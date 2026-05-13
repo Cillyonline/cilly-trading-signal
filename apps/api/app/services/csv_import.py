@@ -1,6 +1,6 @@
 import csv
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
 from io import StringIO
 
@@ -145,7 +145,7 @@ def parse_tradingview_csv(content: str, errors: list[CsvImportError]) -> list[Pa
 
 
 def parse_row(
-    row: dict[str, str], row_number: int, errors: list[CsvImportError]
+    row: dict[str, str | None], row_number: int, errors: list[CsvImportError]
 ) -> ParsedCandle | None:
     timestamp = parse_timestamp(row.get("time", ""), row_number, errors)
     open_price = parse_decimal(row.get("open", ""), "open", row_number, errors)
@@ -199,8 +199,12 @@ def parse_row(
 
 
 def parse_timestamp(
-    value: str, row_number: int, errors: list[CsvImportError]
+    value: str | None, row_number: int, errors: list[CsvImportError]
 ) -> datetime | None:
+    if value is None:
+        errors.append(CsvImportError(row=row_number, field="time", message="Time is required."))
+        return None
+
     normalized = value.strip()
     if not normalized:
         errors.append(CsvImportError(row=row_number, field="time", message="Time is required."))
@@ -208,13 +212,13 @@ def parse_timestamp(
 
     for parser in (datetime.fromisoformat,):
         try:
-            return parser(normalized.replace("Z", "+00:00"))
+            return normalize_timestamp(parser(normalized.replace("Z", "+00:00")))
         except ValueError:
             continue
 
     for format_string in ("%Y-%m-%d", "%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S"):
         try:
-            return datetime.strptime(normalized, format_string)
+            return normalize_timestamp(datetime.strptime(normalized, format_string))
         except ValueError:
             continue
 
@@ -223,8 +227,12 @@ def parse_timestamp(
 
 
 def parse_decimal(
-    value: str, field: str, row_number: int, errors: list[CsvImportError]
+    value: str | None, field: str, row_number: int, errors: list[CsvImportError]
 ) -> Decimal | None:
+    if value is None:
+        errors.append(CsvImportError(row=row_number, field=field, message="Value is required."))
+        return None
+
     normalized = value.strip().replace(",", "")
     if not normalized:
         errors.append(CsvImportError(row=row_number, field=field, message="Value is required."))
@@ -235,3 +243,9 @@ def parse_decimal(
     except InvalidOperation:
         errors.append(CsvImportError(row=row_number, field=field, message="Invalid number."))
         return None
+
+
+def normalize_timestamp(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value.replace(tzinfo=UTC)
+    return value.astimezone(UTC)

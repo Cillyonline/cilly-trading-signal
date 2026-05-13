@@ -108,6 +108,34 @@ def test_import_csv_rejects_invalid_numeric_value(client: TestClient) -> None:
     } >= {(2, "open", "Invalid number.")}
 
 
+def test_import_csv_rejects_missing_row_value(client: TestClient) -> None:
+    watchlist_item_id = create_watchlist_item(client)
+    rows = ["time,open,high,low,close,volume", "2024-01-01,100,110,90,105"]
+    rows.extend(f"2024-01-{day:02d},100,110,90,105,1000" for day in range(2, 21))
+
+    response = post_csv_import(client, watchlist_item_id, "\n".join(rows))
+
+    assert response.status_code == 422
+    assert {
+        (error["row"], error["field"], error["message"])
+        for error in response.json()["detail"]
+    } >= {(2, "volume", "Value is required.")}
+
+
+def test_import_csv_accepts_mixed_timestamp_formats(client: TestClient) -> None:
+    watchlist_item_id = create_watchlist_item(client)
+    rows = [
+        "time,open,high,low,close,volume",
+        "2024-01-01T00:00:00Z,100,110,90,105,1000",
+    ]
+    rows.extend(f"2024-01-{day:02d},100,110,90,105,1000" for day in range(2, 21))
+
+    response = post_csv_import(client, watchlist_item_id, "\n".join(rows))
+
+    assert response.status_code == 200
+    assert response.json()["candle_count"] == 20
+
+
 def test_import_csv_rejects_insufficient_valid_candles(client: TestClient) -> None:
     watchlist_item_id = create_watchlist_item(client)
 
