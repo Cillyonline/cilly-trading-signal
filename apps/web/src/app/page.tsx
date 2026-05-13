@@ -46,7 +46,13 @@ export default function Home() {
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               {plannedAreas.map((area) => (
                 <div key={area} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                  <p className="font-medium">{area}</p>
+                  {area === "Watchlist" ? (
+                    <a className="font-medium text-emerald-300 hover:text-emerald-200" href="/watchlist">
+                      {area}
+                    </a>
+                  ) : (
+                    <p className="font-medium">{area}</p>
+                  )}
                   <p className="mt-1 text-sm text-slate-400">Geplant fuer den MVP-Aufbau.</p>
                 </div>
               ))}

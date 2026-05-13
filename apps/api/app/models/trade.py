@@ -42,7 +42,9 @@ class Trade(Base):
     result_amount: Mapped[Decimal | None] = mapped_column(Numeric(18, 2))
     result_r: Mapped[Decimal | None] = mapped_column(Numeric(8, 4))
     notes: Mapped[str | None] = mapped_column(Text)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
@@ -67,7 +69,9 @@ class TradeEvent(Base):
     new_value: Mapped[str | None] = mapped_column(String(255))
     reason: Mapped[str | None] = mapped_column(String(255))
     notes: Mapped[str | None] = mapped_column(Text)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
 
     trade: Mapped[Trade] = relationship(back_populates="events")
 
@@ -89,7 +93,9 @@ class JournalEntry(Base):
     what_went_wrong: Mapped[str | None] = mapped_column(Text)
     lesson_learned: Mapped[str | None] = mapped_column(Text)
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )

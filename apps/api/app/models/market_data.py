@@ -37,7 +37,9 @@ class MarketDataSeries(Base):
     )
     validation_errors: Mapped[dict | list | None] = mapped_column(JSON)
     file_name: Mapped[str | None] = mapped_column(String(255))
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
 
     watchlist_item: Mapped["WatchlistItem"] = relationship(back_populates="market_data_series")
     candles: Mapped[list["MarketDataCandle"]] = relationship(back_populates="series")
@@ -58,7 +60,9 @@ class MarketDataCandle(Base):
     low: Mapped[Decimal] = mapped_column(Numeric(18, 8))
     close: Mapped[Decimal] = mapped_column(Numeric(18, 8))
     volume: Mapped[Decimal] = mapped_column(Numeric(24, 8))
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
 
     series: Mapped[MarketDataSeries] = relationship(back_populates="candles")
 
@@ -83,6 +87,8 @@ class IndicatorSnapshot(Base):
     swing_low: Mapped[Decimal | None] = mapped_column(Numeric(18, 8))
     trend_state: Mapped[TrendState | None] = mapped_column(enum_values(TrendState))
     structure_state: Mapped[StructureState | None] = mapped_column(enum_values(StructureState))
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
 
     series: Mapped[MarketDataSeries] = relationship(back_populates="indicator_snapshots")
