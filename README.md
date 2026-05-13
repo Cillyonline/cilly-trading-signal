@@ -39,24 +39,84 @@ Voraussetzungen:
 - Docker Desktop
 - Node.js 20 fuer lokale Web-Entwicklung ohne Docker
 - Python 3.12 und uv fuer lokale API-Entwicklung ohne Docker
+- GitHub CLI optional fuer Issue-/PR-Arbeit
 
-Mit Docker Compose:
+Hinweis: Das Backend ist aktuell auf Python 3.12 ausgelegt. Wenn `python --version` lokal Python 3.13 oder neuer zeigt, fuer lokale API-Entwicklung Python 3.12 installieren oder Docker Compose verwenden.
+
+Empfohlene Versionschecks:
+
+```powershell
+docker --version
+docker compose version
+node --version
+npm --version
+python --version
+uv --version
+```
+
+Falls `uv` fehlt:
+
+```powershell
+winget install astral-sh.uv
+```
+
+### Docker Compose
+
+Docker Compose ist der bevorzugte lokale Smoke-Test, weil Web, API und Postgres zusammen starten.
+
+Einmalig lokale Umgebung anlegen:
 
 ```powershell
 Copy-Item .env.example .env
+```
+
+Start:
+
+```powershell
 docker compose -f infra/docker-compose.yml up --build
 ```
 
-Danach:
+Smoke-Checks in einem zweiten Terminal:
+
+```powershell
+Invoke-RestMethod http://localhost:8000/api/health
+```
+
+Danach im Browser pruefen:
 
 - Web: `http://localhost:3000`
 - API Health: `http://localhost:8000/api/health`
+
+Stop:
+
+```powershell
+docker compose -f infra/docker-compose.yml down
+```
 
 Mit Caddy-Profil:
 
 ```powershell
 docker compose -f infra/docker-compose.yml --profile proxy up --build
 ```
+
+### Lokale Entwicklung Ohne Docker
+
+Web:
+
+```powershell
+cd apps/web
+npm install
+npm run dev
+```
+
+API:
+
+```powershell
+cd apps/api
+uv run --with "fastapi[standard]" --with pydantic-settings --with sqlalchemy --with "psycopg[binary]" fastapi dev app/main.py
+```
+
+Hinweis: Die API erwartet standardmaessig Postgres unter dem Docker-Service-Namen `postgres`. Fuer API-Entwicklung ohne Docker Compose muss `DATABASE_URL` passend auf eine erreichbare lokale Datenbank gesetzt werden.
 
 ## Qualitaetschecks
 
