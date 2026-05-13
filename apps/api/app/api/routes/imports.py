@@ -23,7 +23,10 @@ async def import_csv(
     user = get_or_create_default_user(db)
     watchlist_item = get_watchlist_item(db, user.id, watchlist_item_id)
     if watchlist_item is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Watchlist item not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Watchlist item not found.",
+        )
 
     content_bytes = await file.read()
     try:
