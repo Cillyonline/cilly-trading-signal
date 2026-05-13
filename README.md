@@ -138,6 +138,7 @@ uv run --no-project --with pytest --with "fastapi[standard]" --with pydantic-set
 ## Dokumente
 
 - `docs/PRODUCT_ROADMAP.md`
+- `docs/DELIVERY_ROADMAP.md`
 - `docs/MVP_SPEC.md`
 - `docs/STRATEGY_AND_ALERTS.md`
 - `docs/DECISIONS.md`
