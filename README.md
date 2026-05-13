@@ -58,6 +58,23 @@ Mit Caddy-Profil:
 docker compose -f infra/docker-compose.yml --profile proxy up --build
 ```
 
+## Qualitaetschecks
+
+Frontend:
+
+```powershell
+cd apps/web
+npm run build
+```
+
+Backend:
+
+```powershell
+cd apps/api
+uv run --no-project --with ruff ruff check --select E,F,UP,B .
+uv run --no-project --with pytest --with "fastapi[standard]" --with pydantic-settings --with sqlalchemy --with "psycopg[binary]" pytest
+```
+
 ## Dokumente
 
 - `docs/PRODUCT_ROADMAP.md`
