@@ -55,7 +55,10 @@ def evaluate_trend_pullback_long(payload: TrendPullbackInput) -> SignalEvaluatio
         weekly_indicators=payload.signal_input.weekly_indicators,
         daily_indicators=payload.daily,
         trigger_indicators=payload.trigger,
-        data_quality_flags=[*payload.signal_input.data_quality_flags, *data_quality_flags(payload)],
+        data_quality_flags=[
+            *payload.signal_input.data_quality_flags,
+            *data_quality_flags(payload),
+        ],
         setup_invalidated=payload.signal_input.setup_invalidated or payload.setup_invalidated,
     )
     risk_flags = initial_risk_flags(payload)

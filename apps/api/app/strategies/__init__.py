@@ -1,3 +1,7 @@
+from app.strategies.base_breakout_long import (
+    BaseBreakoutInput,
+    evaluate_base_breakout_long,
+)
 from app.strategies.contracts import (
     IndicatorContext,
     ScoreBreakdown,
@@ -16,6 +20,7 @@ from app.strategies.trend_pullback_long import (
 
 __all__ = [
     "IndicatorContext",
+    "BaseBreakoutInput",
     "ScoreBreakdown",
     "SignalEvaluationInput",
     "SignalEvaluationResult",
@@ -25,5 +30,6 @@ __all__ = [
     "collect_common_no_trade_reasons",
     "map_status",
     "TrendPullbackInput",
+    "evaluate_base_breakout_long",
     "evaluate_trend_pullback_long",
 ]
