@@ -102,7 +102,7 @@ def no_setup_result(
         ScoreBreakdown(),
         bias=Bias.NEUTRAL,
         reasoning=reasoning,
-        risk_flags=["no_strategy_input"],
+        risk_flags=["no_strategy_input", *fallback_input.data_quality_flags],
         next_action="No setup; provide strategy inputs before evaluating a signal.",
         stop_loss=None,
     )
