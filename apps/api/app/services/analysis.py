@@ -3,7 +3,7 @@ from decimal import Decimal
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from app.models.enums import AssetClass, Bias, MarketDataStatus, StrategyType
+from app.models.enums import Bias, MarketDataStatus, StrategyType
 from app.models.market_data import IndicatorSnapshot, MarketDataCandle, MarketDataSeries
 from app.schemas.analysis import MarketDataAnalysisResult, SignalAnalysisResult
 from app.services.indicators import (
