@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -13,17 +15,18 @@ from app.services.watchlist import (
 )
 
 router = APIRouter(prefix="/watchlist", tags=["watchlist"])
+DbSession = Annotated[Session, Depends(get_db)]
 
 
 @router.get("", response_model=list[WatchlistItemRead])
-def list_items(db: Session = Depends(get_db)) -> list[WatchlistItemRead]:
+def list_items(db: DbSession) -> list[WatchlistItemRead]:
     user = get_or_create_default_user(db)
     return list_watchlist_items(db, user.id)
 
 
 @router.post("", response_model=WatchlistItemRead, status_code=status.HTTP_201_CREATED)
 def create_item(
-    payload: WatchlistItemCreate, db: Session = Depends(get_db)
+    payload: WatchlistItemCreate, db: DbSession
 ) -> WatchlistItemRead:
     user = get_or_create_default_user(db)
     try:
@@ -36,7 +39,7 @@ def create_item(
 
 
 @router.get("/{item_id}", response_model=WatchlistItemRead)
-def get_item(item_id: int, db: Session = Depends(get_db)) -> WatchlistItemRead:
+def get_item(item_id: int, db: DbSession) -> WatchlistItemRead:
     user = get_or_create_default_user(db)
     item = get_watchlist_item(db, user.id, item_id)
     if item is None:
@@ -49,7 +52,7 @@ def get_item(item_id: int, db: Session = Depends(get_db)) -> WatchlistItemRead:
 
 @router.patch("/{item_id}", response_model=WatchlistItemRead)
 def update_item(
-    item_id: int, payload: WatchlistItemUpdate, db: Session = Depends(get_db)
+    item_id: int, payload: WatchlistItemUpdate, db: DbSession
 ) -> WatchlistItemRead:
     user = get_or_create_default_user(db)
     item = get_watchlist_item(db, user.id, item_id)
@@ -69,7 +72,7 @@ def update_item(
 
 
 @router.delete("/{item_id}", response_model=WatchlistItemRead)
-def deactivate_item(item_id: int, db: Session = Depends(get_db)) -> WatchlistItemRead:
+def deactivate_item(item_id: int, db: DbSession) -> WatchlistItemRead:
     user = get_or_create_default_user(db)
     item = get_watchlist_item(db, user.id, item_id)
     if item is None:
