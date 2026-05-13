@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import health, watchlist
+from app.api.routes import health, imports, watchlist
 from app.core.config import settings
 
 
@@ -17,6 +17,7 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(health.router, prefix="/api")
+    app.include_router(imports.router, prefix="/api")
     app.include_router(watchlist.router, prefix="/api")
     return app
 
