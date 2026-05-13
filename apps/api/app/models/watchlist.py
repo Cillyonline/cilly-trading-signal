@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -6,6 +7,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 from app.models.enums import AssetClass
 from app.models.types import enum_values
+
+if TYPE_CHECKING:
+    from app.models.market_data import MarketDataSeries
+    from app.models.signal import Signal
+    from app.models.trade import Trade
+    from app.models.user import User
 
 
 class WatchlistItem(Base):

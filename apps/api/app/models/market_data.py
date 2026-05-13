@@ -1,5 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, Integer, JSON, Numeric, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -13,6 +14,9 @@ from app.models.enums import (
     TrendState,
 )
 from app.models.types import enum_values
+
+if TYPE_CHECKING:
+    from app.models.watchlist import WatchlistItem
 
 
 class MarketDataSeries(Base):

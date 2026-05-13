@@ -1,12 +1,18 @@
 from datetime import datetime
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Integer, JSON, Numeric, String, Text, func
+from sqlalchemy import DateTime, ForeignKey, Integer, JSON, Numeric, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.models.enums import Bias, ScoreClass, SignalStatus, StrategyType, Timeframe
 from app.models.types import enum_values
+
+if TYPE_CHECKING:
+    from app.models.trade import Trade
+    from app.models.user import User
+    from app.models.watchlist import WatchlistItem
 
 
 class Signal(Base):

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -6,6 +7,12 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 from app.models.enums import UserRole
 from app.models.types import enum_values
+
+if TYPE_CHECKING:
+    from app.models.settings import Settings
+    from app.models.signal import Signal
+    from app.models.trade import JournalEntry, Trade
+    from app.models.watchlist import WatchlistItem
 
 
 class User(Base):
