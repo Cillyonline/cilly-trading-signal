@@ -32,6 +32,32 @@ infra/  Deployment- und Infrastrukturdateien
 scripts/ Hilfsskripte fuer Betrieb und Backups
 ```
 
+## Lokaler Start
+
+Voraussetzungen:
+
+- Docker Desktop
+- Node.js 20 fuer lokale Web-Entwicklung ohne Docker
+- Python 3.12 und uv fuer lokale API-Entwicklung ohne Docker
+
+Mit Docker Compose:
+
+```powershell
+Copy-Item .env.example .env
+docker compose -f infra/docker-compose.yml up --build
+```
+
+Danach:
+
+- Web: `http://localhost:3000`
+- API Health: `http://localhost:8000/api/health`
+
+Mit Caddy-Profil:
+
+```powershell
+docker compose -f infra/docker-compose.yml --profile proxy up --build
+```
+
 ## Dokumente
 
 - `docs/PRODUCT_ROADMAP.md`
@@ -40,3 +66,11 @@ scripts/ Hilfsskripte fuer Betrieb und Backups
 - `docs/DECISIONS.md`
 - `docs/DATA_MODEL.md`
 - `docs/TECH_ARCHITECTURE.md`
+
+## Aktueller Stand
+
+- FastAPI Backend Skeleton mit Health Endpoint
+- Next.js App Router Frontend Skeleton mit Dashboard-Startseite
+- Docker Compose fuer Web, API und PostgreSQL
+- Caddy-Konfiguration fuer spaeteres VPS-Routing
+- `.env.example` fuer lokale Konfiguration
