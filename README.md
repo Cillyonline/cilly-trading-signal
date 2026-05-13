@@ -71,7 +71,7 @@ Backend:
 
 ```powershell
 cd apps/api
-uv run --no-project --with ruff ruff check .
+uv run --no-project --with ruff ruff check --select E,F,UP,B .
 uv run --no-project --with pytest --with "fastapi[standard]" --with pydantic-settings --with sqlalchemy --with "psycopg[binary]" pytest
 ```
 

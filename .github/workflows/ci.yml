@@ -52,7 +52,7 @@ jobs:
           cache-dependency-glob: apps/api/pyproject.toml
 
       - name: Run Ruff
-        run: uv run --no-project --with ruff ruff check .
+        run: uv run --no-project --with ruff ruff check --select E,F,UP,B .
 
       - name: Run Pytest
         run: uv run --no-project --with pytest --with "fastapi[standard]" --with pydantic-settings --with sqlalchemy --with "psycopg[binary]" pytest
