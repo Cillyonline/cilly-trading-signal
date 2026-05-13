@@ -93,12 +93,36 @@ def test_calculate_risk_reward_requires_valid_entry_stop_target() -> None:
 @pytest.mark.parametrize(
     ("input_payload", "entry", "stop", "risk_reward", "expected_reason"),
     [
-        (signal_input(), Decimal("100"), Decimal("90"), Decimal("1.9"), "risk_reward_below_minimum"),
-        (signal_input(weekly_bias=Bias.BEARISH), Decimal("100"), Decimal("90"), Decimal("2.0"), "weekly_context_bearish"),
+        (
+            signal_input(),
+            Decimal("100"),
+            Decimal("90"),
+            Decimal("1.9"),
+            "risk_reward_below_minimum",
+        ),
+        (
+            signal_input(weekly_bias=Bias.BEARISH),
+            Decimal("100"),
+            Decimal("90"),
+            Decimal("2.0"),
+            "weekly_context_bearish",
+        ),
         (signal_input(), Decimal("100"), None, Decimal("2.0"), "missing_stop_loss"),
         (signal_input(), Decimal("90"), Decimal("90"), Decimal("2.0"), "entry_not_above_stop"),
-        (signal_input(data_quality_flags=["missing_ema200"]), Decimal("100"), Decimal("90"), Decimal("2.0"), "poor_data_quality"),
-        (signal_input(setup_invalidated=True), Decimal("100"), Decimal("90"), Decimal("2.0"), "setup_already_invalidated"),
+        (
+            signal_input(data_quality_flags=["missing_ema200"]),
+            Decimal("100"),
+            Decimal("90"),
+            Decimal("2.0"),
+            "poor_data_quality",
+        ),
+        (
+            signal_input(setup_invalidated=True),
+            Decimal("100"),
+            Decimal("90"),
+            Decimal("2.0"),
+            "setup_already_invalidated",
+        ),
     ],
 )
 def test_common_no_trade_reasons(
