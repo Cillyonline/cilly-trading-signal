@@ -85,7 +85,8 @@ export default function SignalsPage() {
             <div>
               <h2 className="text-xl font-semibold">Persistierte Signale</h2>
               <p className="mt-1 text-sm text-slate-400">
-                Sortierung kommt vom Backend. Detailansicht und Trade-Erstellung folgen spaeter.
+                Sortierung kommt vom Backend. Detailseiten zeigen die vollstaendige gespeicherte
+                Signal-Begruendung.
               </p>
             </div>
             <button
@@ -152,6 +153,12 @@ function SignalCard({ signal }: { signal: Signal }) {
           <Metric label="Stop" value={formatMoney(signal.stop_loss)} compact />
           <Metric label="Target 1" value={formatMoney(signal.target_1)} compact />
         </div>
+        <a
+          className="mt-4 inline-flex rounded-xl border border-white/10 px-4 py-2 text-sm text-emerald-300 hover:border-emerald-300/50 hover:text-emerald-200"
+          href={`/signals/${signal.id}`}
+        >
+          Signal im Detail pruefen
+        </a>
       </div>
 
       <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
