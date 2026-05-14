@@ -46,10 +46,10 @@ export default function Home() {
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               {plannedAreas.map((area) => (
                 <div key={area} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                  {area === "Watchlist" || area === "Signals" ? (
+                  {area === "Watchlist" || area === "CSV Import" || area === "Signals" ? (
                     <a
                       className="font-medium text-emerald-300 hover:text-emerald-200"
-                      href={area === "Watchlist" ? "/watchlist" : "/signals"}
+                      href={area === "Watchlist" ? "/watchlist" : area === "CSV Import" ? "/import" : "/signals"}
                     >
                       {area}
                     </a>

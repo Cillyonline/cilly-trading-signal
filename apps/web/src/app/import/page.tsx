@@ -1,0 +1,263 @@
+"use client";
+
+import { FormEvent, useEffect, useMemo, useState } from "react";
+
+import { fetchWatchlist, importCsv } from "@/lib/api";
+import type { CsvImportResult, Timeframe } from "@/types/imports";
+import type { WatchlistItem } from "@/types/watchlist";
+
+const timeframes: Timeframe[] = ["1D", "4H", "1W"];
+
+export default function ImportPage() {
+  const [items, setItems] = useState<WatchlistItem[]>([]);
+  const [watchlistItemId, setWatchlistItemId] = useState("");
+  const [timeframe, setTimeframe] = useState<Timeframe>("1D");
+  const [file, setFile] = useState<File | null>(null);
+  const [result, setResult] = useState<CsvImportResult | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isImporting, setIsImporting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function loadWatchlist() {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const loadedItems = await fetchWatchlist();
+      setItems(loadedItems);
+      setWatchlistItemId((current) => current || loadedItems[0]?.id.toString() || "");
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Unbekannter Fehler.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadWatchlist();
+  }, []);
+
+  const selectedItem = useMemo(
+    () => items.find((item) => item.id.toString() === watchlistItemId) ?? null,
+    [items, watchlistItemId],
+  );
+
+  async function submitImport(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setResult(null);
+
+    if (!watchlistItemId || !file) {
+      setError("Waehle ein Symbol und eine CSV-Datei aus.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("watchlist_item_id", watchlistItemId);
+    formData.append("timeframe", timeframe);
+    formData.append("file", file);
+
+    setIsImporting(true);
+    try {
+      setResult(await importCsv(formData));
+    } catch (importError) {
+      setError(importError instanceof Error ? importError.message : "Unbekannter Fehler.");
+    } finally {
+      setIsImporting(false);
+    }
+  }
+
+  return (
+    <main className="min-h-screen bg-slate-950 px-6 py-8 text-slate-100">
+      <section className="mx-auto flex max-w-6xl flex-col gap-8">
+        <header className="rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_right,#0f766e,transparent_34%),rgba(255,255,255,0.05)] p-8">
+          <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-sm uppercase tracking-[0.35em] text-emerald-300">CSV Import</p>
+              <h1 className="mt-3 text-4xl font-semibold tracking-tight">Marktdaten importieren</h1>
+              <p className="mt-3 max-w-2xl text-slate-300">
+                Lade TradingView CSV-Daten fuer ein Watchlist-Symbol hoch. Der Import validiert die
+                Kerzen und speichert sie als Grundlage fuer eine spaetere Analyse.
+              </p>
+            </div>
+            <a className="text-sm text-emerald-300 hover:text-emerald-200" href="/">
+              Zurueck zum Dashboard
+            </a>
+          </div>
+        </header>
+
+        {error ? <ErrorMessage message={error} /> : null}
+
+        <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+          <form onSubmit={submitImport} className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-semibold">Neue CSV hochladen</h2>
+                <p className="mt-2 text-sm text-slate-400">
+                  Erwartete Spalten: time, open, high, low, close, volume.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => void loadWatchlist()}
+                className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:border-emerald-300/50"
+              >
+                Watchlist laden
+              </button>
+            </div>
+
+            <div className="mt-6 grid gap-4">
+              <label className="grid gap-2 text-sm text-slate-300">
+                Symbol
+                <select
+                  required
+                  disabled={isLoading || items.length === 0}
+                  value={watchlistItemId}
+                  onChange={(event) => setWatchlistItemId(event.target.value)}
+                  className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-emerald-300 disabled:opacity-60"
+                >
+                  {items.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.symbol} {item.name ? `- ${item.name}` : ""}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="grid gap-2 text-sm text-slate-300">
+                Timeframe
+                <select
+                  value={timeframe}
+                  onChange={(event) => setTimeframe(event.target.value as Timeframe)}
+                  className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-emerald-300"
+                >
+                  {timeframes.map((value) => (
+                    <option key={value} value={value}>
+                      {value}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="grid gap-2 text-sm text-slate-300">
+                CSV-Datei
+                <input
+                  required
+                  type="file"
+                  accept=".csv,text/csv"
+                  onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+                  className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-400 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-slate-950 focus:border-emerald-300"
+                />
+              </label>
+
+              {selectedItem ? (
+                <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-sm text-slate-300">
+                  <p className="font-medium text-slate-100">{selectedItem.symbol}</p>
+                  <p className="mt-1">
+                    {selectedItem.asset_class} {selectedItem.exchange ? `auf ${selectedItem.exchange}` : ""}
+                  </p>
+                </div>
+              ) : null}
+
+              {items.length === 0 && !isLoading ? (
+                <div className="rounded-2xl border border-yellow-300/30 bg-yellow-300/10 p-4 text-sm text-yellow-100">
+                  Noch keine Watchlist-Symbole vorhanden. Lege zuerst ein Symbol in der Watchlist an.
+                </div>
+              ) : null}
+
+              <button
+                disabled={isImporting || isLoading || items.length === 0}
+                type="submit"
+                className="rounded-xl bg-emerald-400 px-5 py-3 font-semibold text-slate-950 disabled:opacity-60"
+              >
+                {isImporting ? "Importiere..." : "CSV importieren"}
+              </button>
+            </div>
+          </form>
+
+          <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
+            <h2 className="text-xl font-semibold">Import-Ergebnis</h2>
+            <p className="mt-2 text-sm text-slate-400">
+              Nach einem erfolgreichen Import kannst du die Analyse im naechsten Workflow-Schritt
+              starten. Diese Seite fuehrt keine Trade-Aktion aus.
+            </p>
+
+            <div className="mt-6 overflow-hidden rounded-2xl border border-white/10">
+              {isLoading ? (
+                <p className="p-5 text-sm text-slate-400">Watchlist wird geladen...</p>
+              ) : result ? (
+                <ImportResultCard result={result} symbol={selectedItem?.symbol ?? "Symbol"} />
+              ) : (
+                <EmptyState />
+              )}
+            </div>
+          </section>
+        </section>
+      </section>
+    </main>
+  );
+}
+
+function ErrorMessage({ message }: { message: string }) {
+  return (
+    <div className="whitespace-pre-line rounded-2xl border border-red-400/30 bg-red-950/40 p-4 text-sm text-red-100">
+      {message}
+    </div>
+  );
+}
+
+function ImportResultCard({ result, symbol }: { result: CsvImportResult; symbol: string }) {
+  return (
+    <article className="grid gap-5 p-5">
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="rounded-full border border-emerald-300/30 bg-emerald-300/10 px-3 py-1 text-xs text-emerald-100">
+          {result.status}
+        </span>
+        <h3 className="text-lg font-semibold">{symbol}</h3>
+        <span className="rounded-full bg-slate-800 px-3 py-1 text-xs uppercase text-slate-300">
+          {result.timeframe}
+        </span>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Metric label="Series ID" value={result.series_id?.toString() ?? "-"} />
+        <Metric label="Kerzen" value={result.candle_count.toString()} />
+        <Metric label="Start" value={formatDateTime(result.start_time)} />
+        <Metric label="Ende" value={formatDateTime(result.end_time)} />
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-sm text-slate-300">
+        CSV gespeichert. Analyse und Signal-Erzeugung folgen im separaten Analyze-Schritt.
+      </div>
+    </article>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="p-8 text-center">
+      <p className="text-lg font-semibold text-slate-200">Noch kein Import ausgefuehrt.</p>
+      <p className="mx-auto mt-2 max-w-xl text-sm text-slate-400">
+        Waehle ein Symbol, Timeframe und CSV-Datei aus. Der Backend-Import prueft die Daten, bevor
+        sie fuer die Analyse genutzt werden.
+      </p>
+    </div>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+      <p className="text-xs uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="mt-1 font-semibold text-slate-100">{value}</p>
+    </div>
+  );
+}
+
+function formatDateTime(value: string | null) {
+  if (!value) {
+    return "-";
+  }
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleString("de-DE");
+}
