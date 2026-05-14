@@ -199,6 +199,34 @@ def test_analyze_import_creates_indicator_snapshots(client: TestClient) -> None:
     assert result["signal"]["reasoning"]
     assert "trade" not in result["signal"]
 
+    signals_response = client.get("/api/signals")
+
+    assert signals_response.status_code == 200
+    signals = signals_response.json()
+    assert len(signals) == 1
+    assert signals[0]["watchlist_item_id"] == watchlist_item_id
+    assert signals[0]["strategy_type"] == result["signal"]["strategy_type"]
+    assert signals[0]["reasoning"]
+
+    detail_response = client.get(f"/api/signals/{signals[0]['id']}")
+
+    assert detail_response.status_code == 200
+    assert detail_response.json()["id"] == signals[0]["id"]
+
+
+def test_analyze_import_replaces_existing_strategy_signal(client: TestClient) -> None:
+    watchlist_item_id = create_watchlist_item(client)
+    imported = post_csv_import(client, watchlist_item_id, sequential_csv()).json()
+
+    first_response = client.post(f"/api/imports/{imported['series_id']}/analyze")
+    second_response = client.post(f"/api/imports/{imported['series_id']}/analyze")
+    signals_response = client.get("/api/signals")
+
+    assert first_response.status_code == 200
+    assert second_response.status_code == 200
+    assert signals_response.status_code == 200
+    assert len(signals_response.json()) == 1
+
 
 def test_analyze_import_returns_no_setup_for_insufficient_history(client: TestClient) -> None:
     watchlist_item_id = create_watchlist_item(client)
@@ -212,3 +240,10 @@ def test_analyze_import_returns_no_setup_for_insufficient_history(client: TestCl
     assert result["indicator_snapshot_count"] == 20
     assert result["signal"]["status"] == "no_setup"
     assert "insufficient_candle_history" in result["signal"]["risk_flags"]
+
+
+def test_get_unknown_signal_returns_404(client: TestClient) -> None:
+    response = client.get("/api/signals/999")
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Signal not found."

@@ -10,6 +10,7 @@ from app.services.indicators import (
     calculate_indicator_snapshots,
     indicator_input_from_model,
 )
+from app.services.signals import upsert_signal_from_analysis
 from app.strategies.contracts import IndicatorContext, SignalEvaluationInput
 from app.strategies.orchestrator import SignalEngineInput, evaluate_mvp_signal_engine
 from app.strategies.trend_pullback_long import TrendPullbackInput
@@ -57,7 +58,15 @@ def analyze_market_data_series(db: Session, series: MarketDataSeries) -> MarketD
     else:
         series.validation_errors = None
 
+    signal = upsert_signal_from_analysis(
+        db,
+        user_id=series.watchlist_item.user_id,
+        watchlist_item_id=series.watchlist_item_id,
+        result=signal_result,
+    )
+
     db.commit()
+    db.refresh(signal)
 
     return MarketDataAnalysisResult(
         series_id=series.id,
