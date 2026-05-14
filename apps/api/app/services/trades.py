@@ -87,6 +87,16 @@ def create_trade(db: Session, user_id: int, payload: TradeCreate) -> Trade:
     return trade
 
 
+def list_trades(db: Session, user_id: int) -> list[Trade]:
+    return list(
+        db.scalars(
+            select(Trade)
+            .where(Trade.user_id == user_id)
+            .order_by(Trade.opened_at.desc(), Trade.id.desc())
+        )
+    )
+
+
 def _get_signal(db: Session, user_id: int, signal_id: int) -> Signal | None:
     return db.scalar(
         select(Signal)
