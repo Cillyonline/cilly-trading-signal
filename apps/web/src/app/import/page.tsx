@@ -2,8 +2,8 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
-import { fetchWatchlist, importCsv } from "@/lib/api";
-import type { CsvImportResult, Timeframe } from "@/types/imports";
+import { analyzeImport, fetchWatchlist, importCsv } from "@/lib/api";
+import type { CsvImportResult, MarketDataAnalysisResult, Timeframe } from "@/types/imports";
 import type { WatchlistItem } from "@/types/watchlist";
 
 const timeframes: Timeframe[] = ["1D", "4H", "1W"];
@@ -14,8 +14,10 @@ export default function ImportPage() {
   const [timeframe, setTimeframe] = useState<Timeframe>("1D");
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<CsvImportResult | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<MarketDataAnalysisResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isImporting, setIsImporting] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function loadWatchlist() {
@@ -45,6 +47,7 @@ export default function ImportPage() {
     event.preventDefault();
     setError(null);
     setResult(null);
+    setAnalysisResult(null);
 
     if (!watchlistItemId || !file) {
       setError("Waehle ein Symbol und eine CSV-Datei aus.");
@@ -63,6 +66,24 @@ export default function ImportPage() {
       setError(importError instanceof Error ? importError.message : "Unbekannter Fehler.");
     } finally {
       setIsImporting(false);
+    }
+  }
+
+  async function runAnalysis() {
+    if (!result?.series_id) {
+      setError("Importiere zuerst eine valide CSV-Serie.");
+      return;
+    }
+
+    setError(null);
+    setAnalysisResult(null);
+    setIsAnalyzing(true);
+    try {
+      setAnalysisResult(await analyzeImport(result.series_id));
+    } catch (analysisError) {
+      setError(analysisError instanceof Error ? analysisError.message : "Unbekannter Fehler.");
+    } finally {
+      setIsAnalyzing(false);
     }
   }
 
@@ -185,7 +206,13 @@ export default function ImportPage() {
               {isLoading ? (
                 <p className="p-5 text-sm text-slate-400">Watchlist wird geladen...</p>
               ) : result ? (
-                <ImportResultCard result={result} symbol={selectedItem?.symbol ?? "Symbol"} />
+                <ImportResultCard
+                  analysisResult={analysisResult}
+                  isAnalyzing={isAnalyzing}
+                  onAnalyze={() => void runAnalysis()}
+                  result={result}
+                  symbol={selectedItem?.symbol ?? "Symbol"}
+                />
               ) : (
                 <EmptyState />
               )}
@@ -205,7 +232,19 @@ function ErrorMessage({ message }: { message: string }) {
   );
 }
 
-function ImportResultCard({ result, symbol }: { result: CsvImportResult; symbol: string }) {
+function ImportResultCard({
+  analysisResult,
+  isAnalyzing,
+  onAnalyze,
+  result,
+  symbol,
+}: {
+  analysisResult: MarketDataAnalysisResult | null;
+  isAnalyzing: boolean;
+  onAnalyze: () => void;
+  result: CsvImportResult;
+  symbol: string;
+}) {
   return (
     <article className="grid gap-5 p-5">
       <div className="flex flex-wrap items-center gap-3">
@@ -225,10 +264,112 @@ function ImportResultCard({ result, symbol }: { result: CsvImportResult; symbol:
         <Metric label="Ende" value={formatDateTime(result.end_time)} />
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-sm text-slate-300">
-        CSV gespeichert. Analyse und Signal-Erzeugung folgen im separaten Analyze-Schritt.
+      <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-sm text-slate-300 sm:flex-row sm:items-center sm:justify-between">
+        <p>CSV gespeichert. Starte die Analyse, um Indikatoren und eine Signal-Karte zu erzeugen.</p>
+        <button
+          disabled={isAnalyzing || !result.series_id}
+          onClick={onAnalyze}
+          type="button"
+          className="rounded-xl bg-emerald-400 px-4 py-2 font-semibold text-slate-950 disabled:opacity-60"
+        >
+          {isAnalyzing ? "Analysiere..." : "Analyse starten"}
+        </button>
       </div>
+
+      {analysisResult ? <AnalysisResultCard result={analysisResult} /> : null}
     </article>
+  );
+}
+
+function AnalysisResultCard({ result }: { result: MarketDataAnalysisResult }) {
+  const signal = result.signal;
+  const reasons = signal.reasoning.slice(0, 3);
+  const flags = signal.risk_flags.slice(0, 4);
+  const noTradeReasons = signal.no_trade_reasons.slice(0, 4);
+
+  return (
+    <section className="grid gap-5 rounded-2xl border border-emerald-300/20 bg-emerald-300/5 p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm font-medium text-emerald-100">Analyse abgeschlossen</p>
+          <h4 className="mt-1 text-lg font-semibold">{formatStrategy(signal.strategy_type)}</h4>
+        </div>
+        <a className="text-sm text-emerald-300 hover:text-emerald-200" href="/signals">
+          Zu den Signalen
+        </a>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Metric label="Status" value={signal.status.replaceAll("_", " ")} />
+        <Metric label="Score" value={`${signal.score} / ${signal.score_class.replaceAll("_", " ")}`} />
+        <Metric label="R:R" value={signal.risk_reward ? `${formatNumber(signal.risk_reward)}R` : "-"} />
+        <Metric label="Snapshots" value={result.indicator_snapshot_count.toString()} />
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Metric label="Trigger" value={formatMoney(signal.trigger_level)} />
+        <Metric label="Stop" value={formatMoney(signal.stop_loss)} />
+        <Metric label="Target 1" value={formatMoney(signal.target_1)} />
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+        <p className="text-sm font-medium text-slate-200">Backend-Naechste Aktion</p>
+        <p className="mt-2 text-sm text-slate-300">{signal.next_action}</p>
+      </div>
+
+      <TextList title="Begruendung" empty="Keine Begruendung gespeichert." items={reasons} />
+      <BadgeList title="Risk Flags" empty="Keine Risk Flags" items={flags} tone="orange" />
+      <BadgeList title="No-Trade Gruende" empty="Keine No-Trade Gruende" items={noTradeReasons} tone="slate" />
+    </section>
+  );
+}
+
+function TextList({ title, empty, items }: { title: string; empty: string; items: string[] }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+      <p className="text-sm font-medium text-slate-200">{title}</p>
+      {items.length > 0 ? (
+        <ul className="mt-3 space-y-2 text-sm text-slate-300">
+          {items.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-3 text-sm text-slate-500">{empty}</p>
+      )}
+    </div>
+  );
+}
+
+function BadgeList({
+  title,
+  empty,
+  items,
+  tone,
+}: {
+  title: string;
+  empty: string;
+  items: string[];
+  tone: "orange" | "slate";
+}) {
+  const badgeClass =
+    tone === "orange" ? "bg-orange-300/10 text-orange-100" : "bg-slate-700/70 text-slate-200";
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+      <p className="text-sm font-medium text-slate-200">{title}</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {items.length > 0 ? (
+          items.map((item) => (
+            <span key={item} className={`rounded-full px-3 py-1 text-xs ${badgeClass}`}>
+              {item.replaceAll("_", " ")}
+            </span>
+          ))
+        ) : (
+          <span className="rounded-full bg-emerald-300/10 px-3 py-1 text-xs text-emerald-100">{empty}</span>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -260,4 +401,17 @@ function formatDateTime(value: string | null) {
 
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleString("de-DE");
+}
+
+function formatStrategy(value: MarketDataAnalysisResult["signal"]["strategy_type"]) {
+  return value === "trend_pullback_long" ? "Trend Pullback Long" : "Base Breakout Long";
+}
+
+function formatMoney(value: string | null) {
+  return value ? formatNumber(value) : "-";
+}
+
+function formatNumber(value: string) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed.toFixed(2) : value;
 }
