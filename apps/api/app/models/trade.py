@@ -1,5 +1,5 @@
 from datetime import datetime
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, Text, func
@@ -54,6 +54,26 @@ class Trade(Base):
     watchlist_item: Mapped["WatchlistItem"] = relationship(back_populates="trades")
     events: Mapped[list["TradeEvent"]] = relationship(back_populates="trade")
     journal_entry: Mapped["JournalEntry"] = relationship(back_populates="trade")
+
+    @property
+    def risk_per_unit(self) -> Decimal:
+        return self.entry_price - self.stop_loss
+
+    @property
+    def target_1_potential_r(self) -> Decimal | None:
+        if self.target_1 is None:
+            return None
+        return ((self.target_1 - self.entry_price) / self.risk_per_unit).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
+
+    @property
+    def target_2_potential_r(self) -> Decimal | None:
+        if self.target_2 is None:
+            return None
+        return ((self.target_2 - self.entry_price) / self.risk_per_unit).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
 
 
 class TradeEvent(Base):
