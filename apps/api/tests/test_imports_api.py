@@ -1,4 +1,6 @@
 from collections.abc import Iterator
+from datetime import date, timedelta
+from decimal import Decimal
 
 import pytest
 from fastapi.testclient import TestClient
@@ -42,6 +44,16 @@ def valid_csv(row_count: int = 20) -> str:
     rows = ["time,open,high,low,close,volume"]
     for day in range(1, row_count + 1):
         rows.append(f"2024-01-{day:02d},100,110,90,105,1000")
+    return "\n".join(rows)
+
+
+def sequential_csv(row_count: int = 201) -> str:
+    rows = ["time,open,high,low,close,volume"]
+    start = date(2024, 1, 1)
+    for index in range(row_count):
+        current_date = start + timedelta(days=index)
+        close = Decimal("100") + Decimal(index)
+        rows.append(f"{current_date.isoformat()},{close - 1},{close + 2},{close - 2},{close},1000")
     return "\n".join(rows)
 
 
@@ -168,3 +180,35 @@ def test_import_csv_returns_404_for_unknown_watchlist_item(client: TestClient) -
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Watchlist item not found."
+
+
+def test_analyze_import_creates_indicator_snapshots(client: TestClient) -> None:
+    watchlist_item_id = create_watchlist_item(client)
+    imported = post_csv_import(client, watchlist_item_id, sequential_csv()).json()
+
+    response = client.post(f"/api/imports/{imported['series_id']}/analyze")
+
+    assert response.status_code == 200
+    result = response.json()
+    assert result["series_id"] == imported["series_id"]
+    assert result["status"] == "analyzed"
+    assert result["candle_count"] == 201
+    assert result["indicator_snapshot_count"] == 201
+    assert result["signal"]["strategy_type"] == "trend_pullback_long"
+    assert result["signal"]["status"] in {"watchlist", "armed", "no_setup"}
+    assert result["signal"]["reasoning"]
+    assert "trade" not in result["signal"]
+
+
+def test_analyze_import_returns_no_setup_for_insufficient_history(client: TestClient) -> None:
+    watchlist_item_id = create_watchlist_item(client)
+    imported = post_csv_import(client, watchlist_item_id, valid_csv()).json()
+
+    response = client.post(f"/api/imports/{imported['series_id']}/analyze")
+
+    assert response.status_code == 200
+    result = response.json()
+    assert result["status"] == "failed"
+    assert result["indicator_snapshot_count"] == 20
+    assert result["signal"]["status"] == "no_setup"
+    assert "insufficient_candle_history" in result["signal"]["risk_flags"]
