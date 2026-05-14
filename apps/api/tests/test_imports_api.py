@@ -205,6 +205,8 @@ def test_analyze_import_creates_indicator_snapshots(client: TestClient) -> None:
     signals = signals_response.json()
     assert len(signals) == 1
     assert signals[0]["watchlist_item_id"] == watchlist_item_id
+    assert signals[0]["symbol"] == "AAPL"
+    assert signals[0]["asset_class"] == "stock"
     assert signals[0]["strategy_type"] == result["signal"]["strategy_type"]
     assert signals[0]["reasoning"]
 
@@ -212,6 +214,7 @@ def test_analyze_import_creates_indicator_snapshots(client: TestClient) -> None:
 
     assert detail_response.status_code == 200
     assert detail_response.json()["id"] == signals[0]["id"]
+    assert detail_response.json()["symbol"] == "AAPL"
 
 
 def test_analyze_import_replaces_existing_strategy_signal(client: TestClient) -> None:

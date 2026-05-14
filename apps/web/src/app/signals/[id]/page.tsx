@@ -116,8 +116,11 @@ function SignalDetail({ signal }: { signal: Signal }) {
                 Signal #{signal.id}
               </span>
             </div>
-            <h2 className="mt-4 text-3xl font-semibold tracking-tight">{formatStrategy(signal.strategy_type)}</h2>
-            <p className="mt-2 text-sm text-slate-400">Watchlist Item #{signal.watchlist_item_id}</p>
+            <h2 className="mt-4 text-3xl font-semibold tracking-tight">{signal.symbol}</h2>
+            <p className="mt-2 text-sm text-slate-400">
+              {formatStrategy(signal.strategy_type)} · {signal.asset_class}
+              {signal.exchange ? ` · ${signal.exchange}` : ""} · Watchlist Item #{signal.watchlist_item_id}
+            </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:min-w-96">
             <Metric label="Score" value={formatScore(signal)} />

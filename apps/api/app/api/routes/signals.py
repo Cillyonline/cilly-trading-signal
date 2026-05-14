@@ -15,7 +15,7 @@ DbSession = Annotated[Session, Depends(get_db)]
 @router.get("", response_model=list[SignalRead])
 def list_items(db: DbSession) -> list[SignalRead]:
     user = get_or_create_default_user(db)
-    return list_signals(db, user.id)
+    return [to_signal_read(signal) for signal in list_signals(db, user.id)]
 
 
 @router.get("/{signal_id}", response_model=SignalRead)
@@ -27,4 +27,15 @@ def get_item(signal_id: int, db: DbSession) -> SignalRead:
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Signal not found.",
         )
-    return signal
+    return to_signal_read(signal)
+
+
+def to_signal_read(signal) -> SignalRead:
+    return SignalRead.model_validate(
+        {
+            **signal.__dict__,
+            "symbol": signal.watchlist_item.symbol,
+            "asset_class": signal.watchlist_item.asset_class,
+            "exchange": signal.watchlist_item.exchange,
+        }
+    )
