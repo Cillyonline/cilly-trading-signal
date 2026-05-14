@@ -20,6 +20,17 @@ export async function fetchSignals(): Promise<Signal[]> {
   return response.json();
 }
 
+export async function fetchSignal(signalId: number): Promise<Signal> {
+  const response = await fetch(`${API_BASE_URL}/signals/${signalId}`, { cache: "no-store" });
+  if (response.status === 404) {
+    throw new Error("Signal wurde nicht gefunden.");
+  }
+  if (!response.ok) {
+    throw new Error("Signal konnte nicht geladen werden.");
+  }
+  return response.json();
+}
+
 export async function importCsv(formData: FormData): Promise<CsvImportResult> {
   const response = await fetch(`${API_BASE_URL}/imports/csv`, {
     method: "POST",
