@@ -5,11 +5,17 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.schemas.trades import TradeCreate, TradeRead
-from app.services.trades import TradeCreationError, create_trade
+from app.services.trades import TradeCreationError, create_trade, list_trades
 from app.services.watchlist import get_or_create_default_user
 
 router = APIRouter(prefix="/trades", tags=["trades"])
 DbSession = Annotated[Session, Depends(get_db)]
+
+
+@router.get("", response_model=list[TradeRead])
+def list_items(db: DbSession) -> list[TradeRead]:
+    user = get_or_create_default_user(db)
+    return list_trades(db, user.id)
 
 
 @router.post("", response_model=TradeRead, status_code=status.HTTP_201_CREATED)

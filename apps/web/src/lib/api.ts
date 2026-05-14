@@ -1,5 +1,6 @@
 import type { Signal } from "@/types/signals";
 import type { CsvImportResult, MarketDataAnalysisResult } from "@/types/imports";
+import type { Trade, TradeCreatePayload } from "@/types/trades";
 import type { WatchlistItem } from "@/types/watchlist";
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api";
@@ -58,6 +59,29 @@ export async function analyzeImport(seriesId: number): Promise<MarketDataAnalysi
   return response.json();
 }
 
+export async function fetchTrades(): Promise<Trade[]> {
+  const response = await fetch(`${API_BASE_URL}/trades`, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error("Trades konnten nicht geladen werden.");
+  }
+  return response.json();
+}
+
+export async function createTrade(payload: TradeCreatePayload): Promise<Trade> {
+  const response = await fetch(`${API_BASE_URL}/trades`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(formatApiError(body?.detail, "Trade konnte nicht gespeichert werden."));
+  }
+
+  return response.json();
+}
+
 function formatApiError(detail: unknown, fallback: string) {
   if (typeof detail === "string") {
     return detail;
@@ -69,9 +93,21 @@ function formatApiError(detail: unknown, fallback: string) {
         if (!item || typeof item !== "object") {
           return null;
         }
-        const error = item as { row?: number | null; field?: string | null; message?: string };
-        const location = [error.row ? `Zeile ${error.row}` : null, error.field].filter(Boolean).join(" / ");
-        return [location, error.message].filter(Boolean).join(": ");
+        const error = item as {
+          loc?: unknown[];
+          msg?: string;
+          row?: number | null;
+          field?: string | null;
+          message?: string;
+        };
+        const location = [
+          error.row ? `Zeile ${error.row}` : null,
+          error.field,
+          Array.isArray(error.loc) ? error.loc.filter((part) => part !== "body").join(" / ") : null,
+        ]
+          .filter(Boolean)
+          .join(" / ");
+        return [location, error.message ?? error.msg].filter(Boolean).join(": ");
       })
       .filter(Boolean);
 

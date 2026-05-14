@@ -81,6 +81,18 @@ def test_create_trade_from_watchlist_calculates_initial_risk(client: TestClient)
     assert trade["target_2_potential_r"] == "4.00"
     assert trade["result_r"] is None
 
+    list_response = client.get("/api/trades")
+
+    assert list_response.status_code == 200
+    assert list_response.json()[0]["id"] == trade["id"]
+
+
+def test_list_trades_returns_empty_list(client: TestClient) -> None:
+    response = client.get("/api/trades")
+
+    assert response.status_code == 200
+    assert response.json() == []
+
 
 def test_create_trade_rejects_invalid_long_risk(client: TestClient) -> None:
     watchlist_item_id = create_watchlist_item(client)
