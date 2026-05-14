@@ -1,5 +1,5 @@
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.models.signal import Signal
 from app.strategies.contracts import SignalEvaluationResult
@@ -9,6 +9,7 @@ def list_signals(db: Session, user_id: int) -> list[Signal]:
     return list(
         db.scalars(
             select(Signal)
+            .options(joinedload(Signal.watchlist_item))
             .where(Signal.user_id == user_id)
             .order_by(Signal.updated_at.desc(), Signal.id.desc())
         )
@@ -16,7 +17,11 @@ def list_signals(db: Session, user_id: int) -> list[Signal]:
 
 
 def get_signal(db: Session, user_id: int, signal_id: int) -> Signal | None:
-    signal = db.get(Signal, signal_id)
+    signal = db.scalar(
+        select(Signal)
+        .options(joinedload(Signal.watchlist_item))
+        .where(Signal.id == signal_id)
+    )
     if signal is None or signal.user_id != user_id:
         return None
     return signal

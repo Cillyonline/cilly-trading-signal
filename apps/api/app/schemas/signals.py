@@ -3,12 +3,15 @@ from decimal import Decimal
 
 from pydantic import BaseModel
 
-from app.models.enums import Bias, ScoreClass, SignalStatus, StrategyType, Timeframe
+from app.models.enums import AssetClass, Bias, ScoreClass, SignalStatus, StrategyType, Timeframe
 
 
 class SignalRead(BaseModel):
     id: int
     watchlist_item_id: int
+    symbol: str
+    asset_class: AssetClass
+    exchange: str | None
     strategy_type: StrategyType
     status: SignalStatus
     bias: Bias

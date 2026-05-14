@@ -8,9 +8,14 @@ export type StrategyType = "trend_pullback_long" | "base_breakout_long";
 
 export type Timeframe = "1W" | "1D" | "4H";
 
+export type AssetClass = "stock" | "crypto";
+
 export type Signal = {
   id: number;
   watchlist_item_id: number;
+  symbol: string;
+  asset_class: AssetClass;
+  exchange: string | null;
   strategy_type: StrategyType;
   status: SignalStatus;
   bias: Bias;

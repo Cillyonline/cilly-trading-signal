@@ -137,7 +137,16 @@ function SignalCard({ signal }: { signal: Signal }) {
           <span className={`rounded-full border px-3 py-1 text-xs ${statusTone[signal.status]}`}>
             {statusLabel[signal.status]}
           </span>
-          <h3 className="text-lg font-semibold">{formatStrategy(signal.strategy_type)}</h3>
+          <h3 className="text-lg font-semibold">{signal.symbol}</h3>
+          <span className="rounded-full bg-slate-800 px-3 py-1 text-xs uppercase text-slate-300">
+            {signal.asset_class}
+          </span>
+          {signal.exchange ? (
+            <span className="rounded-full bg-slate-800 px-3 py-1 text-xs uppercase text-slate-300">
+              {signal.exchange}
+            </span>
+          ) : null}
+          <span className="text-sm text-slate-400">{formatStrategy(signal.strategy_type)}</span>
           <span className="rounded-full bg-slate-800 px-3 py-1 text-xs uppercase text-slate-300">
             {signal.bias}
           </span>
