@@ -33,10 +33,21 @@ def client() -> Iterator[TestClient]:
     app = create_app()
     app.dependency_overrides[get_db] = override_get_db
 
-    yield TestClient(app)
+    test_client = TestClient(app)
+    login(test_client)
+
+    yield test_client
 
     app.dependency_overrides.clear()
     Base.metadata.drop_all(bind=engine)
+
+
+def login(client: TestClient) -> None:
+    response = client.post(
+        "/api/auth/login",
+        json={"email": "admin@example.com", "password": "change-this-password"},
+    )
+    assert response.status_code == 200
 
 
 def create_watchlist_item(client: TestClient) -> int:

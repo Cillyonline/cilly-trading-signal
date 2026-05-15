@@ -1,4 +1,5 @@
 import type { Signal } from "@/types/signals";
+import type { AuthUser, LoginPayload } from "@/types/auth";
 import type { CsvImportResult, MarketDataAnalysisResult } from "@/types/imports";
 import type { PerformanceSummary } from "@/types/performance";
 import type {
@@ -15,8 +16,37 @@ import type { WatchlistItem } from "@/types/watchlist";
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api";
 
+const credentialedFetch: typeof fetch = (input, init) => fetch(input, { ...init, credentials: "include" });
+
+export async function login(payload: LoginPayload): Promise<AuthUser> {
+  const response = await credentialedFetch(`${API_BASE_URL}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(formatApiError(body?.detail, "Login fehlgeschlagen."));
+  }
+
+  return response.json();
+}
+
+export async function logout(): Promise<void> {
+  await credentialedFetch(`${API_BASE_URL}/auth/logout`, { method: "POST" });
+}
+
+export async function fetchCurrentUser(): Promise<AuthUser> {
+  const response = await credentialedFetch(`${API_BASE_URL}/auth/me`, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error("Nicht angemeldet.");
+  }
+  return response.json();
+}
+
 export async function fetchWatchlist(): Promise<WatchlistItem[]> {
-  const response = await fetch(`${API_BASE_URL}/watchlist`, { cache: "no-store" });
+  const response = await credentialedFetch(`${API_BASE_URL}/watchlist`, { cache: "no-store" });
   if (!response.ok) {
     throw new Error("Watchlist konnte nicht geladen werden.");
   }
@@ -24,7 +54,7 @@ export async function fetchWatchlist(): Promise<WatchlistItem[]> {
 }
 
 export async function fetchSignals(): Promise<Signal[]> {
-  const response = await fetch(`${API_BASE_URL}/signals`, { cache: "no-store" });
+  const response = await credentialedFetch(`${API_BASE_URL}/signals`, { cache: "no-store" });
   if (!response.ok) {
     throw new Error("Signale konnten nicht geladen werden.");
   }
@@ -32,7 +62,7 @@ export async function fetchSignals(): Promise<Signal[]> {
 }
 
 export async function fetchSignal(signalId: number): Promise<Signal> {
-  const response = await fetch(`${API_BASE_URL}/signals/${signalId}`, { cache: "no-store" });
+  const response = await credentialedFetch(`${API_BASE_URL}/signals/${signalId}`, { cache: "no-store" });
   if (response.status === 404) {
     throw new Error("Signal wurde nicht gefunden.");
   }
@@ -43,7 +73,7 @@ export async function fetchSignal(signalId: number): Promise<Signal> {
 }
 
 export async function importCsv(formData: FormData): Promise<CsvImportResult> {
-  const response = await fetch(`${API_BASE_URL}/imports/csv`, {
+  const response = await credentialedFetch(`${API_BASE_URL}/imports/csv`, {
     method: "POST",
     body: formData,
   });
@@ -57,7 +87,7 @@ export async function importCsv(formData: FormData): Promise<CsvImportResult> {
 }
 
 export async function analyzeImport(seriesId: number): Promise<MarketDataAnalysisResult> {
-  const response = await fetch(`${API_BASE_URL}/imports/${seriesId}/analyze`, {
+  const response = await credentialedFetch(`${API_BASE_URL}/imports/${seriesId}/analyze`, {
     method: "POST",
   });
 
@@ -70,7 +100,7 @@ export async function analyzeImport(seriesId: number): Promise<MarketDataAnalysi
 }
 
 export async function fetchTrades(): Promise<Trade[]> {
-  const response = await fetch(`${API_BASE_URL}/trades`, { cache: "no-store" });
+  const response = await credentialedFetch(`${API_BASE_URL}/trades`, { cache: "no-store" });
   if (!response.ok) {
     throw new Error("Trades konnten nicht geladen werden.");
   }
@@ -78,7 +108,7 @@ export async function fetchTrades(): Promise<Trade[]> {
 }
 
 export async function fetchPerformanceSummary(): Promise<PerformanceSummary> {
-  const response = await fetch(`${API_BASE_URL}/performance/summary`, { cache: "no-store" });
+  const response = await credentialedFetch(`${API_BASE_URL}/performance/summary`, { cache: "no-store" });
   if (!response.ok) {
     throw new Error("Performance Summary konnte nicht geladen werden.");
   }
@@ -86,7 +116,7 @@ export async function fetchPerformanceSummary(): Promise<PerformanceSummary> {
 }
 
 export async function fetchTrade(tradeId: number): Promise<TradeDetail> {
-  const response = await fetch(`${API_BASE_URL}/trades/${tradeId}`, { cache: "no-store" });
+  const response = await credentialedFetch(`${API_BASE_URL}/trades/${tradeId}`, { cache: "no-store" });
   if (response.status === 404) {
     throw new Error("Trade wurde nicht gefunden.");
   }
@@ -97,7 +127,7 @@ export async function fetchTrade(tradeId: number): Promise<TradeDetail> {
 }
 
 export async function createTrade(payload: TradeCreatePayload): Promise<Trade> {
-  const response = await fetch(`${API_BASE_URL}/trades`, {
+  const response = await credentialedFetch(`${API_BASE_URL}/trades`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -112,7 +142,7 @@ export async function createTrade(payload: TradeCreatePayload): Promise<Trade> {
 }
 
 export async function createTradeEvent(tradeId: number, payload: TradeEventCreatePayload): Promise<TradeEvent> {
-  const response = await fetch(`${API_BASE_URL}/trades/${tradeId}/events`, {
+  const response = await credentialedFetch(`${API_BASE_URL}/trades/${tradeId}/events`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -127,7 +157,7 @@ export async function createTradeEvent(tradeId: number, payload: TradeEventCreat
 }
 
 export async function closeTrade(tradeId: number, payload: TradeClosePayload): Promise<TradeDetail> {
-  const response = await fetch(`${API_BASE_URL}/trades/${tradeId}/close`, {
+  const response = await credentialedFetch(`${API_BASE_URL}/trades/${tradeId}/close`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -142,7 +172,7 @@ export async function closeTrade(tradeId: number, payload: TradeClosePayload): P
 }
 
 export async function createJournalEntry(tradeId: number, payload: JournalEntryCreatePayload): Promise<JournalEntry> {
-  const response = await fetch(`${API_BASE_URL}/trades/${tradeId}/journal`, {
+  const response = await credentialedFetch(`${API_BASE_URL}/trades/${tradeId}/journal`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),

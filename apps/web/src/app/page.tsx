@@ -1,6 +1,8 @@
-import { Suspense } from "react";
+"use client";
 
-import { fetchPerformanceSummary, fetchSignals, fetchTrades, fetchWatchlist } from "@/lib/api";
+import { useEffect, useState } from "react";
+
+import { fetchPerformanceSummary, fetchSignals, fetchTrades, fetchWatchlist, logout } from "@/lib/api";
 import type { PerformanceSummary } from "@/types/performance";
 import type { Signal } from "@/types/signals";
 import type { Trade } from "@/types/trades";
@@ -15,38 +17,45 @@ const workflowAreas = [
 ];
 
 export default function Home() {
+  const [dashboard, setDashboard] = useState<DashboardResult | null>(null);
+
+  useEffect(() => {
+    void loadDashboardData().then(setDashboard);
+  }, []);
+
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#172554,transparent_32%),#050816] px-6 py-8 text-slate-100">
       <section className="mx-auto flex max-w-6xl flex-col gap-8">
         <header className="rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl shadow-black/30 backdrop-blur">
-          <p className="text-sm uppercase tracking-[0.35em] text-emerald-300">Cilly Trading Signal</p>
-          <h1 className="mt-4 max-w-3xl text-4xl font-semibold tracking-tight md:text-6xl">
-            Trading-Cockpit fuer Long-only Swingtrading.
-          </h1>
-          <p className="mt-5 max-w-2xl text-lg text-slate-300">
-            Kontext, Setup, Trigger und Risiko werden getrennt bewertet. Keine automatische
-            Orderausfuehrung, sondern erklaerbare Signal-Karten, manuelles Trade Logging und
-            dokumentierte Ergebnisse in R-Multiples.
-          </p>
+          <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+            <div>
+              <p className="text-sm uppercase tracking-[0.35em] text-emerald-300">Cilly Trading Signal</p>
+              <h1 className="mt-4 max-w-3xl text-4xl font-semibold tracking-tight md:text-6xl">
+                Trading-Cockpit fuer Long-only Swingtrading.
+              </h1>
+              <p className="mt-5 max-w-2xl text-lg text-slate-300">
+                Kontext, Setup, Trigger und Risiko werden getrennt bewertet. Keine automatische
+                Orderausfuehrung, sondern erklaerbare Signal-Karten, manuelles Trade Logging und
+                dokumentierte Ergebnisse in R-Multiples.
+              </p>
+            </div>
+            <LogoutButton />
+          </div>
         </header>
 
-        <Suspense fallback={<DashboardLoading />}>
-          <DashboardDataSection />
-        </Suspense>
+        {dashboard ? (
+          dashboard.ok ? <DashboardContent data={dashboard.data} /> : <DashboardError message={dashboard.error} />
+        ) : (
+          <DashboardLoading />
+        )}
       </section>
     </main>
   );
 }
 
-async function DashboardDataSection() {
-  const dashboard = await loadDashboardData();
-  return dashboard.ok ? <DashboardContent data={dashboard.data} /> : <DashboardError message={dashboard.error} />;
-}
+type DashboardResult = { ok: true; data: DashboardData } | { ok: false; error: string };
 
-async function loadDashboardData(): Promise<
-  | { ok: true; data: DashboardData }
-  | { ok: false; error: string }
-> {
+async function loadDashboardData(): Promise<DashboardResult> {
   try {
     const [watchlist, signals, trades, performance] = await Promise.all([
       fetchWatchlist(),
@@ -165,6 +174,23 @@ function DashboardError({ message }: { message: string }) {
         Pruefe, ob die API laeuft. Die Workflow-Links bleiben im Code unveraendert verfuegbar.
       </p>
     </section>
+  );
+}
+
+function LogoutButton() {
+  async function submitLogout() {
+    await logout();
+    window.location.href = "/login";
+  }
+
+  return (
+    <button
+      className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:border-emerald-300/50"
+      onClick={() => void submitLogout()}
+      type="button"
+    >
+      Logout
+    </button>
   );
 }
 

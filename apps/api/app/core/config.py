@@ -8,6 +8,11 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://postgres:postgres@postgres:5432/cilly_trading_signal"
     secret_key: str = "change-me"
     cors_origins: list[str] = ["http://localhost:3000"]
+    admin_email: str = "admin@example.com"
+    admin_initial_password: str = "change-this-password"
+    auth_cookie_name: str = "cilly_session"
+    auth_cookie_secure: bool = False
+    auth_session_ttl_seconds: int = 60 * 60 * 12
     tradingview_webhook_secret: str = "change-me"
     telegram_bot_token: str | None = None
     telegram_chat_id: str | None = None

@@ -3,24 +3,24 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.api.deps import get_current_user
 from app.db.session import get_db
+from app.models.user import User
 from app.schemas.signals import SignalRead
 from app.services.signals import get_signal, list_signals
-from app.services.watchlist import get_or_create_default_user
 
 router = APIRouter(prefix="/signals", tags=["signals"])
 DbSession = Annotated[Session, Depends(get_db)]
+CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 @router.get("", response_model=list[SignalRead])
-def list_items(db: DbSession) -> list[SignalRead]:
-    user = get_or_create_default_user(db)
+def list_items(db: DbSession, user: CurrentUser) -> list[SignalRead]:
     return [to_signal_read(signal) for signal in list_signals(db, user.id)]
 
 
 @router.get("/{signal_id}", response_model=SignalRead)
-def get_item(signal_id: int, db: DbSession) -> SignalRead:
-    user = get_or_create_default_user(db)
+def get_item(signal_id: int, db: DbSession, user: CurrentUser) -> SignalRead:
     signal = get_signal(db, user.id, signal_id)
     if signal is None:
         raise HTTPException(

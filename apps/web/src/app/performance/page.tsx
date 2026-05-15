@@ -1,8 +1,25 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
 import { fetchPerformanceSummary } from "@/lib/api";
 import type { PerformanceSummary } from "@/types/performance";
 
-export default async function PerformancePage() {
-  const summary = await fetchPerformanceSummary();
+export default function PerformancePage() {
+  const [summary, setSummary] = useState<PerformanceSummary | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadSummary() {
+      try {
+        setSummary(await fetchPerformanceSummary());
+      } catch (loadError) {
+        setError(loadError instanceof Error ? loadError.message : "Performance Summary konnte nicht geladen werden.");
+      }
+    }
+
+    void loadSummary();
+  }, []);
 
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-8 text-slate-100">
@@ -28,10 +45,21 @@ export default async function PerformancePage() {
           </div>
         </header>
 
-        {summary.closed_trade_count === 0 ? <EmptyState /> : <SummaryGrid summary={summary} />}
+        {error ? <ErrorState message={error} /> : null}
+        {!summary && !error ? <LoadingState /> : null}
+        {summary?.closed_trade_count === 0 ? <EmptyState /> : null}
+        {summary && summary.closed_trade_count > 0 ? <SummaryGrid summary={summary} /> : null}
       </section>
     </main>
   );
+}
+
+function LoadingState() {
+  return <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-8 text-sm text-slate-400">Performance Summary wird geladen...</section>;
+}
+
+function ErrorState({ message }: { message: string }) {
+  return <section className="rounded-3xl border border-red-400/30 bg-red-950/40 p-6 text-sm text-red-100">{message}</section>;
 }
 
 function EmptyState() {
