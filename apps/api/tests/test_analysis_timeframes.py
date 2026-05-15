@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
 from sqlalchemy import create_engine
@@ -181,7 +181,7 @@ def create_series_with_data(
     db.add(series)
     db.flush()
 
-    start = datetime(2024, 1, 1, tzinfo=timezone.utc)
+    start = datetime(2024, 1, 1, tzinfo=UTC)
     first_close = latest_close - Decimal(candle_count - 1)
     for index in range(candle_count):
         close = first_close + Decimal(index)
