@@ -8,13 +8,19 @@ from app.models.enums import TradeEventType, TradeStatus
 from app.models.signal import Signal
 from app.models.trade import Trade, TradeEvent
 from app.models.watchlist import WatchlistItem
-from app.schemas.trades import TradeCreate, TradeEventCreate
+from app.schemas.trades import TradeClose, TradeCreate, TradeEventCreate
 
 TWO_PLACES = Decimal("0.01")
 FOUR_PLACES = Decimal("0.0001")
 
 
 class TradeCreationError(Exception):
+    def __init__(self, message: str) -> None:
+        self.message = message
+        super().__init__(message)
+
+
+class TradeCloseError(Exception):
     def __init__(self, message: str) -> None:
         self.message = message
         super().__init__(message)
@@ -146,6 +152,46 @@ def create_trade_event(
     db.commit()
     db.refresh(event)
     return event
+
+
+def close_trade(db: Session, user_id: int, trade_id: int, payload: TradeClose) -> Trade:
+    trade = get_trade(db, user_id, trade_id)
+    if trade is None:
+        raise TradeCloseError("Trade not found.")
+    if trade.status == TradeStatus.CLOSED:
+        raise TradeCloseError("Trade is already closed.")
+    if payload.closed_at < trade.opened_at:
+        raise TradeCloseError("closed_at must be after opened_at.")
+    if trade.initial_risk_amount is None or trade.initial_risk_amount <= 0:
+        raise TradeCloseError("Initial risk amount is required to close trade.")
+
+    result_amount = (payload.exit_price - trade.entry_price) * trade.position_size
+    if trade.fees is not None:
+        result_amount -= trade.fees
+    result_r = result_amount / trade.initial_risk_amount
+
+    trade.status = TradeStatus.CLOSED
+    trade.exit_price = payload.exit_price
+    trade.exit_reason = payload.exit_reason
+    trade.closed_at = payload.closed_at
+    trade.result_amount = _quantize(result_amount, TWO_PLACES)
+    trade.result_r = _quantize(result_r, FOUR_PLACES)
+
+    event = TradeEvent(
+        trade_id=trade.id,
+        event_type=TradeEventType.CLOSED,
+        event_time=payload.closed_at,
+        price=payload.exit_price,
+        quantity=trade.position_size,
+        old_value=None,
+        new_value=str(payload.exit_price),
+        reason=payload.exit_reason,
+        notes=payload.notes,
+    )
+    db.add(event)
+    db.commit()
+    db.refresh(trade)
+    return trade
 
 
 def _get_signal(db: Session, user_id: int, signal_id: int) -> Signal | None:

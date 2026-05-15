@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field, model_validator
 
-from app.models.enums import AssetClass, StrategyType, TradeEventType, TradeStatus
+from app.models.enums import AssetClass, ExitReason, StrategyType, TradeEventType, TradeStatus
 
 
 class TradeCreate(BaseModel):
@@ -49,6 +49,7 @@ class TradeRead(BaseModel):
     opened_at: datetime
     closed_at: datetime | None
     exit_price: Decimal | None
+    exit_reason: ExitReason | None
     risk_per_unit: Decimal
     initial_risk_amount: Decimal | None
     initial_risk_percent: Decimal | None
@@ -109,3 +110,10 @@ class TradeEventRead(BaseModel):
 
 class TradeDetailRead(TradeRead):
     events: list[TradeEventRead]
+
+
+class TradeClose(BaseModel):
+    exit_price: Decimal = Field(gt=0)
+    exit_reason: ExitReason
+    closed_at: datetime
+    notes: str | None = None
