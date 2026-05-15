@@ -253,7 +253,7 @@ def test_analyze_import_returns_no_setup_for_insufficient_history(client: TestCl
     assert result["status"] == "failed"
     assert result["indicator_snapshot_count"] == 20
     assert result["signal"]["status"] == "no_setup"
-    assert "insufficient_candle_history" in result["signal"]["risk_flags"]
+    assert "1D_insufficient_candle_history" in result["signal"]["risk_flags"]
 
 
 def test_get_unknown_signal_returns_404(client: TestClient) -> None:
