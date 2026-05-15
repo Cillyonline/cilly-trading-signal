@@ -103,6 +103,114 @@ def test_create_trade_from_watchlist_calculates_initial_risk(client: TestClient)
     assert detail_response.json()["events"] == []
 
 
+def test_create_trade_calculates_initial_risk_percent(client: TestClient) -> None:
+    watchlist_item_id = create_watchlist_item(client)
+    settings_response = client.patch(
+        "/api/settings",
+        json={"account_size": "10000.00", "max_risk_percent": "2.00"},
+    )
+    assert settings_response.status_code == 200
+
+    response = client.post(
+        "/api/trades",
+        json={
+            "watchlist_item_id": watchlist_item_id,
+            "strategy_type": "trend_pullback_long",
+            "entry_price": "100.00",
+            "stop_loss": "95.00",
+            "target_1": "112.50",
+            "position_size": "10",
+            "opened_at": "2024-01-05T10:00:00Z",
+        },
+    )
+
+    assert response.status_code == 201
+    assert response.json()["initial_risk_amount"] == "50.00"
+    assert response.json()["initial_risk_percent"] == "0.5000"
+
+
+def test_create_trade_rejects_below_min_risk_reward(client: TestClient) -> None:
+    watchlist_item_id = create_watchlist_item(client)
+    settings_response = client.patch("/api/settings", json={"min_risk_reward": "3.00"})
+    assert settings_response.status_code == 200
+
+    response = client.post(
+        "/api/trades",
+        json={
+            "watchlist_item_id": watchlist_item_id,
+            "strategy_type": "trend_pullback_long",
+            "entry_price": "100.00",
+            "stop_loss": "95.00",
+            "target_1": "112.50",
+            "position_size": "10",
+            "opened_at": "2024-01-05T10:00:00Z",
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Initial risk/reward is below configured minimum."
+
+
+def test_create_trade_rejects_above_max_risk_percent(client: TestClient) -> None:
+    watchlist_item_id = create_watchlist_item(client)
+    settings_response = client.patch(
+        "/api/settings",
+        json={"account_size": "10000.00", "max_risk_percent": "0.25"},
+    )
+    assert settings_response.status_code == 200
+
+    response = client.post(
+        "/api/trades",
+        json={
+            "watchlist_item_id": watchlist_item_id,
+            "strategy_type": "trend_pullback_long",
+            "entry_price": "100.00",
+            "stop_loss": "95.00",
+            "target_1": "112.50",
+            "position_size": "10",
+            "opened_at": "2024-01-05T10:00:00Z",
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Initial risk percent exceeds configured maximum."
+
+
+def test_create_trade_rejects_when_max_open_trades_reached(client: TestClient) -> None:
+    watchlist_item_id = create_watchlist_item(client)
+    settings_response = client.patch("/api/settings", json={"max_open_trades": 1})
+    assert settings_response.status_code == 200
+
+    first_response = client.post(
+        "/api/trades",
+        json={
+            "watchlist_item_id": watchlist_item_id,
+            "strategy_type": "trend_pullback_long",
+            "entry_price": "100.00",
+            "stop_loss": "95.00",
+            "target_1": "112.50",
+            "position_size": "10",
+            "opened_at": "2024-01-05T10:00:00Z",
+        },
+    )
+    second_response = client.post(
+        "/api/trades",
+        json={
+            "watchlist_item_id": watchlist_item_id,
+            "strategy_type": "trend_pullback_long",
+            "entry_price": "110.00",
+            "stop_loss": "105.00",
+            "target_1": "122.50",
+            "position_size": "10",
+            "opened_at": "2024-01-06T10:00:00Z",
+        },
+    )
+
+    assert first_response.status_code == 201
+    assert second_response.status_code == 400
+    assert second_response.json()["detail"] == "Maximum open trades reached."
+
+
 def test_list_trades_returns_empty_list(client: TestClient) -> None:
     response = client.get("/api/trades")
 
