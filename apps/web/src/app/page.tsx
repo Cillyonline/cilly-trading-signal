@@ -1,18 +1,17 @@
-const dashboardCards = [
-  { label: "Open Trades", value: "0", tone: "border-blue-400/40" },
-  { label: "Armed Setups", value: "0", tone: "border-yellow-400/40" },
-  { label: "Triggered Today", value: "0", tone: "border-green-400/40" },
-  { label: "Total R", value: "0.0R", tone: "border-slate-400/40" },
-];
+import { Suspense } from "react";
 
-const plannedAreas = [
-  "Watchlist",
-  "CSV Import",
-  "Signals",
-  "Trades",
-  "Journal",
-  "Performance",
-  "Settings",
+import { fetchPerformanceSummary, fetchSignals, fetchTrades, fetchWatchlist } from "@/lib/api";
+import type { PerformanceSummary } from "@/types/performance";
+import type { Signal } from "@/types/signals";
+import type { Trade } from "@/types/trades";
+import type { WatchlistItem } from "@/types/watchlist";
+
+const workflowAreas = [
+  { label: "Watchlist", href: "/watchlist", description: "Symbole und Asset-Klassen pflegen." },
+  { label: "CSV Import", href: "/import", description: "OHLCV-Daten importieren und analysieren." },
+  { label: "Signals", href: "/signals", description: "Setups und No-Trade Gruende pruefen." },
+  { label: "Trades", href: "/trades", description: "Manuelle Trades und Management dokumentieren." },
+  { label: "Performance", href: "/performance", description: "Geschlossene Trades in R auswerten." },
 ];
 
 export default function Home() {
@@ -31,70 +30,251 @@ export default function Home() {
           </p>
         </header>
 
-        <section className="grid gap-4 md:grid-cols-4">
-          {dashboardCards.map((card) => (
-            <article key={card.label} className={`rounded-2xl border ${card.tone} bg-slate-950/70 p-5`}>
-              <p className="text-sm text-slate-400">{card.label}</p>
-              <p className="mt-3 text-3xl font-semibold">{card.value}</p>
-            </article>
-          ))}
-        </section>
-
-        <section className="grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
-          <article className="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
-            <h2 className="text-xl font-semibold">MVP Fokus</h2>
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              {plannedAreas.map((area) => (
-                <div key={area} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                  {area === "Watchlist" ||
-                  area === "CSV Import" ||
-                  area === "Signals" ||
-                  area === "Trades" ||
-                  area === "Performance" ? (
-                    <a
-                      className="font-medium text-emerald-300 hover:text-emerald-200"
-                      href={toAreaHref(area)}
-                    >
-                      {area}
-                    </a>
-                  ) : (
-                    <p className="font-medium">{area}</p>
-                  )}
-                  <p className="mt-1 text-sm text-slate-400">Geplant fuer den MVP-Aufbau.</p>
-                </div>
-              ))}
-            </div>
-          </article>
-
-          <aside className="rounded-3xl border border-emerald-400/20 bg-emerald-950/20 p-6">
-            <h2 className="text-xl font-semibold text-emerald-200">Strategie-Standard</h2>
-            <ul className="mt-5 space-y-3 text-sm text-emerald-50/90">
-              <li>1W Kontext</li>
-              <li>1D Setup</li>
-              <li>4H Trigger und Management</li>
-              <li>Trend Pullback Long</li>
-              <li>Base Breakout Long</li>
-              <li>Minimum R:R 1:2</li>
-            </ul>
-          </aside>
-        </section>
+        <Suspense fallback={<DashboardLoading />}>
+          <DashboardDataSection />
+        </Suspense>
       </section>
     </main>
   );
 }
 
-function toAreaHref(area: string) {
-  if (area === "Watchlist") {
-    return "/watchlist";
+async function DashboardDataSection() {
+  const dashboard = await loadDashboardData();
+  return dashboard.ok ? <DashboardContent data={dashboard.data} /> : <DashboardError message={dashboard.error} />;
+}
+
+async function loadDashboardData(): Promise<
+  | { ok: true; data: DashboardData }
+  | { ok: false; error: string }
+> {
+  try {
+    const [watchlist, signals, trades, performance] = await Promise.all([
+      fetchWatchlist(),
+      fetchSignals(),
+      fetchTrades(),
+      fetchPerformanceSummary(),
+    ]);
+
+    return {
+      ok: true,
+      data: buildDashboardData(watchlist, signals, trades, performance),
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Dashboard-Daten konnten nicht geladen werden.",
+    };
   }
-  if (area === "CSV Import") {
-    return "/import";
+}
+
+type DashboardData = {
+  cards: DashboardCard[];
+  hasAnyData: boolean;
+  recentSignals: Signal[];
+  openTrades: Trade[];
+};
+
+type DashboardCard = {
+  label: string;
+  value: string;
+  detail: string;
+  href: string;
+  tone: string;
+};
+
+function buildDashboardData(
+  watchlist: WatchlistItem[],
+  signals: Signal[],
+  trades: Trade[],
+  performance: PerformanceSummary,
+): DashboardData {
+  const openTrades = trades.filter((trade) => trade.status !== "closed" && trade.status !== "reviewed");
+  const actionableSignals = signals.filter((signal) => signal.status === "armed" || signal.status === "triggered");
+  const triggeredSignals = signals.filter((signal) => signal.status === "triggered");
+
+  return {
+    cards: [
+      {
+        label: "Watchlist Items",
+        value: String(watchlist.length),
+        detail: watchlist.length === 0 ? "Noch keine Symbole" : "Aktive Analyse-Basis",
+        href: "/watchlist",
+        tone: "border-blue-400/40",
+      },
+      {
+        label: "Actionable Signals",
+        value: String(actionableSignals.length),
+        detail: `${triggeredSignals.length} triggered`,
+        href: "/signals",
+        tone: "border-yellow-400/40",
+      },
+      {
+        label: "Open Trades",
+        value: String(openTrades.length),
+        detail: "Manuell verwaltete Trades",
+        href: "/trades",
+        tone: "border-green-400/40",
+      },
+      {
+        label: "Total R",
+        value: formatR(performance.total_r),
+        detail: `${performance.closed_trade_count} closed trades`,
+        href: "/performance",
+        tone: "border-slate-400/40",
+      },
+    ],
+    hasAnyData: watchlist.length > 0 || signals.length > 0 || trades.length > 0,
+    recentSignals: signals.slice(0, 3),
+    openTrades: openTrades.slice(0, 3),
+  };
+}
+
+function DashboardContent({ data }: { data: DashboardData }) {
+  return (
+    <>
+      <section className="grid gap-4 md:grid-cols-4">
+        {data.cards.map((card) => (
+          <a
+            key={card.label}
+            className={`rounded-2xl border ${card.tone} bg-slate-950/70 p-5 hover:bg-slate-900/80`}
+            href={card.href}
+          >
+            <p className="text-sm text-slate-400">{card.label}</p>
+            <p className="mt-3 text-3xl font-semibold">{card.value}</p>
+            <p className="mt-2 text-xs text-slate-500">{card.detail}</p>
+          </a>
+        ))}
+      </section>
+
+      {!data.hasAnyData ? <DashboardEmptyState /> : null}
+
+      <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+        <WorkflowCard />
+        <CockpitSnapshot data={data} />
+      </section>
+    </>
+  );
+}
+
+function DashboardError({ message }: { message: string }) {
+  return (
+    <section className="rounded-3xl border border-red-400/30 bg-red-950/40 p-6">
+      <h2 className="text-xl font-semibold text-red-100">Dashboard konnte nicht geladen werden</h2>
+      <p className="mt-2 whitespace-pre-line text-sm text-red-100/80">{message}</p>
+      <p className="mt-4 text-sm text-red-100/70">
+        Pruefe, ob die API laeuft. Die Workflow-Links bleiben im Code unveraendert verfuegbar.
+      </p>
+    </section>
+  );
+}
+
+function DashboardLoading() {
+  return (
+    <section className="grid gap-4 md:grid-cols-4">
+      {["Watchlist", "Signals", "Trades", "Performance"].map((label) => (
+        <article key={label} className="rounded-2xl border border-white/10 bg-slate-950/70 p-5">
+          <p className="text-sm text-slate-500">{label}</p>
+          <p className="mt-3 text-3xl font-semibold text-slate-600">...</p>
+          <p className="mt-2 text-xs text-slate-600">Dashboard-Daten werden geladen</p>
+        </article>
+      ))}
+    </section>
+  );
+}
+
+function DashboardEmptyState() {
+  return (
+    <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
+      <h2 className="text-xl font-semibold">Noch keine Cockpit-Daten</h2>
+      <p className="mt-2 max-w-2xl text-sm text-slate-400">
+        Starte mit der Watchlist, importiere CSV-Daten und analysiere Setups. Das Dashboard zeigt
+        danach automatisch Signale, offene Trades und geschlossene R-Ergebnisse.
+      </p>
+      <a
+        className="mt-5 inline-flex rounded-xl bg-emerald-400 px-5 py-3 font-semibold text-slate-950"
+        href="/watchlist"
+      >
+        Watchlist oeffnen
+      </a>
+    </section>
+  );
+}
+
+function WorkflowCard() {
+  return (
+    <article className="rounded-3xl border border-white/10 bg-slate-950/70 p-6">
+      <h2 className="text-xl font-semibold">MVP Workflows</h2>
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        {workflowAreas.map((area) => (
+          <a
+            key={area.label}
+            className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 hover:border-emerald-300/50"
+            href={area.href}
+          >
+            <p className="font-medium text-emerald-300">{area.label}</p>
+            <p className="mt-1 text-sm text-slate-400">{area.description}</p>
+          </a>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function CockpitSnapshot({ data }: { data: DashboardData }) {
+  return (
+    <aside className="rounded-3xl border border-emerald-400/20 bg-emerald-950/20 p-6">
+      <h2 className="text-xl font-semibold text-emerald-200">Cockpit Snapshot</h2>
+      <SnapshotList
+        title="Recent Signals"
+        emptyText="Noch keine Signale."
+        items={data.recentSignals.map(formatSignal)}
+      />
+      <SnapshotList
+        title="Open Trades"
+        emptyText="Keine offenen Trades."
+        items={data.openTrades.map(formatTrade)}
+      />
+    </aside>
+  );
+}
+
+function SnapshotList({
+  title,
+  emptyText,
+  items,
+}: {
+  title: string;
+  emptyText: string;
+  items: string[];
+}) {
+  return (
+    <div className="mt-5">
+      <h3 className="text-sm font-semibold uppercase tracking-wide text-emerald-100/80">{title}</h3>
+      {items.length === 0 ? (
+        <p className="mt-2 text-sm text-emerald-50/60">{emptyText}</p>
+      ) : (
+        <ul className="mt-3 space-y-2 text-sm text-emerald-50/90">
+          {items.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function formatSignal(signal: Signal) {
+  return `${signal.symbol} / ${signal.status.replaceAll("_", " ")}`;
+}
+
+function formatTrade(trade: Trade) {
+  return `${trade.symbol} / ${formatR(trade.result_r ?? trade.initial_risk_reward)}`;
+}
+
+function formatR(value: string | null) {
+  if (!value) {
+    return "-";
   }
-  if (area === "Trades") {
-    return "/trades";
-  }
-  if (area === "Performance") {
-    return "/performance";
-  }
-  return "/signals";
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? `${parsed.toFixed(2)}R` : `${value}R`;
 }
