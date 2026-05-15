@@ -2,9 +2,17 @@
 
 import { FormEvent, useEffect, useState } from "react";
 
-import { closeTrade, createTradeEvent, fetchTrade } from "@/lib/api";
+import { closeTrade, createJournalEntry, createTradeEvent, fetchTrade } from "@/lib/api";
 import type { StrategyType } from "@/types/signals";
-import type { ExitReason, TradeClosePayload, TradeDetail, TradeEventCreatePayload, TradeEventType } from "@/types/trades";
+import type {
+  ExitReason,
+  JournalEntry,
+  JournalEntryCreatePayload,
+  TradeClosePayload,
+  TradeDetail,
+  TradeEventCreatePayload,
+  TradeEventType,
+} from "@/types/trades";
 
 type EventForm = {
   event_type: TradeEventType;
@@ -19,6 +27,20 @@ type CloseForm = {
   exit_reason: ExitReason;
   closed_at: string;
   notes: string;
+};
+
+type JournalForm = {
+  setup_rule_followed: "" | "true" | "false";
+  entry_quality_score: string;
+  stop_quality_score: string;
+  exit_quality_score: string;
+  discipline_score: string;
+  market_context: string;
+  emotional_notes: string;
+  what_went_well: string;
+  what_went_wrong: string;
+  lesson_learned: string;
+  reviewed_at: string;
 };
 
 const emptyForm: EventForm = {
@@ -36,13 +58,29 @@ const emptyCloseForm: CloseForm = {
   notes: "",
 };
 
+const emptyJournalForm: JournalForm = {
+  setup_rule_followed: "",
+  entry_quality_score: "",
+  stop_quality_score: "",
+  exit_quality_score: "",
+  discipline_score: "",
+  market_context: "",
+  emotional_notes: "",
+  what_went_well: "",
+  what_went_wrong: "",
+  lesson_learned: "",
+  reviewed_at: "",
+};
+
 export default function TradeDetailPage({ params }: { params: { id: string } }) {
   const [trade, setTrade] = useState<TradeDetail | null>(null);
   const [form, setForm] = useState<EventForm>(emptyForm);
   const [closeForm, setCloseForm] = useState<CloseForm>(emptyCloseForm);
+  const [journalForm, setJournalForm] = useState<JournalForm>(emptyJournalForm);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [isReviewing, setIsReviewing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function loadTrade() {
@@ -117,6 +155,31 @@ export default function TradeDetailPage({ params }: { params: { id: string } }) 
     }
   }
 
+  async function submitJournal(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!trade) {
+      return;
+    }
+
+    const payload = buildJournalPayload(journalForm);
+    if (!payload) {
+      setError("Fuellen das Review-Datum aus.");
+      return;
+    }
+
+    setIsReviewing(true);
+    setError(null);
+    try {
+      await createJournalEntry(trade.id, payload);
+      setJournalForm(emptyJournalForm);
+      await loadTrade();
+    } catch (reviewError) {
+      setError(reviewError instanceof Error ? reviewError.message : "Unbekannter Fehler.");
+    } finally {
+      setIsReviewing(false);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-8 text-slate-100">
       <section className="mx-auto flex max-w-6xl flex-col gap-8">
@@ -154,6 +217,13 @@ export default function TradeDetailPage({ params }: { params: { id: string } }) 
               <EventTimeline trade={trade} />
             </div>
             <div className="grid gap-6">
+              <JournalReviewCard
+                form={journalForm}
+                isReviewing={isReviewing}
+                onChange={setJournalForm}
+                onSubmit={submitJournal}
+                trade={trade}
+              />
               <CloseTradeCard
                 form={closeForm}
                 isClosing={isClosing}
@@ -215,6 +285,30 @@ function buildClosePayload(form: CloseForm): TradeClosePayload | null {
   };
 }
 
+function buildJournalPayload(form: JournalForm): JournalEntryCreatePayload | null {
+  if (!form.reviewed_at) {
+    return null;
+  }
+
+  return {
+    setup_rule_followed: form.setup_rule_followed === "" ? null : form.setup_rule_followed === "true",
+    entry_quality_score: optionalScore(form.entry_quality_score),
+    stop_quality_score: optionalScore(form.stop_quality_score),
+    exit_quality_score: optionalScore(form.exit_quality_score),
+    discipline_score: optionalScore(form.discipline_score),
+    market_context: form.market_context || null,
+    emotional_notes: form.emotional_notes || null,
+    what_went_well: form.what_went_well || null,
+    what_went_wrong: form.what_went_wrong || null,
+    lesson_learned: form.lesson_learned || null,
+    reviewed_at: new Date(form.reviewed_at).toISOString(),
+  };
+}
+
+function optionalScore(value: string) {
+  return value ? Number(value) : null;
+}
+
 function TradeSummary({ trade }: { trade: TradeDetail }) {
   return (
     <article className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
@@ -242,6 +336,216 @@ function TradeSummary({ trade }: { trade: TradeDetail }) {
 
       {trade.notes ? <p className="mt-5 text-sm text-slate-300">{trade.notes}</p> : null}
     </article>
+  );
+}
+
+function JournalReviewCard({
+  form,
+  isReviewing,
+  onChange,
+  onSubmit,
+  trade,
+}: {
+  form: JournalForm;
+  isReviewing: boolean;
+  onChange: (form: JournalForm) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  trade: TradeDetail;
+}) {
+  if (trade.journal_entry) {
+    return <JournalReviewSummary journalEntry={trade.journal_entry} />;
+  }
+
+  if (trade.status !== "closed") {
+    return (
+      <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
+        <h2 className="text-xl font-semibold">Journal Review</h2>
+        <p className="mt-2 text-sm text-slate-400">
+          Review ist erst nach einem geschlossenen Trade moeglich. Fokus: Prozessqualitaet, Disziplin und Lernen.
+        </p>
+      </section>
+    );
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
+      <h2 className="text-xl font-semibold">Journal Review erfassen</h2>
+      <p className="mt-2 text-sm text-slate-400">
+        Reflektiert Prozess, Disziplin und Lernpunkte im R-Kontext. Keine Trade-Empfehlung.
+      </p>
+
+      <div className="mt-6 grid gap-4">
+        <label className="grid gap-2 text-sm text-slate-300">
+          Review Datum
+          <input
+            required
+            type="datetime-local"
+            value={form.reviewed_at}
+            onChange={(event) => onChange({ ...form, reviewed_at: event.target.value })}
+            className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-emerald-300"
+          />
+        </label>
+
+        <label className="grid gap-2 text-sm text-slate-300">
+          Setup-Regeln eingehalten?
+          <select
+            value={form.setup_rule_followed}
+            onChange={(event) =>
+              onChange({
+                ...form,
+                setup_rule_followed: event.target.value as JournalForm["setup_rule_followed"],
+              })
+            }
+            className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-emerald-300"
+          >
+            <option value="">Nicht bewertet</option>
+            <option value="true">Ja</option>
+            <option value="false">Nein</option>
+          </select>
+        </label>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <ScoreField
+            label="Entry Qualitaet"
+            value={form.entry_quality_score}
+            onChange={(value) => onChange({ ...form, entry_quality_score: value })}
+          />
+          <ScoreField
+            label="Stop Qualitaet"
+            value={form.stop_quality_score}
+            onChange={(value) => onChange({ ...form, stop_quality_score: value })}
+          />
+          <ScoreField
+            label="Exit Qualitaet"
+            value={form.exit_quality_score}
+            onChange={(value) => onChange({ ...form, exit_quality_score: value })}
+          />
+          <ScoreField
+            label="Disziplin"
+            value={form.discipline_score}
+            onChange={(value) => onChange({ ...form, discipline_score: value })}
+          />
+        </div>
+
+        <JournalTextArea
+          label="Marktkontext"
+          value={form.market_context}
+          onChange={(value) => onChange({ ...form, market_context: value })}
+        />
+        <JournalTextArea
+          label="Emotionale Notizen"
+          value={form.emotional_notes}
+          onChange={(value) => onChange({ ...form, emotional_notes: value })}
+        />
+        <JournalTextArea
+          label="Was lief gut?"
+          value={form.what_went_well}
+          onChange={(value) => onChange({ ...form, what_went_well: value })}
+        />
+        <JournalTextArea
+          label="Was lief falsch?"
+          value={form.what_went_wrong}
+          onChange={(value) => onChange({ ...form, what_went_wrong: value })}
+        />
+        <JournalTextArea
+          label="Gelernt"
+          value={form.lesson_learned}
+          onChange={(value) => onChange({ ...form, lesson_learned: value })}
+        />
+
+        <button
+          disabled={isReviewing}
+          type="submit"
+          className="rounded-xl bg-emerald-400 px-5 py-3 font-semibold text-slate-950 disabled:opacity-60"
+        >
+          {isReviewing ? "Speichere..." : "Review speichern"}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function JournalReviewSummary({ journalEntry }: { journalEntry: JournalEntry }) {
+  return (
+    <section className="rounded-3xl border border-emerald-300/20 bg-emerald-300/5 p-6">
+      <h2 className="text-xl font-semibold">Journal Review</h2>
+      <p className="mt-2 text-sm text-slate-400">Erfasst am {formatDateTime(journalEntry.reviewed_at)}</p>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <Metric label="Setup Rules" value={formatBoolean(journalEntry.setup_rule_followed)} />
+        <Metric label="Entry" value={formatScore(journalEntry.entry_quality_score)} />
+        <Metric label="Stop" value={formatScore(journalEntry.stop_quality_score)} />
+        <Metric label="Exit" value={formatScore(journalEntry.exit_quality_score)} />
+        <Metric label="Disziplin" value={formatScore(journalEntry.discipline_score)} />
+      </div>
+
+      <div className="mt-5 grid gap-4 text-sm text-slate-300">
+        <JournalText label="Marktkontext" value={journalEntry.market_context} />
+        <JournalText label="Emotionale Notizen" value={journalEntry.emotional_notes} />
+        <JournalText label="Was lief gut?" value={journalEntry.what_went_well} />
+        <JournalText label="Was lief falsch?" value={journalEntry.what_went_wrong} />
+        <JournalText label="Gelernt" value={journalEntry.lesson_learned} />
+      </div>
+    </section>
+  );
+}
+
+function ScoreField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="grid gap-2 text-sm text-slate-300">
+      {label}
+      <input
+        type="number"
+        min="1"
+        max="5"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-emerald-300"
+        placeholder="1-5"
+      />
+    </label>
+  );
+}
+
+function JournalTextArea({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="grid gap-2 text-sm text-slate-300">
+      {label}
+      <textarea
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="min-h-24 rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-emerald-300"
+        placeholder="Prozessbezogene Beobachtung festhalten"
+      />
+    </label>
+  );
+}
+
+function JournalText({ label, value }: { label: string; value: string | null }) {
+  if (!value) {
+    return null;
+  }
+  return (
+    <div>
+      <p className="text-xs uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="mt-1 whitespace-pre-line">{value}</p>
+    </div>
   );
 }
 
@@ -499,6 +803,17 @@ function formatMoney(value: string | null) {
 
 function formatR(value: string | null) {
   return value ? `${formatNumber(value)}R` : "-";
+}
+
+function formatScore(value: number | null) {
+  return value ? `${value}/5` : "-";
+}
+
+function formatBoolean(value: boolean | null) {
+  if (value === null) {
+    return "-";
+  }
+  return value ? "Ja" : "Nein";
 }
 
 function formatNumber(value: string) {

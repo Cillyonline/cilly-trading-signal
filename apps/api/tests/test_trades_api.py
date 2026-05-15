@@ -324,6 +324,73 @@ def test_close_trade_rejects_close_before_open(client: TestClient) -> None:
     assert response.json()["detail"] == "closed_at must be after opened_at."
 
 
+def test_create_journal_entry_for_closed_trade(client: TestClient) -> None:
+    trade = close_manual_trade(client)
+
+    response = client.post(
+        f"/api/trades/{trade['id']}/journal",
+        json={
+            "setup_rule_followed": True,
+            "entry_quality_score": 4,
+            "stop_quality_score": 5,
+            "exit_quality_score": 3,
+            "discipline_score": 4,
+            "market_context": "Trend intact, broader market constructive.",
+            "emotional_notes": "Stayed calm during pullback.",
+            "what_went_well": "Waited for planned entry and respected risk.",
+            "what_went_wrong": "Exit was slightly early.",
+            "lesson_learned": "Review exit trigger before market open.",
+            "reviewed_at": "2024-01-08T10:00:00Z",
+        },
+    )
+
+    assert response.status_code == 201
+    journal_entry = response.json()
+    assert journal_entry["trade_id"] == trade["id"]
+    assert journal_entry["setup_rule_followed"] is True
+    assert journal_entry["discipline_score"] == 4
+    assert journal_entry["lesson_learned"] == "Review exit trigger before market open."
+
+    detail_response = client.get(f"/api/trades/{trade['id']}")
+
+    assert detail_response.status_code == 200
+    assert detail_response.json()["journal_entry"]["id"] == journal_entry["id"]
+
+
+def test_create_journal_entry_rejects_unknown_trade(client: TestClient) -> None:
+    response = client.post(
+        "/api/trades/999/journal",
+        json={"reviewed_at": "2024-01-08T10:00:00Z"},
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Trade not found."
+
+
+def test_create_journal_entry_rejects_open_trade(client: TestClient) -> None:
+    trade = create_manual_trade(client)
+
+    response = client.post(
+        f"/api/trades/{trade['id']}/journal",
+        json={"reviewed_at": "2024-01-08T10:00:00Z"},
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Trade must be closed before review."
+
+
+def test_create_journal_entry_rejects_duplicate_review(client: TestClient) -> None:
+    trade = close_manual_trade(client)
+    payload = {"reviewed_at": "2024-01-08T10:00:00Z", "discipline_score": 4}
+
+    first_response = client.post(f"/api/trades/{trade['id']}/journal", json=payload)
+    second_response = client.post(f"/api/trades/{trade['id']}/journal", json=payload)
+
+    assert first_response.status_code == 201
+    assert second_response.status_code == 400
+    assert second_response.json()["detail"] == "Trade already has a journal review."
+
+
 def sequential_csv(row_count: int = 201) -> str:
     rows = ["time,open,high,low,close,volume"]
     start = date(2024, 1, 1)
@@ -350,4 +417,18 @@ def create_manual_trade(client: TestClient) -> dict:
         },
     )
     assert response.status_code == 201
+    return response.json()
+
+
+def close_manual_trade(client: TestClient) -> dict:
+    trade = create_manual_trade(client)
+    response = client.post(
+        f"/api/trades/{trade['id']}/close",
+        json={
+            "exit_price": "115.00",
+            "exit_reason": "target_1",
+            "closed_at": "2024-01-07T10:00:00Z",
+        },
+    )
+    assert response.status_code == 200
     return response.json()

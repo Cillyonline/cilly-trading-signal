@@ -53,6 +53,26 @@ export type Trade = {
 
 export type TradeDetail = Trade & {
   events: TradeEvent[];
+  journal_entry: JournalEntry | null;
+};
+
+export type JournalEntry = {
+  id: number;
+  trade_id: number;
+  user_id: number;
+  setup_rule_followed: boolean | null;
+  entry_quality_score: number | null;
+  stop_quality_score: number | null;
+  exit_quality_score: number | null;
+  discipline_score: number | null;
+  market_context: string | null;
+  emotional_notes: string | null;
+  what_went_well: string | null;
+  what_went_wrong: string | null;
+  lesson_learned: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type TradeCreatePayload = {
@@ -82,4 +102,18 @@ export type TradeClosePayload = {
   exit_reason: ExitReason;
   closed_at: string;
   notes?: string | null;
+};
+
+export type JournalEntryCreatePayload = {
+  setup_rule_followed?: boolean | null;
+  entry_quality_score?: number | null;
+  stop_quality_score?: number | null;
+  exit_quality_score?: number | null;
+  discipline_score?: number | null;
+  market_context?: string | null;
+  emotional_notes?: string | null;
+  what_went_well?: string | null;
+  what_went_wrong?: string | null;
+  lesson_learned?: string | null;
+  reviewed_at: string;
 };

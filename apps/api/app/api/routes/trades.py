@@ -5,6 +5,8 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.schemas.trades import (
+    JournalEntryCreate,
+    JournalEntryRead,
     TradeClose,
     TradeCreate,
     TradeDetailRead,
@@ -13,9 +15,11 @@ from app.schemas.trades import (
     TradeRead,
 )
 from app.services.trades import (
+    JournalEntryError,
     TradeCloseError,
     TradeCreationError,
     close_trade,
+    create_journal_entry,
     create_trade,
     create_trade_event,
     get_trade,
@@ -79,6 +83,31 @@ def close_item(trade_id: int, payload: TradeClose, db: DbSession) -> TradeDetail
     try:
         return close_trade(db, user.id, trade_id, payload)
     except TradeCloseError as error:
+        status_code = (
+            status.HTTP_404_NOT_FOUND
+            if error.message == "Trade not found."
+            else status.HTTP_400_BAD_REQUEST
+        )
+        raise HTTPException(
+            status_code=status_code,
+            detail=error.message,
+        ) from error
+
+
+@router.post(
+    "/{trade_id}/journal",
+    response_model=JournalEntryRead,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_journal(
+    trade_id: int,
+    payload: JournalEntryCreate,
+    db: DbSession,
+) -> JournalEntryRead:
+    user = get_or_create_default_user(db)
+    try:
+        return create_journal_entry(db, user.id, trade_id, payload)
+    except JournalEntryError as error:
         status_code = (
             status.HTTP_404_NOT_FOUND
             if error.message == "Trade not found."

@@ -1,6 +1,8 @@
 import type { Signal } from "@/types/signals";
 import type { CsvImportResult, MarketDataAnalysisResult } from "@/types/imports";
 import type {
+  JournalEntry,
+  JournalEntryCreatePayload,
   Trade,
   TradeClosePayload,
   TradeCreatePayload,
@@ -125,6 +127,21 @@ export async function closeTrade(tradeId: number, payload: TradeClosePayload): P
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     throw new Error(formatApiError(body?.detail, "Trade konnte nicht geschlossen werden."));
+  }
+
+  return response.json();
+}
+
+export async function createJournalEntry(tradeId: number, payload: JournalEntryCreatePayload): Promise<JournalEntry> {
+  const response = await fetch(`${API_BASE_URL}/trades/${tradeId}/journal`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(formatApiError(body?.detail, "Journal Review konnte nicht gespeichert werden."));
   }
 
   return response.json();

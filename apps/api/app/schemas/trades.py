@@ -108,8 +108,44 @@ class TradeEventRead(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class JournalEntryCreate(BaseModel):
+    setup_rule_followed: bool | None = None
+    entry_quality_score: int | None = Field(default=None, ge=1, le=5)
+    stop_quality_score: int | None = Field(default=None, ge=1, le=5)
+    exit_quality_score: int | None = Field(default=None, ge=1, le=5)
+    discipline_score: int | None = Field(default=None, ge=1, le=5)
+    market_context: str | None = None
+    emotional_notes: str | None = None
+    what_went_well: str | None = None
+    what_went_wrong: str | None = None
+    lesson_learned: str | None = None
+    reviewed_at: datetime
+
+
+class JournalEntryRead(BaseModel):
+    id: int
+    trade_id: int
+    user_id: int
+    setup_rule_followed: bool | None
+    entry_quality_score: int | None
+    stop_quality_score: int | None
+    exit_quality_score: int | None
+    discipline_score: int | None
+    market_context: str | None
+    emotional_notes: str | None
+    what_went_well: str | None
+    what_went_wrong: str | None
+    lesson_learned: str | None
+    reviewed_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 class TradeDetailRead(TradeRead):
     events: list[TradeEventRead]
+    journal_entry: JournalEntryRead | None
 
 
 class TradeClose(BaseModel):
