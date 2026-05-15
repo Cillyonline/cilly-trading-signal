@@ -1,6 +1,6 @@
 import type { Signal } from "@/types/signals";
 import type { CsvImportResult, MarketDataAnalysisResult } from "@/types/imports";
-import type { Trade, TradeCreatePayload } from "@/types/trades";
+import type { Trade, TradeCreatePayload, TradeDetail, TradeEvent, TradeEventCreatePayload } from "@/types/trades";
 import type { WatchlistItem } from "@/types/watchlist";
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api";
@@ -67,6 +67,17 @@ export async function fetchTrades(): Promise<Trade[]> {
   return response.json();
 }
 
+export async function fetchTrade(tradeId: number): Promise<TradeDetail> {
+  const response = await fetch(`${API_BASE_URL}/trades/${tradeId}`, { cache: "no-store" });
+  if (response.status === 404) {
+    throw new Error("Trade wurde nicht gefunden.");
+  }
+  if (!response.ok) {
+    throw new Error("Trade konnte nicht geladen werden.");
+  }
+  return response.json();
+}
+
 export async function createTrade(payload: TradeCreatePayload): Promise<Trade> {
   const response = await fetch(`${API_BASE_URL}/trades`, {
     method: "POST",
@@ -77,6 +88,21 @@ export async function createTrade(payload: TradeCreatePayload): Promise<Trade> {
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     throw new Error(formatApiError(body?.detail, "Trade konnte nicht gespeichert werden."));
+  }
+
+  return response.json();
+}
+
+export async function createTradeEvent(tradeId: number, payload: TradeEventCreatePayload): Promise<TradeEvent> {
+  const response = await fetch(`${API_BASE_URL}/trades/${tradeId}/events`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(formatApiError(body?.detail, "Trade Event konnte nicht gespeichert werden."));
   }
 
   return response.json();

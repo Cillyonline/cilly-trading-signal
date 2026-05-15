@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field, model_validator
 
-from app.models.enums import AssetClass, StrategyType, TradeStatus
+from app.models.enums import AssetClass, StrategyType, TradeEventType, TradeStatus
 
 
 class TradeCreate(BaseModel):
@@ -62,3 +62,50 @@ class TradeRead(BaseModel):
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class TradeEventCreate(BaseModel):
+    event_type: TradeEventType
+    event_time: datetime
+    price: Decimal | None = Field(default=None, gt=0)
+    reason: str | None = Field(default=None, max_length=255)
+    notes: str | None = None
+
+    @model_validator(mode="after")
+    def validate_management_event(self) -> "TradeEventCreate":
+        if self.event_type not in {
+            TradeEventType.NOTE,
+            TradeEventType.STOP_UPDATED,
+            TradeEventType.TARGET_UPDATED,
+        }:
+            raise ValueError("Only note, stop update, and target update events are supported.")
+        if self.event_type == TradeEventType.NOTE and not self.notes:
+            raise ValueError("notes are required for note events.")
+        if self.event_type == TradeEventType.STOP_UPDATED and self.price is None:
+            raise ValueError("price is required for stop update events.")
+        if self.event_type == TradeEventType.TARGET_UPDATED:
+            if self.price is None:
+                raise ValueError("price is required for target update events.")
+            if self.reason not in {"target_1", "target_2"}:
+                raise ValueError("reason must be target_1 or target_2 for target updates.")
+        return self
+
+
+class TradeEventRead(BaseModel):
+    id: int
+    trade_id: int
+    event_type: TradeEventType
+    event_time: datetime
+    price: Decimal | None
+    quantity: Decimal | None
+    old_value: str | None
+    new_value: str | None
+    reason: str | None
+    notes: str | None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class TradeDetailRead(TradeRead):
+    events: list[TradeEventRead]

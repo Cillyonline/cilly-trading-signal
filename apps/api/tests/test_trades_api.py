@@ -86,6 +86,11 @@ def test_create_trade_from_watchlist_calculates_initial_risk(client: TestClient)
     assert list_response.status_code == 200
     assert list_response.json()[0]["id"] == trade["id"]
 
+    detail_response = client.get(f"/api/trades/{trade['id']}")
+
+    assert detail_response.status_code == 200
+    assert detail_response.json()["events"] == []
+
 
 def test_list_trades_returns_empty_list(client: TestClient) -> None:
     response = client.get("/api/trades")
@@ -163,6 +168,92 @@ def test_create_trade_from_signal_uses_signal_context(client: TestClient) -> Non
     assert trade["initial_risk_reward"] == "3.00"
 
 
+def test_create_trade_event_logs_note(client: TestClient) -> None:
+    trade = create_manual_trade(client)
+
+    response = client.post(
+        f"/api/trades/{trade['id']}/events",
+        json={
+            "event_type": "note",
+            "event_time": "2024-01-06T10:00:00Z",
+            "notes": "Reviewed position manually.",
+        },
+    )
+
+    assert response.status_code == 201
+    event = response.json()
+    assert event["event_type"] == "note"
+    assert event["notes"] == "Reviewed position manually."
+
+    detail_response = client.get(f"/api/trades/{trade['id']}")
+
+    assert detail_response.status_code == 200
+    assert detail_response.json()["events"][0]["id"] == event["id"]
+
+
+def test_create_trade_event_updates_stop_loss(client: TestClient) -> None:
+    trade = create_manual_trade(client)
+
+    response = client.post(
+        f"/api/trades/{trade['id']}/events",
+        json={
+            "event_type": "stop_updated",
+            "event_time": "2024-01-06T10:00:00Z",
+            "price": "98.00",
+            "notes": "Manual stop adjustment.",
+        },
+    )
+
+    assert response.status_code == 201
+    event = response.json()
+    assert event["old_value"] == "95.00000000"
+    assert event["new_value"] == "98.00"
+
+    detail_response = client.get(f"/api/trades/{trade['id']}")
+
+    assert detail_response.status_code == 200
+    assert detail_response.json()["stop_loss"] == "98.00000000"
+
+
+def test_create_trade_event_updates_target(client: TestClient) -> None:
+    trade = create_manual_trade(client)
+
+    response = client.post(
+        f"/api/trades/{trade['id']}/events",
+        json={
+            "event_type": "target_updated",
+            "event_time": "2024-01-06T10:00:00Z",
+            "price": "118.00",
+            "reason": "target_1",
+        },
+    )
+
+    assert response.status_code == 201
+    event = response.json()
+    assert event["old_value"] == "112.50000000"
+    assert event["new_value"] == "118.00"
+    assert event["reason"] == "target_1"
+
+    detail_response = client.get(f"/api/trades/{trade['id']}")
+
+    assert detail_response.status_code == 200
+    assert detail_response.json()["target_1"] == "118.00000000"
+
+
+def test_create_trade_event_returns_404_for_unknown_trade(client: TestClient) -> None:
+    response = client.post(
+        "/api/trades/999/events",
+        json={
+            "event_type": "note",
+            "event_time": "2024-01-06T10:00:00Z",
+            "notes": "Missing trade.",
+        },
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Trade not found."
+
+
 def sequential_csv(row_count: int = 201) -> str:
     rows = ["time,open,high,low,close,volume"]
     start = date(2024, 1, 1)
@@ -171,3 +262,22 @@ def sequential_csv(row_count: int = 201) -> str:
         close = 100 + index
         rows.append(f"{current_date.isoformat()},{close - 1},{close + 2},{close - 2},{close},1000")
     return "\n".join(rows)
+
+
+def create_manual_trade(client: TestClient) -> dict:
+    watchlist_item_id = create_watchlist_item(client)
+    response = client.post(
+        "/api/trades",
+        json={
+            "watchlist_item_id": watchlist_item_id,
+            "strategy_type": "trend_pullback_long",
+            "entry_price": "100.00",
+            "stop_loss": "95.00",
+            "target_1": "112.50",
+            "target_2": "120.00",
+            "position_size": "10",
+            "opened_at": "2024-01-05T10:00:00Z",
+        },
+    )
+    assert response.status_code == 201
+    return response.json()
