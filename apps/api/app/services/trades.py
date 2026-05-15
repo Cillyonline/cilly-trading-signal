@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from decimal import Decimal, ROUND_HALF_UP
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload, selectinload
 
@@ -10,6 +10,7 @@ from app.models.signal import Signal
 from app.models.trade import JournalEntry, Trade, TradeEvent
 from app.models.watchlist import WatchlistItem
 from app.schemas.trades import JournalEntryCreate, TradeClose, TradeCreate, TradeEventCreate
+from app.services.settings import get_or_create_settings
 
 TWO_PLACES = Decimal("0.01")
 FOUR_PLACES = Decimal("0.0001")
@@ -34,6 +35,14 @@ class JournalEntryError(Exception):
 
 
 def create_trade(db: Session, user_id: int, payload: TradeCreate) -> Trade:
+    settings = get_or_create_settings(db, user_id)
+    open_trade_count = db.scalar(
+        select(func.count())
+        .where(Trade.user_id == user_id, Trade.status != TradeStatus.CLOSED)
+    )
+    if open_trade_count >= settings.max_open_trades:
+        raise TradeCreationError("Maximum open trades reached.")
+
     signal = _get_signal(db, user_id, payload.signal_id) if payload.signal_id is not None else None
     if payload.signal_id is not None and signal is None:
         raise TradeCreationError("Signal not found.")
@@ -67,6 +76,14 @@ def create_trade(db: Session, user_id: int, payload: TradeCreate) -> Trade:
     initial_risk_reward = None
     if payload.target_1 is not None:
         initial_risk_reward = (payload.target_1 - payload.entry_price) / risk_per_unit
+        if initial_risk_reward < settings.min_risk_reward:
+            raise TradeCreationError("Initial risk/reward is below configured minimum.")
+
+    initial_risk_percent = None
+    if settings.account_size is not None:
+        initial_risk_percent = (initial_risk_amount / settings.account_size) * Decimal("100")
+        if initial_risk_percent > settings.max_risk_percent:
+            raise TradeCreationError("Initial risk percent exceeds configured maximum.")
 
     trade = Trade(
         user_id=user_id,
@@ -84,7 +101,7 @@ def create_trade(db: Session, user_id: int, payload: TradeCreate) -> Trade:
         fees=payload.fees,
         opened_at=payload.opened_at,
         initial_risk_amount=_quantize(initial_risk_amount, TWO_PLACES),
-        initial_risk_percent=None,
+        initial_risk_percent=_quantize(initial_risk_percent, FOUR_PLACES),
         initial_risk_reward=_quantize(initial_risk_reward, TWO_PLACES),
         notes=payload.notes,
     )

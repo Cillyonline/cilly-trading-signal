@@ -2,6 +2,7 @@ import type { Signal } from "@/types/signals";
 import type { AuthUser, LoginPayload } from "@/types/auth";
 import type { CsvImportResult, MarketDataAnalysisResult } from "@/types/imports";
 import type { PerformanceSummary } from "@/types/performance";
+import type { RiskSettings, RiskSettingsUpdatePayload } from "@/types/settings";
 import type {
   JournalEntry,
   JournalEntryCreatePayload,
@@ -112,6 +113,29 @@ export async function fetchPerformanceSummary(): Promise<PerformanceSummary> {
   if (!response.ok) {
     throw new Error("Performance Summary konnte nicht geladen werden.");
   }
+  return response.json();
+}
+
+export async function fetchRiskSettings(): Promise<RiskSettings> {
+  const response = await credentialedFetch(`${API_BASE_URL}/settings`, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error("Risk Settings konnten nicht geladen werden.");
+  }
+  return response.json();
+}
+
+export async function updateRiskSettings(payload: RiskSettingsUpdatePayload): Promise<RiskSettings> {
+  const response = await credentialedFetch(`${API_BASE_URL}/settings`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(formatApiError(body?.detail, "Risk Settings konnten nicht gespeichert werden."));
+  }
+
   return response.json();
 }
 
