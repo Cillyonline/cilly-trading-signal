@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.schemas.trades import (
+    TradeClose,
     TradeCreate,
     TradeDetailRead,
     TradeEventCreate,
@@ -12,7 +13,9 @@ from app.schemas.trades import (
     TradeRead,
 )
 from app.services.trades import (
+    TradeCloseError,
     TradeCreationError,
+    close_trade,
     create_trade,
     create_trade_event,
     get_trade,
@@ -66,5 +69,22 @@ def create_event(trade_id: int, payload: TradeEventCreate, db: DbSession) -> Tra
     except TradeCreationError as error:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
+            detail=error.message,
+        ) from error
+
+
+@router.post("/{trade_id}/close", response_model=TradeDetailRead)
+def close_item(trade_id: int, payload: TradeClose, db: DbSession) -> TradeDetailRead:
+    user = get_or_create_default_user(db)
+    try:
+        return close_trade(db, user.id, trade_id, payload)
+    except TradeCloseError as error:
+        status_code = (
+            status.HTTP_404_NOT_FOUND
+            if error.message == "Trade not found."
+            else status.HTTP_400_BAD_REQUEST
+        )
+        raise HTTPException(
+            status_code=status_code,
             detail=error.message,
         ) from error

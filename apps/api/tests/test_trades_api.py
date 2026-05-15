@@ -254,6 +254,76 @@ def test_create_trade_event_returns_404_for_unknown_trade(client: TestClient) ->
     assert response.json()["detail"] == "Trade not found."
 
 
+def test_close_trade_calculates_result_r(client: TestClient) -> None:
+    trade = create_manual_trade(client)
+
+    response = client.post(
+        f"/api/trades/{trade['id']}/close",
+        json={
+            "exit_price": "115.00",
+            "exit_reason": "target_1",
+            "closed_at": "2024-01-07T10:00:00Z",
+            "notes": "Manual full close.",
+        },
+    )
+
+    assert response.status_code == 200
+    closed = response.json()
+    assert closed["status"] == "closed"
+    assert closed["exit_price"] == "115.00000000"
+    assert closed["exit_reason"] == "target_1"
+    assert closed["result_amount"] == "150.00"
+    assert closed["result_r"] == "3.0000"
+    assert closed["events"][-1]["event_type"] == "closed"
+    assert closed["events"][-1]["notes"] == "Manual full close."
+
+
+def test_close_trade_rejects_unknown_trade(client: TestClient) -> None:
+    response = client.post(
+        "/api/trades/999/close",
+        json={
+            "exit_price": "115.00",
+            "exit_reason": "target_1",
+            "closed_at": "2024-01-07T10:00:00Z",
+        },
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Trade not found."
+
+
+def test_close_trade_rejects_duplicate_close(client: TestClient) -> None:
+    trade = create_manual_trade(client)
+    payload = {
+        "exit_price": "115.00",
+        "exit_reason": "target_1",
+        "closed_at": "2024-01-07T10:00:00Z",
+    }
+
+    first_response = client.post(f"/api/trades/{trade['id']}/close", json=payload)
+    second_response = client.post(f"/api/trades/{trade['id']}/close", json=payload)
+
+    assert first_response.status_code == 200
+    assert second_response.status_code == 400
+    assert second_response.json()["detail"] == "Trade is already closed."
+
+
+def test_close_trade_rejects_close_before_open(client: TestClient) -> None:
+    trade = create_manual_trade(client)
+
+    response = client.post(
+        f"/api/trades/{trade['id']}/close",
+        json={
+            "exit_price": "115.00",
+            "exit_reason": "target_1",
+            "closed_at": "2024-01-04T10:00:00Z",
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "closed_at must be after opened_at."
+
+
 def sequential_csv(row_count: int = 201) -> str:
     rows = ["time,open,high,low,close,volume"]
     start = date(2024, 1, 1)

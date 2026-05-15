@@ -2,7 +2,9 @@ import type { AssetClass, StrategyType } from "@/types/signals";
 
 export type TradeStatus = "open" | "partial_profit" | "break_even" | "exit_warning" | "exit_signal" | "closed" | "reviewed";
 
-export type TradeEventType = "note" | "stop_updated" | "target_updated";
+export type ExitReason = "stop_loss" | "target_1" | "target_2" | "manual_exit" | "structure_break" | "time_stop" | "failed_breakout" | "other";
+
+export type TradeEventType = "note" | "stop_updated" | "target_updated" | "closed";
 
 export type TradeEvent = {
   id: number;
@@ -35,6 +37,7 @@ export type Trade = {
   opened_at: string;
   closed_at: string | null;
   exit_price: string | null;
+  exit_reason: ExitReason | null;
   risk_per_unit: string;
   initial_risk_amount: string | null;
   initial_risk_percent: string | null;
@@ -71,5 +74,12 @@ export type TradeEventCreatePayload = {
   event_time: string;
   price?: string | null;
   reason?: string | null;
+  notes?: string | null;
+};
+
+export type TradeClosePayload = {
+  exit_price: string;
+  exit_reason: ExitReason;
+  closed_at: string;
   notes?: string | null;
 };

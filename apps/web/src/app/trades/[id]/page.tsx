@@ -2,15 +2,22 @@
 
 import { FormEvent, useEffect, useState } from "react";
 
-import { createTradeEvent, fetchTrade } from "@/lib/api";
+import { closeTrade, createTradeEvent, fetchTrade } from "@/lib/api";
 import type { StrategyType } from "@/types/signals";
-import type { TradeDetail, TradeEventCreatePayload, TradeEventType } from "@/types/trades";
+import type { ExitReason, TradeClosePayload, TradeDetail, TradeEventCreatePayload, TradeEventType } from "@/types/trades";
 
 type EventForm = {
   event_type: TradeEventType;
   event_time: string;
   price: string;
   reason: "" | "target_1" | "target_2";
+  notes: string;
+};
+
+type CloseForm = {
+  exit_price: string;
+  exit_reason: ExitReason;
+  closed_at: string;
   notes: string;
 };
 
@@ -22,11 +29,20 @@ const emptyForm: EventForm = {
   notes: "",
 };
 
+const emptyCloseForm: CloseForm = {
+  exit_price: "",
+  exit_reason: "manual_exit",
+  closed_at: "",
+  notes: "",
+};
+
 export default function TradeDetailPage({ params }: { params: { id: string } }) {
   const [trade, setTrade] = useState<TradeDetail | null>(null);
   const [form, setForm] = useState<EventForm>(emptyForm);
+  const [closeForm, setCloseForm] = useState<CloseForm>(emptyCloseForm);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function loadTrade() {
@@ -77,6 +93,30 @@ export default function TradeDetailPage({ params }: { params: { id: string } }) 
     }
   }
 
+  async function submitClose(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!trade) {
+      return;
+    }
+
+    const payload = buildClosePayload(closeForm);
+    if (!payload) {
+      setError("Fuellen die Pflichtfelder fuer den manuellen Close aus.");
+      return;
+    }
+
+    setIsClosing(true);
+    setError(null);
+    try {
+      setTrade(await closeTrade(trade.id, payload));
+      setCloseForm(emptyCloseForm);
+    } catch (closeError) {
+      setError(closeError instanceof Error ? closeError.message : "Unbekannter Fehler.");
+    } finally {
+      setIsClosing(false);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-8 text-slate-100">
       <section className="mx-auto flex max-w-6xl flex-col gap-8">
@@ -113,7 +153,16 @@ export default function TradeDetailPage({ params }: { params: { id: string } }) 
               <TradeSummary trade={trade} />
               <EventTimeline trade={trade} />
             </div>
-            <EventFormCard form={form} isSaving={isSaving} onChange={setForm} onSubmit={submitEvent} />
+            <div className="grid gap-6">
+              <CloseTradeCard
+                form={closeForm}
+                isClosing={isClosing}
+                onChange={setCloseForm}
+                onSubmit={submitClose}
+                trade={trade}
+              />
+              <EventFormCard form={form} isSaving={isSaving} onChange={setForm} onSubmit={submitEvent} />
+            </div>
           </section>
         ) : null}
       </section>
@@ -154,6 +203,18 @@ function buildEventPayload(form: EventForm): TradeEventCreatePayload | null {
   return payload;
 }
 
+function buildClosePayload(form: CloseForm): TradeClosePayload | null {
+  if (!form.exit_price || !form.closed_at) {
+    return null;
+  }
+  return {
+    exit_price: form.exit_price,
+    exit_reason: form.exit_reason,
+    closed_at: new Date(form.closed_at).toISOString(),
+    notes: form.notes || null,
+  };
+}
+
 function TradeSummary({ trade }: { trade: TradeDetail }) {
   return (
     <article className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
@@ -173,10 +234,109 @@ function TradeSummary({ trade }: { trade: TradeDetail }) {
         <Metric label="Risk" value={formatMoney(trade.initial_risk_amount)} />
         <Metric label="R:R" value={formatR(trade.initial_risk_reward)} />
         <Metric label="Opened" value={formatDateTime(trade.opened_at)} />
+        <Metric label="Exit" value={formatMoney(trade.exit_price)} />
+        <Metric label="Result" value={formatMoney(trade.result_amount)} />
+        <Metric label="Result R" value={formatR(trade.result_r)} />
+        <Metric label="Closed" value={formatDateTime(trade.closed_at)} />
       </div>
 
       {trade.notes ? <p className="mt-5 text-sm text-slate-300">{trade.notes}</p> : null}
     </article>
+  );
+}
+
+function CloseTradeCard({
+  form,
+  isClosing,
+  onChange,
+  onSubmit,
+  trade,
+}: {
+  form: CloseForm;
+  isClosing: boolean;
+  onChange: (form: CloseForm) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  trade: TradeDetail;
+}) {
+  if (trade.status === "closed") {
+    return (
+      <section className="rounded-3xl border border-emerald-300/20 bg-emerald-300/5 p-6">
+        <h2 className="text-xl font-semibold">Trade geschlossen</h2>
+        <p className="mt-2 text-sm text-slate-300">
+          Ergebnis: {formatMoney(trade.result_amount)} / {formatR(trade.result_r)}. Dieser Close ist
+          eine manuelle Dokumentation, keine Broker-Aktion.
+        </p>
+      </section>
+    );
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
+      <h2 className="text-xl font-semibold">Trade manuell schliessen</h2>
+      <p className="mt-2 text-sm text-slate-400">Loggt den Exit und berechnet Result R. Keine Orderausfuehrung.</p>
+
+      <div className="mt-6 grid gap-4">
+        <label className="grid gap-2 text-sm text-slate-300">
+          Exit Price
+          <input
+            required
+            type="number"
+            min="0"
+            step="0.00000001"
+            value={form.exit_price}
+            onChange={(event) => onChange({ ...form, exit_price: event.target.value })}
+            className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-emerald-300"
+          />
+        </label>
+
+        <label className="grid gap-2 text-sm text-slate-300">
+          Exit Reason
+          <select
+            value={form.exit_reason}
+            onChange={(event) => onChange({ ...form, exit_reason: event.target.value as ExitReason })}
+            className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-emerald-300"
+          >
+            <option value="stop_loss">Stop Loss</option>
+            <option value="target_1">Target 1</option>
+            <option value="target_2">Target 2</option>
+            <option value="manual_exit">Manual Exit</option>
+            <option value="structure_break">Structure Break</option>
+            <option value="time_stop">Time Stop</option>
+            <option value="failed_breakout">Failed Breakout</option>
+            <option value="other">Other</option>
+          </select>
+        </label>
+
+        <label className="grid gap-2 text-sm text-slate-300">
+          Closed At
+          <input
+            required
+            type="datetime-local"
+            value={form.closed_at}
+            onChange={(event) => onChange({ ...form, closed_at: event.target.value })}
+            className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-emerald-300"
+          />
+        </label>
+
+        <label className="grid gap-2 text-sm text-slate-300">
+          Notes optional
+          <textarea
+            value={form.notes}
+            onChange={(event) => onChange({ ...form, notes: event.target.value })}
+            className="min-h-24 rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-emerald-300"
+            placeholder="Warum wurde der Trade manuell geschlossen?"
+          />
+        </label>
+
+        <button
+          disabled={isClosing}
+          type="submit"
+          className="rounded-xl bg-emerald-400 px-5 py-3 font-semibold text-slate-950 disabled:opacity-60"
+        >
+          {isClosing ? "Schliesse..." : "Trade Close loggen"}
+        </button>
+      </div>
+    </form>
   );
 }
 
