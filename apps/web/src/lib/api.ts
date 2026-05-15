@@ -1,5 +1,6 @@
 import type { Signal } from "@/types/signals";
 import type { CsvImportResult, MarketDataAnalysisResult } from "@/types/imports";
+import type { PerformanceSummary } from "@/types/performance";
 import type {
   JournalEntry,
   JournalEntryCreatePayload,
@@ -72,6 +73,14 @@ export async function fetchTrades(): Promise<Trade[]> {
   const response = await fetch(`${API_BASE_URL}/trades`, { cache: "no-store" });
   if (!response.ok) {
     throw new Error("Trades konnten nicht geladen werden.");
+  }
+  return response.json();
+}
+
+export async function fetchPerformanceSummary(): Promise<PerformanceSummary> {
+  const response = await fetch(`${API_BASE_URL}/performance/summary`, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error("Performance Summary konnte nicht geladen werden.");
   }
   return response.json();
 }
