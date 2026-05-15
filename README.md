@@ -25,6 +25,8 @@ Konfiguration in `.env`:
 - `SECRET_KEY`: Signiert Session-Cookies und muss ausserhalb lokaler Entwicklung eindeutig gesetzt sein.
 - `AUTH_COOKIE_SECURE`: In produktiven HTTPS-Umgebungen auf `true` setzen.
 
+In `staging` und `production` bricht die API beim Start ab, wenn lokale Platzhalter-Secrets, Default-Credentials, unsichere Datenbank-Zugangsdaten, Wildcard-CORS oder unsichere Auth-Cookies konfiguriert sind.
+
 ## Geplanter Stack
 
 - Frontend: Next.js, React, TypeScript, Tailwind CSS
