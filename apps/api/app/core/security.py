@@ -14,11 +14,9 @@ HASH_ITERATIONS = 210_000
 def hash_password(password: str) -> str:
     salt = secrets.token_bytes(16)
     digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, HASH_ITERATIONS)
-    return "pbkdf2_sha256${}${}${}".format(
-        HASH_ITERATIONS,
-        _b64encode(salt),
-        _b64encode(digest),
-    )
+    encoded_salt = _b64encode(salt)
+    encoded_digest = _b64encode(digest)
+    return f"pbkdf2_sha256${HASH_ITERATIONS}${encoded_salt}${encoded_digest}"
 
 
 def verify_password(password: str, password_hash: str) -> bool:
