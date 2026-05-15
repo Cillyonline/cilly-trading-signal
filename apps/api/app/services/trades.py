@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from decimal import Decimal, ROUND_HALF_UP
 
 from sqlalchemy import select
@@ -160,7 +161,7 @@ def close_trade(db: Session, user_id: int, trade_id: int, payload: TradeClose) -
         raise TradeCloseError("Trade not found.")
     if trade.status == TradeStatus.CLOSED:
         raise TradeCloseError("Trade is already closed.")
-    if payload.closed_at < trade.opened_at:
+    if _as_naive_utc(payload.closed_at) < _as_naive_utc(trade.opened_at):
         raise TradeCloseError("closed_at must be after opened_at.")
     if trade.initial_risk_amount is None or trade.initial_risk_amount <= 0:
         raise TradeCloseError("Initial risk amount is required to close trade.")
@@ -206,3 +207,9 @@ def _quantize(value: Decimal | None, exponent: Decimal) -> Decimal | None:
     if value is None:
         return None
     return value.quantize(exponent, rounding=ROUND_HALF_UP)
+
+
+def _as_naive_utc(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value
+    return value.astimezone(UTC).replace(tzinfo=None)
