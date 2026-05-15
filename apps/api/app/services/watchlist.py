@@ -2,6 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.models.enums import UserRole
 from app.models.user import User
 from app.models.watchlist import WatchlistItem
@@ -15,6 +16,9 @@ class DuplicateWatchlistSymbolError(Exception):
 
 
 def get_or_create_default_user(db: Session) -> User:
+    if settings.environment not in {"development", "test"}:
+        raise RuntimeError("Default local user bridge is disabled outside development/test.")
+
     user = db.scalar(select(User).where(User.email == DEFAULT_USER_EMAIL))
     if user is not None:
         return user

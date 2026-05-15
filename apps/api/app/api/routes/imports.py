@@ -3,27 +3,30 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
+from app.api.deps import get_current_user
 from app.db.session import get_db
 from app.models.enums import Timeframe
 from app.models.market_data import MarketDataSeries
+from app.models.user import User
 from app.schemas.analysis import MarketDataAnalysisResult
 from app.schemas.imports import CsvImportResult
 from app.services.analysis import analyze_market_data_series
 from app.services.csv_import import import_tradingview_csv
-from app.services.watchlist import get_or_create_default_user, get_watchlist_item
+from app.services.watchlist import get_watchlist_item
 
 router = APIRouter(prefix="/imports", tags=["imports"])
 DbSession = Annotated[Session, Depends(get_db)]
+CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 @router.post("/csv", response_model=CsvImportResult)
 async def import_csv(
     db: DbSession,
+    user: CurrentUser,
     watchlist_item_id: Annotated[int, Form()],
     timeframe: Annotated[Timeframe, Form()],
     file: Annotated[UploadFile, File()],
 ) -> CsvImportResult:
-    user = get_or_create_default_user(db)
     watchlist_item = get_watchlist_item(db, user.id, watchlist_item_id)
     if watchlist_item is None:
         raise HTTPException(
@@ -56,8 +59,7 @@ async def import_csv(
 
 
 @router.post("/{series_id}/analyze", response_model=MarketDataAnalysisResult)
-def analyze_import(series_id: int, db: DbSession) -> MarketDataAnalysisResult:
-    user = get_or_create_default_user(db)
+def analyze_import(series_id: int, db: DbSession, user: CurrentUser) -> MarketDataAnalysisResult:
     series = db.get(MarketDataSeries, series_id)
     if series is None or series.watchlist_item.user_id != user.id:
         raise HTTPException(

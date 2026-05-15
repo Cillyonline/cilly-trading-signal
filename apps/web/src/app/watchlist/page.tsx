@@ -35,7 +35,7 @@ export default function WatchlistPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/watchlist`, { cache: "no-store" });
+      const response = await fetch(`${API_BASE_URL}/watchlist`, { cache: "no-store", credentials: "include" });
       if (!response.ok) {
         throw new Error("Watchlist konnte nicht geladen werden.");
       }
@@ -88,6 +88,7 @@ export default function WatchlistPage() {
           method: editingId ? "PATCH" : "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
+          credentials: "include",
         },
       );
 
@@ -108,7 +109,10 @@ export default function WatchlistPage() {
   async function deactivateItem(item: WatchlistItem) {
     setError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/watchlist/${item.id}`, { method: "DELETE" });
+      const response = await fetch(`${API_BASE_URL}/watchlist/${item.id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
       if (!response.ok) {
         throw new Error("Watchlist-Eintrag konnte nicht deaktiviert werden.");
       }

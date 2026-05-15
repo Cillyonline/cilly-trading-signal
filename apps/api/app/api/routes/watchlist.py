@@ -3,12 +3,13 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.api.deps import get_current_user
 from app.db.session import get_db
+from app.models.user import User
 from app.schemas.watchlist import WatchlistItemCreate, WatchlistItemRead, WatchlistItemUpdate
 from app.services.watchlist import (
     DuplicateWatchlistSymbolError,
     create_watchlist_item,
-    get_or_create_default_user,
     get_watchlist_item,
     list_watchlist_items,
     update_watchlist_item,
@@ -16,19 +17,18 @@ from app.services.watchlist import (
 
 router = APIRouter(prefix="/watchlist", tags=["watchlist"])
 DbSession = Annotated[Session, Depends(get_db)]
+CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 @router.get("", response_model=list[WatchlistItemRead])
-def list_items(db: DbSession) -> list[WatchlistItemRead]:
-    user = get_or_create_default_user(db)
+def list_items(db: DbSession, user: CurrentUser) -> list[WatchlistItemRead]:
     return list_watchlist_items(db, user.id)
 
 
 @router.post("", response_model=WatchlistItemRead, status_code=status.HTTP_201_CREATED)
 def create_item(
-    payload: WatchlistItemCreate, db: DbSession
+    payload: WatchlistItemCreate, db: DbSession, user: CurrentUser
 ) -> WatchlistItemRead:
-    user = get_or_create_default_user(db)
     try:
         return create_watchlist_item(db, user.id, payload)
     except DuplicateWatchlistSymbolError as error:
@@ -39,8 +39,7 @@ def create_item(
 
 
 @router.get("/{item_id}", response_model=WatchlistItemRead)
-def get_item(item_id: int, db: DbSession) -> WatchlistItemRead:
-    user = get_or_create_default_user(db)
+def get_item(item_id: int, db: DbSession, user: CurrentUser) -> WatchlistItemRead:
     item = get_watchlist_item(db, user.id, item_id)
     if item is None:
         raise HTTPException(
@@ -52,9 +51,8 @@ def get_item(item_id: int, db: DbSession) -> WatchlistItemRead:
 
 @router.patch("/{item_id}", response_model=WatchlistItemRead)
 def update_item(
-    item_id: int, payload: WatchlistItemUpdate, db: DbSession
+    item_id: int, payload: WatchlistItemUpdate, db: DbSession, user: CurrentUser
 ) -> WatchlistItemRead:
-    user = get_or_create_default_user(db)
     item = get_watchlist_item(db, user.id, item_id)
     if item is None:
         raise HTTPException(
@@ -72,8 +70,7 @@ def update_item(
 
 
 @router.delete("/{item_id}", response_model=WatchlistItemRead)
-def deactivate_item(item_id: int, db: DbSession) -> WatchlistItemRead:
-    user = get_or_create_default_user(db)
+def deactivate_item(item_id: int, db: DbSession, user: CurrentUser) -> WatchlistItemRead:
     item = get_watchlist_item(db, user.id, item_id)
     if item is None:
         raise HTTPException(

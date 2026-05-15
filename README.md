@@ -14,6 +14,17 @@ Ziel ist ein professionelles Trading-Cockpit fuer Long-only Swingtrading: Setups
 - Performance zeigt dokumentierte historische Ergebnisse, keine Prognosen oder Gewinnzusagen.
 - Strategie, Score und Alerts muessen erklaerbar sein.
 
+## MVP Auth
+
+Das MVP nutzt Single-User Login mit einem HttpOnly Session-Cookie. Es gibt keine oeffentliche Registrierung und keine clientseitige Token-Speicherung.
+
+Konfiguration in `.env`:
+
+- `ADMIN_EMAIL`: Login-E-Mail fuer den einzelnen Admin-User.
+- `ADMIN_INITIAL_PASSWORD`: Initiales Passwort, mit dem der Admin-User beim ersten Login angelegt wird.
+- `SECRET_KEY`: Signiert Session-Cookies und muss ausserhalb lokaler Entwicklung eindeutig gesetzt sein.
+- `AUTH_COOKIE_SECURE`: In produktiven HTTPS-Umgebungen auf `true` setzen.
+
 ## Geplanter Stack
 
 - Frontend: Next.js, React, TypeScript, Tailwind CSS
