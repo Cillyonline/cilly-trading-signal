@@ -7,9 +7,9 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.models.enums import TradeEventType, TradeStatus
 from app.models.signal import Signal
-from app.models.trade import Trade, TradeEvent
+from app.models.trade import JournalEntry, Trade, TradeEvent
 from app.models.watchlist import WatchlistItem
-from app.schemas.trades import TradeClose, TradeCreate, TradeEventCreate
+from app.schemas.trades import JournalEntryCreate, TradeClose, TradeCreate, TradeEventCreate
 
 TWO_PLACES = Decimal("0.01")
 FOUR_PLACES = Decimal("0.0001")
@@ -22,6 +22,12 @@ class TradeCreationError(Exception):
 
 
 class TradeCloseError(Exception):
+    def __init__(self, message: str) -> None:
+        self.message = message
+        super().__init__(message)
+
+
+class JournalEntryError(Exception):
     def __init__(self, message: str) -> None:
         self.message = message
         super().__init__(message)
@@ -107,12 +113,47 @@ def list_trades(db: Session, user_id: int) -> list[Trade]:
 def get_trade(db: Session, user_id: int, trade_id: int) -> Trade | None:
     trade = db.scalar(
         select(Trade)
-        .options(selectinload(Trade.events))
+        .options(selectinload(Trade.events), selectinload(Trade.journal_entry))
         .where(Trade.id == trade_id, Trade.user_id == user_id)
     )
     if trade is not None:
         trade.events.sort(key=lambda event: (event.event_time, event.id))
     return trade
+
+
+def create_journal_entry(
+    db: Session,
+    user_id: int,
+    trade_id: int,
+    payload: JournalEntryCreate,
+) -> JournalEntry:
+    trade = get_trade(db, user_id, trade_id)
+    if trade is None:
+        raise JournalEntryError("Trade not found.")
+    if trade.status != TradeStatus.CLOSED:
+        raise JournalEntryError("Trade must be closed before review.")
+    if trade.journal_entry is not None:
+        raise JournalEntryError("Trade already has a journal review.")
+
+    journal_entry = JournalEntry(
+        trade_id=trade.id,
+        user_id=user_id,
+        setup_rule_followed=payload.setup_rule_followed,
+        entry_quality_score=payload.entry_quality_score,
+        stop_quality_score=payload.stop_quality_score,
+        exit_quality_score=payload.exit_quality_score,
+        discipline_score=payload.discipline_score,
+        market_context=payload.market_context,
+        emotional_notes=payload.emotional_notes,
+        what_went_well=payload.what_went_well,
+        what_went_wrong=payload.what_went_wrong,
+        lesson_learned=payload.lesson_learned,
+        reviewed_at=payload.reviewed_at,
+    )
+    db.add(journal_entry)
+    db.commit()
+    db.refresh(journal_entry)
+    return journal_entry
 
 
 def create_trade_event(
