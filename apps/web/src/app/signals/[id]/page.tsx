@@ -63,7 +63,7 @@ export default function SignalDetailPage({ params }: { params: { id: string } })
               <h1 className="mt-3 text-4xl font-semibold tracking-tight">Signal vollstaendig pruefen</h1>
               <p className="mt-3 max-w-2xl text-slate-300">
                 Diese Ansicht zeigt die gespeicherte Setup-Bewertung als Entscheidungshilfe fuer
-                manuelle Pruefung. Sie ist keine Kauf- oder Verkaufsanweisung.
+                deine manuelle Pruefung. Sie ist keine Kauf- oder Verkaufsanweisung.
               </p>
             </div>
             <div className="flex gap-4 text-sm">
@@ -131,7 +131,7 @@ function SignalDetail({ signal }: { signal: Signal }) {
 
       <section className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
         <article className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
-          <h3 className="text-xl font-semibold">Setup Plan</h3>
+          <h3 className="text-xl font-semibold">Setup Bewertungsdaten</h3>
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             <Metric label="Entry Low" value={formatMoney(signal.entry_low)} />
             <Metric label="Entry High" value={formatMoney(signal.entry_high)} />
@@ -171,9 +171,9 @@ function SignalDetail({ signal }: { signal: Signal }) {
       <article className="rounded-3xl border border-slate-400/20 bg-slate-900/60 p-6">
         <h3 className="text-xl font-semibold">No-Trade Kontext</h3>
         <p className="mt-3 text-sm text-slate-300">
-          Wenn Status oder Score Class auf `No Setup` oder `No Trade` stehen, ist das konservative
-          Ergebnis des Backends hier ueber Status, Score Class, Invalidierung, Begruendung und Risk
-          Flags nachvollziehbar.
+          Wenn Status oder Score Class auf `No Setup` oder `No Trade` stehen, bleibt das ein
+          vollwertiges Ergebnis. Status, Score Class, Invalidierung, Begruendung und Risk Flags
+          machen die konservative Bewertung nachvollziehbar.
         </p>
       </article>
     </section>

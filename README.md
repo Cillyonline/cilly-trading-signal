@@ -2,7 +2,7 @@
 
 Webbasierte Trading- und Signal-Plattform fuer Aktien und Krypto.
 
-Ziel ist ein professionelles Trading-Cockpit fuer Long-only Swingtrading: Setups analysieren, Trigger vorbereiten, Alerts empfangen, manuelle Trades loggen, Trades managen und Performance in R-Multiples auswerten.
+Ziel ist ein professionelles Trading-Cockpit fuer Long-only Swingtrading: Setups analysieren, Trigger vorbereiten, Alerts pruefen, extern ausgefuehrte Trades manuell loggen, Trades dokumentieren und historische Performance in R-Multiples auswerten.
 
 ## Grundprinzipien
 
@@ -11,6 +11,7 @@ Ziel ist ein professionelles Trading-Cockpit fuer Long-only Swingtrading: Setups
 - Keine Broker-Anbindung im MVP.
 - Signale sind Entscheidungsunterstuetzung, keine blinden Buy-/Sell-Anweisungen.
 - Trading-Ausfuehrung bleibt manuell, z.B. ueber Trade Republic.
+- Performance zeigt dokumentierte historische Ergebnisse, keine Prognosen oder Gewinnzusagen.
 - Strategie, Score und Alerts muessen erklaerbar sein.
 
 ## Geplanter Stack

@@ -13,8 +13,8 @@ export default async function PerformancePage() {
               <p className="text-sm uppercase tracking-[0.35em] text-emerald-300">Performance</p>
               <h1 className="mt-3 text-4xl font-semibold tracking-tight">Closed Trades in R</h1>
               <p className="mt-3 max-w-2xl text-slate-300">
-                Kompakte Auswertung abgeschlossener Trades. Die Werte beschreiben dokumentierte
-                R-Multiples und sind keine Prognose fuer zukuenftige Ergebnisse.
+                Kompakte Auswertung manuell dokumentierter Trade-Abschluesse. Die Werte beschreiben
+                historische R-Multiples und sind keine Prognose fuer zukuenftige Ergebnisse.
               </p>
             </div>
             <div className="flex gap-4 text-sm">
@@ -39,8 +39,8 @@ function EmptyState() {
     <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-8">
       <h2 className="text-2xl font-semibold">Noch keine geschlossenen Trades</h2>
       <p className="mt-3 max-w-2xl text-slate-400">
-        Die Summary wird sichtbar, sobald Trades manuell geschlossen wurden. Offene Trades bleiben
-        aus diesen Metriken ausgeschlossen.
+        Die Summary wird sichtbar, sobald manuell dokumentierte Trades geschlossen wurden. Offene
+        Trades bleiben aus diesen Metriken ausgeschlossen.
       </p>
       <a
         className="mt-6 inline-flex rounded-xl bg-emerald-400 px-5 py-3 font-semibold text-slate-950"

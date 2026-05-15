@@ -126,8 +126,8 @@ export default function WatchlistPage() {
             <p className="text-sm uppercase tracking-[0.35em] text-emerald-300">Watchlist</p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight">Symbole verwalten</h1>
             <p className="mt-3 max-w-2xl text-slate-300">
-              Pflege Aktien und Krypto-Symbole als Grundlage fuer CSV-Import, Signale und
-              manuelles Trade Logging.
+              Pflege Aktien und Krypto-Symbole als Grundlage fuer CSV-Import, Setup-Bewertungen
+              und manuelles Trade Logging.
             </p>
           </div>
           <a className="text-sm text-emerald-300 hover:text-emerald-200" href="/">

@@ -4,7 +4,8 @@
 
 Dieses Dokument definiert Trading-Strategien, Trigger, Alarme, Scoring-Regeln, No-Trade-Regeln und den Trade-Lifecycle des Tools.
 
-Das Tool erzeugt keine blinden Kaufempfehlungen. Es bewertet Setups strukturiert, ueberwacht Trigger und liefert klare Trade-Plaene.
+Das Tool erzeugt keine Kauf- oder Verkaufsempfehlungen. Es bewertet Setups strukturiert,
+ueberwacht Trigger und liefert erklaerbare Pruefpunkte fuer manuelle Entscheidungen.
 
 Grundprinzip:
 
@@ -192,7 +193,7 @@ Ein Reclaim Long entsteht, wenn ein Asset kurz ein wichtiges Level verliert und 
 
 ## Scoring-System
 
-Der Score bewertet die Setup-Qualitaet. Er ist keine Gewinnwahrscheinlichkeit.
+Der Score bewertet die Setup-Qualitaet. Er ist keine Gewinnwahrscheinlichkeit und keine Handlungsempfehlung.
 
 - Trend: 0 bis 25 Punkte
 - Struktur: 0 bis 25 Punkte
@@ -234,6 +235,14 @@ Fuer Krypto zusaetzlich:
 - illiquide Altcoins vermeiden
 - starke Wick-Struktur als Risiko-Flag
 
+## Safety Boundaries Fuer Signale Und Alerts
+
+- Signale und Alerts sind Entscheidungshilfe, keine Order-Anweisung.
+- `Triggered` bedeutet: manuell pruefen, nicht automatisch handeln.
+- `No Setup` und `No Trade` bleiben konservative, vollwertige Ergebnisse.
+- Scores bewerten Setup-Qualitaet, nicht Gewinnwahrscheinlichkeit.
+- Trade Management Alerts dokumentieren Pruefpunkte und fuehren keine Broker-Aktion aus.
+
 ## Alert-System
 
 Alerts bestehen aus Farbe, Status, Prioritaet und Aktion.
@@ -258,10 +267,10 @@ Prioritaeten:
 - Watchlist Alert: Gelb / P2-P3, Asset wird interessant, noch kein Entry
 - Armed Alert: Gelb / P2, Setup vorbereitet, Trigger-Level definiert
 - Near Trigger Alert: Gelb / P2, Preis naehert sich Trigger
-- Entry Trigger Alert: Gruen / P1, Trigger bestaetigt, Trade manuell pruefen
-- Management Alert: Blau / P2, offener Trade benoetigt Management
-- Exit Warning: Rot / P1-P2, Trade verschlechtert sich
-- Exit Signal: Rot / P1, klare Ausstiegsregel erreicht
+- Entry Trigger Alert: Gruen / P1, Trigger bestaetigt, Setup manuell pruefen
+- Management Alert: Blau / P2, offener Trade benoetigt manuelle Pruefung
+- Exit Warning: Rot / P1-P2, Trade-Struktur verschlechtert sich
+- Exit Signal: Rot / P1, dokumentierte Ausstiegsregel erreicht
 - Invalidation Alert: Rot oder Grau / P2, Setup vor Entry ungueltig
 
 ## Telegram-Alert-Format
@@ -276,7 +285,7 @@ Trend Pullback Long
 Trigger:
 4H Close ueber 184.50 bestaetigt
 
-Plan:
+Pruefpunkte:
 Entry Zone: 184.50 - 186.00
 Stop: 179.80
 Target 1: 192.00
@@ -287,7 +296,7 @@ Score:
 74/100, B-Setup
 
 Aktion:
-Manuell pruefen. Kein automatischer Kauf.
+Manuell pruefen. Keine automatische Order und keine Kaufanweisung.
 ```
 
 ## TradingView Webhook Payload
@@ -313,7 +322,7 @@ Das Backend prueft Secret, Payload, Setup, Symbol, Timeframe, Status, Risk/Rewar
 - Watchlist: Asset ist interessant, aber noch nicht bereit
 - Armed: Setup ist konkret vorbereitet
 - Triggered: Trigger wurde bestaetigt, manuelle Pruefung erforderlich
-- Entered: Nutzer hat Trade manuell ausgefuehrt und geloggt
+- Entered: Nutzer hat einen extern ausgefuehrten Trade manuell geloggt
 - Open: Trade ist aktiv
 - Managed: Trade wurde aktiv angepasst
 - Exit Warning: Trade verschlechtert sich
@@ -329,8 +338,8 @@ Das Backend prueft Secret, Payload, Setup, Symbol, Timeframe, Status, Risk/Rewar
 Target 1 erreicht:
 
 - Blau / Management / P2
-- Teilgewinn 30-50% pruefen
-- Stop auf Break-even pruefen
+- Teilgewinn 30-50% manuell pruefen
+- Stop auf Break-even manuell pruefen
 - Restposition laufen lassen
 
 Break-even Regel nach Target 1:

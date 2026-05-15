@@ -97,7 +97,7 @@ export default function ImportPage() {
               <h1 className="mt-3 text-4xl font-semibold tracking-tight">Marktdaten importieren</h1>
               <p className="mt-3 max-w-2xl text-slate-300">
                 Lade TradingView CSV-Daten fuer ein Watchlist-Symbol hoch. Der Import validiert die
-                Kerzen und speichert sie als Grundlage fuer eine spaetere Analyse.
+                Kerzen und speichert sie als Grundlage fuer eine erklaerbare Setup-Bewertung.
               </p>
             </div>
             <a className="text-sm text-emerald-300 hover:text-emerald-200" href="/">
@@ -199,7 +199,7 @@ export default function ImportPage() {
             <h2 className="text-xl font-semibold">Import-Ergebnis</h2>
             <p className="mt-2 text-sm text-slate-400">
               Nach einem erfolgreichen Import kannst du die Analyse im naechsten Workflow-Schritt
-              starten. Diese Seite fuehrt keine Trade-Aktion aus.
+              starten. Diese Seite fuehrt keine Trade- oder Broker-Aktion aus.
             </p>
 
             <div className="mt-6 overflow-hidden rounded-2xl border border-white/10">

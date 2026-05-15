@@ -122,8 +122,8 @@ export default function TradesPage() {
               <p className="text-sm uppercase tracking-[0.35em] text-emerald-300">Trades</p>
               <h1 className="mt-3 text-4xl font-semibold tracking-tight">Manuelle Trades loggen</h1>
               <p className="mt-3 max-w-2xl text-slate-300">
-                Erfasse Trades, die du ausserhalb der App manuell ausgefuehrt hast. Die App loggt
-                Risiko und R-Werte, fuehrt aber keine Orders aus.
+                Erfasse Trades, die du ausserhalb der App manuell ausgefuehrt hast. Die App
+                dokumentiert Risiko und R-Werte, fuehrt aber keine Orders aus.
               </p>
             </div>
             <a className="text-sm text-emerald-300 hover:text-emerald-200" href="/">
@@ -140,7 +140,7 @@ export default function TradesPage() {
               <div>
                 <h2 className="text-xl font-semibold">Trade erfassen</h2>
                 <p className="mt-2 text-sm text-slate-400">
-                  Long-only MVP: Entry muss ueber Stop liegen. Risiko wird vom Backend berechnet.
+                  Long-only MVP: Entry muss ueber Stop liegen. Risiko wird zur Dokumentation vom Backend berechnet.
                 </p>
               </div>
               <button
@@ -161,7 +161,7 @@ export default function TradesPage() {
                   className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-emerald-300"
                 >
                   <option value="watchlist">Direkt von Watchlist</option>
-                  <option value="signal">Aus Signal</option>
+                  <option value="signal">Aus Signal-Bewertung</option>
                 </select>
               </label>
 
@@ -242,7 +242,7 @@ export default function TradesPage() {
                   value={form.notes}
                   onChange={(event) => setForm({ ...form, notes: event.target.value })}
                   className="min-h-24 rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-emerald-300"
-                  placeholder="Warum wurde der Trade manuell genommen?"
+                  placeholder="Warum hast du den Trade ausserhalb der App manuell ausgefuehrt?"
                 />
               </label>
 
