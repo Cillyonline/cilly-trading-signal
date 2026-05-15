@@ -46,7 +46,11 @@ export default function Home() {
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               {plannedAreas.map((area) => (
                 <div key={area} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-                  {area === "Watchlist" || area === "CSV Import" || area === "Signals" || area === "Trades" ? (
+                  {area === "Watchlist" ||
+                  area === "CSV Import" ||
+                  area === "Signals" ||
+                  area === "Trades" ||
+                  area === "Performance" ? (
                     <a
                       className="font-medium text-emerald-300 hover:text-emerald-200"
                       href={toAreaHref(area)}
@@ -88,6 +92,9 @@ function toAreaHref(area: string) {
   }
   if (area === "Trades") {
     return "/trades";
+  }
+  if (area === "Performance") {
+    return "/performance";
   }
   return "/signals";
 }
