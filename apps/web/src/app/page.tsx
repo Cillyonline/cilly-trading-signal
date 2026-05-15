@@ -9,9 +9,9 @@ import type { WatchlistItem } from "@/types/watchlist";
 const workflowAreas = [
   { label: "Watchlist", href: "/watchlist", description: "Symbole und Asset-Klassen pflegen." },
   { label: "CSV Import", href: "/import", description: "OHLCV-Daten importieren und analysieren." },
-  { label: "Signals", href: "/signals", description: "Setups und No-Trade Gruende pruefen." },
-  { label: "Trades", href: "/trades", description: "Manuelle Trades und Management dokumentieren." },
-  { label: "Performance", href: "/performance", description: "Geschlossene Trades in R auswerten." },
+  { label: "Signals", href: "/signals", description: "Setup-Bewertungen und No-Trade Gruende pruefen." },
+  { label: "Trades", href: "/trades", description: "Extern ausgefuehrte Trades manuell dokumentieren." },
+  { label: "Performance", href: "/performance", description: "Dokumentierte Ergebnisse in R auswerten." },
 ];
 
 export default function Home() {
@@ -25,8 +25,8 @@ export default function Home() {
           </h1>
           <p className="mt-5 max-w-2xl text-lg text-slate-300">
             Kontext, Setup, Trigger und Risiko werden getrennt bewertet. Keine automatische
-            Orderausfuehrung, sondern klare Signal-Karten, manuelles Trade Logging und Performance
-            in R-Multiples.
+            Orderausfuehrung, sondern erklaerbare Signal-Karten, manuelles Trade Logging und
+            dokumentierte Ergebnisse in R-Multiples.
           </p>
         </header>
 
@@ -89,7 +89,7 @@ function buildDashboardData(
   performance: PerformanceSummary,
 ): DashboardData {
   const openTrades = trades.filter((trade) => trade.status !== "closed" && trade.status !== "reviewed");
-  const actionableSignals = signals.filter((signal) => signal.status === "armed" || signal.status === "triggered");
+  const reviewSignals = signals.filter((signal) => signal.status === "armed" || signal.status === "triggered");
   const triggeredSignals = signals.filter((signal) => signal.status === "triggered");
 
   return {
@@ -102,23 +102,23 @@ function buildDashboardData(
         tone: "border-blue-400/40",
       },
       {
-        label: "Actionable Signals",
-        value: String(actionableSignals.length),
-        detail: `${triggeredSignals.length} triggered`,
+        label: "Signals To Review",
+        value: String(reviewSignals.length),
+        detail: `${triggeredSignals.length} triggered for manual review`,
         href: "/signals",
         tone: "border-yellow-400/40",
       },
       {
         label: "Open Trades",
         value: String(openTrades.length),
-        detail: "Manuell verwaltete Trades",
+        detail: "Manuell dokumentierte Trades",
         href: "/trades",
         tone: "border-green-400/40",
       },
       {
         label: "Total R",
         value: formatR(performance.total_r),
-        detail: `${performance.closed_trade_count} closed trades`,
+        detail: `${performance.closed_trade_count} documented closes`,
         href: "/performance",
         tone: "border-slate-400/40",
       },
@@ -188,7 +188,7 @@ function DashboardEmptyState() {
       <h2 className="text-xl font-semibold">Noch keine Cockpit-Daten</h2>
       <p className="mt-2 max-w-2xl text-sm text-slate-400">
         Starte mit der Watchlist, importiere CSV-Daten und analysiere Setups. Das Dashboard zeigt
-        danach automatisch Signale, offene Trades und geschlossene R-Ergebnisse.
+        danach gespeicherte Signal-Bewertungen, manuell geloggte Trades und dokumentierte R-Ergebnisse.
       </p>
       <a
         className="mt-5 inline-flex rounded-xl bg-emerald-400 px-5 py-3 font-semibold text-slate-950"

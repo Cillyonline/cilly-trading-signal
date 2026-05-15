@@ -2,7 +2,7 @@
 
 ## Ziel Des MVP
 
-Das MVP soll eine erste nutzbare Web-App liefern, mit der Long-only Swingtrading-Setups fuer Aktien und Krypto strukturiert analysiert, gespeichert, bewertet und manuell gehandelt werden koennen.
+Das MVP soll eine erste nutzbare Web-App liefern, mit der Long-only Swingtrading-Setups fuer Aktien und Krypto strukturiert analysiert, gespeichert, bewertet und manuell dokumentiert werden koennen.
 
 Der Fokus liegt auf:
 
@@ -16,11 +16,19 @@ Der Fokus liegt auf:
 - Basis-Performance in R
 - Risk Settings
 
-Nicht enthalten sind automatische Orderausfuehrung und Broker-Anbindung.
+Nicht enthalten sind automatische Orderausfuehrung, Broker-Anbindung und Kauf-/Verkaufsanweisungen.
 
 ## Nutzer
 
-Version 1 ist fuer einen Single-User gedacht. Der Nutzer handelt manuell, nutzt Trade Republic oder andere Broker/Exchanges, prueft Signale und Trigger, dokumentiert Trades und wertet Performance in R aus.
+Version 1 ist fuer einen Single-User gedacht. Der Nutzer handelt manuell ausserhalb der App, nutzt Trade Republic oder andere Broker/Exchanges, prueft Signale und Trigger eigenverantwortlich, dokumentiert Trades und wertet historische Performance in R aus.
+
+## Safety Boundaries
+
+- Signale sind Entscheidungshilfe fuer manuelle Pruefung, keine Kauf- oder Verkaufsanweisung.
+- Ein Signal erzeugt keinen Trade und fuehrt keine Order aus.
+- Trade Logging dokumentiert extern ausgefuehrte Trades; die App hat keine Broker-Aktion.
+- Performance zeigt historische, dokumentierte R-Multiples und keine Prognose oder Gewinnzusage.
+- `No Setup` und `No Trade` sind vollwertige konservative Ergebnisse.
 
 ## Kernworkflow
 
@@ -93,7 +101,7 @@ Eine Signal-Karte enthaelt:
 - Risk/Reward
 - Invalidierung
 - Begruendung
-- Naechste Aktion
+- Naechster Pruefschritt
 
 Status:
 
@@ -113,6 +121,8 @@ Moegliche Aktionen:
 - Notiz hinzufuegen
 
 ### 6. Trade Manuell Loggen
+
+Trade Logging ist reine Dokumentation eines extern ausgefuehrten Trades. Die App platziert keine Orders.
 
 Pflichtfelder:
 
@@ -135,11 +145,11 @@ Das Tool berechnet Risiko pro Einheit, Gesamtrisiko, Risiko in Prozent, Initial 
 
 ### 7. Trade Verwalten
 
-Der Nutzer kann Stop anpassen, Target anpassen, Teilgewinn eintragen, Trade schliessen und Notizen hinzufuegen.
+Der Nutzer kann Stop-Anpassungen, Target-Anpassungen, Teilgewinn-Notizen, Trade Close und Notizen dokumentieren.
 
 ### 8. Trade Schliessen
 
-Beim Schliessen werden Exit Price, Exit Date, geschlossene Menge, Exit Reason und optional Kommentar erfasst. Das Tool berechnet Gewinn/Verlust, Ergebnis in R, Haltedauer und Setup-Ergebnis.
+Beim Schliessen werden Exit Price, Exit Date, geschlossene Menge, Exit Reason und optional Kommentar erfasst. Das Tool berechnet dokumentiertes Ergebnis, Ergebnis in R, Haltedauer und Setup-Ergebnis.
 
 ### 9. Review / Journal
 
@@ -243,7 +253,7 @@ Spalten:
 
 ### Trade Detail
 
-- urspruenglicher Trade Plan
+- urspruenglich dokumentierter Trade Plan
 - aktuelle Trade-Daten
 - Risk Calculation
 - Management Events
@@ -256,7 +266,6 @@ Spalten:
 - Total R
 - Winrate
 - Average R
-- einfacher Profit Factor
 - Best Trade
 - Worst Trade
 - Anzahl Trades
@@ -326,7 +335,7 @@ Signal-Klassen:
 - 50-64: Watchlist
 - unter 50: No Trade
 
-Der Score ist keine Gewinnwahrscheinlichkeit. Er bewertet die Setup-Qualitaet.
+Der Score ist keine Gewinnwahrscheinlichkeit und keine Handlungsempfehlung. Er bewertet die Setup-Qualitaet.
 
 ## No-Trade-Regeln Im MVP
 
@@ -357,6 +366,7 @@ Fuer Aktien wird Earnings-Risiko mindestens als Warnung angezeigt. Fuer Krypto w
 
 - automatische Orderausfuehrung
 - Broker-/Trade-Republic-Anbindung
+- Kauf-/Verkaufsanweisungen
 - Short-Signale
 - Multi-User
 - native Android-App
@@ -370,4 +380,4 @@ Fuer Aktien wird Earnings-Risiko mindestens als Warnung angezeigt. Fuer Krypto w
 
 ## Akzeptanzkriterien
 
-Das MVP ist erfolgreich, wenn Login, Watchlist, CSV Upload, OHLCV Validierung, Indikatorberechnung, Signal-Karten, Armed Setups, manuelle Trades, Risiko-/R-Berechnung, Trade Review und Basis-Performance funktionieren, ohne automatische Orderausfuehrung.
+Das MVP ist erfolgreich, wenn Login, Watchlist, CSV Upload, OHLCV Validierung, Indikatorberechnung, Signal-Karten, Armed Setups, manuelle Trade-Dokumentation, Risiko-/R-Berechnung, Trade Review und Basis-Performance funktionieren, ohne automatische Orderausfuehrung oder Broker-Anbindung.

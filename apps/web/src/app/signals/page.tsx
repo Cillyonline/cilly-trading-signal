@@ -57,8 +57,8 @@ export default function SignalsPage() {
               <p className="text-sm uppercase tracking-[0.35em] text-emerald-300">Signals</p>
               <h1 className="mt-3 text-4xl font-semibold tracking-tight">Signal-Karten pruefen</h1>
               <p className="mt-3 max-w-2xl text-slate-300">
-                Persistierte Setup-Bewertungen aus dem Backend. Die Karten sind Entscheidungshilfe
-                fuer manuelle Pruefung, keine Kauf- oder Verkaufsanweisung.
+                Persistierte Setup-Bewertungen aus dem Backend. Die Karten unterstuetzen deine
+                manuelle Pruefung und sind keine Kauf- oder Verkaufsanweisung.
               </p>
             </div>
             <a className="text-sm text-emerald-300 hover:text-emerald-200" href="/">
@@ -85,8 +85,8 @@ export default function SignalsPage() {
             <div>
               <h2 className="text-xl font-semibold">Persistierte Signale</h2>
               <p className="mt-1 text-sm text-slate-400">
-                Sortierung kommt vom Backend. Detailseiten zeigen die vollstaendige gespeicherte
-                Signal-Begruendung.
+                Sortierung kommt vom Backend. Detailseiten zeigen die gespeicherte Begruendung,
+                damit du den Kontext selbst pruefen kannst.
               </p>
             </div>
             <button
@@ -171,7 +171,7 @@ function SignalCard({ signal }: { signal: Signal }) {
       </div>
 
       <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
-        <p className="text-sm font-medium text-slate-200">Begruendung</p>
+        <p className="text-sm font-medium text-slate-200">Begruendung zur manuellen Pruefung</p>
         {reasoning.length > 0 ? (
           <ul className="mt-3 space-y-2 text-sm text-slate-300">
             {reasoning.map((item) => (
@@ -214,7 +214,7 @@ function EmptyState() {
       <p className="text-lg font-semibold text-slate-200">Noch keine Signale gespeichert.</p>
       <p className="mx-auto mt-2 max-w-xl text-sm text-slate-400">
         Importiere CSV-Daten und starte die Analyse, damit das Backend Indikatoren berechnet und
-        erklaerbare Signal-Karten erzeugt.
+        erklaerbare Setup-Bewertungen speichert.
       </p>
     </div>
   );
