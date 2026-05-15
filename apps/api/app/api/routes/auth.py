@@ -38,7 +38,8 @@ def login(payload: LoginRequest, response: Response, db: DbSession) -> AuthUserR
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-def logout(response: Response) -> Response:
+def logout() -> Response:
+    response = Response(status_code=status.HTTP_204_NO_CONTENT)
     response.delete_cookie(key=settings.auth_cookie_name, path="/")
     return response
 
