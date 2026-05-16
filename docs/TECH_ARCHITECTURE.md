@@ -432,6 +432,18 @@ Manuelle Tests:
 - Telegram Test senden
 - Webhook Test senden
 
+## Operations
+
+Operational healthcheck, logging, and first-response triage commands are documented in `docs/DEPLOYMENT_RUNBOOK.md`.
+
+Key runtime checks:
+
+- API health via `/api/health`.
+- Docker Compose service state for `web`, `api`, `postgres`, and `caddy`.
+- PostgreSQL readiness via `pg_isready`.
+- Caddy public routing for `/` and `/api/*`.
+- Service logs inspected locally on the VPS with secrets redacted before sharing.
+
 ## MVP Scope Technisch
 
 Enthalten:

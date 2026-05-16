@@ -230,6 +230,110 @@ docker compose -f infra/docker-compose.yml --profile proxy down
 
 Do not run `down --volumes` on a VPS unless you intentionally want to remove PostgreSQL data and have a verified backup.
 
+## Healthchecks And Logs
+
+Use these checks after deploys, restarts, restores, and configuration changes. Do not paste full logs into issues or chat without reviewing them for secrets, cookies, tokens, database URLs, email addresses, and trade/journal content.
+
+Container status:
+
+```bash
+docker compose -f infra/docker-compose.yml --profile proxy ps
+```
+
+API health through Caddy:
+
+```bash
+curl -fsS https://trading.example.com/api/health
+```
+
+API health directly on the VPS:
+
+```bash
+curl -fsS http://localhost:8000/api/health
+```
+
+Web response through Caddy:
+
+```bash
+curl -I https://trading.example.com
+```
+
+PostgreSQL health from the Compose service:
+
+```bash
+docker compose -f infra/docker-compose.yml exec postgres pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+```
+
+Recent logs:
+
+```bash
+docker compose -f infra/docker-compose.yml --profile proxy logs --tail=200 api
+docker compose -f infra/docker-compose.yml --profile proxy logs --tail=200 web
+docker compose -f infra/docker-compose.yml --profile proxy logs --tail=200 postgres
+docker compose -f infra/docker-compose.yml --profile proxy logs --tail=200 caddy
+```
+
+Follow logs while reproducing an issue:
+
+```bash
+docker compose -f infra/docker-compose.yml --profile proxy logs -f api
+docker compose -f infra/docker-compose.yml --profile proxy logs -f web
+```
+
+Expected healthy signals after restart or deploy:
+
+- `postgres` is `healthy` in `docker compose -f infra/docker-compose.yml --profile proxy ps`.
+- `api`, `web`, and `caddy` are running or restarting only briefly.
+- `/api/health` returns successfully through the public domain.
+- The web route returns an HTTP success or redirect response through Caddy.
+- Admin login page loads over HTTPS.
+- No service repeatedly exits.
+
+## Failure Triage
+
+API does not start:
+
+- Check `docker compose -f infra/docker-compose.yml --profile proxy logs --tail=200 api`.
+- Look for unsafe production configuration errors first.
+- Confirm `.env` exists on the VPS and does not use local placeholder secrets.
+- Confirm `DATABASE_URL` matches `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB`.
+- Confirm migrations were run after pulling new code.
+
+Web does not load:
+
+- Check `docker compose -f infra/docker-compose.yml --profile proxy logs --tail=200 web`.
+- Confirm `NEXT_PUBLIC_API_BASE_URL` points to `https://<APP_DOMAIN>/api` for public deployments.
+- Confirm the web container is running in `docker compose -f infra/docker-compose.yml --profile proxy ps`.
+- Check Caddy logs if the web container is healthy but the public domain fails.
+
+Database is unhealthy:
+
+- Check `docker compose -f infra/docker-compose.yml --profile proxy logs --tail=200 postgres`.
+- Confirm the PostgreSQL volume exists and disk space is available.
+- Confirm `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB` are consistent with `.env`.
+- Do not remove volumes while troubleshooting unless a verified restore path is ready.
+
+Caddy or HTTPS fails:
+
+- Check `docker compose -f infra/docker-compose.yml --profile proxy logs --tail=200 caddy`.
+- Confirm `APP_DOMAIN` is a real domain and DNS points to the VPS public IP.
+- Confirm ports `80` and `443` are open to the internet.
+- Confirm `infra/caddy/Caddyfile` routes `/api/*` to `api:8000` and all other traffic to `web:3000`.
+
+Login fails:
+
+- Confirm API health succeeds first.
+- Confirm the browser is using HTTPS when `AUTH_COOKIE_SECURE=true`.
+- Confirm `ADMIN_EMAIL` is the configured admin email.
+- Check API logs for authentication errors, but do not paste credentials or cookies into support channels.
+
+CSV import or analysis fails after deploy:
+
+- Confirm API health and database health first.
+- Check API logs around the failed request.
+- Confirm the uploaded CSV uses the selected timeframe and is below upload limits.
+- Treat signal output as decision-support only; failed analysis should not trigger any trading action.
+
 ## PostgreSQL Backups
 
 The MVP database stores watchlist items, imported candles, indicator snapshots, signals, trades, journal entries, settings, and auth data. Treat backups as sensitive data.
@@ -346,5 +450,4 @@ Minimum checks after first deploy or update:
 
 ## Known Gaps
 
-- Operational healthcheck and logging guidance is tracked separately in `#80`.
 - Deployment smoke test checklist is tracked separately in `#81`.
