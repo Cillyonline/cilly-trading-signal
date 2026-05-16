@@ -13,6 +13,8 @@ from app.db.session import get_db
 from app.main import create_app
 from app.models import *  # noqa: F403
 from app.models.alert import Alert
+from app.models.enums import AlertDeliveryStatus, AlertSource, AlertStatus, AlertType, Timeframe
+from app.services.auth import get_or_create_admin_user
 
 
 @pytest.fixture()
@@ -59,6 +61,47 @@ def test_telegram_test_endpoint_requires_authentication(client: TestClient) -> N
 
     assert response.status_code == 401
     assert response.json()["detail"] == "Authentication required."
+
+
+def test_alert_list_requires_authentication(client: TestClient) -> None:
+    response = client.get("/api/alerts")
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Authentication required."
+
+
+def test_alert_list_returns_recent_alert_events(
+    client: TestClient, db_session: Session
+) -> None:
+    user = get_or_create_admin_user(db_session)
+    db_session.add(
+        Alert(
+            user_id=user.id,
+            alert_type=AlertType.NEAR_TRIGGER,
+            status=AlertStatus.TRIGGERED,
+            source=AlertSource.TRADINGVIEW_WEBHOOK,
+            priority="p2",
+            trigger_level="125.50",
+            timeframe=Timeframe.FOUR_HOURS,
+            message="TradingView webhook received for AAPL: near_trigger",
+            source_payload={"symbol": "AAPL", "exchange": "NASDAQ"},
+            delivery_status=AlertDeliveryStatus.PENDING,
+        )
+    )
+    db_session.commit()
+    login(client)
+
+    response = client.get("/api/alerts")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body) == 1
+    assert body[0]["alert_type"] == "near_trigger"
+    assert body[0]["status"] == "triggered"
+    assert body[0]["source"] == "tradingview_webhook"
+    assert body[0]["delivery_status"] == "pending"
+    assert body[0]["timeframe"] == "4H"
+    assert body[0]["source_payload"]["symbol"] == "AAPL"
 
 
 def test_telegram_test_endpoint_requires_configuration(
