@@ -256,6 +256,12 @@ Benötigt:
 - `TELEGRAM_BOT_TOKEN`
 - `TELEGRAM_CHAT_ID`
 
+Aktueller MVP-Stand:
+
+- `POST /api/alerts/test-telegram` ist ein geschuetzter, expliziter Operator-Test.
+- Fehlende Telegram-Konfiguration liefert einen klaren Fehler und sendet nichts.
+- Webhook- und Signal-Flows senden noch keine automatischen Telegram-Nachrichten.
+
 Nachrichtentypen:
 
 - Entry Trigger

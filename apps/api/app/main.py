@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, health, imports, performance, signals, trades, watchlist, webhooks
+from app.api.routes import alerts, auth, health, imports, performance, signals, trades
+from app.api.routes import watchlist, webhooks
 from app.api.routes import settings as settings_routes
 from app.core.config import settings
 
@@ -18,6 +19,7 @@ def create_app() -> FastAPI:
     )
 
     app.include_router(health.router, prefix="/api")
+    app.include_router(alerts.router, prefix="/api")
     app.include_router(auth.router, prefix="/api")
     app.include_router(imports.router, prefix="/api")
     app.include_router(performance.router, prefix="/api")
