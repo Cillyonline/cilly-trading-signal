@@ -254,6 +254,18 @@ def test_analyze_import_returns_no_setup_for_insufficient_history(client: TestCl
     assert result["indicator_snapshot_count"] == 20
     assert result["signal"]["status"] == "no_setup"
     assert "1D_insufficient_candle_history" in result["signal"]["risk_flags"]
+    assert "poor_data_quality" in result["signal"]["no_trade_reasons"]
+    assert result["signal"]["next_action"]
+
+    signals_response = client.get("/api/signals")
+    detail_response = client.get(f"/api/signals/{signals_response.json()[0]['id']}")
+
+    assert signals_response.status_code == 200
+    assert "poor_data_quality" in signals_response.json()[0]["no_trade_reasons"]
+    assert signals_response.json()[0]["next_action"]
+    assert detail_response.status_code == 200
+    assert "poor_data_quality" in detail_response.json()["no_trade_reasons"]
+    assert detail_response.json()["next_action"]
 
 
 def test_get_unknown_signal_returns_404(client: TestClient) -> None:

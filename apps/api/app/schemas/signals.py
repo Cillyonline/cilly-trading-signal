@@ -30,9 +30,10 @@ class SignalRead(BaseModel):
     invalidation_reason: str | None
     reasoning: list | dict | None
     risk_flags: list | dict | None
+    no_trade_reasons: list | dict | None
+    next_action: str | None
     created_at: datetime
     updated_at: datetime
     triggered_at: datetime | None
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}

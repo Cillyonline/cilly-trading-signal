@@ -99,6 +99,7 @@ export default function SignalDetailPage({ params }: { params: { id: string } })
 function SignalDetail({ signal }: { signal: Signal }) {
   const reasoning = toTextList(signal.reasoning);
   const riskFlags = toTextList(signal.risk_flags);
+  const noTradeReasons = toTextList(signal.no_trade_reasons);
 
   return (
     <section className="grid gap-6">
@@ -165,15 +166,19 @@ function SignalDetail({ signal }: { signal: Signal }) {
 
       <section className="grid gap-6 lg:grid-cols-[1fr_0.8fr]">
         <TextList title="Vollstaendige Begruendung" empty="Keine Begruendung gespeichert." items={reasoning} />
-        <BadgeList title="Risk Flags" empty="Keine Risk Flags" items={riskFlags} />
+        <div className="grid gap-6">
+          <BadgeList title="No-Trade Gruende" empty="Keine harten No-Trade Gruende" items={noTradeReasons} tone="red" />
+          <BadgeList title="Risk Flags" empty="Keine Risk Flags" items={riskFlags} tone="orange" />
+        </div>
       </section>
 
       <article className="rounded-3xl border border-slate-400/20 bg-slate-900/60 p-6">
-        <h3 className="text-xl font-semibold">No-Trade Kontext</h3>
+        <h3 className="text-xl font-semibold">Naechste manuelle Aktion</h3>
         <p className="mt-3 text-sm text-slate-300">
-          Wenn Status oder Score Class auf `No Setup` oder `No Trade` stehen, bleibt das ein
-          vollwertiges Ergebnis. Status, Score Class, Invalidierung, Begruendung und Risk Flags
-          machen die konservative Bewertung nachvollziehbar.
+          {signal.next_action || "Keine naechste Aktion gespeichert. Weiter manuell pruefen."}
+        </p>
+        <p className="mt-3 text-xs text-slate-500">
+          Diese Aktion ist ein Pruefhinweis fuer deine manuelle Entscheidung, keine Order-Anweisung.
         </p>
       </article>
     </section>
@@ -223,19 +228,31 @@ function TextList({ title, empty, items }: { title: string; empty: string; items
   );
 }
 
-function BadgeList({ title, empty, items }: { title: string; empty: string; items: string[] }) {
+function BadgeList({
+  empty,
+  items,
+  title,
+  tone,
+}: {
+  empty: string;
+  items: string[];
+  title: string;
+  tone: "orange" | "red";
+}) {
+  const badgeClass = tone === "red" ? "bg-red-300/10 text-red-100" : "bg-orange-300/10 text-orange-100";
+  const emptyClass = "bg-emerald-300/10 text-emerald-100";
   return (
     <article className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
       <h3 className="text-xl font-semibold">{title}</h3>
       <div className="mt-5 flex flex-wrap gap-2">
         {items.length > 0 ? (
           items.map((item) => (
-            <span key={item} className="rounded-full bg-orange-300/10 px-3 py-1 text-xs text-orange-100">
+            <span key={item} className={`rounded-full px-3 py-1 text-xs ${badgeClass}`}>
               {item.replaceAll("_", " ")}
             </span>
           ))
         ) : (
-          <span className="rounded-full bg-emerald-300/10 px-3 py-1 text-xs text-emerald-100">{empty}</span>
+          <span className={`rounded-full px-3 py-1 text-xs ${emptyClass}`}>{empty}</span>
         )}
       </div>
     </article>

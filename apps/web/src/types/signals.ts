@@ -34,6 +34,8 @@ export type Signal = {
   invalidation_reason: string | null;
   reasoning: string[] | Record<string, unknown> | null;
   risk_flags: string[] | Record<string, unknown> | null;
+  no_trade_reasons: string[] | Record<string, unknown> | null;
+  next_action: string | null;
   created_at: string;
   updated_at: string;
   triggered_at: string | null;
