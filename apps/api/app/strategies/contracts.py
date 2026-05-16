@@ -125,6 +125,8 @@ class SignalEvaluationResult:
             "invalidation_reason": self.invalidation_reason,
             "reasoning": self.reasoning,
             "risk_flags": self.risk_flags,
+            "no_trade_reasons": self.no_trade_reasons,
+            "next_action": self.next_action,
         }
 
 

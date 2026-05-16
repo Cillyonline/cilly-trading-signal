@@ -65,4 +65,6 @@ def upsert_signal_from_analysis(
     signal.invalidation_reason = result.invalidation_reason
     signal.reasoning = result.reasoning
     signal.risk_flags = result.risk_flags
+    signal.no_trade_reasons = result.no_trade_reasons
+    signal.next_action = result.next_action
     return signal

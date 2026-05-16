@@ -147,6 +147,8 @@ def test_output_has_signal_compatible_fields_and_no_trade_fields() -> None:
         "invalidation_reason",
         "reasoning",
         "risk_flags",
+        "no_trade_reasons",
+        "next_action",
     }
     assert "trade" not in signal_kwargs
     assert "alert" not in signal_kwargs

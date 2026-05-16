@@ -221,6 +221,8 @@ Felder:
 - invalidation_reason
 - reasoning
 - risk_flags
+- no_trade_reasons
+- next_action
 - created_at
 - updated_at
 - triggered_at
@@ -232,7 +234,8 @@ Werte:
 - bias: bullish, neutral, bearish
 - score_class: a_setup, b_setup, watchlist, no_trade
 
-`reasoning` und `risk_flags` koennen als JSON gespeichert werden.
+`reasoning`, `risk_flags` und `no_trade_reasons` koennen als JSON gespeichert werden.
+`next_action` speichert den naechsten manuellen Pruefhinweis und ist keine Order-Anweisung.
 
 ## Alert
 

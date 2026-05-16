@@ -58,3 +58,4 @@ def test_signal_reasoning_and_risk_flags_are_json_columns() -> None:
 
     assert isinstance(signal_table.c.reasoning.type, JSON)
     assert isinstance(signal_table.c.risk_flags.type, JSON)
+    assert isinstance(signal_table.c.no_trade_reasons.type, JSON)
