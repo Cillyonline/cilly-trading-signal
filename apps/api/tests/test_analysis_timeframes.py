@@ -11,13 +11,14 @@ from app.models.enums import (
     MarketDataSource,
     MarketDataStatus,
     SignalStatus,
+    StrategyType,
     Timeframe,
     UserRole,
 )
 from app.models.market_data import IndicatorSnapshot, MarketDataCandle, MarketDataSeries
 from app.models.user import User
 from app.models.watchlist import WatchlistItem
-from app.services.analysis import build_signal_engine_input
+from app.services.analysis import analyze_market_data_series, build_signal_engine_input
 from app.strategies.orchestrator import evaluate_mvp_signal_engine
 
 
@@ -41,6 +42,124 @@ def test_build_signal_input_uses_distinct_weekly_daily_and_4h_data() -> None:
         assert payload.trend_pullback.trigger.close == Decimal("103.00000000")
         assert payload.trend_pullback.previous_ema50 == Decimal("94.00000000")
         assert weekly.id != daily.id != trigger.id
+
+
+def test_build_signal_input_creates_base_breakout_candidate() -> None:
+    with make_session() as db:
+        watchlist_item = create_watchlist_item(db)
+        create_series_with_data(db, watchlist_item, Timeframe.ONE_WEEK, Decimal("120"))
+        daily = create_series_with_base_breakout(
+            db,
+            watchlist_item,
+            Timeframe.ONE_DAY,
+            breakout_close=Decimal("111"),
+        )
+        trigger = create_series_with_base_breakout(
+            db,
+            watchlist_item,
+            Timeframe.FOUR_HOURS,
+            breakout_close=Decimal("111"),
+        )
+
+        payload = build_signal_engine_input(
+            db,
+            daily,
+            load_series_candles(db, daily),
+            load_series_snapshots(db, daily),
+        )
+
+        assert payload.base_breakout is not None
+        assert payload.base_breakout.base_high == Decimal("110.00000000")
+        assert payload.base_breakout.base_low == Decimal("100.00000000")
+        assert payload.base_breakout.close_above_base_high_4h is True
+        assert trigger.id != daily.id
+
+
+def test_base_breakout_can_be_selected_by_orchestrator() -> None:
+    with make_session() as db:
+        watchlist_item = create_watchlist_item(db)
+        create_series_with_data(db, watchlist_item, Timeframe.ONE_WEEK, Decimal("120"))
+        daily = create_series_with_base_breakout(
+            db,
+            watchlist_item,
+            Timeframe.ONE_DAY,
+            breakout_close=Decimal("111"),
+        )
+        create_series_with_base_breakout(
+            db,
+            watchlist_item,
+            Timeframe.FOUR_HOURS,
+            breakout_close=Decimal("111"),
+        )
+
+        result = evaluate_mvp_signal_engine(
+            build_signal_engine_input(
+                db,
+                daily,
+                load_series_candles(db, daily),
+                load_series_snapshots(db, daily),
+            )
+        )
+
+        assert result.strategy_type == StrategyType.BASE_BREAKOUT_LONG
+        assert result.status == SignalStatus.ARMED
+
+
+def test_wick_only_base_breakout_does_not_arm() -> None:
+    with make_session() as db:
+        watchlist_item = create_watchlist_item(db)
+        create_series_with_data(db, watchlist_item, Timeframe.ONE_WEEK, Decimal("120"))
+        daily = create_series_with_base_breakout(
+            db,
+            watchlist_item,
+            Timeframe.ONE_DAY,
+            breakout_close=Decimal("109"),
+            breakout_high=Decimal("112"),
+        )
+        create_series_with_base_breakout(
+            db,
+            watchlist_item,
+            Timeframe.FOUR_HOURS,
+            breakout_close=Decimal("109"),
+            breakout_high=Decimal("112"),
+        )
+
+        result = evaluate_mvp_signal_engine(
+            build_signal_engine_input(
+                db,
+                daily,
+                load_series_candles(db, daily),
+                load_series_snapshots(db, daily),
+            )
+        )
+
+        assert result.status != SignalStatus.ARMED
+        assert "wick_without_close_confirmation" in result.risk_flags
+
+
+def test_analyze_market_data_persists_base_breakout_signal() -> None:
+    with make_session() as db:
+        watchlist_item = create_watchlist_item(db)
+        create_series_with_data(db, watchlist_item, Timeframe.ONE_WEEK, Decimal("120"))
+        daily = create_series_with_base_breakout(
+            db,
+            watchlist_item,
+            Timeframe.ONE_DAY,
+            breakout_close=Decimal("111"),
+            with_snapshots=False,
+        )
+        create_series_with_base_breakout(
+            db,
+            watchlist_item,
+            Timeframe.FOUR_HOURS,
+            breakout_close=Decimal("111"),
+        )
+
+        result = analyze_market_data_series(db, daily)
+
+        assert result.signal.strategy_type == StrategyType.BASE_BREAKOUT_LONG
+        assert result.signal.status == SignalStatus.ARMED
+        assert result.signal.trigger_level == Decimal("110")
 
 
 def test_missing_weekly_context_returns_conservative_no_setup() -> None:
@@ -210,6 +329,72 @@ def create_series_with_data(
                 relative_volume=Decimal("0.8"),
             )
         )
+    db.commit()
+    db.refresh(series)
+    return series
+
+
+def create_series_with_base_breakout(
+    db: Session,
+    watchlist_item: WatchlistItem,
+    timeframe: Timeframe,
+    breakout_close: Decimal,
+    breakout_high: Decimal | None = None,
+    with_snapshots: bool = True,
+) -> MarketDataSeries:
+    candle_count = 201
+    series = MarketDataSeries(
+        watchlist_item_id=watchlist_item.id,
+        source=MarketDataSource.TRADINGVIEW_CSV,
+        timeframe=timeframe,
+        candle_count=candle_count,
+        status=MarketDataStatus.ANALYZED,
+        validation_errors=None,
+        file_name=f"{timeframe.value}-base.csv",
+    )
+    db.add(series)
+    db.flush()
+
+    start = datetime(2024, 1, 1, tzinfo=UTC)
+    for index in range(candle_count):
+        timestamp = start + timedelta(days=index)
+        if index >= candle_count - 21 and index < candle_count - 1:
+            close = Decimal("105")
+            high = Decimal("110")
+            low = Decimal("100")
+        elif index == candle_count - 1:
+            close = breakout_close
+            high = breakout_high or breakout_close + Decimal("1")
+            low = Decimal("106")
+        else:
+            close = Decimal("90") + Decimal(index) * Decimal("0.05")
+            high = close + Decimal("1")
+            low = close - Decimal("1")
+        db.add(
+            MarketDataCandle(
+                series_id=series.id,
+                timestamp=timestamp,
+                open=close - Decimal("0.5"),
+                high=high,
+                low=low,
+                close=close,
+                volume=Decimal("1000"),
+            )
+        )
+        if with_snapshots:
+            db.add(
+                IndicatorSnapshot(
+                    series_id=series.id,
+                    timestamp=timestamp,
+                    ema20=close - Decimal("1"),
+                    ema50=close - Decimal("2"),
+                    ema200=close - Decimal("20"),
+                    rsi14=Decimal("55"),
+                    atr14=Decimal("2"),
+                    volume_avg20=Decimal("1000"),
+                    relative_volume=Decimal("0.8"),
+                )
+            )
     db.commit()
     db.refresh(series)
     return series
