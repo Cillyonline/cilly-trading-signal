@@ -167,8 +167,8 @@ def validate_timeframe_consistency(
     candles: list[ParsedCandle], timeframe: Timeframe, errors: list[CsvImportError]
 ) -> None:
     intervals = [
-        current.timestamp - previous.timestamp
-        for previous, current in zip(candles, candles[1:])
+        candles[index].timestamp - candles[index - 1].timestamp
+        for index in range(1, len(candles))
     ]
     if not intervals:
         return
