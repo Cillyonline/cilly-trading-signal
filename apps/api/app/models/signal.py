@@ -10,6 +10,7 @@ from app.models.enums import Bias, ScoreClass, SignalStatus, StrategyType, Timef
 from app.models.types import enum_values
 
 if TYPE_CHECKING:
+    from app.models.alert import Alert
     from app.models.trade import Trade
     from app.models.user import User
     from app.models.watchlist import WatchlistItem
@@ -55,3 +56,4 @@ class Signal(Base):
     user: Mapped["User"] = relationship(back_populates="signals")
     watchlist_item: Mapped["WatchlistItem"] = relationship(back_populates="signals")
     trade: Mapped["Trade"] = relationship(back_populates="signal")
+    alerts: Mapped[list["Alert"]] = relationship(back_populates="signal")

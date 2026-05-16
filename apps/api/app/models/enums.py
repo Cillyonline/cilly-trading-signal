@@ -103,3 +103,40 @@ class TradeEventType(StrEnum):
     EXIT_SIGNAL = "exit_signal"
     CLOSED = "closed"
     NOTE = "note"
+
+
+class AlertType(StrEnum):
+    INFO = "info"
+    WATCHLIST = "watchlist"
+    ARMED = "armed"
+    NEAR_TRIGGER = "near_trigger"
+    ENTRY_TRIGGER = "entry_trigger"
+    MANAGEMENT = "management"
+    EXIT_WARNING = "exit_warning"
+    EXIT_SIGNAL = "exit_signal"
+    INVALIDATION = "invalidation"
+
+
+class AlertStatus(StrEnum):
+    ACTIVE = "active"
+    TRIGGERED = "triggered"
+    RESOLVED = "resolved"
+    CANCELLED = "cancelled"
+    EXPIRED = "expired"
+
+
+class AlertSource(StrEnum):
+    MANUAL = "manual"
+    TRADINGVIEW_WEBHOOK = "tradingview_webhook"
+    SYSTEM = "system"
+
+
+class AlertDeliveryStatus(StrEnum):
+    PENDING = "pending"
+    SENT = "sent"
+    FAILED = "failed"
+    SKIPPED = "skipped"
+
+
+class NotificationChannel(StrEnum):
+    TELEGRAM = "telegram"

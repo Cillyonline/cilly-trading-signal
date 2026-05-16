@@ -10,6 +10,7 @@ from app.models.enums import AssetClass, ExitReason, StrategyType, TradeEventTyp
 from app.models.types import enum_values
 
 if TYPE_CHECKING:
+    from app.models.alert import Alert
     from app.models.signal import Signal
     from app.models.user import User
     from app.models.watchlist import WatchlistItem
@@ -54,6 +55,7 @@ class Trade(Base):
     watchlist_item: Mapped["WatchlistItem"] = relationship(back_populates="trades")
     events: Mapped[list["TradeEvent"]] = relationship(back_populates="trade")
     journal_entry: Mapped["JournalEntry"] = relationship(back_populates="trade")
+    alerts: Mapped[list["Alert"]] = relationship(back_populates="trade")
 
     @property
     def risk_per_unit(self) -> Decimal:
