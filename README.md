@@ -27,6 +27,8 @@ Konfiguration in `.env`:
 
 In `staging` und `production` bricht die API beim Start ab, wenn lokale Platzhalter-Secrets, Default-Credentials, unsichere Datenbank-Zugangsdaten, Wildcard-CORS oder unsichere Auth-Cookies konfiguriert sind.
 
+Details zu produktionsnahen Umgebungsvariablen, sicheren Werten und Secret-Rotation stehen in `docs/DEPLOYMENT_RUNBOOK.md`. Die Werte aus `.env.example` sind lokale Platzhalter und ausserhalb von `development`/`test` absichtlich unsicher.
+
 ## Geplanter Stack
 
 - Frontend: Next.js, React, TypeScript, Tailwind CSS

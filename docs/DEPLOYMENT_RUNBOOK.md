@@ -44,6 +44,8 @@ Repository files used by this runbook:
 
 Create `.env` on the VPS from `.env.example` and replace every local placeholder before starting a staging or production-like environment.
 
+Local defaults in `.env.example` are intentionally unsafe outside `development` and `test`. When `ENVIRONMENT` is any other value, the API fails fast if protected settings still use known local placeholders or unsafe values.
+
 Required values:
 
 - `APP_DOMAIN`: public domain used by Caddy, for example `trading.example.com`.
@@ -66,6 +68,48 @@ Optional values for later alert work:
 - `TELEGRAM_CHAT_ID`
 
 Do not commit `.env` or paste secrets into issues, PRs, logs, or screenshots.
+
+## Production Secrets And Config Guards
+
+Use a secret generator for `SECRET_KEY`, `ADMIN_INITIAL_PASSWORD`, `POSTGRES_PASSWORD`, and `TRADINGVIEW_WEBHOOK_SECRET`. Prefer at least 32 random characters for secrets and unique values per environment.
+
+For `staging` and `production`, the API rejects unsafe configuration at startup when any of these checks fail:
+
+- `SECRET_KEY` is empty or a known placeholder such as `change-this-secret-key`.
+- `TRADINGVIEW_WEBHOOK_SECRET` is empty or a known placeholder such as `change-this-webhook-secret`.
+- `ADMIN_EMAIL` is empty or the local default `admin@example.com`.
+- `ADMIN_INITIAL_PASSWORD` is empty or a known placeholder such as `change-this-password`.
+- `AUTH_COOKIE_SECURE` is not `true`.
+- `DATABASE_URL` is empty or uses default PostgreSQL credentials such as `postgres:postgres`.
+- `CORS_ORIGINS` contains wildcard origins.
+
+Recommended production-style values:
+
+```dotenv
+APP_DOMAIN=trading.example.com
+ENVIRONMENT=production
+DATABASE_URL=postgresql+psycopg://cilly_app:<strong-db-password>@postgres:5432/cilly_trading_signal
+SECRET_KEY=<strong-random-secret>
+ADMIN_EMAIL=<your-admin-email>
+ADMIN_INITIAL_PASSWORD=<strong-random-password>
+AUTH_COOKIE_SECURE=true
+TRADINGVIEW_WEBHOOK_SECRET=<strong-random-webhook-secret>
+CORS_ORIGINS=["https://trading.example.com"]
+NEXT_PUBLIC_API_BASE_URL=https://trading.example.com/api
+POSTGRES_USER=cilly_app
+POSTGRES_PASSWORD=<strong-db-password>
+POSTGRES_DB=cilly_trading_signal
+```
+
+Rotation expectations:
+
+- Rotate `ADMIN_INITIAL_PASSWORD` immediately if it was shared through an unsafe channel.
+- Rotate `SECRET_KEY` only with awareness that existing sessions may become invalid.
+- Rotate `POSTGRES_PASSWORD` together in both `POSTGRES_PASSWORD` and `DATABASE_URL`.
+- Rotate `TRADINGVIEW_WEBHOOK_SECRET` when webhook URLs or payload examples may have leaked.
+- After any secret change, restart the stack and confirm login and API health.
+
+Do not store production secrets in shell history, screenshots, issue comments, PR descriptions, or copied terminal output.
 
 ## First Deployment
 
@@ -302,6 +346,5 @@ Minimum checks after first deploy or update:
 
 ## Known Gaps
 
-- Production secret and environment hardening docs are tracked separately in `#79`.
 - Operational healthcheck and logging guidance is tracked separately in `#80`.
 - Deployment smoke test checklist is tracked separately in `#81`.
