@@ -12,6 +12,7 @@ const workflowAreas = [
   { label: "Watchlist", href: "/watchlist", description: "Symbole und Asset-Klassen pflegen." },
   { label: "CSV Import", href: "/import", description: "OHLCV-Daten importieren und analysieren." },
   { label: "Signals", href: "/signals", description: "Setup-Bewertungen und No-Trade Gruende pruefen." },
+  { label: "Alerts", href: "/alerts", description: "Webhook- und Notification-Events auditieren." },
   { label: "Trades", href: "/trades", description: "Extern ausgefuehrte Trades manuell dokumentieren." },
   { label: "Performance", href: "/performance", description: "Dokumentierte Ergebnisse in R auswerten." },
 ];

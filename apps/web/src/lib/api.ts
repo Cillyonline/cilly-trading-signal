@@ -1,5 +1,5 @@
 import type { Signal } from "@/types/signals";
-import type { TelegramTestMessageResult } from "@/types/alerts";
+import type { AlertEvent, TelegramTestMessageResult } from "@/types/alerts";
 import type { AuthUser, LoginPayload } from "@/types/auth";
 import type { CsvImportResult, MarketDataAnalysisResult } from "@/types/imports";
 import type { PerformanceSummary } from "@/types/performance";
@@ -59,6 +59,14 @@ export async function fetchSignals(): Promise<Signal[]> {
   const response = await credentialedFetch(`${API_BASE_URL}/signals`, { cache: "no-store" });
   if (!response.ok) {
     throw new Error("Signale konnten nicht geladen werden.");
+  }
+  return response.json();
+}
+
+export async function fetchAlerts(): Promise<AlertEvent[]> {
+  const response = await credentialedFetch(`${API_BASE_URL}/alerts`, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error("Alert Events konnten nicht geladen werden.");
   }
   return response.json();
 }
