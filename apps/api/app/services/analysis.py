@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
@@ -9,12 +11,15 @@ from app.services.indicators import (
     indicator_input_from_model,
 )
 from app.services.signals import upsert_signal_from_analysis
+from app.strategies.base_breakout_long import BaseBreakoutInput
 from app.strategies.contracts import IndicatorContext, SignalEvaluationInput
 from app.strategies.orchestrator import SignalEngineInput, evaluate_mvp_signal_engine
 from app.strategies.trend_pullback_long import TrendPullbackInput
 
 MIN_ANALYSIS_CANDLES = 200
 REQUIRED_TIMEFRAMES = (Timeframe.ONE_WEEK, Timeframe.ONE_DAY, Timeframe.FOUR_HOURS)
+BASE_LOOKBACK_CANDLES = 20
+MIN_BASE_CANDLES = 5
 
 
 class TimeframeAnalysisData:
@@ -148,7 +153,74 @@ def build_signal_engine_input(
         previous_trend_clear=True,
         pullback_controlled=True,
     )
-    return SignalEngineInput(fallback_input=fallback_input, trend_pullback=trend_input)
+    base_breakout_input = build_base_breakout_input(
+        fallback_input,
+        daily_data,
+        trigger_data,
+        daily_context,
+        trigger_context,
+    )
+    if base_breakout_input is not None and base_interaction_active(base_breakout_input):
+        return SignalEngineInput(
+            fallback_input=fallback_input,
+            base_breakout=base_breakout_input,
+        )
+    return SignalEngineInput(
+        fallback_input=fallback_input,
+        trend_pullback=trend_input,
+        base_breakout=base_breakout_input,
+    )
+
+
+def build_base_breakout_input(
+    fallback_input: SignalEvaluationInput,
+    daily_data: TimeframeAnalysisData,
+    trigger_data: TimeframeAnalysisData,
+    daily_context: IndicatorContext,
+    trigger_context: IndicatorContext,
+) -> BaseBreakoutInput | None:
+    if len(daily_data.candles) < BASE_LOOKBACK_CANDLES + 1:
+        return None
+
+    latest_daily = daily_data.latest_candle
+    latest_trigger = trigger_data.latest_candle
+    if latest_daily is None or latest_trigger is None:
+        return None
+
+    base_candles = daily_data.candles[-(BASE_LOOKBACK_CANDLES + 1) : -1]
+    if len(base_candles) < MIN_BASE_CANDLES:
+        return None
+
+    base_high = max(candle.high for candle in base_candles)
+    base_low = min(candle.low for candle in base_candles)
+    previous_daily_snapshot = previous_snapshot(daily_data.snapshots)
+    close_above_base_high_daily = close_above_level(daily_context.close, base_high)
+    close_above_base_high_4h = close_above_level(trigger_context.close, base_high)
+    wick_above_base_high_only = (
+        (latest_daily.high > base_high and not close_above_base_high_daily)
+        or (latest_trigger.high > base_high and not close_above_base_high_4h)
+    )
+
+    return BaseBreakoutInput(
+        signal_input=fallback_input,
+        daily=daily_context,
+        trigger=trigger_context,
+        previous_ema20=getattr(previous_daily_snapshot, "ema20", None),
+        previous_ema50=getattr(previous_daily_snapshot, "ema50", None),
+        base_high=base_high,
+        base_low=base_low,
+        base_days=len(base_candles),
+        base_high_is_clear=True,
+        previous_move_constructive=True,
+        volume_drying_up=(
+            daily_context.relative_volume is None
+            or daily_context.relative_volume <= Decimal("1.0")
+        ),
+        close_above_base_high_4h=close_above_base_high_4h,
+        close_above_base_high_daily=close_above_base_high_daily,
+        wick_above_base_high_only=wick_above_base_high_only,
+        close_near_high=close_near_daily_high(latest_daily),
+    )
 
 
 def load_timeframe_analysis_data(
@@ -249,6 +321,29 @@ def previous_snapshot(snapshots: list[object]) -> object | None:
 
 def close_above_level(close: object, level: object) -> bool:
     return close is not None and level is not None and close > level
+
+
+def close_near_daily_high(candle: MarketDataCandle) -> bool:
+    candle_range = candle.high - candle.low
+    if candle_range <= 0:
+        return True
+    return (candle.high - candle.close) / candle_range <= Decimal("0.25")
+
+
+def base_interaction_active(payload: BaseBreakoutInput) -> bool:
+    if base_range_too_wide(payload.base_high, payload.base_low):
+        return False
+    return (
+        payload.close_above_base_high_4h
+        or payload.close_above_base_high_daily
+        or payload.wick_above_base_high_only
+    )
+
+
+def base_range_too_wide(base_high: Decimal | None, base_low: Decimal | None) -> bool:
+    if base_high is None or base_low is None or base_low <= 0:
+        return False
+    return (base_high - base_low) / base_low > Decimal("0.15")
 
 
 def timeframe_quality_flags(timeframe_data: dict[Timeframe, TimeframeAnalysisData]) -> list[str]:
