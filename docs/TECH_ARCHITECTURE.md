@@ -338,26 +338,33 @@ Keine Secrets im Repo:
 
 ## Environment Variables
 
+Local `.env.example` values are development placeholders. In `staging` and `production`, the API validates deployment safety at startup and rejects known unsafe defaults.
+
 Backend:
 
-- DATABASE_URL
-- SECRET_KEY
-- ADMIN_EMAIL
-- ADMIN_INITIAL_PASSWORD
-- TRADINGVIEW_WEBHOOK_SECRET
-- TELEGRAM_BOT_TOKEN
-- TELEGRAM_CHAT_ID
-- CORS_ORIGINS
+- `DATABASE_URL`: must point to PostgreSQL with non-default credentials outside local development.
+- `SECRET_KEY`: strong random secret for signing sessions; never use local placeholders.
+- `ADMIN_EMAIL`: single admin login email; must not be `admin@example.com` outside local development.
+- `ADMIN_INITIAL_PASSWORD`: strong initial admin password; never use local placeholders.
+- `AUTH_COOKIE_NAME`: cookie name, defaults to `cilly_session`.
+- `AUTH_COOKIE_SECURE`: must be `true` for HTTPS staging/production.
+- `AUTH_SESSION_TTL_SECONDS`: session lifetime in seconds.
+- `TRADINGVIEW_WEBHOOK_SECRET`: strong random webhook secret for later alert ingestion.
+- `TELEGRAM_BOT_TOKEN`: optional until Telegram alerts are enabled.
+- `TELEGRAM_CHAT_ID`: optional until Telegram alerts are enabled.
+- `CORS_ORIGINS`: exact allowed frontend origins; wildcard origins are rejected outside local development.
 
 Frontend:
 
-- NEXT_PUBLIC_API_BASE_URL
+- `NEXT_PUBLIC_API_BASE_URL`: public browser-facing API base URL, for example `https://trading.example.com/api`.
 
 Postgres:
 
-- POSTGRES_USER
-- POSTGRES_PASSWORD
-- POSTGRES_DB
+- `POSTGRES_USER`: database user; avoid default `postgres` outside local development.
+- `POSTGRES_PASSWORD`: strong database password; avoid default or placeholder passwords.
+- `POSTGRES_DB`: database name.
+
+See `docs/DEPLOYMENT_RUNBOOK.md` for production-style examples and rotation guidance.
 
 ## Deployment Auf VPS
 
