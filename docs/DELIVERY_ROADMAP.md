@@ -43,14 +43,14 @@ Missing:
 
 - Live market data API integration.
 - TradingView webhook ingestion and Telegram alert delivery.
-- Production deployment runbook, backup/restore process, monitoring, and operational alerting.
+- Backup/restore process, monitoring, and operational alerting.
 - Multi-user mode, roles beyond the MVP admin, public registration, and password reset flows.
 - Backtesting, strategy validation, or profitability reporting.
 - Broker integration or automatic order execution.
 
 Current blockers and risks:
 
-- The app is not production-ready until deployment, monitoring, backups, secrets operations, and security review are completed.
+- The app is not production-ready until deployment is tested and monitoring, backups, secrets operations, and security review are completed.
 - CSV timeframe/upload hardening must be merged before CSV import should be considered robust against common user mistakes.
 - Strategy behavior remains a deterministic decision-support hypothesis and must not be presented as trading advice or validated profitability.
 - Local development depends on `uv`, Python 3.12, Node.js 20, Docker, and a reachable PostgreSQL database or Docker Compose.
