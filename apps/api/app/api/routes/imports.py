@@ -11,7 +11,7 @@ from app.models.user import User
 from app.schemas.analysis import MarketDataAnalysisResult
 from app.schemas.imports import CsvImportResult
 from app.services.analysis import analyze_market_data_series
-from app.services.csv_import import import_tradingview_csv
+from app.services.csv_import import MAX_CSV_UPLOAD_BYTES, import_tradingview_csv
 from app.services.watchlist import get_watchlist_item
 
 router = APIRouter(prefix="/imports", tags=["imports"])
@@ -35,6 +35,18 @@ async def import_csv(
         )
 
     content_bytes = await file.read()
+    if len(content_bytes) > MAX_CSV_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=[
+                {
+                    "row": None,
+                    "field": "file",
+                    "message": f"CSV file must be at most {MAX_CSV_UPLOAD_BYTES} bytes.",
+                }
+            ],
+        )
+
     try:
         content = content_bytes.decode("utf-8-sig")
     except UnicodeDecodeError as error:

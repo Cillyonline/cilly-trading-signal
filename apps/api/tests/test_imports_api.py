@@ -1,5 +1,5 @@
 from collections.abc import Iterator
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 import pytest
@@ -53,8 +53,28 @@ def login(client: TestClient) -> None:
 
 def valid_csv(row_count: int = 20) -> str:
     rows = ["time,open,high,low,close,volume"]
-    for day in range(1, row_count + 1):
-        rows.append(f"2024-01-{day:02d},100,110,90,105,1000")
+    start = date(2024, 1, 1)
+    for index in range(row_count):
+        current_date = start + timedelta(days=index)
+        rows.append(f"{current_date.isoformat()},100,110,90,105,1000")
+    return "\n".join(rows)
+
+
+def valid_four_hour_csv(row_count: int = 20) -> str:
+    rows = ["time,open,high,low,close,volume"]
+    start = datetime(2024, 1, 1)
+    for index in range(row_count):
+        current_time = start + timedelta(hours=4 * index)
+        rows.append(f"{current_time.isoformat()},100,110,90,105,1000")
+    return "\n".join(rows)
+
+
+def valid_weekly_csv(row_count: int = 20) -> str:
+    rows = ["time,open,high,low,close,volume"]
+    start = date(2024, 1, 1)
+    for index in range(row_count):
+        current_date = start + timedelta(days=7 * index)
+        rows.append(f"{current_date.isoformat()},100,110,90,105,1000")
     return "\n".join(rows)
 
 
@@ -79,10 +99,11 @@ def post_csv_import(
     watchlist_item_id: int,
     csv_content: str,
     file_name: str = "tradingview.csv",
+    timeframe: str = "1D",
 ) -> object:
     return client.post(
         "/api/imports/csv",
-        data={"watchlist_item_id": str(watchlist_item_id), "timeframe": "1D"},
+        data={"watchlist_item_id": str(watchlist_item_id), "timeframe": timeframe},
         files={"file": (file_name, csv_content, "text/csv")},
     )
 
@@ -102,6 +123,102 @@ def test_import_csv_persists_valid_candles(client: TestClient) -> None:
     assert result["start_time"].startswith("2024-01-01")
     assert result["end_time"].startswith("2024-01-20")
     assert result["errors"] == []
+
+
+def test_import_csv_accepts_valid_four_hour_spacing(client: TestClient) -> None:
+    watchlist_item_id = create_watchlist_item(client)
+
+    response = post_csv_import(
+        client,
+        watchlist_item_id,
+        valid_four_hour_csv(),
+        timeframe="4H",
+    )
+
+    assert response.status_code == 200
+    assert response.json()["timeframe"] == "4H"
+    assert response.json()["candle_count"] == 20
+
+
+def test_import_csv_accepts_valid_weekly_spacing(client: TestClient) -> None:
+    watchlist_item_id = create_watchlist_item(client)
+
+    response = post_csv_import(
+        client,
+        watchlist_item_id,
+        valid_weekly_csv(),
+        timeframe="1W",
+    )
+
+    assert response.status_code == 200
+    assert response.json()["timeframe"] == "1W"
+    assert response.json()["candle_count"] == 20
+
+
+def test_import_csv_rejects_daily_data_uploaded_as_four_hour(client: TestClient) -> None:
+    watchlist_item_id = create_watchlist_item(client)
+
+    response = post_csv_import(client, watchlist_item_id, valid_csv(), timeframe="4H")
+
+    assert response.status_code == 422
+    assert any(
+        error["field"] == "time" and "Selected timeframe 4H does not match" in error["message"]
+        for error in response.json()["detail"]
+    )
+
+
+def test_import_csv_rejects_four_hour_data_uploaded_as_daily(client: TestClient) -> None:
+    watchlist_item_id = create_watchlist_item(client)
+
+    response = post_csv_import(client, watchlist_item_id, valid_four_hour_csv(), timeframe="1D")
+
+    assert response.status_code == 422
+    assert any(
+        error["field"] == "time" and "Selected timeframe 1D does not match" in error["message"]
+        for error in response.json()["detail"]
+    )
+
+
+def test_import_csv_rejects_daily_data_uploaded_as_weekly(client: TestClient) -> None:
+    watchlist_item_id = create_watchlist_item(client)
+
+    response = post_csv_import(client, watchlist_item_id, valid_csv(), timeframe="1W")
+
+    assert response.status_code == 422
+    assert any(
+        error["field"] == "time" and "Selected timeframe 1W does not match" in error["message"]
+        for error in response.json()["detail"]
+    )
+
+
+def test_import_csv_rejects_too_many_candles(client: TestClient) -> None:
+    watchlist_item_id = create_watchlist_item(client)
+
+    response = post_csv_import(client, watchlist_item_id, valid_csv(row_count=10_001))
+
+    assert response.status_code == 422
+    assert any(
+        error["message"] == "CSV must contain at most 10000 candles."
+        for error in response.json()["detail"]
+    )
+
+
+def test_import_csv_rejects_oversized_upload(client: TestClient) -> None:
+    watchlist_item_id = create_watchlist_item(client)
+    csv_content = "time,open,high,low,close,volume\n" + (
+        "2024-01-01,100,110,90,105,1000\n" * 70_000
+    )
+
+    response = post_csv_import(client, watchlist_item_id, csv_content)
+
+    assert response.status_code == 413
+    assert response.json()["detail"] == [
+        {
+            "row": None,
+            "field": "file",
+            "message": "CSV file must be at most 2097152 bytes.",
+        }
+    ]
 
 
 def test_import_csv_rejects_missing_required_column(client: TestClient) -> None:

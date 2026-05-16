@@ -1,6 +1,6 @@
 import csv
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from io import StringIO
 
@@ -14,6 +14,14 @@ from app.schemas.imports import CsvImportError, CsvImportResult
 
 REQUIRED_COLUMNS = {"time", "open", "high", "low", "close", "volume"}
 MIN_CANDLE_COUNT = 20
+MAX_CANDLE_COUNT = 10_000
+MAX_CSV_UPLOAD_BYTES = 2 * 1024 * 1024
+
+FOUR_HOUR_MIN_INTERVAL = timedelta(hours=3)
+FOUR_HOUR_MAX_INTERVAL = timedelta(hours=5)
+DAILY_MIN_INTERVAL = timedelta(hours=18)
+WEEKLY_MIN_INTERVAL = timedelta(days=5)
+WEEKLY_LIKE_INTERVAL = timedelta(days=6)
 
 
 @dataclass(frozen=True)
@@ -42,6 +50,9 @@ def import_tradingview_csv(
                 message=f"CSV must contain at least {MIN_CANDLE_COUNT} valid candles."
             )
         )
+
+    if not errors:
+        validate_timeframe_consistency(candles, timeframe, errors)
 
     if errors:
         return CsvImportResult(
@@ -125,6 +136,14 @@ def parse_tradingview_csv(content: str, errors: list[CsvImportError]) -> list[Pa
     seen_timestamps: set[datetime] = set()
 
     for row_number, row in enumerate(reader, start=2):
+        if len(candles) >= MAX_CANDLE_COUNT:
+            errors.append(
+                CsvImportError(
+                    message=f"CSV must contain at most {MAX_CANDLE_COUNT} candles."
+                )
+            )
+            break
+
         candle = parse_row(row, row_number, errors)
         if candle is None:
             continue
@@ -142,6 +161,70 @@ def parse_tradingview_csv(content: str, errors: list[CsvImportError]) -> list[Pa
 
     candles.sort(key=lambda candle: candle.timestamp)
     return candles
+
+
+def validate_timeframe_consistency(
+    candles: list[ParsedCandle], timeframe: Timeframe, errors: list[CsvImportError]
+) -> None:
+    intervals = [
+        current.timestamp - previous.timestamp
+        for previous, current in zip(candles, candles[1:])
+    ]
+    if not intervals:
+        return
+
+    if timeframe == Timeframe.FOUR_HOURS:
+        expected_intervals = [
+            interval
+            for interval in intervals
+            if FOUR_HOUR_MIN_INTERVAL <= interval <= FOUR_HOUR_MAX_INTERVAL
+        ]
+        too_short_intervals = [
+            interval for interval in intervals if interval < FOUR_HOUR_MIN_INTERVAL
+        ]
+        if too_short_intervals or not expected_intervals:
+            errors.append(
+                CsvImportError(
+                    field="time",
+                    message=(
+                        "Selected timeframe 4H does not match CSV timestamps; "
+                        "expected recurring four-hour candle spacing."
+                    ),
+                )
+            )
+        return
+
+    if timeframe == Timeframe.ONE_DAY:
+        intraday_intervals = [
+            interval for interval in intervals if interval < DAILY_MIN_INTERVAL
+        ]
+        weekly_like = all(interval >= WEEKLY_LIKE_INTERVAL for interval in intervals)
+        if intraday_intervals or weekly_like:
+            errors.append(
+                CsvImportError(
+                    field="time",
+                    message=(
+                        "Selected timeframe 1D does not match CSV timestamps; "
+                        "expected daily candle spacing with possible weekend or holiday gaps."
+                    ),
+                )
+            )
+        return
+
+    if timeframe == Timeframe.ONE_WEEK:
+        too_short_intervals = [
+            interval for interval in intervals if interval < WEEKLY_MIN_INTERVAL
+        ]
+        if too_short_intervals:
+            errors.append(
+                CsvImportError(
+                    field="time",
+                    message=(
+                        "Selected timeframe 1W does not match CSV timestamps; "
+                        "expected weekly candle spacing."
+                    ),
+                )
+            )
 
 
 def parse_row(
