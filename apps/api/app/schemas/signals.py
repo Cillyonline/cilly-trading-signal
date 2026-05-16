@@ -37,3 +37,7 @@ class SignalRead(BaseModel):
     triggered_at: datetime | None
 
     model_config = {"from_attributes": True}
+
+
+class SignalStatusUpdate(BaseModel):
+    status: SignalStatus
