@@ -1,4 +1,4 @@
-import type { Signal } from "@/types/signals";
+import type { Signal, SignalStatusUpdatePayload } from "@/types/signals";
 import type { AlertEvent, TelegramTestMessageResult } from "@/types/alerts";
 import type { AuthUser, LoginPayload } from "@/types/auth";
 import type { CsvImportResult, MarketDataAnalysisResult } from "@/types/imports";
@@ -79,6 +79,24 @@ export async function fetchSignal(signalId: number): Promise<Signal> {
   if (!response.ok) {
     throw new Error("Signal konnte nicht geladen werden.");
   }
+  return response.json();
+}
+
+export async function updateSignalStatus(
+  signalId: number,
+  payload: SignalStatusUpdatePayload,
+): Promise<Signal> {
+  const response = await credentialedFetch(`${API_BASE_URL}/signals/${signalId}/status`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(formatApiError(body?.detail, "Signal Status konnte nicht geaendert werden."));
+  }
+
   return response.json();
 }
 

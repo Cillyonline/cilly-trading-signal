@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { fetchSignal } from "@/lib/api";
+import { fetchSignal, updateSignalStatus } from "@/lib/api";
 import type { Signal, SignalStatus } from "@/types/signals";
 
 const statusTone: Record<SignalStatus, string> = {
@@ -28,7 +28,10 @@ const statusLabel: Record<SignalStatus, string> = {
 export default function SignalDetailPage({ params }: { params: { id: string } }) {
   const [signal, setSignal] = useState<Signal | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [statusError, setStatusError] = useState<string | null>(null);
 
   async function loadSignal() {
     const signalId = Number(params.id);
@@ -52,6 +55,24 @@ export default function SignalDetailPage({ params }: { params: { id: string } })
   useEffect(() => {
     void loadSignal();
   }, [params.id]);
+
+  async function submitStatus(targetStatus: SignalStatus) {
+    if (!signal) {
+      return;
+    }
+    setStatusError(null);
+    setStatusMessage(null);
+    setIsUpdatingStatus(true);
+    try {
+      const updated = await updateSignalStatus(signal.id, { status: targetStatus });
+      setSignal(updated);
+      setStatusMessage(`Status manuell auf ${statusLabel[targetStatus]} gesetzt.`);
+    } catch (updateError) {
+      setStatusError(updateError instanceof Error ? updateError.message : "Unbekannter Fehler.");
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  }
 
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-8 text-slate-100">
@@ -78,13 +99,19 @@ export default function SignalDetailPage({ params }: { params: { id: string } })
         </header>
 
         {error ? <ErrorMessage message={error} onRetry={() => void loadSignal()} /> : null}
+        {statusError ? <Notice message={statusError} tone="error" /> : null}
+        {statusMessage ? <Notice message={statusMessage} tone="success" /> : null}
 
         {isLoading ? (
           <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
             <p className="text-sm text-slate-400">Signal wird geladen...</p>
           </section>
         ) : signal ? (
-          <SignalDetail signal={signal} />
+          <SignalDetail
+            signal={signal}
+            isUpdatingStatus={isUpdatingStatus}
+            onStatusChange={(targetStatus) => void submitStatus(targetStatus)}
+          />
         ) : error ? null : (
           <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-8 text-center">
             <p className="text-lg font-semibold text-slate-200">Signal nicht gefunden.</p>
@@ -96,7 +123,15 @@ export default function SignalDetailPage({ params }: { params: { id: string } })
   );
 }
 
-function SignalDetail({ signal }: { signal: Signal }) {
+function SignalDetail({
+  isUpdatingStatus,
+  onStatusChange,
+  signal,
+}: {
+  isUpdatingStatus: boolean;
+  onStatusChange: (targetStatus: SignalStatus) => void;
+  signal: Signal;
+}) {
   const reasoning = toTextList(signal.reasoning);
   const riskFlags = toTextList(signal.risk_flags);
   const noTradeReasons = toTextList(signal.no_trade_reasons);
@@ -126,6 +161,36 @@ function SignalDetail({ signal }: { signal: Signal }) {
           <div className="grid gap-3 sm:grid-cols-2 lg:min-w-96">
             <Metric label="Score" value={formatScore(signal)} />
             <Metric label="R:R" value={signal.risk_reward ? `${formatNumber(signal.risk_reward)}R` : "-"} />
+          </div>
+        </div>
+      </article>
+
+      <article className="rounded-3xl border border-emerald-400/20 bg-emerald-950/20 p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <h3 className="text-xl font-semibold text-emerald-100">Manueller Review Status</h3>
+            <p className="mt-2 max-w-2xl text-sm text-emerald-50/70">
+              Setze den Review-Zustand bewusst und manuell. Diese Aktionen erstellen keine Trades,
+              platzieren keine Orders und sind keine Ausfuehrungsanweisung.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {manualStatusTargets(signal.status).map((targetStatus) => (
+              <button
+                key={targetStatus}
+                type="button"
+                disabled={isUpdatingStatus}
+                onClick={() => onStatusChange(targetStatus)}
+                className="rounded-xl border border-emerald-300/40 px-4 py-2 text-sm font-semibold text-emerald-100 hover:bg-emerald-300/10 disabled:opacity-60"
+              >
+                {statusActionLabel[targetStatus]}
+              </button>
+            ))}
+            {manualStatusTargets(signal.status).length === 0 ? (
+              <span className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-400">
+                Keine manuelle Transition verfuegbar
+              </span>
+            ) : null}
           </div>
         </div>
       </article>
@@ -183,6 +248,34 @@ function SignalDetail({ signal }: { signal: Signal }) {
       </article>
     </section>
   );
+}
+
+const manualStatusTransitions: Partial<Record<SignalStatus, SignalStatus[]>> = {
+  watchlist: ["armed", "invalidated", "expired"],
+  armed: ["invalidated", "missed", "expired"],
+  triggered: ["invalidated", "missed", "expired"],
+};
+
+const statusActionLabel: Record<SignalStatus, string> = {
+  watchlist: "Auf Watchlist setzen",
+  armed: "Als Armed markieren",
+  triggered: "Als Triggered markieren",
+  invalidated: "Invalidieren",
+  no_setup: "Als No Setup markieren",
+  missed: "Als Missed markieren",
+  expired: "Als Expired markieren",
+};
+
+function manualStatusTargets(currentStatus: SignalStatus) {
+  return manualStatusTransitions[currentStatus] ?? [];
+}
+
+function Notice({ message, tone }: { message: string; tone: "error" | "success" }) {
+  const classes =
+    tone === "error"
+      ? "border-red-400/30 bg-red-950/40 text-red-100"
+      : "border-emerald-300/30 bg-emerald-300/10 text-emerald-50";
+  return <div className={`whitespace-pre-line rounded-2xl border p-4 text-sm ${classes}`}>{message}</div>;
 }
 
 function ErrorMessage({ message, onRetry }: { message: string; onRetry: () => void }) {

@@ -40,3 +40,7 @@ export type Signal = {
   updated_at: string;
   triggered_at: string | null;
 };
+
+export type SignalStatusUpdatePayload = {
+  status: SignalStatus;
+};

@@ -1,8 +1,33 @@
+from datetime import UTC, datetime
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
+from app.models.enums import SignalStatus
 from app.models.signal import Signal
 from app.strategies.contracts import SignalEvaluationResult
+
+MANUAL_SIGNAL_STATUS_TRANSITIONS: dict[SignalStatus, set[SignalStatus]] = {
+    SignalStatus.WATCHLIST: {
+        SignalStatus.ARMED,
+        SignalStatus.INVALIDATED,
+        SignalStatus.EXPIRED,
+    },
+    SignalStatus.ARMED: {
+        SignalStatus.INVALIDATED,
+        SignalStatus.MISSED,
+        SignalStatus.EXPIRED,
+    },
+    SignalStatus.TRIGGERED: {
+        SignalStatus.INVALIDATED,
+        SignalStatus.MISSED,
+        SignalStatus.EXPIRED,
+    },
+}
+
+
+class InvalidSignalStatusTransitionError(Exception):
+    pass
 
 
 def list_signals(db: Session, user_id: int) -> list[Signal]:
@@ -24,6 +49,28 @@ def get_signal(db: Session, user_id: int, signal_id: int) -> Signal | None:
     )
     if signal is None or signal.user_id != user_id:
         return None
+    return signal
+
+
+def update_signal_status(
+    db: Session,
+    user_id: int,
+    signal_id: int,
+    target_status: SignalStatus,
+) -> Signal | None:
+    signal = get_signal(db, user_id, signal_id)
+    if signal is None:
+        return None
+
+    allowed_targets = MANUAL_SIGNAL_STATUS_TRANSITIONS.get(signal.status, set())
+    if target_status not in allowed_targets:
+        raise InvalidSignalStatusTransitionError
+
+    signal.status = target_status
+    if target_status == SignalStatus.INVALIDATED:
+        signal.invalidated_at = datetime.now(UTC)
+    db.commit()
+    db.refresh(signal)
     return signal
 
 
