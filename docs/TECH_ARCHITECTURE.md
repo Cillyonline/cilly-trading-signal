@@ -394,6 +394,9 @@ MVP Mindestanforderung:
 - regelmaessiger PostgreSQL Dump
 - Backup ausserhalb des Containers
 - manuelle Restore-Anleitung
+- Restore-Verifikation auf nicht-produktiver Kopie
+
+The current backup and restore workflow is documented in `docs/DEPLOYMENT_RUNBOOK.md` and supported by `scripts/backup_postgres.sh` and `scripts/restore_postgres.sh`.
 
 Spaeter:
 

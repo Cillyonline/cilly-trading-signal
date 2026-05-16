@@ -186,6 +186,77 @@ docker compose -f infra/docker-compose.yml --profile proxy down
 
 Do not run `down --volumes` on a VPS unless you intentionally want to remove PostgreSQL data and have a verified backup.
 
+## PostgreSQL Backups
+
+The MVP database stores watchlist items, imported candles, indicator snapshots, signals, trades, journal entries, settings, and auth data. Treat backups as sensitive data.
+
+Backup files must not be committed to the repository or attached to issues/PRs. Store them outside the repo working tree when possible, for example under `/var/backups/cilly-trading-signal/postgres` with restrictive permissions.
+
+Create a backup with the helper script:
+
+```bash
+BACKUP_DIR=/var/backups/cilly-trading-signal/postgres ./scripts/backup_postgres.sh
+```
+
+The script creates a PostgreSQL custom-format dump using the running `postgres` Compose service. It reads these optional environment variables:
+
+- `COMPOSE_FILE`, default `infra/docker-compose.yml`.
+- `BACKUP_DIR`, default `backups/postgres`.
+- `POSTGRES_DB`, default `cilly_trading_signal`.
+- `POSTGRES_USER`, default `postgres`.
+
+Minimum retention guidance:
+
+- Keep at least one known-good backup before each deployment.
+- Keep several recent daily backups while operating the MVP.
+- Move important backups off the VPS or to encrypted storage when handling real user data.
+- Periodically delete old backups intentionally; do not let disk usage grow without review.
+
+Storage risks:
+
+- PostgreSQL dumps can contain trade notes, journal text, auth data, and market data.
+- Anyone with a backup may be able to inspect or restore sensitive app data.
+- Do not store backups in public buckets, synced folders, screenshots, or support tickets.
+
+## PostgreSQL Restore
+
+Restore only after confirming the target database can be replaced. A restore should be tested on a non-production copy before relying on it operationally.
+
+Restore with the helper script:
+
+```bash
+./scripts/restore_postgres.sh /var/backups/cilly-trading-signal/postgres/cilly_trading_signal_YYYYMMDDTHHMMSSZ.dump
+```
+
+The restore script:
+
+- Stops the `api` and `web` services before replacing the database.
+- Copies the selected dump into the running `postgres` container.
+- Drops and recreates the configured database.
+- Runs `pg_restore` into the new database.
+- Removes the temporary dump from the container.
+- Starts the `api` and `web` services again.
+
+Verify a restore:
+
+```bash
+curl -fsS https://trading.example.com/api/health
+```
+
+Then log in and check a small sample of user-owned data:
+
+- Watchlist item exists.
+- Recent import history or signals are present.
+- Trades and journal entries expected in the backup are visible.
+
+Safe local verification path:
+
+1. Start a local Docker Compose stack with a disposable `.env`.
+2. Restore the dump into that local stack.
+3. Run the API health check.
+4. Log in and confirm sample data exists.
+5. Stop the local stack and remove disposable volumes only after confirming the test is complete.
+
 ## Basic Rollback
 
 Rollback assumes the previous commit is still available and the database schema is compatible with the previous app version.
@@ -214,7 +285,7 @@ docker compose -f infra/docker-compose.yml --profile proxy up --build -d
 curl -fsS https://trading.example.com/api/health
 ```
 
-If a migration has already changed the database, do not assume code rollback is enough. Restore testing and migration rollback policy are tracked separately from this runbook.
+If a migration has already changed the database, do not assume code rollback is enough. Confirm whether a database restore is required before continuing.
 
 ## Post-Deploy Checks
 
@@ -231,7 +302,6 @@ Minimum checks after first deploy or update:
 
 ## Known Gaps
 
-- Backup and restore workflow is tracked separately in `#78`.
 - Production secret and environment hardening docs are tracked separately in `#79`.
 - Operational healthcheck and logging guidance is tracked separately in `#80`.
 - Deployment smoke test checklist is tracked separately in `#81`.
