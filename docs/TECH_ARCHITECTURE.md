@@ -361,6 +361,8 @@ Postgres:
 
 ## Deployment Auf VPS
 
+Operational deployment steps are documented in `docs/DEPLOYMENT_RUNBOOK.md`.
+
 Zielsetup:
 
 - VPS

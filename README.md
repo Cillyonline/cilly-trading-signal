@@ -158,6 +158,7 @@ uv run --no-project --with pytest --with "fastapi[standard]" --with pydantic-set
 - `docs/DECISIONS.md`
 - `docs/DATA_MODEL.md`
 - `docs/TECH_ARCHITECTURE.md`
+- `docs/DEPLOYMENT_RUNBOOK.md`
 
 ## Aktueller Stand
 
