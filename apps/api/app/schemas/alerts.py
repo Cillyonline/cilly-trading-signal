@@ -68,3 +68,8 @@ class TradingViewWebhookResult(BaseModel):
     status: AlertStatus
     delivery_status: AlertDeliveryStatus
     message: str
+
+
+class TelegramTestMessageResult(BaseModel):
+    status: str
+    message: str
