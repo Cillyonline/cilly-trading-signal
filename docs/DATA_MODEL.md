@@ -38,14 +38,15 @@ MVP:
 - MarketDataCandle
 - IndicatorSnapshot
 - Signal
+- Alert
+- NotificationLog
 - Trade
 - TradeEvent
 - JournalEntry
 
 MVP+:
 
-- Alert
-- NotificationLog
+- TradingViewWebhookDelivery
 
 Spaeter:
 
@@ -239,7 +240,7 @@ Werte:
 
 ## Alert
 
-Zweck: handlungsorientiertes Ereignis oder vorbereiteter Trigger.
+Zweck: gespeichertes Benachrichtigungs- oder Review-Ereignis. Ein Alert ist keine Order und fuehrt keinen Trade aus.
 
 Felder:
 
@@ -250,13 +251,14 @@ Felder:
 - watchlist_item_id
 - alert_type
 - status
-- color
 - priority
 - source
 - trigger_level
 - timeframe
 - message
-- action_required
+- source_payload
+- delivery_status
+- delivery_error
 - last_triggered_at
 - created_at
 - updated_at
@@ -265,9 +267,11 @@ Werte:
 
 - alert_type: info, watchlist, armed, near_trigger, entry_trigger, management, exit_warning, exit_signal, invalidation
 - status: active, triggered, resolved, cancelled, expired
-- color: gray, yellow, green, blue, red
 - priority: p1, p2, p3
 - source: manual, tradingview_webhook, system
+- delivery_status: pending, sent, failed, skipped
+
+`source_payload` speichert validierte Metadaten des Ausloesers, z.B. einen spaeteren TradingView Webhook Payload. Es darf keine Broker-Orderdaten enthalten.
 
 ## Trade
 
@@ -369,7 +373,15 @@ Felder:
 - status
 - sent_at
 - error_message
+- provider_payload
 - created_at
+
+Werte:
+
+- channel: telegram
+- status: pending, sent, failed, skipped
+
+NotificationLog dokumentiert Zustellversuche. Es ist kein Ausfuehrungs- oder Broker-Log.
 
 ## Beziehungen
 

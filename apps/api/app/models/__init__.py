@@ -1,9 +1,14 @@
 from app.models.enums import (
+    AlertDeliveryStatus,
+    AlertSource,
+    AlertStatus,
+    AlertType,
     AssetClass,
     Bias,
     ExitReason,
     MarketDataSource,
     MarketDataStatus,
+    NotificationChannel,
     ScoreClass,
     SignalStatus,
     StrategyType,
@@ -14,6 +19,7 @@ from app.models.enums import (
     TrendState,
     UserRole,
 )
+from app.models.alert import Alert, NotificationLog
 from app.models.market_data import IndicatorSnapshot, MarketDataCandle, MarketDataSeries
 from app.models.settings import Settings
 from app.models.signal import Signal
@@ -23,6 +29,11 @@ from app.models.watchlist import WatchlistItem
 
 __all__ = [
     "AssetClass",
+    "Alert",
+    "AlertDeliveryStatus",
+    "AlertSource",
+    "AlertStatus",
+    "AlertType",
     "Bias",
     "ExitReason",
     "IndicatorSnapshot",
@@ -31,6 +42,8 @@ __all__ = [
     "MarketDataSeries",
     "MarketDataSource",
     "MarketDataStatus",
+    "NotificationChannel",
+    "NotificationLog",
     "ScoreClass",
     "Settings",
     "Signal",
