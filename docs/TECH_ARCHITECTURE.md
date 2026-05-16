@@ -239,7 +239,15 @@ TradingView sendet JSON an `/api/webhooks/tradingview`:
 }
 ```
 
-Backend prueft Secret, Payload, Setup, Symbol, Timeframe, Status, Risk/Reward und offene Trades. Wenn gueltig, wird Signal auf `triggered` gesetzt, ein Alert erstellt, Telegram gesendet und ein Event geloggt.
+Backend prueft Secret, Symbol, Timeframe, Preis/Zeit und Trigger. Wenn gueltig, wird ein Alert zur manuellen Review gespeichert.
+
+Aktueller MVP-Stand:
+
+- kein Trade wird erstellt.
+- keine Order wird platziert.
+- kein Broker wird angesprochen.
+- keine Telegram-Nachricht wird automatisch gesendet.
+- das Webhook-Secret wird nicht im gespeicherten Payload persistiert.
 
 ## Telegram Flow
 

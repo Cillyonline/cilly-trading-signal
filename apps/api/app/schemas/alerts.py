@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.models.enums import (
     AlertDeliveryStatus,
@@ -50,3 +50,21 @@ class NotificationLogRead(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class TradingViewWebhookPayload(BaseModel):
+    secret: str = Field(min_length=1)
+    symbol: str = Field(min_length=1, max_length=32)
+    exchange: str | None = Field(default=None, max_length=64)
+    price: Decimal = Field(gt=0)
+    time: datetime
+    timeframe: Timeframe
+    trigger: str = Field(min_length=1, max_length=64)
+    setup_id: str | None = Field(default=None, max_length=64)
+
+
+class TradingViewWebhookResult(BaseModel):
+    alert_id: int
+    status: AlertStatus
+    delivery_status: AlertDeliveryStatus
+    message: str
