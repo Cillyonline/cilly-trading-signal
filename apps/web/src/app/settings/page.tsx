@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 
-import { fetchRiskSettings, updateRiskSettings } from "@/lib/api";
+import { fetchRiskSettings, sendTelegramTestMessage, updateRiskSettings } from "@/lib/api";
 import type { RiskSettings, RiskSettingsUpdatePayload } from "@/types/settings";
 
 type SettingsForm = {
@@ -28,8 +28,11 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<RiskSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isTestingTelegram, setIsTestingTelegram] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [telegramMessage, setTelegramMessage] = useState<string | null>(null);
+  const [telegramError, setTelegramError] = useState<string | null>(null);
 
   async function loadSettings() {
     setIsLoading(true);
@@ -63,6 +66,20 @@ export default function SettingsPage() {
       setError(saveError instanceof Error ? saveError.message : "Unbekannter Fehler.");
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  async function testTelegram() {
+    setTelegramError(null);
+    setTelegramMessage(null);
+    setIsTestingTelegram(true);
+    try {
+      await sendTelegramTestMessage();
+      setTelegramMessage("Telegram Test gesendet. Pruefe den konfigurierten Operator-Chat.");
+    } catch (testError) {
+      setTelegramError(testError instanceof Error ? testError.message : "Unbekannter Fehler.");
+    } finally {
+      setIsTestingTelegram(false);
     }
   }
 
@@ -152,6 +169,38 @@ export default function SettingsPage() {
               <Metric label="Max Open Trades" value={settings ? settings.max_open_trades.toString() : "-"} />
             </div>
           </aside>
+        </section>
+
+        <section className="rounded-3xl border border-white/10 bg-slate-900/70 p-6">
+          <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+            <div>
+              <p className="text-sm uppercase tracking-[0.35em] text-emerald-300">Alerts</p>
+              <h2 className="mt-2 text-xl font-semibold">Telegram Test</h2>
+              <p className="mt-2 max-w-3xl text-sm text-slate-400">
+                Sende eine explizite Testnachricht an den konfigurierten Telegram-Chat. Alerts sind
+                Review-Prompts und keine Buy/Sell-Anweisungen; die App platziert keine Orders.
+              </p>
+            </div>
+            <button
+              type="button"
+              disabled={isTestingTelegram}
+              onClick={testTelegram}
+              className="rounded-xl border border-emerald-300/40 px-5 py-3 font-semibold text-emerald-100 hover:bg-emerald-300/10 disabled:opacity-60"
+            >
+              {isTestingTelegram ? "Sende Test..." : "Telegram Test senden"}
+            </button>
+          </div>
+
+          <div className="mt-5 grid gap-3 md:grid-cols-3">
+            <Metric label="Aktivierung" value="Server-Konfiguration" />
+            <Metric label="Ausloeser" value="Nur manueller Test" />
+            <Metric label="Execution" value="Keine Orders" />
+          </div>
+
+          <div className="mt-5" aria-live="polite">
+            {telegramError ? <Notice tone="error" message={telegramError} /> : null}
+            {telegramMessage ? <Notice tone="success" message={telegramMessage} /> : null}
+          </div>
         </section>
       </section>
     </main>

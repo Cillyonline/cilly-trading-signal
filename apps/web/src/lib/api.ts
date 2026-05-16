@@ -1,4 +1,5 @@
 import type { Signal } from "@/types/signals";
+import type { TelegramTestMessageResult } from "@/types/alerts";
 import type { AuthUser, LoginPayload } from "@/types/auth";
 import type { CsvImportResult, MarketDataAnalysisResult } from "@/types/imports";
 import type { PerformanceSummary } from "@/types/performance";
@@ -134,6 +135,19 @@ export async function updateRiskSettings(payload: RiskSettingsUpdatePayload): Pr
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     throw new Error(formatApiError(body?.detail, "Risk Settings konnten nicht gespeichert werden."));
+  }
+
+  return response.json();
+}
+
+export async function sendTelegramTestMessage(): Promise<TelegramTestMessageResult> {
+  const response = await credentialedFetch(`${API_BASE_URL}/alerts/test-telegram`, {
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(formatApiError(body?.detail, "Telegram Test konnte nicht gesendet werden."));
   }
 
   return response.json();
