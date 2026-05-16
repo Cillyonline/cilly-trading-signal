@@ -334,6 +334,43 @@ CSV import or analysis fails after deploy:
 - Confirm the uploaded CSV uses the selected timeframe and is below upload limits.
 - Treat signal output as decision-support only; failed analysis should not trigger any trading action.
 
+## Deployment Smoke Test Checklist
+
+Run this checklist after first deployment, restart, restore, or a production-like configuration change. Use sample or paper-trading data only. Do not place real orders, connect a broker, or treat signals as buy/sell instructions.
+
+| Step | Check | Expected Result | If It Fails |
+| --- | --- | --- | --- |
+| 1 | `docker compose -f infra/docker-compose.yml --profile proxy ps` | `postgres` is healthy and `api`, `web`, `caddy` are running. | Inspect service logs before retrying. |
+| 2 | `curl -fsS https://<APP_DOMAIN>/api/health` | API health returns successfully. | Check API, Caddy, DNS, and database health. |
+| 3 | Open `https://<APP_DOMAIN>` | Web app loads over HTTPS. | Check web and Caddy logs. |
+| 4 | Log in with configured admin credentials. | Login succeeds and a secure session cookie is set. | Confirm `ADMIN_EMAIL`, password, API health, HTTPS, and `AUTH_COOKIE_SECURE`. |
+| 5 | Open the watchlist page. | Existing watchlist items load, or the empty state is shown. | Check API logs and authenticated API requests. |
+| 6 | Create or verify a sample watchlist item. | Sample stock or crypto symbol is visible. | Confirm watchlist API access and database state. |
+| 7 | Open CSV import page. | Import form loads with symbol and timeframe controls. | Check web logs and authenticated API calls. |
+| 8 | Upload a small sample CSV for a selected timeframe. | Import succeeds or returns a clear validation error. | Review structured CSV errors; do not bypass validation. |
+| 9 | Run analysis for the imported sample data. | Analysis completes or returns a conservative `No Setup`/data-quality result. | Check API logs and confirm required timeframe data exists. |
+| 10 | Open signals list/detail. | Signal card is visible with reasoning, risk flags, No-Trade reasons, and next action where applicable. | Confirm analysis persisted a signal and user owns the data. |
+| 11 | Create a sample manual trade record only if using paper/sample data. | Trade is logged as documentation of an external manual action. | Check risk settings, trade validation errors, and API logs. |
+| 12 | Open trade detail and add a sample note/event if appropriate. | Manual event or note is saved. | Check trade ownership and trade API logs. |
+| 13 | Log out. | Session ends and protected routes require login again. | Check auth API logs and cookie behavior. |
+
+Pass criteria:
+
+- Health, login, watchlist, import page, signal visibility, and logout checks pass.
+- CSV import and analysis either succeed with sample data or fail with clear conservative validation/data-quality messages.
+- Any manual trade check uses paper/sample data only.
+- No step implies automatic execution, broker integration, profitability, or trading advice.
+
+Fail criteria:
+
+- Health endpoint fails through the public domain.
+- Login cannot complete over HTTPS.
+- Protected pages expose data without login.
+- Database-backed pages fail broadly after API health passes.
+- Logs show repeated service restarts or unsafe production configuration errors.
+
+Record smoke-test findings outside committed secrets. If logs are needed for a follow-up issue, redact cookies, tokens, database URLs, email addresses, journal text, and trade details before sharing.
+
 ## PostgreSQL Backups
 
 The MVP database stores watchlist items, imported candles, indicator snapshots, signals, trades, journal entries, settings, and auth data. Treat backups as sensitive data.
@@ -450,4 +487,4 @@ Minimum checks after first deploy or update:
 
 ## Known Gaps
 
-- Deployment smoke test checklist is tracked separately in `#81`.
+- Automated deployment smoke tests are not implemented; the checklist above is manual.

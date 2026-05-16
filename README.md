@@ -162,7 +162,7 @@ uv run --no-project --with pytest --with "fastapi[standard]" --with pydantic-set
 - `docs/TECH_ARCHITECTURE.md`
 - `docs/DEPLOYMENT_RUNBOOK.md`
 
-Operational deployment, PostgreSQL backup/restore, healthcheck, and logging steps are documented in `docs/DEPLOYMENT_RUNBOOK.md`. Backup files and logs may contain sensitive app data and must not be committed or shared without review.
+Operational deployment, PostgreSQL backup/restore, healthcheck, logging, and deployment smoke-test steps are documented in `docs/DEPLOYMENT_RUNBOOK.md`. Backup files and logs may contain sensitive app data and must not be committed or shared without review.
 
 ## Aktueller Stand
 
