@@ -160,6 +160,8 @@ uv run --no-project --with pytest --with "fastapi[standard]" --with pydantic-set
 - `docs/TECH_ARCHITECTURE.md`
 - `docs/DEPLOYMENT_RUNBOOK.md`
 
+Operational deployment, PostgreSQL backup, and restore steps are documented in `docs/DEPLOYMENT_RUNBOOK.md`. Backup files may contain sensitive app data and must not be committed.
+
 ## Aktueller Stand
 
 Das Projekt ist ueber den Skeleton hinaus und bildet den MVP-Kernfluss bereits ab. Es ist weiterhin ein Review- und Entscheidungsunterstuetzungs-Tool, keine produktionsfertige Trading-Plattform.
