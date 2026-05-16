@@ -161,8 +161,40 @@ uv run --no-project --with pytest --with "fastapi[standard]" --with pydantic-set
 
 ## Aktueller Stand
 
-- FastAPI Backend Skeleton mit Health Endpoint
-- Next.js App Router Frontend Skeleton mit Dashboard-Startseite
-- Docker Compose fuer Web, API und PostgreSQL
-- Caddy-Konfiguration fuer spaeteres VPS-Routing
-- `.env.example` fuer lokale Konfiguration
+Das Projekt ist ueber den Skeleton hinaus und bildet den MVP-Kernfluss bereits ab. Es ist weiterhin ein Review- und Entscheidungsunterstuetzungs-Tool, keine produktionsfertige Trading-Plattform.
+
+Implementiert:
+
+- FastAPI Backend mit SQLAlchemy-Modellen, Alembic-Migrationen und geschuetzten MVP-Routen.
+- Next.js App Router Frontend mit Login, Dashboard, Watchlist, CSV Import, Signals, Trades, Trade Detail und Settings.
+- Single-User Auth mit HttpOnly Session-Cookie, ohne oeffentliche Registrierung und ohne clientseitige Token-Speicherung.
+- Watchlist-Verwaltung fuer Aktien und Krypto.
+- TradingView CSV Import fuer `1W`, `1D` und `4H` mit Pflichtfeld-, Plausibilitaets- und Kerzenanzahl-Pruefung.
+- Persistierte Multi-Timeframe-Analyse mit echten `1W`, `1D` und `4H` Daten als Grundlage fuer konservative Signale.
+- Indikator-Basis fuer EMA, RSI, ATR, Volumen, Relative Volume und Swing-Struktur.
+- Erklaerbare Signal-Erzeugung fuer Trend Pullback Long und Base Breakout Long mit Score, Status, Risk Flags, No-Trade-Reasons und Next Action.
+- Manuelles Trade Logging mit Risk/R:R-Berechnung, Events, Close-Flow, Journal und Performance-Kennzahlen in R.
+- Risk Settings fuer Account Size, maximales Risiko, Mindest-R:R und maximale offene Trades.
+- Docker Compose fuer Web, API und PostgreSQL sowie Caddy-Konfiguration fuer spaeteres VPS-Routing.
+- CI fuer API lint/tests, Web build und PostgreSQL/Alembic Migration Smoke.
+
+Teilweise umgesetzt oder noch MVP-limitiert:
+
+- CSV-Daten kommen weiterhin manuell aus TradingView; es gibt keine Live-Marktdaten-API.
+- Analyse und Signale sind deterministisch und konservativ, aber keine validierte Strategie und keine Gewinnprognose.
+- Auth ist bewusst Single-User; Multi-User, Rollenmodell und Self-Service-Registrierung sind nicht Teil des MVP.
+- Risk Settings erzwingen Basisregeln beim manuellen Trade Logging, ersetzen aber kein vollstaendiges Portfolio-Risikomanagement.
+- Dashboard, Journal und Performance sind funktional, aber noch Basisansichten.
+
+Nicht enthalten:
+
+- Automatische Orderausfuehrung.
+- Broker- oder Exchange-Integration.
+- TradingView Webhooks und Telegram Alerts als produktiver Alert-Flow.
+- Live Market Data, Backtesting Engine, Mobile App oder Multi-User SaaS-Betrieb.
+
+Aktuelle Blocker und offene Punkte:
+
+- Keine Produktionsfreigabe: Deployment, Monitoring, Backups, Secrets-Betrieb und Security Review sind noch offen.
+- CSV Import braucht weitere Haertung gegen falsche Timeframe-Zuordnung und zu grosse Uploads, bis Issue `#66` gemerged ist.
+- Dokumentation und Roadmap muessen nach jedem groesseren Slice weiter synchron gehalten werden.
