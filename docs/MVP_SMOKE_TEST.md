@@ -55,54 +55,105 @@ Date: 2026-05-17
 Environment:
 
 - Windows workspace: `C:\repos\cilly-trading-signal`
-- Docker CLI: available
-- Docker Compose CLI: available
-- Docker Desktop Linux engine: not running or not reachable
-- Sample CSV fixtures: available under `test-data/csv/` (see "Sample Data" section)
+- Branch: `issue-131-browser-mvp-smoke-test`
+- Docker CLI: `Docker version 29.1.3, build f52814d`
+- Docker Compose CLI: `Docker Compose version v2.40.3-desktop.1`
+- Docker Desktop Linux engine: reachable after starting Docker Desktop
+- Docker Server: `29.1.3`
+- Docker OS: Docker Desktop / Linux / WSL2
+- Sample CSV fixtures: available under `test-data/csv/`
 
 Commands attempted:
 
 ```powershell
-docker --version
-docker compose version
-Copy-Item .env.example .env
-docker compose -f infra/docker-compose.yml up --build -d
-Invoke-RestMethod http://localhost:8000/api/health
+.\scripts\smoke_test.ps1
+docker compose -f .\infra\docker-compose.yml ps
+Test-Path .\public
+Test-Path .\apps\web\public
+Get-Content .\infra\docker-compose.yml
+Get-Content .\apps\web\Dockerfile
 ```
 
 Results:
 
-- `docker --version`: PASS
-- `docker compose version`: PASS
-- `.env` creation from `.env.example`: PASS, then removed after the blocked run
+- `docker CLI`: PASS
+- `docker compose`: PASS
+- Docker engine reachability: PASS after Docker Desktop was started
+- Compose file presence: PASS
+- `.env` presence: PASS, created from `.env.example` by the smoke runner
 - Docker Compose stack startup: BLOCKED
 - API health check: NOT RUN because stack startup was blocked
-- Full browser workflow: NOT RUN because stack startup and sample CSV fixtures were unavailable
+- Browser login: NOT RUN because stack startup was blocked
+- Full browser workflow: NOT RUN because the web image build failed before the app became available
 
 Observed blocker:
 
 ```text
-open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.
+Dockerfile:15
+
+COPY --from=builder /app/public ./public
+
+target web: failed to solve: failed to compute cache key:
+failed to calculate checksum of ref ...:
+"/app/public": not found
 ```
 
-Interpretation: Docker Desktop is installed, but the Linux engine was not reachable from this shell session. The full local smoke test cannot be claimed as passed from this run.
+Additional evidence:
+
+```powershell
+docker compose -f .\infra\docker-compose.yml ps
+```
+
+Result:
+
+```text
+NAME      IMAGE     COMMAND   SERVICE   CREATED   STATUS    PORTS
+```
+
+No services were running after the failed startup attempt.
+
+```powershell
+Test-Path .\public
+Test-Path .\apps\web\public
+```
+
+Result:
+
+```text
+False
+False
+```
+
+Interpretation:
+
+The local Docker engine is now reachable, but the release-validation stack cannot start because the web Docker build expects `/app/public` in the Next.js builder stage while no `public` directory exists in the current repository checkout. This blocks the browser-based MVP smoke test before login, CSV import, analysis, signal review, manual paper trade, close, journal, and performance steps can be attempted.
+
+This is a reproduced smoke-test defect and should be handled under follow-up issue `#132`. No product feature changes, strategy/scoring changes, broker integration, automatic order execution, real trading data, secrets, or personal journal data were introduced or used.
 
 ## Coverage Matrix
 
 | Area | Result | Notes |
 | --- | --- | --- |
-| Docker CLI availability | PASS | CLI returned a version. |
-| Docker Compose CLI availability | PASS | Compose returned a version. |
-| Compose stack startup | BLOCKED | Docker Desktop Linux engine pipe unavailable. |
+| Docker CLI availability | PASS | Docker CLI returned `Docker version 29.1.3, build f52814d`. |
+| Docker Compose CLI availability | PASS | Compose returned `Docker Compose version v2.40.3-desktop.1`. |
+| Docker engine reachability | PASS | Initially unavailable, then reachable after Docker Desktop was started. |
+| Compose stack startup | BLOCKED | Web image build failed because `/app/public` was not found during Dockerfile runner-stage copy. |
 | API health | NOT RUN | Requires running stack. |
 | Web login | NOT RUN | Requires running stack. |
 | Watchlist workflow | NOT RUN | Requires running stack. |
-| CSV import and analysis | NOT RUN | Requires running stack and sample CSV fixtures. |
-| Signal review workflow | NOT RUN | Requires generated/persisted signals. |
-| Manual trade logging | NOT RUN | Requires running stack and sample signal/trade data. |
-| Journal and performance | NOT RUN | Requires manual trade records. |
-| Settings and Telegram test UI | NOT RUN | Requires running stack and configured/mocked Telegram values. |
-| Safety wording review | PARTIAL | Static documentation and UI wording have been reviewed incrementally in prior PRs; full browser review is still needed. |
+| CSV import 1W fixture | NOT RUN | Requires running stack. Fixture exists at `test-data/csv/sample_paper_1w.csv`. |
+| CSV import 1D fixture | NOT RUN | Requires running stack. Fixture exists at `test-data/csv/sample_paper_1d.csv`. |
+| CSV import 4H fixture | NOT RUN | Requires running stack. Fixture exists at `test-data/csv/sample_paper_4h.csv`. |
+| Analysis and signal review | NOT RUN | Requires running stack and imported sample data. |
+| Signal detail review | NOT RUN | Requires generated or persisted signals. |
+| Manual paper trade logging | NOT RUN | Requires running stack and sample signal/trade data. |
+| Trade close flow | NOT RUN | Requires manual paper trade record. |
+| Journal review | NOT RUN | Requires closed manual paper trade record. |
+| Performance review | NOT RUN | Requires trade records. |
+| Alerts review | NOT RUN | Requires running stack. |
+| Settings review | NOT RUN | Requires running stack. |
+| Dashboard review | NOT RUN | Requires running stack. |
+| Safety wording review | NOT RUN | Full browser review requires running stack. Existing smoke document keeps decision-support and no-execution boundaries explicit. |
 
 ## Sample Data
 
@@ -133,18 +184,20 @@ See `test-data/csv/README.md` for the full safety scope of these fixtures.
 
 ## Follow-Up Issues
 
-- `#117` Add deterministic MVP smoke test fixture data.
-- `#118` Add repeatable MVP smoke test runner.
+- `#132` Fix defects found during MVP smoke test. Current reproduced blocker: web Docker build fails because `apps/web/Dockerfile` copies `/app/public`, but no `public` directory exists in the web build context.
+- `#133` Add release candidate checklist status update.
 
 ## Next Smoke-Test Requirements
 
 Before marking the MVP smoke flow as passed, rerun this document with:
 
 - Docker Desktop Linux engine running and reachable.
-- Deterministic sample/paper CSV files for `1W`, `1D`, and `4H` (committed under `test-data/csv/`).
+- Docker Compose stack startup passing successfully.
+- API health endpoint reachable.
+- Deterministic sample/paper CSV files for `1W`, `1D`, and `4H` committed under `test-data/csv/`.
 - A browser pass through the complete manual workflow.
 - Follow-up issues opened for any material product defects discovered.
 
 ## Cleanup Notes
 
-The temporary local `.env` created during this run was removed and must not be committed. If future smoke runs create local data, logs, screenshots, or exports, review them for secrets or personal trading data before sharing.
+The temporary local `.env` created during this run remains local and must not be committed. If future smoke runs create local data, logs, screenshots, or exports, review them for secrets or personal trading data before sharing.
