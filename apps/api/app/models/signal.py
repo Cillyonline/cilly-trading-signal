@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Integer, JSON, Numeric, Text, func
+from sqlalchemy import DateTime, ForeignKey, Integer, JSON, Numeric, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -58,3 +58,22 @@ class Signal(Base):
     watchlist_item: Mapped["WatchlistItem"] = relationship(back_populates="signals")
     trade: Mapped["Trade"] = relationship(back_populates="signal")
     alerts: Mapped[list["Alert"]] = relationship(back_populates="signal")
+    review_events: Mapped[list["SignalReviewEvent"]] = relationship(back_populates="signal")
+
+
+class SignalReviewEvent(Base):
+    __tablename__ = "signal_review_events"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    signal_id: Mapped[int] = mapped_column(ForeignKey("signals.id"), index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    event_type: Mapped[str] = mapped_column(String(32))
+    previous_status: Mapped[SignalStatus | None] = mapped_column(enum_values(SignalStatus))
+    new_status: Mapped[SignalStatus | None] = mapped_column(enum_values(SignalStatus))
+    note: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    signal: Mapped["Signal"] = relationship(back_populates="review_events")
+    user: Mapped["User"] = relationship(back_populates="signal_review_events")

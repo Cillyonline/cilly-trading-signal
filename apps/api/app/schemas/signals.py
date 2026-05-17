@@ -6,6 +6,19 @@ from pydantic import BaseModel, Field
 from app.models.enums import AssetClass, Bias, ScoreClass, SignalStatus, StrategyType, Timeframe
 
 
+class SignalReviewEventRead(BaseModel):
+    id: int
+    signal_id: int
+    user_id: int
+    event_type: str
+    previous_status: SignalStatus | None
+    new_status: SignalStatus | None
+    note: str | None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 class SignalRead(BaseModel):
     id: int
     watchlist_item_id: int
@@ -36,6 +49,7 @@ class SignalRead(BaseModel):
     created_at: datetime
     updated_at: datetime
     triggered_at: datetime | None
+    review_events: list[SignalReviewEventRead] = Field(default_factory=list)
 
     model_config = {"from_attributes": True}
 

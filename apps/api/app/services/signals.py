@@ -1,10 +1,10 @@
 from datetime import UTC, datetime
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.models.enums import SignalStatus
-from app.models.signal import Signal
+from app.models.signal import Signal, SignalReviewEvent
 from app.strategies.contracts import SignalEvaluationResult
 
 MANUAL_SIGNAL_STATUS_TRANSITIONS: dict[SignalStatus, set[SignalStatus]] = {
@@ -35,6 +35,7 @@ def list_signals(db: Session, user_id: int) -> list[Signal]:
         db.scalars(
             select(Signal)
             .options(joinedload(Signal.watchlist_item))
+            .options(selectinload(Signal.review_events))
             .where(Signal.user_id == user_id)
             .order_by(Signal.updated_at.desc(), Signal.id.desc())
         )
@@ -45,6 +46,7 @@ def get_signal(db: Session, user_id: int, signal_id: int) -> Signal | None:
     signal = db.scalar(
         select(Signal)
         .options(joinedload(Signal.watchlist_item))
+        .options(selectinload(Signal.review_events))
         .where(Signal.id == signal_id)
     )
     if signal is None or signal.user_id != user_id:
@@ -66,9 +68,20 @@ def update_signal_status(
     if target_status not in allowed_targets:
         raise InvalidSignalStatusTransitionError
 
+    previous_status = signal.status
     signal.status = target_status
     if target_status == SignalStatus.INVALIDATED:
         signal.invalidated_at = datetime.now(UTC)
+    db.add(
+        SignalReviewEvent(
+            signal_id=signal.id,
+            user_id=user_id,
+            event_type="status_change",
+            previous_status=previous_status,
+            new_status=target_status,
+            note=None,
+        )
+    )
     db.commit()
     db.refresh(signal)
     return signal
@@ -86,6 +99,16 @@ def update_signal_review_note(
 
     note = review_note.strip() if review_note is not None else ""
     signal.review_note = note or None
+    db.add(
+        SignalReviewEvent(
+            signal_id=signal.id,
+            user_id=user_id,
+            event_type="review_note",
+            previous_status=signal.status,
+            new_status=signal.status,
+            note=signal.review_note,
+        )
+    )
     db.commit()
     db.refresh(signal)
     return signal

@@ -10,9 +10,10 @@ from app.db.base import Base
 from app.db.session import get_db
 from app.main import create_app
 from app.models import *  # noqa: F403
-from app.models.enums import AssetClass, SignalStatus, StrategyType
-from app.models.signal import Signal
+from app.models.enums import AssetClass, SignalStatus, StrategyType, UserRole
+from app.models.signal import Signal, SignalReviewEvent
 from app.models.trade import Trade
+from app.models.user import User
 from app.models.watchlist import WatchlistItem
 from app.services.auth import get_or_create_admin_user
 
@@ -101,7 +102,13 @@ def test_update_signal_status_allows_manual_review_transition(
     body = response.json()
     assert body["status"] == "armed"
     assert body["symbol"] == "AAPL"
+    assert body["review_events"][0]["event_type"] == "status_change"
+    assert body["review_events"][0]["previous_status"] == "watchlist"
+    assert body["review_events"][0]["new_status"] == "armed"
     assert db_session.scalars(select(Trade)).all() == []
+    event = db_session.scalar(select(SignalReviewEvent))
+    assert event is not None
+    assert event.signal_id == signal.id
 
 
 def test_update_signal_status_rejects_invalid_manual_transition(
@@ -143,6 +150,8 @@ def test_update_signal_review_note_persists_manual_context(
     assert body["review_note"] == "Armed only if volume confirms. No execution from app."
     assert body["status"] == original_status
     assert body["score"] == original_score
+    assert body["review_events"][0]["event_type"] == "review_note"
+    assert body["review_events"][0]["note"] == body["review_note"]
 
 
 def test_update_signal_review_note_can_clear_note(
@@ -174,3 +183,36 @@ def test_update_signal_review_note_returns_404_for_unknown_signal(
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Signal not found."
+
+
+def test_signal_detail_does_not_expose_other_users_review_history(
+    client: TestClient, db_session: Session
+) -> None:
+    other_user = User(
+        email="other@example.com",
+        password_hash="unused",
+        display_name="Other",
+        role=UserRole.ADMIN,
+        is_active=True,
+    )
+    db_session.add(other_user)
+    db_session.flush()
+    watchlist_item = WatchlistItem(
+        user_id=other_user.id,
+        symbol="MSFT",
+        asset_class=AssetClass.STOCK,
+    )
+    db_session.add(watchlist_item)
+    db_session.flush()
+    signal = Signal(
+        user_id=other_user.id,
+        watchlist_item_id=watchlist_item.id,
+        strategy_type=StrategyType.TREND_PULLBACK_LONG,
+    )
+    db_session.add(signal)
+    db_session.commit()
+    login(client)
+
+    response = client.get(f"/api/signals/{signal.id}")
+
+    assert response.status_code == 404

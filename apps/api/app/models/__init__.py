@@ -22,7 +22,7 @@ from app.models.enums import (
 from app.models.alert import Alert, NotificationLog
 from app.models.market_data import IndicatorSnapshot, MarketDataCandle, MarketDataSeries
 from app.models.settings import Settings
-from app.models.signal import Signal
+from app.models.signal import Signal, SignalReviewEvent
 from app.models.trade import JournalEntry, Trade, TradeEvent
 from app.models.user import User
 from app.models.watchlist import WatchlistItem
@@ -47,6 +47,7 @@ __all__ = [
     "ScoreClass",
     "Settings",
     "Signal",
+    "SignalReviewEvent",
     "SignalStatus",
     "StrategyType",
     "StructureState",

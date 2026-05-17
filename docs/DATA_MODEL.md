@@ -240,6 +240,26 @@ Werte:
 `next_action` speichert den naechsten manuellen Pruefhinweis und ist keine Order-Anweisung.
 `review_note` speichert manuelle Review-Notizen des Users und veraendert Strategie-Score oder Setup-Auswertung nicht.
 
+## SignalReviewEvent
+
+Zweck: read-only Historie manueller Signal-Review-Aktionen. Ein Event dokumentiert Review-Kontext und fuehrt keine Order oder Trade-Aktion aus.
+
+Felder:
+
+- id
+- signal_id
+- user_id
+- event_type
+- previous_status
+- new_status
+- note
+- created_at
+
+Werte:
+
+- event_type: status_change, review_note
+- previous_status/new_status: watchlist, armed, triggered, invalidated, no_setup, missed, expired oder leer
+
 ## Alert
 
 Zweck: gespeichertes Benachrichtigungs- oder Review-Ereignis. Ein Alert ist keine Order und fuehrt keinen Trade aus.

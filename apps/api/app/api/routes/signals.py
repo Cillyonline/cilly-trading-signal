@@ -76,5 +76,10 @@ def to_signal_read(signal) -> SignalRead:
             "symbol": signal.watchlist_item.symbol,
             "asset_class": signal.watchlist_item.asset_class,
             "exchange": signal.watchlist_item.exchange,
+            "review_events": sorted(
+                signal.review_events,
+                key=lambda event: event.id,
+                reverse=True,
+            ),
         }
     )

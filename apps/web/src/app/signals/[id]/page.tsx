@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { fetchSignal, updateSignalReviewNote, updateSignalStatus } from "@/lib/api";
-import type { Signal, SignalStatus } from "@/types/signals";
+import type { Signal, SignalReviewEvent, SignalStatus } from "@/types/signals";
 
 const statusTone: Record<SignalStatus, string> = {
   watchlist: "border-yellow-300/30 bg-yellow-300/10 text-yellow-100",
@@ -264,6 +264,8 @@ function SignalDetail({
         <p className="mt-2 text-xs text-slate-500">{reviewNote.length}/5000 Zeichen</p>
       </article>
 
+      <ReviewHistory events={signal.review_events} />
+
       <section className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
         <article className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
           <h3 className="text-xl font-semibold">Setup Bewertungsdaten</h3>
@@ -319,6 +321,41 @@ function SignalDetail({
   );
 }
 
+function ReviewHistory({ events }: { events: SignalReviewEvent[] }) {
+  return (
+    <article className="rounded-3xl border border-white/10 bg-slate-900/60 p-6">
+      <h3 className="text-xl font-semibold">Review History</h3>
+      <p className="mt-2 text-sm text-slate-400">
+        Read-only Historie manueller Review-Aktionen. Diese Eintraege sind Audit-Kontext und keine
+        Order- oder Trade-Aktionen.
+      </p>
+      {events.length === 0 ? (
+        <p className="mt-5 text-sm text-slate-500">Noch keine manuellen Review Events gespeichert.</p>
+      ) : (
+        <div className="mt-5 divide-y divide-white/10 overflow-hidden rounded-2xl border border-white/10">
+          {events.map((event) => (
+            <div key={event.id} className="grid gap-3 bg-slate-950/60 p-4 md:grid-cols-[0.9fr_1fr]">
+              <div>
+                <p className="text-sm font-semibold text-slate-100">{formatEventType(event.event_type)}</p>
+                <p className="mt-1 text-xs text-slate-500">{formatDateTime(event.created_at)}</p>
+              </div>
+              <div className="text-sm text-slate-300">
+                {event.event_type === "status_change" ? (
+                  <p>
+                    {formatOptionalStatus(event.previous_status)} {"->"} {formatOptionalStatus(event.new_status)}
+                  </p>
+                ) : (
+                  <p>{event.note || "Review Note geleert."}</p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </article>
+  );
+}
+
 const manualStatusTransitions: Partial<Record<SignalStatus, SignalStatus[]>> = {
   watchlist: ["armed", "invalidated", "expired"],
   armed: ["invalidated", "missed", "expired"],
@@ -337,6 +374,14 @@ const statusActionLabel: Record<SignalStatus, string> = {
 
 function manualStatusTargets(currentStatus: SignalStatus) {
   return manualStatusTransitions[currentStatus] ?? [];
+}
+
+function formatEventType(eventType: string) {
+  return eventType === "status_change" ? "Status Change" : "Review Note";
+}
+
+function formatOptionalStatus(status: SignalStatus | null) {
+  return status ? statusLabel[status] : "-";
 }
 
 function Notice({ message, tone }: { message: string; tone: "error" | "success" }) {
