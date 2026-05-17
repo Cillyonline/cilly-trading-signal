@@ -30,10 +30,11 @@ Done:
 - Manual trade logging, trade events, close flow, journal entries, and R-multiple performance summary.
 - Risk Settings API/UI with account size, max risk percent, minimum R:R, and max open trades.
 - Dashboard and safety wording for manual execution only.
+- TradingView webhook ingestion, Telegram test delivery, alert event review UI, manual signal review workflow, and stale signal visibility.
 
 Partial:
 
-- CSV import is usable, but strict upload-size and timeframe-consistency hardening is tracked in `#66`.
+- CSV import is hardened for upload size, candle count, and timeframe consistency, but still depends on manual TradingView exports.
 - Dashboard, journal, and performance views are MVP-level summaries, not full analytics modules.
 - Risk enforcement covers manual trade creation basics, not complete portfolio-level exposure management.
 - Multi-timeframe analysis requires manually imported `1W`, `1D`, and `4H` datasets; there is no live data sync.
@@ -42,7 +43,7 @@ Partial:
 Missing:
 
 - Live market data API integration.
-- TradingView webhook ingestion and Telegram alert delivery.
+- Full notification routing and automatic Telegram alert delivery rules.
 - Monitoring and operational alerting.
 - Multi-user mode, roles beyond the MVP admin, public registration, and password reset flows.
 - Backtesting, strategy validation, or profitability reporting.
@@ -51,7 +52,6 @@ Missing:
 Current blockers and risks:
 
 - The app is not production-ready until deployment is repeatedly verified and monitoring, secrets operations, and security review are completed.
-- CSV timeframe/upload hardening must be merged before CSV import should be considered robust against common user mistakes.
 - Strategy behavior remains a deterministic decision-support hypothesis and must not be presented as trading advice or validated profitability.
 - Local development depends on `uv`, Python 3.12, Node.js 20, Docker, and a reachable PostgreSQL database or Docker Compose.
 - The latest full MVP smoke-test attempt is documented in `docs/MVP_SMOKE_TEST.md` and is blocked until Docker Desktop engine access and deterministic sample CSV fixtures are available.

@@ -28,7 +28,7 @@ export default function PerformancePage() {
           <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-sm uppercase tracking-[0.35em] text-emerald-300">Performance</p>
-              <h1 className="mt-3 text-4xl font-semibold tracking-tight">Closed Trades in R</h1>
+              <h1 className="mt-3 text-4xl font-semibold tracking-tight">Dokumentierte Closed Trades in R</h1>
               <p className="mt-3 max-w-2xl text-slate-300">
                 Kompakte Auswertung manuell dokumentierter Trade-Abschluesse. Die Werte beschreiben
                 historische R-Multiples und sind keine Prognose fuer zukuenftige Ergebnisse.
@@ -84,8 +84,8 @@ function SummaryGrid({ summary }: { summary: PerformanceSummary }) {
   return (
     <section className="grid gap-4 md:grid-cols-3">
       <Metric label="Closed Trades" value={String(summary.closed_trade_count)} />
-      <Metric label="Total R" value={formatR(summary.total_r)} />
-      <Metric label="Average R" value={formatR(summary.average_r)} />
+      <Metric label="Documented Total R" value={formatR(summary.total_r)} />
+      <Metric label="Documented Average R" value={formatR(summary.average_r)} />
       <Metric label="Win Rate" value={formatPercent(summary.win_rate)} />
       <Metric label="Best R" value={formatR(summary.best_r)} />
       <Metric label="Worst R" value={formatR(summary.worst_r)} />

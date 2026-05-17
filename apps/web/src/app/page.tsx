@@ -14,7 +14,7 @@ const workflowAreas = [
   { label: "Signals", href: "/signals", description: "Setup-Bewertungen und No-Trade Gruende pruefen." },
   { label: "Alerts", href: "/alerts", description: "Webhook- und Notification-Events auditieren." },
   { label: "Trades", href: "/trades", description: "Extern ausgefuehrte Trades manuell dokumentieren." },
-  { label: "Performance", href: "/performance", description: "Dokumentierte Ergebnisse in R auswerten." },
+  { label: "Performance", href: "/performance", description: "Historisch dokumentierte R-Werte pruefen." },
 ];
 
 export default function Home() {
@@ -37,7 +37,7 @@ export default function Home() {
               <p className="mt-5 max-w-2xl text-lg text-slate-300">
                 Kontext, Setup, Trigger und Risiko werden getrennt bewertet. Keine automatische
                 Orderausfuehrung, sondern erklaerbare Signal-Karten, manuelles Trade Logging und
-                dokumentierte Ergebnisse in R-Multiples.
+                historisch dokumentierte Ergebnisse in R-Multiples.
               </p>
             </div>
             <LogoutButton />
@@ -126,9 +126,9 @@ function buildDashboardData(
         tone: "border-green-400/40",
       },
       {
-        label: "Total R",
+        label: "Documented Total R",
         value: formatR(performance.total_r),
-        detail: `${performance.closed_trade_count} documented closes`,
+        detail: `${performance.closed_trade_count} manuell dokumentierte Abschluesse`,
         href: "/performance",
         tone: "border-slate-400/40",
       },
