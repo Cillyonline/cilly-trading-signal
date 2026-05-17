@@ -49,6 +49,9 @@ class SignalRead(BaseModel):
     created_at: datetime
     updated_at: datetime
     triggered_at: datetime | None
+    is_stale: bool
+    stale_reason: str | None
+    stale_after_days: int
     review_events: list[SignalReviewEventRead] = Field(default_factory=list)
 
     model_config = {"from_attributes": True}

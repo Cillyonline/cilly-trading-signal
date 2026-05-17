@@ -13,6 +13,9 @@ from app.services.signals import (
     list_signals,
     update_signal_review_note,
     update_signal_status,
+    STALE_SIGNAL_AFTER_DAYS,
+    is_signal_stale,
+    stale_signal_reason,
 )
 
 router = APIRouter(prefix="/signals", tags=["signals"])
@@ -76,6 +79,9 @@ def to_signal_read(signal) -> SignalRead:
             "symbol": signal.watchlist_item.symbol,
             "asset_class": signal.watchlist_item.asset_class,
             "exchange": signal.watchlist_item.exchange,
+            "is_stale": is_signal_stale(signal),
+            "stale_reason": stale_signal_reason(signal),
+            "stale_after_days": STALE_SIGNAL_AFTER_DAYS,
             "review_events": sorted(
                 signal.review_events,
                 key=lambda event: event.id,
