@@ -55,6 +55,7 @@ Current blockers and risks:
 - Strategy behavior remains a deterministic decision-support hypothesis and must not be presented as trading advice or validated profitability.
 - Local development depends on `uv`, Python 3.12, Node.js 20, Docker, and a reachable PostgreSQL database or Docker Compose.
 - The latest full MVP smoke-test attempt is documented in `docs/MVP_SMOKE_TEST.md` and is blocked until Docker Desktop engine access and deterministic sample CSV fixtures are available.
+- MVP release posture is tracked in `docs/MVP_RELEASE_CHECKLIST.md`; it separates Done, Partial, Missing, Blocked, and Not Included areas without claiming production readiness.
 
 ## v0.1 - Foundation
 
