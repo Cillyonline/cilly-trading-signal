@@ -2,11 +2,22 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
-import { analyzeImport, fetchWatchlist, importCsv } from "@/lib/api";
-import type { CsvImportResult, MarketDataAnalysisResult, Timeframe } from "@/types/imports";
+import { ApiError, analyzeImport, fetchWatchlist, importCsv } from "@/lib/api";
+import type {
+  CsvImportError,
+  CsvImportResult,
+  MarketDataAnalysisResult,
+  Timeframe,
+} from "@/types/imports";
 import type { WatchlistItem } from "@/types/watchlist";
 
 const timeframes: Timeframe[] = ["1D", "4H", "1W"];
+
+type ImportPageError = {
+  summary: string;
+  details: CsvImportError[];
+  guidance: string[];
+};
 
 export default function ImportPage() {
   const [items, setItems] = useState<WatchlistItem[]>([]);
@@ -18,7 +29,7 @@ export default function ImportPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isImporting, setIsImporting] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ImportPageError | null>(null);
 
   async function loadWatchlist() {
     setIsLoading(true);
@@ -28,7 +39,7 @@ export default function ImportPage() {
       setItems(loadedItems);
       setWatchlistItemId((current) => current || loadedItems[0]?.id.toString() || "");
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Unbekannter Fehler.");
+      setError(toSimpleError(loadError, "Watchlist konnte nicht geladen werden."));
     } finally {
       setIsLoading(false);
     }
@@ -50,7 +61,7 @@ export default function ImportPage() {
     setAnalysisResult(null);
 
     if (!watchlistItemId || !file) {
-      setError("Waehle ein Symbol und eine CSV-Datei aus.");
+      setError(toSimpleError("Waehle ein Symbol und eine CSV-Datei aus."));
       return;
     }
 
@@ -63,7 +74,7 @@ export default function ImportPage() {
     try {
       setResult(await importCsv(formData));
     } catch (importError) {
-      setError(importError instanceof Error ? importError.message : "Unbekannter Fehler.");
+      setError(toImportError(importError));
     } finally {
       setIsImporting(false);
     }
@@ -71,7 +82,7 @@ export default function ImportPage() {
 
   async function runAnalysis() {
     if (!result?.series_id) {
-      setError("Importiere zuerst eine valide CSV-Serie.");
+      setError(toSimpleError("Importiere zuerst eine valide CSV-Serie."));
       return;
     }
 
@@ -81,7 +92,7 @@ export default function ImportPage() {
     try {
       setAnalysisResult(await analyzeImport(result.series_id));
     } catch (analysisError) {
-      setError(analysisError instanceof Error ? analysisError.message : "Unbekannter Fehler.");
+      setError(toSimpleError(analysisError, "Analyse konnte nicht gestartet werden."));
     } finally {
       setIsAnalyzing(false);
     }
@@ -224,12 +235,99 @@ export default function ImportPage() {
   );
 }
 
-function ErrorMessage({ message }: { message: string }) {
+function ErrorMessage({ message }: { message: ImportPageError }) {
   return (
-    <div className="whitespace-pre-line rounded-2xl border border-red-400/30 bg-red-950/40 p-4 text-sm text-red-100">
-      {message}
+    <div className="rounded-2xl border border-red-400/30 bg-red-950/40 p-4 text-sm text-red-100">
+      <p className="font-semibold">{message.summary}</p>
+      {message.details.length > 0 ? (
+        <div className="mt-4 overflow-hidden rounded-xl border border-red-300/20">
+          <div className="grid grid-cols-[4.5rem_6rem_minmax(0,1fr)] gap-3 bg-red-300/10 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-red-100">
+            <span>Zeile</span>
+            <span>Feld</span>
+            <span>Problem</span>
+          </div>
+          <div className="divide-y divide-red-300/10">
+            {message.details.map((detail, index) => (
+              <div
+                key={`${detail.row ?? "global"}-${detail.field ?? "csv"}-${index}`}
+                className="grid grid-cols-[4.5rem_6rem_minmax(0,1fr)] gap-3 px-3 py-2"
+              >
+                <span>{detail.row ?? "CSV"}</span>
+                <span>{detail.field ?? "-"}</span>
+                <span className="min-w-0 break-words">{detail.message}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+      {message.guidance.length > 0 ? (
+        <div className="mt-4 rounded-xl border border-yellow-300/20 bg-yellow-300/10 p-3 text-yellow-50">
+          <p className="font-medium">Naechster Check</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            {message.guidance.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </div>
   );
+}
+
+function toSimpleError(error: unknown, fallback = "Unbekannter Fehler."): ImportPageError {
+  return {
+    summary: typeof error === "string" ? error : error instanceof Error ? error.message : fallback,
+    details: [],
+    guidance: [],
+  };
+}
+
+function toImportError(error: unknown): ImportPageError {
+  if (error instanceof ApiError && Array.isArray(error.detail)) {
+    const details = error.detail.filter(isCsvImportError);
+    if (details.length > 0) {
+      return {
+        summary: "CSV konnte nicht importiert werden.",
+        details,
+        guidance: buildImportGuidance(details),
+      };
+    }
+  }
+
+  return toSimpleError(error, "CSV-Import konnte nicht gespeichert werden.");
+}
+
+function isCsvImportError(value: unknown): value is CsvImportError {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const error = value as CsvImportError;
+  return (
+    (error.row === null || error.row === undefined || typeof error.row === "number") &&
+    (error.field === null || error.field === undefined || typeof error.field === "string") &&
+    typeof error.message === "string"
+  );
+}
+
+function buildImportGuidance(details: CsvImportError[]) {
+  const messages = details.map((detail) => detail.message.toLowerCase());
+  const fields = new Set(details.map((detail) => detail.field).filter(Boolean));
+  const guidance: string[] = [];
+
+  if (messages.some((message) => message.includes("selected timeframe") || message.includes("timeframe"))) {
+    guidance.push("Pruefe, ob der ausgewaehlte Timeframe zur TradingView-CSV passt, zum Beispiel 1D, 4H oder 1W.");
+  }
+
+  if (messages.some((message) => message.includes("at most") || message.includes("bytes"))) {
+    guidance.push("Reduziere den Export-Zeitraum oder lade eine kleinere CSV-Datei hoch.");
+  }
+
+  if (fields.size > 0) {
+    guidance.push("Vergleiche die betroffenen Felder mit den erwarteten Spalten: time, open, high, low, close, volume.");
+  }
+
+  return guidance.length > 0 ? guidance : ["Korrigiere die CSV und starte den Import danach erneut."];
 }
 
 function ImportResultCard({
