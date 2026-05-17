@@ -206,63 +206,69 @@ function SignalDetail({
         </div>
       </article>
 
-      <article className="rounded-3xl border border-emerald-400/20 bg-emerald-950/20 p-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+        <article className="rounded-3xl border border-emerald-400/20 bg-emerald-950/20 p-6">
           <div>
-            <h3 className="text-xl font-semibold text-emerald-100">Manueller Review Status</h3>
+            <p className="text-xs uppercase tracking-[0.3em] text-emerald-300">Manual Review</p>
+            <h3 className="mt-2 text-xl font-semibold text-emerald-100">Review Workbench</h3>
             <p className="mt-2 max-w-2xl text-sm text-emerald-50/70">
-              Setze den Review-Zustand bewusst und manuell. Diese Aktionen erstellen keine Trades,
-              platzieren keine Orders und sind keine Ausfuehrungsanweisung.
+              Aendere nur den Review-Zustand und dokumentiere deine Entscheidung. Diese Aktionen
+              erstellen keine Trades, platzieren keine Orders und sind keine Ausfuehrungsanweisung.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {manualStatusTargets(signal.status).map((targetStatus) => (
-              <button
-                key={targetStatus}
-                type="button"
-                disabled={isUpdatingStatus}
-                onClick={() => onStatusChange(targetStatus)}
-                className="rounded-xl border border-emerald-300/40 px-4 py-2 text-sm font-semibold text-emerald-100 hover:bg-emerald-300/10 disabled:opacity-60"
-              >
-                {statusActionLabel[targetStatus]}
-              </button>
-            ))}
-            {manualStatusTargets(signal.status).length === 0 ? (
-              <span className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-400">
-                Keine manuelle Transition verfuegbar
-              </span>
-            ) : null}
-          </div>
-        </div>
-      </article>
 
-      <article className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h3 className="text-xl font-semibold">Manuelle Review Note</h3>
-            <p className="mt-2 max-w-2xl text-sm text-slate-400">
-              Dokumentiere hier deine eigene Review-Entscheidung. Diese Notiz ersetzt kein Trade-Journal
-              und veraendert weder Score noch Strategie-Auswertung.
-            </p>
+          <div className="mt-5 rounded-2xl border border-emerald-300/20 bg-slate-950/50 p-4">
+            <p className="text-sm font-medium text-emerald-100">Status manuell setzen</p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-3">
+              {manualStatusTargets(signal.status).map((targetStatus) => (
+                <button
+                  key={targetStatus}
+                  type="button"
+                  disabled={isUpdatingStatus}
+                  onClick={() => onStatusChange(targetStatus)}
+                  className="rounded-xl border border-emerald-300/40 px-4 py-3 text-sm font-semibold text-emerald-100 hover:bg-emerald-300/10 disabled:opacity-60"
+                >
+                  {statusActionLabel[targetStatus]}
+                </button>
+              ))}
+              {manualStatusTargets(signal.status).length === 0 ? (
+                <span className="rounded-xl border border-white/10 px-4 py-3 text-sm text-slate-400">
+                  Keine manuelle Transition verfuegbar
+                </span>
+              ) : null}
+            </div>
           </div>
-          <button
-            type="button"
-            disabled={isSavingReviewNote}
-            onClick={onReviewNoteSave}
-            className="rounded-xl bg-emerald-400 px-5 py-3 font-semibold text-slate-950 disabled:opacity-60"
-          >
-            {isSavingReviewNote ? "Speichere..." : "Review Note speichern"}
-          </button>
-        </div>
-        <textarea
-          value={reviewNote}
-          maxLength={5000}
-          onChange={(event) => onReviewNoteChange(event.target.value)}
-          placeholder="Warum wurde das Setup bewaffnet, ignoriert, invalidiert oder spaeter erneut geprueft?"
-          className="mt-5 min-h-36 w-full rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 text-sm text-slate-100 outline-none focus:border-emerald-300"
-        />
-        <p className="mt-2 text-xs text-slate-500">{reviewNote.length}/5000 Zeichen</p>
-      </article>
+
+          <div className="mt-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-sm font-medium text-slate-100">Review Note</p>
+                <p className="mt-1 text-xs text-slate-400">
+                  Manuelle Review-Notiz, kein Trade-Journal und kein Einfluss auf Score oder Strategie.
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={isSavingReviewNote}
+                onClick={onReviewNoteSave}
+                className="rounded-xl bg-emerald-400 px-5 py-3 font-semibold text-slate-950 disabled:opacity-60"
+              >
+                {isSavingReviewNote ? "Speichere..." : "Review Note speichern"}
+              </button>
+            </div>
+            <textarea
+              value={reviewNote}
+              maxLength={5000}
+              onChange={(event) => onReviewNoteChange(event.target.value)}
+              placeholder="Warum wurde das Setup bewaffnet, ignoriert, invalidiert oder spaeter erneut geprueft?"
+              className="mt-4 min-h-36 w-full rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 text-sm text-slate-100 outline-none focus:border-emerald-300"
+            />
+            <p className="mt-2 text-xs text-slate-500">{reviewNote.length}/5000 Zeichen</p>
+          </div>
+        </article>
+
+        <ReviewContextPanel noTradeReasons={noTradeReasons} riskFlags={riskFlags} signal={signal} />
+      </section>
 
       <ReviewHistory events={signal.review_events} />
 
@@ -353,6 +359,52 @@ function ReviewHistory({ events }: { events: SignalReviewEvent[] }) {
         </div>
       )}
     </article>
+  );
+}
+
+function ReviewContextPanel({
+  noTradeReasons,
+  riskFlags,
+  signal,
+}: {
+  noTradeReasons: string[];
+  riskFlags: string[];
+  signal: Signal;
+}) {
+  return (
+    <aside className="rounded-3xl border border-orange-300/20 bg-orange-950/10 p-6">
+      <p className="text-xs uppercase tracking-[0.3em] text-orange-200">Risk Context</p>
+      <h3 className="mt-2 text-xl font-semibold">Vor jeder Review-Aktion pruefen</h3>
+      <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+        <Metric label="Aktueller Status" value={statusLabel[signal.status]} />
+        <Metric label="Next Action" value={signal.next_action || "Manuell weiter pruefen"} />
+        <Metric label="R:R" value={signal.risk_reward ? `${formatNumber(signal.risk_reward)}R` : "-"} />
+        <Metric label="Trigger" value={formatMoney(signal.trigger_level)} />
+      </div>
+      <div className="mt-5 rounded-2xl border border-red-300/20 bg-red-950/20 p-4">
+        <p className="text-sm font-medium text-red-100">No-Trade Gruende</p>
+        <CompactTextItems items={noTradeReasons} empty="Keine harten No-Trade Gruende gespeichert." tone="red" />
+      </div>
+      <div className="mt-4 rounded-2xl border border-orange-300/20 bg-orange-950/20 p-4">
+        <p className="text-sm font-medium text-orange-100">Risk Flags</p>
+        <CompactTextItems items={riskFlags} empty="Keine Risk Flags gespeichert." tone="orange" />
+      </div>
+    </aside>
+  );
+}
+
+function CompactTextItems({ empty, items, tone }: { empty: string; items: string[]; tone: "orange" | "red" }) {
+  const itemClass = tone === "red" ? "bg-red-300/10 text-red-100" : "bg-orange-300/10 text-orange-100";
+  return items.length > 0 ? (
+    <ul className="mt-3 flex flex-wrap gap-2">
+      {items.slice(0, 5).map((item) => (
+        <li key={item} className={`rounded-full px-3 py-1 text-xs ${itemClass}`}>
+          {item.replaceAll("_", " ")}
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <p className="mt-3 text-sm text-slate-500">{empty}</p>
   );
 }
 
