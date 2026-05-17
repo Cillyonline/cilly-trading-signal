@@ -6,6 +6,14 @@ export type PerformanceByStrategy = {
   win_rate: string | null;
 };
 
+export type PerformanceByAssetClass = {
+  asset_class: string;
+  closed_trade_count: number;
+  total_r: string;
+  average_r: string | null;
+  win_rate: string | null;
+};
+
 export type PerformanceSummary = {
   closed_trade_count: number;
   total_r: string;
@@ -14,4 +22,5 @@ export type PerformanceSummary = {
   best_r: string | null;
   worst_r: string | null;
   by_strategy: PerformanceByStrategy[];
+  by_asset_class: PerformanceByAssetClass[];
 };

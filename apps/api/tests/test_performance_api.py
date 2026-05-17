@@ -61,6 +61,7 @@ def test_performance_summary_returns_empty_state(client: TestClient) -> None:
         "best_r": None,
         "worst_r": None,
         "by_strategy": [],
+        "by_asset_class": [],
     }
 
 
@@ -78,6 +79,15 @@ def test_performance_summary_uses_closed_trades_only(client: TestClient) -> None
     assert summary["by_strategy"] == [
         {
             "strategy_type": "trend_pullback_long",
+            "closed_trade_count": 1,
+            "total_r": "3.0000",
+            "average_r": "3.0000",
+            "win_rate": "100.00",
+        }
+    ]
+    assert summary["by_asset_class"] == [
+        {
+            "asset_class": "stock",
             "closed_trade_count": 1,
             "total_r": "3.0000",
             "average_r": "3.0000",
@@ -153,19 +163,60 @@ def test_performance_summary_groups_closed_trades_by_strategy(client: TestClient
     ]
 
 
-def create_watchlist_item(client: TestClient, symbol: str) -> int:
+def test_performance_summary_groups_closed_trades_by_asset_class(client: TestClient) -> None:
+    close_trade(
+        client,
+        create_open_trade(client, "AAPL", asset_class="stock"),
+        "115.00",
+    )
+    close_trade(
+        client,
+        create_open_trade(client, "MSFT", asset_class="stock"),
+        "90.00",
+    )
+    close_trade(
+        client,
+        create_open_trade(client, "BTCUSD", asset_class="crypto"),
+        "110.00",
+    )
+
+    response = client.get("/api/performance/summary")
+
+    assert response.status_code == 200
+    assert response.json()["by_asset_class"] == [
+        {
+            "asset_class": "crypto",
+            "closed_trade_count": 1,
+            "total_r": "2.0000",
+            "average_r": "2.0000",
+            "win_rate": "100.00",
+        },
+        {
+            "asset_class": "stock",
+            "closed_trade_count": 2,
+            "total_r": "1.0000",
+            "average_r": "0.5000",
+            "win_rate": "50.00",
+        },
+    ]
+
+
+def create_watchlist_item(client: TestClient, symbol: str, asset_class: str = "stock") -> int:
     response = client.post(
         "/api/watchlist",
-        json={"symbol": symbol, "asset_class": "stock", "exchange": "NASDAQ"},
+        json={"symbol": symbol, "asset_class": asset_class, "exchange": "NASDAQ"},
     )
     assert response.status_code == 201
     return response.json()["id"]
 
 
 def create_open_trade(
-    client: TestClient, symbol: str, strategy_type: str = "trend_pullback_long"
+    client: TestClient,
+    symbol: str,
+    strategy_type: str = "trend_pullback_long",
+    asset_class: str = "stock",
 ) -> dict:
-    watchlist_item_id = create_watchlist_item(client, symbol)
+    watchlist_item_id = create_watchlist_item(client, symbol, asset_class)
     response = client.post(
         "/api/trades",
         json={
