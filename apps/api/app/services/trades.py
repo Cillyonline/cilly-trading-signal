@@ -135,13 +135,15 @@ def list_trades(db: Session, user_id: int, filters: TradeFilters | None = None) 
         statement = statement.where(Trade.strategy_type == filters.strategy_type)
     if filters.asset_class is not None:
         statement = statement.where(Trade.asset_class == filters.asset_class)
-    if filters.reviewed is not None:
-        review_exists = exists().where(JournalEntry.trade_id == Trade.id)
-        statement = statement.where(review_exists if filters.reviewed else ~review_exists)
     if filters.setup_rule_followed is not None:
+        if filters.reviewed is False:
+            return []
         statement = statement.join(JournalEntry).where(
             JournalEntry.setup_rule_followed == filters.setup_rule_followed
         )
+    elif filters.reviewed is not None:
+        review_exists = exists().where(JournalEntry.trade_id == Trade.id)
+        statement = statement.where(review_exists if filters.reviewed else ~review_exists)
 
     return list(
         db.scalars(
