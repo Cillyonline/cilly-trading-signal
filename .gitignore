@@ -37,3 +37,4 @@ postgres-data/
 
 # Docker / deployment local overrides
 docker-compose.override.yml
+.claude/
