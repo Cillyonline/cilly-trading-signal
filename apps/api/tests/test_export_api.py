@@ -1,6 +1,7 @@
 import csv
 import io
 from collections.abc import Iterator
+from decimal import Decimal
 
 import pytest
 from fastapi.testclient import TestClient
@@ -199,9 +200,9 @@ def test_trades_export_row_contains_performance_fields(client: TestClient) -> No
     assert row["strategy_type"] == "trend_pullback_long"
     assert row["asset_class"] == "stock"
     assert row["status"] == "closed"
-    assert row["entry_price"] == "100.00"
-    assert row["stop_loss"] == "95.00"
-    assert row["exit_price"] == "115.00"
+    assert Decimal(row["entry_price"]) == Decimal("100")
+    assert Decimal(row["stop_loss"]) == Decimal("95")
+    assert Decimal(row["exit_price"]) == Decimal("115")
     assert row["exit_reason"] == "manual_exit"
     assert row["result_r"] != ""
     assert row["initial_risk_amount"] != ""
