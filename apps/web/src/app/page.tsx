@@ -82,6 +82,7 @@ type DashboardData = {
   hasAnyData: boolean;
   recentSignals: Signal[];
   openTrades: Trade[];
+  reviewNeededTrades: Trade[];
 };
 
 type DashboardCard = {
@@ -99,6 +100,7 @@ function buildDashboardData(
   performance: PerformanceSummary,
 ): DashboardData {
   const openTrades = trades.filter((trade) => trade.status !== "closed" && trade.status !== "reviewed");
+  const reviewNeededTrades = trades.filter((trade) => trade.review_status === "needs_review");
   const reviewSignals = signals.filter((signal) => signal.status === "armed" || signal.status === "triggered");
   const triggeredSignals = signals.filter((signal) => signal.status === "triggered");
 
@@ -132,17 +134,25 @@ function buildDashboardData(
         href: "/performance",
         tone: "border-slate-400/40",
       },
+      {
+        label: "Reviews Needed",
+        value: String(reviewNeededTrades.length),
+        detail: "Geschlossene Trades ohne Journal Review",
+        href: "/trades",
+        tone: "border-orange-300/40",
+      },
     ],
     hasAnyData: watchlist.length > 0 || signals.length > 0 || trades.length > 0,
     recentSignals: signals.slice(0, 3),
     openTrades: openTrades.slice(0, 3),
+    reviewNeededTrades: reviewNeededTrades.slice(0, 3),
   };
 }
 
 function DashboardContent({ data }: { data: DashboardData }) {
   return (
     <>
-      <section className="grid gap-4 md:grid-cols-4">
+      <section className="grid gap-4 md:grid-cols-5">
         {data.cards.map((card) => (
           <a
             key={card.label}
@@ -197,8 +207,8 @@ function LogoutButton() {
 
 function DashboardLoading() {
   return (
-    <section className="grid gap-4 md:grid-cols-4">
-      {["Watchlist", "Signals", "Trades", "Performance"].map((label) => (
+    <section className="grid gap-4 md:grid-cols-5">
+      {["Watchlist", "Signals", "Trades", "Performance", "Reviews"].map((label) => (
         <article key={label} className="rounded-2xl border border-white/10 bg-slate-950/70 p-5">
           <p className="text-sm text-slate-500">{label}</p>
           <p className="mt-3 text-3xl font-semibold text-slate-600">...</p>
@@ -261,6 +271,11 @@ function CockpitSnapshot({ data }: { data: DashboardData }) {
         emptyText="Keine offenen Trades."
         items={data.openTrades.map(formatTrade)}
       />
+      <SnapshotList
+        title="Reviews Needed"
+        emptyText="Keine offenen Trade Reviews."
+        items={data.reviewNeededTrades.map(formatReviewTrade)}
+      />
     </aside>
   );
 }
@@ -296,6 +311,17 @@ function formatSignal(signal: Signal) {
 
 function formatTrade(trade: Trade) {
   return `${trade.symbol} / ${formatR(trade.result_r ?? trade.initial_risk_reward)}`;
+}
+
+function formatReviewTrade(trade: Trade) {
+  return `${trade.symbol} / geschlossen ${formatDate(trade.closed_at)}`;
+}
+
+function formatDate(value: string | null) {
+  if (!value) {
+    return "ohne Datum";
+  }
+  return new Intl.DateTimeFormat("de-DE", { dateStyle: "medium" }).format(new Date(value));
 }
 
 function formatR(value: string | null) {

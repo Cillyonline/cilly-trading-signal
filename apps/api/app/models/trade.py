@@ -77,6 +77,18 @@ class Trade(Base):
             Decimal("0.01"), rounding=ROUND_HALF_UP
         )
 
+    @property
+    def is_review_complete(self) -> bool:
+        return self.status == TradeStatus.REVIEWED or self.journal_entry is not None
+
+    @property
+    def review_status(self) -> str:
+        if self.is_review_complete:
+            return "reviewed"
+        if self.status == TradeStatus.CLOSED:
+            return "needs_review"
+        return "not_ready"
+
 
 class TradeEvent(Base):
     __tablename__ = "trade_events"

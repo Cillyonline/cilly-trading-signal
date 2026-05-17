@@ -147,7 +147,9 @@ def list_trades(db: Session, user_id: int, filters: TradeFilters | None = None) 
 
     return list(
         db.scalars(
-            statement.order_by(Trade.opened_at.desc(), Trade.id.desc())
+            statement.options(selectinload(Trade.journal_entry)).order_by(
+                Trade.opened_at.desc(), Trade.id.desc()
+            )
         )
     )
 

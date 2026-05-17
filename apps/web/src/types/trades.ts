@@ -46,6 +46,8 @@ export type Trade = {
   target_2_potential_r: string | null;
   result_amount: string | null;
   result_r: string | null;
+  is_review_complete: boolean;
+  review_status: "not_ready" | "needs_review" | "reviewed";
   notes: string | null;
   created_at: string;
   updated_at: string;
