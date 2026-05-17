@@ -60,6 +60,7 @@ def test_performance_summary_returns_empty_state(client: TestClient) -> None:
         "win_rate": None,
         "best_r": None,
         "worst_r": None,
+        "by_strategy": [],
     }
 
 
@@ -74,6 +75,15 @@ def test_performance_summary_uses_closed_trades_only(client: TestClient) -> None
     assert summary["closed_trade_count"] == 1
     assert summary["total_r"] == "3.0000"
     assert summary["average_r"] == "3.0000"
+    assert summary["by_strategy"] == [
+        {
+            "strategy_type": "trend_pullback_long",
+            "closed_trade_count": 1,
+            "total_r": "3.0000",
+            "average_r": "3.0000",
+            "win_rate": "100.00",
+        }
+    ]
 
 
 def test_performance_summary_calculates_winners_and_losers(client: TestClient) -> None:
@@ -105,6 +115,44 @@ def test_performance_summary_calculates_average_r(client: TestClient) -> None:
     assert summary["average_r"] == "0.6667"
 
 
+def test_performance_summary_groups_closed_trades_by_strategy(client: TestClient) -> None:
+    close_trade(
+        client,
+        create_open_trade(client, "AAPL", strategy_type="trend_pullback_long"),
+        "115.00",
+    )
+    close_trade(
+        client,
+        create_open_trade(client, "MSFT", strategy_type="trend_pullback_long"),
+        "90.00",
+    )
+    close_trade(
+        client,
+        create_open_trade(client, "NVDA", strategy_type="base_breakout_long"),
+        "110.00",
+    )
+
+    response = client.get("/api/performance/summary")
+
+    assert response.status_code == 200
+    assert response.json()["by_strategy"] == [
+        {
+            "strategy_type": "base_breakout_long",
+            "closed_trade_count": 1,
+            "total_r": "2.0000",
+            "average_r": "2.0000",
+            "win_rate": "100.00",
+        },
+        {
+            "strategy_type": "trend_pullback_long",
+            "closed_trade_count": 2,
+            "total_r": "1.0000",
+            "average_r": "0.5000",
+            "win_rate": "50.00",
+        },
+    ]
+
+
 def create_watchlist_item(client: TestClient, symbol: str) -> int:
     response = client.post(
         "/api/watchlist",
@@ -114,13 +162,15 @@ def create_watchlist_item(client: TestClient, symbol: str) -> int:
     return response.json()["id"]
 
 
-def create_open_trade(client: TestClient, symbol: str) -> dict:
+def create_open_trade(
+    client: TestClient, symbol: str, strategy_type: str = "trend_pullback_long"
+) -> dict:
     watchlist_item_id = create_watchlist_item(client, symbol)
     response = client.post(
         "/api/trades",
         json={
             "watchlist_item_id": watchlist_item_id,
-            "strategy_type": "trend_pullback_long",
+            "strategy_type": strategy_type,
             "entry_price": "100.00",
             "stop_loss": "95.00",
             "target_1": "112.50",

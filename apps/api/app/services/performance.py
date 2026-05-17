@@ -3,24 +3,25 @@ from decimal import Decimal, ROUND_HALF_UP
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.enums import TradeStatus
+from app.models.enums import StrategyType, TradeStatus
 from app.models.trade import Trade
-from app.schemas.performance import PerformanceSummaryRead
+from app.schemas.performance import PerformanceByStrategyRead, PerformanceSummaryRead
 
 FOUR_PLACES = Decimal("0.0001")
 TWO_PLACES = Decimal("0.01")
 
 
 def get_performance_summary(db: Session, user_id: int) -> PerformanceSummaryRead:
-    result_values = list(
-        db.scalars(
-            select(Trade.result_r).where(
+    trade_results = list(
+        db.execute(
+            select(Trade.strategy_type, Trade.result_r).where(
                 Trade.user_id == user_id,
                 Trade.status == TradeStatus.CLOSED,
                 Trade.result_r.is_not(None),
             )
         )
     )
+    result_values = [result_r for _, result_r in trade_results]
 
     closed_trade_count = len(result_values)
     if closed_trade_count == 0:
@@ -31,6 +32,7 @@ def get_performance_summary(db: Session, user_id: int) -> PerformanceSummaryRead
             win_rate=None,
             best_r=None,
             worst_r=None,
+            by_strategy=[],
         )
 
     total_r = sum(result_values, Decimal("0"))
@@ -43,7 +45,34 @@ def get_performance_summary(db: Session, user_id: int) -> PerformanceSummaryRead
         win_rate=_quantize(Decimal(winning_trades) / closed_trade_count * 100, TWO_PLACES),
         best_r=_quantize(max(result_values), FOUR_PLACES),
         worst_r=_quantize(min(result_values), FOUR_PLACES),
+        by_strategy=_build_strategy_breakdown(trade_results),
     )
+
+
+def _build_strategy_breakdown(
+    trade_results: list[tuple[StrategyType, Decimal]]
+) -> list[PerformanceByStrategyRead]:
+    grouped_results: dict[StrategyType, list[Decimal]] = {}
+    for strategy_type, result_r in trade_results:
+        grouped_results.setdefault(strategy_type, []).append(result_r)
+
+    breakdown: list[PerformanceByStrategyRead] = []
+    sorted_groups = sorted(grouped_results.items(), key=lambda item: item[0].value)
+    for strategy_type, result_values in sorted_groups:
+        closed_trade_count = len(result_values)
+        total_r = sum(result_values, Decimal("0"))
+        winning_trades = sum(1 for result_r in result_values if result_r > 0)
+        breakdown.append(
+            PerformanceByStrategyRead(
+                strategy_type=strategy_type.value,
+                closed_trade_count=closed_trade_count,
+                total_r=_quantize(total_r, FOUR_PLACES),
+                average_r=_quantize(total_r / closed_trade_count, FOUR_PLACES),
+                win_rate=_quantize(Decimal(winning_trades) / closed_trade_count * 100, TWO_PLACES),
+            )
+        )
+
+    return breakdown
 
 
 def _quantize(value: Decimal, exponent: Decimal) -> Decimal:
