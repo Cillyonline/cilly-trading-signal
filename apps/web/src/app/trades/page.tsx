@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import { createTrade, fetchSignals, fetchTrades, fetchWatchlist } from "@/lib/api";
 import type { Signal, StrategyType } from "@/types/signals";
-import type { Trade, TradeCreatePayload } from "@/types/trades";
+import type { Trade, TradeCreatePayload, TradeFilters } from "@/types/trades";
 import type { WatchlistItem } from "@/types/watchlist";
 
 type TradeForm = {
@@ -22,6 +22,15 @@ type TradeForm = {
   notes: string;
 };
 
+type FilterForm = {
+  opened_from: string;
+  opened_to: string;
+  strategy_type: "" | StrategyType;
+  asset_class: "" | "stock" | "crypto";
+  reviewed: "" | "true" | "false";
+  setup_rule_followed: "" | "true" | "false";
+};
+
 const emptyForm: TradeForm = {
   mode: "watchlist",
   watchlist_item_id: "",
@@ -37,11 +46,21 @@ const emptyForm: TradeForm = {
   notes: "",
 };
 
+const emptyFilters: FilterForm = {
+  opened_from: "",
+  opened_to: "",
+  strategy_type: "",
+  asset_class: "",
+  reviewed: "",
+  setup_rule_followed: "",
+};
+
 export default function TradesPage() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [signals, setSignals] = useState<Signal[]>([]);
   const [form, setForm] = useState<TradeForm>(emptyForm);
+  const [filters, setFilters] = useState<FilterForm>(emptyFilters);
   const [createdTrade, setCreatedTrade] = useState<Trade | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -52,7 +71,7 @@ export default function TradesPage() {
     setError(null);
     try {
       const [loadedTrades, loadedWatchlist, loadedSignals] = await Promise.all([
-        fetchTrades(),
+        fetchTrades(toTradeFilters(filters)),
         fetchWatchlist(),
         fetchSignals(),
       ]);
@@ -74,6 +93,24 @@ export default function TradesPage() {
   useEffect(() => {
     void loadData();
   }, []);
+
+  async function submitFilters(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await loadData();
+  }
+
+  async function resetFilters() {
+    setFilters(emptyFilters);
+    setIsLoading(true);
+    setError(null);
+    try {
+      setTrades(await fetchTrades());
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Unbekannter Fehler.");
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   const selectedSignal = useMemo(
     () => signals.find((signal) => signal.id.toString() === form.signal_id) ?? null,
@@ -267,6 +304,14 @@ export default function TradesPage() {
 
             {createdTrade ? <CreatedTradeCard trade={createdTrade} /> : null}
 
+            <TradeFilterForm
+              filters={filters}
+              isLoading={isLoading}
+              onChange={setFilters}
+              onReset={() => void resetFilters()}
+              onSubmit={submitFilters}
+            />
+
             <div className="mt-6 overflow-hidden rounded-2xl border border-white/10">
               {isLoading ? (
                 <p className="p-5 text-sm text-slate-400">Trades werden geladen...</p>
@@ -317,6 +362,122 @@ function buildPayload(form: TradeForm): TradeCreatePayload | null {
   payload.watchlist_item_id = Number(form.watchlist_item_id);
   payload.strategy_type = form.strategy_type;
   return payload;
+}
+
+function toTradeFilters(filters: FilterForm): TradeFilters {
+  return {
+    opened_from: filters.opened_from ? new Date(filters.opened_from).toISOString() : undefined,
+    opened_to: filters.opened_to ? new Date(filters.opened_to).toISOString() : undefined,
+    strategy_type: filters.strategy_type || undefined,
+    asset_class: filters.asset_class || undefined,
+    reviewed: filters.reviewed === "" ? undefined : filters.reviewed === "true",
+    setup_rule_followed:
+      filters.setup_rule_followed === "" ? undefined : filters.setup_rule_followed === "true",
+  };
+}
+
+function TradeFilterForm({
+  filters,
+  isLoading,
+  onChange,
+  onReset,
+  onSubmit,
+}: {
+  filters: FilterForm;
+  isLoading: boolean;
+  onChange: (filters: FilterForm) => void;
+  onReset: () => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+}) {
+  return (
+    <form onSubmit={onSubmit} className="mt-5 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <label className="grid gap-2 text-sm text-slate-300">
+          Opened from
+          <input
+            type="datetime-local"
+            value={filters.opened_from}
+            onChange={(event) => onChange({ ...filters, opened_from: event.target.value })}
+            className="rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-slate-100 outline-none focus:border-emerald-300"
+          />
+        </label>
+        <label className="grid gap-2 text-sm text-slate-300">
+          Opened to
+          <input
+            type="datetime-local"
+            value={filters.opened_to}
+            onChange={(event) => onChange({ ...filters, opened_to: event.target.value })}
+            className="rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-slate-100 outline-none focus:border-emerald-300"
+          />
+        </label>
+        <label className="grid gap-2 text-sm text-slate-300">
+          Strategie
+          <select
+            value={filters.strategy_type}
+            onChange={(event) => onChange({ ...filters, strategy_type: event.target.value as FilterForm["strategy_type"] })}
+            className="rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-slate-100 outline-none focus:border-emerald-300"
+          >
+            <option value="">Alle</option>
+            <option value="trend_pullback_long">Trend Pullback Long</option>
+            <option value="base_breakout_long">Base Breakout Long</option>
+          </select>
+        </label>
+        <label className="grid gap-2 text-sm text-slate-300">
+          Asset Class
+          <select
+            value={filters.asset_class}
+            onChange={(event) => onChange({ ...filters, asset_class: event.target.value as FilterForm["asset_class"] })}
+            className="rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-slate-100 outline-none focus:border-emerald-300"
+          >
+            <option value="">Alle</option>
+            <option value="stock">Stock</option>
+            <option value="crypto">Crypto</option>
+          </select>
+        </label>
+        <label className="grid gap-2 text-sm text-slate-300">
+          Review
+          <select
+            value={filters.reviewed}
+            onChange={(event) => onChange({ ...filters, reviewed: event.target.value as FilterForm["reviewed"] })}
+            className="rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-slate-100 outline-none focus:border-emerald-300"
+          >
+            <option value="">Alle</option>
+            <option value="true">Review vorhanden</option>
+            <option value="false">Noch nicht reviewed</option>
+          </select>
+        </label>
+        <label className="grid gap-2 text-sm text-slate-300">
+          Setup-Regel
+          <select
+            value={filters.setup_rule_followed}
+            onChange={(event) => onChange({ ...filters, setup_rule_followed: event.target.value as FilterForm["setup_rule_followed"] })}
+            className="rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-slate-100 outline-none focus:border-emerald-300"
+          >
+            <option value="">Alle</option>
+            <option value="true">Regel befolgt</option>
+            <option value="false">Regel nicht befolgt</option>
+          </select>
+        </label>
+      </div>
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+        <button
+          disabled={isLoading}
+          type="submit"
+          className="rounded-xl bg-emerald-400 px-4 py-2 font-semibold text-slate-950 disabled:opacity-60"
+        >
+          Filter anwenden
+        </button>
+        <button
+          disabled={isLoading}
+          type="button"
+          onClick={onReset}
+          className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:border-emerald-300/50 disabled:opacity-60"
+        >
+          Filter zuruecksetzen
+        </button>
+      </div>
+    </form>
+  );
 }
 
 function ContextCard({

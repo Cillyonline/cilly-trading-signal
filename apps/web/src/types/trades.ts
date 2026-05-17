@@ -117,3 +117,12 @@ export type JournalEntryCreatePayload = {
   lesson_learned?: string | null;
   reviewed_at: string;
 };
+
+export type TradeFilters = {
+  opened_from?: string;
+  opened_to?: string;
+  strategy_type?: StrategyType;
+  asset_class?: AssetClass;
+  reviewed?: boolean;
+  setup_rule_followed?: boolean;
+};

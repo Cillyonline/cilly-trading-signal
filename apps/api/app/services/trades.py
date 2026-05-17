@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 from decimal import Decimal, ROUND_HALF_UP
 
-from sqlalchemy import func, select
+from sqlalchemy import exists, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload, selectinload
 
@@ -9,7 +9,13 @@ from app.models.enums import TradeEventType, TradeStatus
 from app.models.signal import Signal
 from app.models.trade import JournalEntry, Trade, TradeEvent
 from app.models.watchlist import WatchlistItem
-from app.schemas.trades import JournalEntryCreate, TradeClose, TradeCreate, TradeEventCreate
+from app.schemas.trades import (
+    JournalEntryCreate,
+    TradeClose,
+    TradeCreate,
+    TradeEventCreate,
+    TradeFilters,
+)
 from app.services.settings import get_or_create_settings
 
 TWO_PLACES = Decimal("0.01")
@@ -117,12 +123,29 @@ def create_trade(db: Session, user_id: int, payload: TradeCreate) -> Trade:
     return trade
 
 
-def list_trades(db: Session, user_id: int) -> list[Trade]:
+def list_trades(db: Session, user_id: int, filters: TradeFilters | None = None) -> list[Trade]:
+    filters = filters or TradeFilters()
+    statement = select(Trade).where(Trade.user_id == user_id)
+
+    if filters.opened_from is not None:
+        statement = statement.where(Trade.opened_at >= filters.opened_from)
+    if filters.opened_to is not None:
+        statement = statement.where(Trade.opened_at <= filters.opened_to)
+    if filters.strategy_type is not None:
+        statement = statement.where(Trade.strategy_type == filters.strategy_type)
+    if filters.asset_class is not None:
+        statement = statement.where(Trade.asset_class == filters.asset_class)
+    if filters.reviewed is not None:
+        review_exists = exists().where(JournalEntry.trade_id == Trade.id)
+        statement = statement.where(review_exists if filters.reviewed else ~review_exists)
+    if filters.setup_rule_followed is not None:
+        statement = statement.join(JournalEntry).where(
+            JournalEntry.setup_rule_followed == filters.setup_rule_followed
+        )
+
     return list(
         db.scalars(
-            select(Trade)
-            .where(Trade.user_id == user_id)
-            .order_by(Trade.opened_at.desc(), Trade.id.desc())
+            statement.order_by(Trade.opened_at.desc(), Trade.id.desc())
         )
     )
 
