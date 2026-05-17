@@ -45,6 +45,7 @@ class Signal(Base):
     risk_flags: Mapped[dict | list | None] = mapped_column(JSON)
     no_trade_reasons: Mapped[dict | list | None] = mapped_column(JSON)
     next_action: Mapped[str | None] = mapped_column(Text)
+    review_note: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )

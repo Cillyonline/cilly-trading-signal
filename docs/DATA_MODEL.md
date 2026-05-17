@@ -224,6 +224,7 @@ Felder:
 - risk_flags
 - no_trade_reasons
 - next_action
+- review_note
 - created_at
 - updated_at
 - triggered_at
@@ -237,6 +238,7 @@ Werte:
 
 `reasoning`, `risk_flags` und `no_trade_reasons` koennen als JSON gespeichert werden.
 `next_action` speichert den naechsten manuellen Pruefhinweis und ist keine Order-Anweisung.
+`review_note` speichert manuelle Review-Notizen des Users und veraendert Strategie-Score oder Setup-Auswertung nicht.
 
 ## Alert
 

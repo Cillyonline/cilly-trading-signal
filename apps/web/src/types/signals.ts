@@ -36,6 +36,7 @@ export type Signal = {
   risk_flags: string[] | Record<string, unknown> | null;
   no_trade_reasons: string[] | Record<string, unknown> | null;
   next_action: string | null;
+  review_note: string | null;
   created_at: string;
   updated_at: string;
   triggered_at: string | null;
@@ -43,4 +44,8 @@ export type Signal = {
 
 export type SignalStatusUpdatePayload = {
   status: SignalStatus;
+};
+
+export type SignalReviewNoteUpdatePayload = {
+  review_note: string | null;
 };
