@@ -62,6 +62,17 @@ Regel:
 - 4H Close = Entry Trigger
 - Daily Close = staerkere Bestaetigung
 
+## Signal Freshness
+
+MVP-Signale basieren auf gespeicherten Analysen aus manuell importierten CSV-Daten. Die App behauptet keine Live-Freshness.
+
+Konservative Regel:
+
+- aktive Review-Kandidaten (`watchlist`, `armed`, `triggered`) gelten nach 7 Tagen seit dem letzten gespeicherten Signal-Update als stale.
+- stale bedeutet: nicht als aktuellen Review-Kandidaten behandeln, bis neue CSV-Daten importiert und analysiert wurden.
+- stale erzeugt keine automatische Order, keinen Alert und keine Strategie-Neubewertung.
+- terminale Review-Zustaende wie `invalidated`, `missed` oder `expired` werden nicht als stale markiert, weil sie bereits manuell eingeordnet sind.
+
 ## Strategie A: Trend Pullback Long
 
 ### Idee

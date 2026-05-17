@@ -40,6 +40,9 @@ export type Signal = {
   created_at: string;
   updated_at: string;
   triggered_at: string | null;
+  is_stale: boolean;
+  stale_reason: string | null;
+  stale_after_days: number;
   review_events: SignalReviewEvent[];
 };
 

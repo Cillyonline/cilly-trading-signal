@@ -58,7 +58,8 @@ export default function SignalsPage() {
               <h1 className="mt-3 text-4xl font-semibold tracking-tight">Signal-Karten pruefen</h1>
               <p className="mt-3 max-w-2xl text-slate-300">
                 Persistierte Setup-Bewertungen aus dem Backend. Die Karten unterstuetzen deine
-                manuelle Pruefung und sind keine Kauf- oder Verkaufsanweisung.
+                manuelle Pruefung und sind keine Kauf- oder Verkaufsanweisung. Stale Hinweise bedeuten,
+                dass keine Live-Freshness vorliegt und neue CSV-Daten sinnvoll sind.
               </p>
             </div>
             <a className="text-sm text-emerald-300 hover:text-emerald-200" href="/">
@@ -71,7 +72,7 @@ export default function SignalsPage() {
           <SummaryCard label="Alle Signale" value={signals.length.toString()} />
           <SummaryCard label="Armed" value={summary.armed.toString()} tone="border-emerald-300/40" />
           <SummaryCard label="Watchlist" value={summary.watchlist.toString()} tone="border-yellow-300/40" />
-          <SummaryCard label="No Setup" value={summary.noSetup.toString()} tone="border-slate-400/40" />
+          <SummaryCard label="Stale" value={summary.stale.toString()} tone="border-orange-300/40" />
         </section>
 
         {error ? (
@@ -137,6 +138,11 @@ function SignalCard({ signal }: { signal: Signal }) {
           <span className={`rounded-full border px-3 py-1 text-xs ${statusTone[signal.status]}`}>
             {statusLabel[signal.status]}
           </span>
+          {signal.is_stale ? (
+            <span className="rounded-full border border-orange-300/30 bg-orange-300/10 px-3 py-1 text-xs text-orange-100">
+              Stale CSV Review
+            </span>
+          ) : null}
           <h3 className="text-lg font-semibold">{signal.symbol}</h3>
           <span className="rounded-full bg-slate-800 px-3 py-1 text-xs uppercase text-slate-300">
             {signal.asset_class}
@@ -156,6 +162,7 @@ function SignalCard({ signal }: { signal: Signal }) {
           <Metric label="R:R" value={signal.risk_reward ? `${formatNumber(signal.risk_reward)}R` : "-"} />
           <Metric label="Trigger" value={formatMoney(signal.trigger_level)} />
         </div>
+        {signal.is_stale ? <StaleNotice signal={signal} compact /> : null}
         <div className="mt-4 grid gap-3 sm:grid-cols-4">
           <Metric label="Entry Low" value={formatMoney(signal.entry_low)} compact />
           <Metric label="Entry High" value={formatMoney(signal.entry_high)} compact />
@@ -224,8 +231,22 @@ function buildSummary(signals: Signal[]) {
   return {
     armed: signals.filter((signal) => signal.status === "armed").length,
     watchlist: signals.filter((signal) => signal.status === "watchlist").length,
-    noSetup: signals.filter((signal) => signal.status === "no_setup").length,
+    stale: signals.filter((signal) => signal.is_stale).length,
   };
+}
+
+function StaleNotice({ compact, signal }: { compact?: boolean; signal: Signal }) {
+  return (
+    <div className={`${compact ? "mt-4" : "mt-5"} rounded-2xl border border-orange-300/30 bg-orange-950/30 p-4`}>
+      <p className="text-sm font-semibold text-orange-100">Stale Review Candidate</p>
+      <p className="mt-1 text-sm text-orange-100/80">
+        {signal.stale_reason ?? `Dieses Signal ist aelter als ${signal.stale_after_days} Tage.`}
+      </p>
+      <p className="mt-2 text-xs text-orange-100/60">
+        Kein Live-Datenstatus. Vor weiterer Review neue CSV-Daten importieren oder manuell als expired markieren.
+      </p>
+    </div>
+  );
 }
 
 function formatStrategy(strategy: Signal["strategy_type"]) {

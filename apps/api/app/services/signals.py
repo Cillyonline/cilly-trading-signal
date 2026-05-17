@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload, selectinload
@@ -24,10 +24,39 @@ MANUAL_SIGNAL_STATUS_TRANSITIONS: dict[SignalStatus, set[SignalStatus]] = {
         SignalStatus.EXPIRED,
     },
 }
+STALE_SIGNAL_AFTER_DAYS = 7
+STALE_SIGNAL_STATUSES = {
+    SignalStatus.WATCHLIST,
+    SignalStatus.ARMED,
+    SignalStatus.TRIGGERED,
+}
 
 
 class InvalidSignalStatusTransitionError(Exception):
     pass
+
+
+def is_signal_stale(signal: Signal, now: datetime | None = None) -> bool:
+    if signal.status not in STALE_SIGNAL_STATUSES:
+        return False
+
+    reference = signal.updated_at or signal.created_at
+    if reference is None:
+        return False
+
+    if reference.tzinfo is None:
+        reference = reference.replace(tzinfo=UTC)
+
+    return (now or datetime.now(UTC)) - reference >= timedelta(days=STALE_SIGNAL_AFTER_DAYS)
+
+
+def stale_signal_reason(signal: Signal) -> str | None:
+    if not is_signal_stale(signal):
+        return None
+    return (
+        "Signal is older than 7 days based on the last saved update. "
+        "Refresh with new CSV data before treating it as current."
+    )
 
 
 def list_signals(db: Session, user_id: int) -> list[Signal]:

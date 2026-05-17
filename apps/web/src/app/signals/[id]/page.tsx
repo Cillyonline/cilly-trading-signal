@@ -111,7 +111,8 @@ export default function SignalDetailPage({ params }: { params: { id: string } })
               <h1 className="mt-3 text-4xl font-semibold tracking-tight">Signal vollstaendig pruefen</h1>
               <p className="mt-3 max-w-2xl text-slate-300">
                 Diese Ansicht zeigt die gespeicherte Setup-Bewertung als Entscheidungshilfe fuer
-                deine manuelle Pruefung. Sie ist keine Kauf- oder Verkaufsanweisung.
+                deine manuelle Pruefung. Sie ist keine Kauf- oder Verkaufsanweisung und nutzt keine
+                Live-Marktdaten.
               </p>
             </div>
             <div className="flex gap-4 text-sm">
@@ -205,6 +206,8 @@ function SignalDetail({
           </div>
         </div>
       </article>
+
+      {signal.is_stale ? <StaleSignalBanner signal={signal} /> : null}
 
       <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <article className="rounded-3xl border border-emerald-400/20 bg-emerald-950/20 p-6">
@@ -377,6 +380,7 @@ function ReviewContextPanel({
       <h3 className="mt-2 text-xl font-semibold">Vor jeder Review-Aktion pruefen</h3>
       <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
         <Metric label="Aktueller Status" value={statusLabel[signal.status]} />
+        <Metric label="Freshness" value={signal.is_stale ? "Stale" : "Current enough"} />
         <Metric label="Next Action" value={signal.next_action || "Manuell weiter pruefen"} />
         <Metric label="R:R" value={signal.risk_reward ? `${formatNumber(signal.risk_reward)}R` : "-"} />
         <Metric label="Trigger" value={formatMoney(signal.trigger_level)} />
@@ -405,6 +409,22 @@ function CompactTextItems({ empty, items, tone }: { empty: string; items: string
     </ul>
   ) : (
     <p className="mt-3 text-sm text-slate-500">{empty}</p>
+  );
+}
+
+function StaleSignalBanner({ signal }: { signal: Signal }) {
+  return (
+    <article className="rounded-3xl border border-orange-300/30 bg-orange-950/30 p-6">
+      <p className="text-xs uppercase tracking-[0.3em] text-orange-200">Stale Signal</p>
+      <h3 className="mt-2 text-xl font-semibold text-orange-100">Nicht als aktuellen Review-Kandidaten behandeln</h3>
+      <p className="mt-3 max-w-3xl text-sm text-orange-100/80">
+        {signal.stale_reason ?? `Dieses Signal ist aelter als ${signal.stale_after_days} Tage.`}
+      </p>
+      <p className="mt-3 text-xs text-orange-100/60">
+        Die App hat keine Live-Daten. Importiere aktuelle CSV-Daten oder markiere das Signal manuell als expired,
+        wenn es nicht mehr relevant ist.
+      </p>
+    </article>
   );
 }
 

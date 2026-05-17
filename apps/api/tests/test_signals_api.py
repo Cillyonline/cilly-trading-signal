@@ -1,4 +1,5 @@
 from collections.abc import Iterator
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -216,3 +217,36 @@ def test_signal_detail_does_not_expose_other_users_review_history(
     response = client.get(f"/api/signals/{signal.id}")
 
     assert response.status_code == 404
+
+
+def test_signal_detail_marks_old_active_review_signal_as_stale(
+    client: TestClient, db_session: Session
+) -> None:
+    signal = create_signal(db_session, status=SignalStatus.ARMED)
+    signal.updated_at = datetime.now(UTC) - timedelta(days=8)
+    db_session.commit()
+    login(client)
+
+    response = client.get(f"/api/signals/{signal.id}")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["is_stale"] is True
+    assert body["stale_after_days"] == 7
+    assert "Refresh with new CSV data" in body["stale_reason"]
+
+
+def test_signal_detail_does_not_mark_terminal_old_signal_as_stale(
+    client: TestClient, db_session: Session
+) -> None:
+    signal = create_signal(db_session, status=SignalStatus.INVALIDATED)
+    signal.updated_at = datetime.now(UTC) - timedelta(days=30)
+    db_session.commit()
+    login(client)
+
+    response = client.get(f"/api/signals/{signal.id}")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["is_stale"] is False
+    assert body["stale_reason"] is None
