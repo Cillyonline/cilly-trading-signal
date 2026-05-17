@@ -1,4 +1,4 @@
-import type { Signal, SignalStatusUpdatePayload } from "@/types/signals";
+import type { Signal, SignalReviewNoteUpdatePayload, SignalStatusUpdatePayload } from "@/types/signals";
 import type { AlertEvent, TelegramTestMessageResult } from "@/types/alerts";
 import type { AuthUser, LoginPayload } from "@/types/auth";
 import type { CsvImportResult, MarketDataAnalysisResult } from "@/types/imports";
@@ -95,6 +95,24 @@ export async function updateSignalStatus(
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     throw new Error(formatApiError(body?.detail, "Signal Status konnte nicht geaendert werden."));
+  }
+
+  return response.json();
+}
+
+export async function updateSignalReviewNote(
+  signalId: number,
+  payload: SignalReviewNoteUpdatePayload,
+): Promise<Signal> {
+  const response = await credentialedFetch(`${API_BASE_URL}/signals/${signalId}/review-note`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(formatApiError(body?.detail, "Review Note konnte nicht gespeichert werden."));
   }
 
   return response.json();

@@ -6,11 +6,12 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.signals import SignalRead, SignalStatusUpdate
+from app.schemas.signals import SignalRead, SignalReviewNoteUpdate, SignalStatusUpdate
 from app.services.signals import (
     InvalidSignalStatusTransitionError,
     get_signal,
     list_signals,
+    update_signal_review_note,
     update_signal_status,
 )
 
@@ -47,6 +48,19 @@ def update_item_status(
             detail="Signal status transition is not allowed.",
         ) from error
 
+    if signal is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Signal not found.",
+        )
+    return to_signal_read(signal)
+
+
+@router.patch("/{signal_id}/review-note", response_model=SignalRead)
+def update_item_review_note(
+    signal_id: int, payload: SignalReviewNoteUpdate, db: DbSession, user: CurrentUser
+) -> SignalRead:
+    signal = update_signal_review_note(db, user.id, signal_id, payload.review_note)
     if signal is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

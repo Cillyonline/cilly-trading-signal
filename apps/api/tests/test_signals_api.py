@@ -123,3 +123,54 @@ def test_update_signal_status_returns_404_for_unknown_signal(client: TestClient)
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Signal not found."
+
+
+def test_update_signal_review_note_persists_manual_context(
+    client: TestClient, db_session: Session
+) -> None:
+    signal = create_signal(db_session)
+    original_status = signal.status
+    original_score = signal.score
+    login(client)
+
+    response = client.patch(
+        f"/api/signals/{signal.id}/review-note",
+        json={"review_note": "Armed only if volume confirms. No execution from app."},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["review_note"] == "Armed only if volume confirms. No execution from app."
+    assert body["status"] == original_status
+    assert body["score"] == original_score
+
+
+def test_update_signal_review_note_can_clear_note(
+    client: TestClient, db_session: Session
+) -> None:
+    signal = create_signal(db_session)
+    signal.review_note = "Old note"
+    db_session.commit()
+    login(client)
+
+    response = client.patch(
+        f"/api/signals/{signal.id}/review-note",
+        json={"review_note": "  "},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["review_note"] is None
+
+
+def test_update_signal_review_note_returns_404_for_unknown_signal(
+    client: TestClient,
+) -> None:
+    login(client)
+
+    response = client.patch(
+        "/api/signals/999/review-note",
+        json={"review_note": "Review note"},
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Signal not found."

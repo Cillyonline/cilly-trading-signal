@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { fetchSignal, updateSignalStatus } from "@/lib/api";
+import { fetchSignal, updateSignalReviewNote, updateSignalStatus } from "@/lib/api";
 import type { Signal, SignalStatus } from "@/types/signals";
 
 const statusTone: Record<SignalStatus, string> = {
@@ -27,11 +27,15 @@ const statusLabel: Record<SignalStatus, string> = {
 
 export default function SignalDetailPage({ params }: { params: { id: string } }) {
   const [signal, setSignal] = useState<Signal | null>(null);
+  const [reviewNote, setReviewNote] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [isSavingReviewNote, setIsSavingReviewNote] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
+  const [reviewNoteMessage, setReviewNoteMessage] = useState<string | null>(null);
+  const [reviewNoteError, setReviewNoteError] = useState<string | null>(null);
 
   async function loadSignal() {
     const signalId = Number(params.id);
@@ -44,7 +48,9 @@ export default function SignalDetailPage({ params }: { params: { id: string } })
     setIsLoading(true);
     setError(null);
     try {
-      setSignal(await fetchSignal(signalId));
+      const loaded = await fetchSignal(signalId);
+      setSignal(loaded);
+      setReviewNote(loaded.review_note ?? "");
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "Unbekannter Fehler.");
     } finally {
@@ -71,6 +77,27 @@ export default function SignalDetailPage({ params }: { params: { id: string } })
       setStatusError(updateError instanceof Error ? updateError.message : "Unbekannter Fehler.");
     } finally {
       setIsUpdatingStatus(false);
+    }
+  }
+
+  async function submitReviewNote() {
+    if (!signal) {
+      return;
+    }
+    setReviewNoteError(null);
+    setReviewNoteMessage(null);
+    setIsSavingReviewNote(true);
+    try {
+      const updated = await updateSignalReviewNote(signal.id, {
+        review_note: reviewNote.trim() || null,
+      });
+      setSignal(updated);
+      setReviewNote(updated.review_note ?? "");
+      setReviewNoteMessage("Review Note gespeichert. Strategie-Score und Setup-Bewertung bleiben unveraendert.");
+    } catch (saveError) {
+      setReviewNoteError(saveError instanceof Error ? saveError.message : "Unbekannter Fehler.");
+    } finally {
+      setIsSavingReviewNote(false);
     }
   }
 
@@ -101,6 +128,8 @@ export default function SignalDetailPage({ params }: { params: { id: string } })
         {error ? <ErrorMessage message={error} onRetry={() => void loadSignal()} /> : null}
         {statusError ? <Notice message={statusError} tone="error" /> : null}
         {statusMessage ? <Notice message={statusMessage} tone="success" /> : null}
+        {reviewNoteError ? <Notice message={reviewNoteError} tone="error" /> : null}
+        {reviewNoteMessage ? <Notice message={reviewNoteMessage} tone="success" /> : null}
 
         {isLoading ? (
           <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
@@ -110,6 +139,10 @@ export default function SignalDetailPage({ params }: { params: { id: string } })
           <SignalDetail
             signal={signal}
             isUpdatingStatus={isUpdatingStatus}
+            isSavingReviewNote={isSavingReviewNote}
+            reviewNote={reviewNote}
+            onReviewNoteChange={setReviewNote}
+            onReviewNoteSave={() => void submitReviewNote()}
             onStatusChange={(targetStatus) => void submitStatus(targetStatus)}
           />
         ) : error ? null : (
@@ -125,11 +158,19 @@ export default function SignalDetailPage({ params }: { params: { id: string } })
 
 function SignalDetail({
   isUpdatingStatus,
+  isSavingReviewNote,
   onStatusChange,
+  onReviewNoteChange,
+  onReviewNoteSave,
+  reviewNote,
   signal,
 }: {
+  isSavingReviewNote: boolean;
   isUpdatingStatus: boolean;
+  onReviewNoteChange: (value: string) => void;
+  onReviewNoteSave: () => void;
   onStatusChange: (targetStatus: SignalStatus) => void;
+  reviewNote: string;
   signal: Signal;
 }) {
   const reasoning = toTextList(signal.reasoning);
@@ -193,6 +234,34 @@ function SignalDetail({
             ) : null}
           </div>
         </div>
+      </article>
+
+      <article className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h3 className="text-xl font-semibold">Manuelle Review Note</h3>
+            <p className="mt-2 max-w-2xl text-sm text-slate-400">
+              Dokumentiere hier deine eigene Review-Entscheidung. Diese Notiz ersetzt kein Trade-Journal
+              und veraendert weder Score noch Strategie-Auswertung.
+            </p>
+          </div>
+          <button
+            type="button"
+            disabled={isSavingReviewNote}
+            onClick={onReviewNoteSave}
+            className="rounded-xl bg-emerald-400 px-5 py-3 font-semibold text-slate-950 disabled:opacity-60"
+          >
+            {isSavingReviewNote ? "Speichere..." : "Review Note speichern"}
+          </button>
+        </div>
+        <textarea
+          value={reviewNote}
+          maxLength={5000}
+          onChange={(event) => onReviewNoteChange(event.target.value)}
+          placeholder="Warum wurde das Setup bewaffnet, ignoriert, invalidiert oder spaeter erneut geprueft?"
+          className="mt-5 min-h-36 w-full rounded-2xl border border-white/10 bg-slate-950 px-4 py-3 text-sm text-slate-100 outline-none focus:border-emerald-300"
+        />
+        <p className="mt-2 text-xs text-slate-500">{reviewNote.length}/5000 Zeichen</p>
       </article>
 
       <section className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">

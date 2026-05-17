@@ -74,6 +74,23 @@ def update_signal_status(
     return signal
 
 
+def update_signal_review_note(
+    db: Session,
+    user_id: int,
+    signal_id: int,
+    review_note: str | None,
+) -> Signal | None:
+    signal = get_signal(db, user_id, signal_id)
+    if signal is None:
+        return None
+
+    note = review_note.strip() if review_note is not None else ""
+    signal.review_note = note or None
+    db.commit()
+    db.refresh(signal)
+    return signal
+
+
 def upsert_signal_from_analysis(
     db: Session,
     user_id: int,

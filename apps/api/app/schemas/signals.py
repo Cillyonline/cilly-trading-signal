@@ -1,7 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.models.enums import AssetClass, Bias, ScoreClass, SignalStatus, StrategyType, Timeframe
 
@@ -32,6 +32,7 @@ class SignalRead(BaseModel):
     risk_flags: list | dict | None
     no_trade_reasons: list | dict | None
     next_action: str | None
+    review_note: str | None
     created_at: datetime
     updated_at: datetime
     triggered_at: datetime | None
@@ -41,3 +42,7 @@ class SignalRead(BaseModel):
 
 class SignalStatusUpdate(BaseModel):
     status: SignalStatus
+
+
+class SignalReviewNoteUpdate(BaseModel):
+    review_note: str | None = Field(default=None, max_length=5000)
