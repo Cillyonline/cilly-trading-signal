@@ -50,7 +50,9 @@ def login(client: TestClient) -> None:
     assert response.status_code == 200
 
 
-def create_watchlist_item(client: TestClient, symbol: str = "AAPL", asset_class: str = "stock") -> int:
+def create_watchlist_item(
+    client: TestClient, symbol: str = "AAPL", asset_class: str = "stock"
+) -> int:
     response = client.post(
         "/api/watchlist",
         json={"symbol": symbol, "asset_class": asset_class, "exchange": "NASDAQ"},
