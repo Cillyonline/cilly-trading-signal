@@ -1,6 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -8,8 +9,9 @@ from app.db.session import get_db
 from app.models.enums import Timeframe
 from app.models.market_data import MarketDataSeries
 from app.models.user import User
+from app.models.watchlist import WatchlistItem
 from app.schemas.analysis import MarketDataAnalysisResult
-from app.schemas.imports import CsvImportResult
+from app.schemas.imports import CsvImportResult, ImportHistoryItem
 from app.services.analysis import analyze_market_data_series
 from app.services.csv_import import MAX_CSV_UPLOAD_BYTES, import_tradingview_csv
 from app.services.watchlist import get_watchlist_item
@@ -68,6 +70,32 @@ async def import_csv(
             detail=[error.model_dump() for error in result.errors],
         )
     return result
+
+
+@router.get("", response_model=list[ImportHistoryItem])
+def list_imports(db: DbSession, user: CurrentUser) -> list[ImportHistoryItem]:
+    series_rows = db.execute(
+        select(MarketDataSeries)
+        .join(MarketDataSeries.watchlist_item)
+        .where(WatchlistItem.user_id == user.id)
+        .order_by(MarketDataSeries.imported_at.desc(), MarketDataSeries.id.desc())
+    ).scalars()
+
+    return [
+        ImportHistoryItem(
+            series_id=series.id,
+            watchlist_item_id=series.watchlist_item_id,
+            symbol=series.watchlist_item.symbol,
+            timeframe=series.timeframe,
+            status=series.status,
+            candle_count=series.candle_count,
+            start_time=series.start_time,
+            end_time=series.end_time,
+            imported_at=series.imported_at,
+            file_name=series.file_name,
+        )
+        for series in series_rows
+    ]
 
 
 @router.post("/{series_id}/analyze", response_model=MarketDataAnalysisResult)
