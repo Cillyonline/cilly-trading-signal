@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 
-import { fetchPerformanceSummary } from "@/lib/api";
+import { exportPerformanceCsv, fetchPerformanceSummary } from "@/lib/api";
 import type { PerformanceByAssetClass, PerformanceByStrategy, PerformanceSummary } from "@/types/performance";
 
 export default function PerformancePage() {
   const [summary, setSummary] = useState<PerformanceSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadSummary() {
@@ -20,6 +21,15 @@ export default function PerformancePage() {
 
     void loadSummary();
   }, []);
+
+  async function handleExport() {
+    setExportError(null);
+    try {
+      await exportPerformanceCsv();
+    } catch (err) {
+      setExportError(err instanceof Error ? err.message : "Export fehlgeschlagen.");
+    }
+  }
 
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-8 text-slate-100">
@@ -34,7 +44,14 @@ export default function PerformancePage() {
                 historische R-Multiples und sind keine Prognose fuer zukuenftige Ergebnisse.
               </p>
             </div>
-            <div className="flex gap-4 text-sm">
+            <div className="flex flex-wrap items-center gap-4 text-sm">
+              <button
+                className="rounded-xl bg-emerald-400 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-300"
+                onClick={() => void handleExport()}
+                type="button"
+              >
+                CSV exportieren
+              </button>
               <a className="text-emerald-300 hover:text-emerald-200" href="/trades">
                 Trades
               </a>
@@ -45,6 +62,7 @@ export default function PerformancePage() {
           </div>
         </header>
 
+        {exportError ? <ErrorState message={exportError} /> : null}
         {error ? <ErrorState message={error} /> : null}
         {!summary && !error ? <LoadingState /> : null}
         {summary?.closed_trade_count === 0 ? <EmptyState /> : null}
