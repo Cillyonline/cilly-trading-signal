@@ -20,6 +20,18 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://loca
 
 const credentialedFetch: typeof fetch = (input, init) => fetch(input, { ...init, credentials: "include" });
 
+export class ApiError extends Error {
+  detail: unknown;
+  status: number;
+
+  constructor(message: string, detail: unknown, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.detail = detail;
+    this.status = status;
+  }
+}
+
 export async function login(payload: LoginPayload): Promise<AuthUser> {
   const response = await credentialedFetch(`${API_BASE_URL}/auth/login`, {
     method: "POST",
@@ -126,7 +138,11 @@ export async function importCsv(formData: FormData): Promise<CsvImportResult> {
 
   if (!response.ok) {
     const body = await response.json().catch(() => null);
-    throw new Error(formatApiError(body?.detail, "CSV-Import konnte nicht gespeichert werden."));
+    throw new ApiError(
+      formatApiError(body?.detail, "CSV-Import konnte nicht gespeichert werden."),
+      body?.detail,
+      response.status,
+    );
   }
 
   return response.json();
