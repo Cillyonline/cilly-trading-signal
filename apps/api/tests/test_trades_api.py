@@ -50,10 +50,12 @@ def login(client: TestClient) -> None:
     assert response.status_code == 200
 
 
-def create_watchlist_item(client: TestClient) -> int:
+def create_watchlist_item(
+    client: TestClient, symbol: str = "AAPL", asset_class: str = "stock"
+) -> int:
     response = client.post(
         "/api/watchlist",
-        json={"symbol": "AAPL", "asset_class": "stock", "exchange": "NASDAQ"},
+        json={"symbol": symbol, "asset_class": asset_class, "exchange": "NASDAQ"},
     )
     assert response.status_code == 201
     return response.json()["id"]
@@ -216,6 +218,60 @@ def test_list_trades_returns_empty_list(client: TestClient) -> None:
 
     assert response.status_code == 200
     assert response.json() == []
+
+
+def test_list_trades_filters_by_opened_date_strategy_and_asset_class(client: TestClient) -> None:
+    stock_item_id = create_watchlist_item(client, "AAPL", "stock")
+    crypto_item_id = create_watchlist_item(client, "BTCUSD", "crypto")
+    create_manual_trade(
+        client,
+        watchlist_item_id=stock_item_id,
+        opened_at="2024-01-05T10:00:00Z",
+        strategy_type="trend_pullback_long",
+    )
+    matching_trade = create_manual_trade(
+        client,
+        watchlist_item_id=crypto_item_id,
+        opened_at="2024-02-05T10:00:00Z",
+        strategy_type="base_breakout_long",
+    )
+
+    response = client.get(
+        "/api/trades",
+        params={
+            "opened_from": "2024-02-01T00:00:00Z",
+            "opened_to": "2024-02-28T23:59:59Z",
+            "strategy_type": "base_breakout_long",
+            "asset_class": "crypto",
+        },
+    )
+
+    assert response.status_code == 200
+    assert [trade["id"] for trade in response.json()] == [matching_trade["id"]]
+
+
+def test_list_trades_filters_by_review_and_rule_adherence(client: TestClient) -> None:
+    reviewed_trade = close_manual_trade(client)
+    unreviewed_trade = close_manual_trade(
+        client,
+        watchlist_item_id=create_watchlist_item(client, "MSFT", "stock"),
+    )
+    review_response = client.post(
+        f"/api/trades/{reviewed_trade['id']}/journal",
+        json={"reviewed_at": "2024-01-08T10:00:00Z", "setup_rule_followed": True},
+    )
+    assert review_response.status_code == 201
+
+    reviewed_response = client.get(
+        "/api/trades",
+        params={"reviewed": "true", "setup_rule_followed": "true"},
+    )
+    unreviewed_response = client.get("/api/trades", params={"reviewed": "false"})
+
+    assert reviewed_response.status_code == 200
+    assert [trade["id"] for trade in reviewed_response.json()] == [reviewed_trade["id"]]
+    assert unreviewed_response.status_code == 200
+    assert [trade["id"] for trade in unreviewed_response.json()] == [unreviewed_trade["id"]]
 
 
 def test_create_trade_rejects_invalid_long_risk(client: TestClient) -> None:
@@ -520,27 +576,32 @@ def sequential_csv(row_count: int = 201) -> str:
     return "\n".join(rows)
 
 
-def create_manual_trade(client: TestClient) -> dict:
-    watchlist_item_id = create_watchlist_item(client)
+def create_manual_trade(
+    client: TestClient,
+    watchlist_item_id: int | None = None,
+    opened_at: str = "2024-01-05T10:00:00Z",
+    strategy_type: str = "trend_pullback_long",
+) -> dict:
+    watchlist_item_id = watchlist_item_id or create_watchlist_item(client)
     response = client.post(
         "/api/trades",
         json={
             "watchlist_item_id": watchlist_item_id,
-            "strategy_type": "trend_pullback_long",
+            "strategy_type": strategy_type,
             "entry_price": "100.00",
             "stop_loss": "95.00",
             "target_1": "112.50",
             "target_2": "120.00",
             "position_size": "10",
-            "opened_at": "2024-01-05T10:00:00Z",
+            "opened_at": opened_at,
         },
     )
     assert response.status_code == 201
     return response.json()
 
 
-def close_manual_trade(client: TestClient) -> dict:
-    trade = create_manual_trade(client)
+def close_manual_trade(client: TestClient, watchlist_item_id: int | None = None) -> dict:
+    trade = create_manual_trade(client, watchlist_item_id=watchlist_item_id)
     response = client.post(
         f"/api/trades/{trade['id']}/close",
         json={

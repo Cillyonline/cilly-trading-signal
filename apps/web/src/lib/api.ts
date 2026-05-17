@@ -13,6 +13,7 @@ import type {
   TradeDetail,
   TradeEvent,
   TradeEventCreatePayload,
+  TradeFilters,
 } from "@/types/trades";
 import type { WatchlistItem } from "@/types/watchlist";
 
@@ -169,8 +170,17 @@ export async function analyzeImport(seriesId: number): Promise<MarketDataAnalysi
   return response.json();
 }
 
-export async function fetchTrades(): Promise<Trade[]> {
-  const response = await credentialedFetch(`${API_BASE_URL}/trades`, { cache: "no-store" });
+export async function fetchTrades(filters: TradeFilters = {}): Promise<Trade[]> {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(filters)) {
+    if (value !== undefined && value !== "") {
+      params.set(key, String(value));
+    }
+  }
+  const query = params.toString();
+  const response = await credentialedFetch(`${API_BASE_URL}/trades${query ? `?${query}` : ""}`, {
+    cache: "no-store",
+  });
   if (!response.ok) {
     throw new Error("Trades konnten nicht geladen werden.");
   }

@@ -32,6 +32,15 @@ class TradeCreate(BaseModel):
         return self
 
 
+class TradeFilters(BaseModel):
+    opened_from: datetime | None = None
+    opened_to: datetime | None = None
+    strategy_type: StrategyType | None = None
+    asset_class: AssetClass | None = None
+    reviewed: bool | None = None
+    setup_rule_followed: bool | None = None
+
+
 class TradeRead(BaseModel):
     id: int
     signal_id: int | None

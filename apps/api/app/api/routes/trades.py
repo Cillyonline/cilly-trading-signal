@@ -14,6 +14,7 @@ from app.schemas.trades import (
     TradeDetailRead,
     TradeEventCreate,
     TradeEventRead,
+    TradeFilters,
     TradeRead,
 )
 from app.services.trades import (
@@ -34,8 +35,12 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 @router.get("", response_model=list[TradeRead])
-def list_items(db: DbSession, user: CurrentUser) -> list[TradeRead]:
-    return list_trades(db, user.id)
+def list_items(
+    filters: Annotated[TradeFilters, Depends()],
+    db: DbSession,
+    user: CurrentUser,
+) -> list[TradeRead]:
+    return list_trades(db, user.id, filters)
 
 
 @router.get("/{trade_id}", response_model=TradeDetailRead)
