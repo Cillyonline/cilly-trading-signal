@@ -34,7 +34,7 @@ Environment:
 - Docker CLI: available
 - Docker Compose CLI: available
 - Docker Desktop Linux engine: not running or not reachable
-- Sample CSV fixtures: not present in repository
+- Sample CSV fixtures: available under `test-data/csv/` (see "Sample Data" section)
 
 Commands attempted:
 
@@ -80,6 +80,33 @@ Interpretation: Docker Desktop is installed, but the Linux engine was not reacha
 | Settings and Telegram test UI | NOT RUN | Requires running stack and configured/mocked Telegram values. |
 | Safety wording review | PARTIAL | Static documentation and UI wording have been reviewed incrementally in prior PRs; full browser review is still needed. |
 
+## Sample Data
+
+Deterministic paper/sample CSV fixtures live under `test-data/csv/` and are
+the canonical input for the import + analysis portion of this smoke flow.
+They are synthetic OHLCV curves — not market data — and exist only to make
+this workflow reproducible without exposing personal trading data.
+
+| File | Timeframe | Candles |
+| --- | --- | --- |
+| `test-data/csv/sample_paper_1w.csv` | 1W | 60 |
+| `test-data/csv/sample_paper_1d.csv` | 1D | 250 |
+| `test-data/csv/sample_paper_4h.csv` | 4H | 250 |
+
+Suggested smoke workflow with these fixtures:
+
+1. In the web app, add a watchlist item with a clearly fake symbol (for
+   example `SMOKE-PAPER-001`, asset class `stock`, exchange `SAMPLE`).
+2. Upload each CSV from the Import page, selecting the matching timeframe.
+3. From the import history, run analysis to generate signals.
+4. Continue through the manual trade/journal/performance steps using only
+   sample values.
+
+Regenerate the fixtures with `python scripts/generate_smoke_fixtures.py`
+if they are ever removed; output is deterministic.
+
+See `test-data/csv/README.md` for the full safety scope of these fixtures.
+
 ## Follow-Up Issues
 
 - `#117` Add deterministic MVP smoke test fixture data.
@@ -90,7 +117,7 @@ Interpretation: Docker Desktop is installed, but the Linux engine was not reacha
 Before marking the MVP smoke flow as passed, rerun this document with:
 
 - Docker Desktop Linux engine running and reachable.
-- Deterministic sample/paper CSV files for `1W`, `1D`, and `4H`.
+- Deterministic sample/paper CSV files for `1W`, `1D`, and `4H` (committed under `test-data/csv/`).
 - A browser pass through the complete manual workflow.
 - Follow-up issues opened for any material product defects discovered.
 

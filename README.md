@@ -209,5 +209,5 @@ Nicht enthalten:
 Aktuelle Blocker und offene Punkte:
 
 - Keine Produktionsfreigabe: Deployment, Monitoring, Backups, Secrets-Betrieb und Security Review sind noch offen.
-- Der dokumentierte MVP-Smoke-Test ist noch blockiert, bis Docker Engine Zugriff und deterministische Sample-CSV-Fixtures verfuegbar sind.
+- Der dokumentierte MVP-Smoke-Test ist noch blockiert, bis Docker Engine Zugriff hergestellt ist. Deterministische Sample-CSV-Fixtures liegen unter `test-data/csv/` bereit (siehe `docs/MVP_SMOKE_TEST.md`).
 - Dokumentation und Roadmap muessen nach jedem groesseren Slice weiter synchron gehalten werden.
