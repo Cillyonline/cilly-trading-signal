@@ -27,6 +27,19 @@ export type CsvImportResult = {
   errors: CsvImportError[];
 };
 
+export type ImportHistoryItem = {
+  series_id: number;
+  watchlist_item_id: number;
+  symbol: string;
+  timeframe: Timeframe;
+  status: MarketDataStatus;
+  candle_count: number;
+  start_time: string | null;
+  end_time: string | null;
+  imported_at: string;
+  file_name: string | null;
+};
+
 export type SignalAnalysisResult = {
   strategy_type: StrategyType;
   status: SignalStatus;

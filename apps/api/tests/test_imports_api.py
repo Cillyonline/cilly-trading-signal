@@ -125,6 +125,41 @@ def test_import_csv_persists_valid_candles(client: TestClient) -> None:
     assert result["errors"] == []
 
 
+def test_list_imports_returns_authenticated_user_history(client: TestClient) -> None:
+    watchlist_item_id = create_watchlist_item(client)
+    imported = post_csv_import(
+        client,
+        watchlist_item_id,
+        valid_csv(),
+        file_name="aapl-daily.csv",
+    ).json()
+
+    response = client.get("/api/imports")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body) == 1
+    assert body[0]["series_id"] == imported["series_id"]
+    assert body[0]["watchlist_item_id"] == watchlist_item_id
+    assert body[0]["symbol"] == "AAPL"
+    assert body[0]["timeframe"] == "1D"
+    assert body[0]["status"] == "validated"
+    assert body[0]["candle_count"] == 20
+    assert body[0]["start_time"].startswith("2024-01-01")
+    assert body[0]["end_time"].startswith("2024-01-20")
+    assert body[0]["imported_at"] is not None
+    assert body[0]["file_name"] == "aapl-daily.csv"
+
+
+def test_list_imports_rejects_unauthenticated_request(client: TestClient) -> None:
+    client.post("/api/auth/logout")
+
+    response = client.get("/api/imports")
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Authentication required."
+
+
 def test_import_csv_accepts_valid_four_hour_spacing(client: TestClient) -> None:
     watchlist_item_id = create_watchlist_item(client)
 

@@ -1,7 +1,7 @@
 import type { Signal, SignalReviewNoteUpdatePayload, SignalStatusUpdatePayload } from "@/types/signals";
 import type { AlertEvent, TelegramTestMessageResult } from "@/types/alerts";
 import type { AuthUser, LoginPayload } from "@/types/auth";
-import type { CsvImportResult, MarketDataAnalysisResult } from "@/types/imports";
+import type { CsvImportResult, ImportHistoryItem, MarketDataAnalysisResult } from "@/types/imports";
 import type { PerformanceSummary } from "@/types/performance";
 import type { RiskSettings, RiskSettingsUpdatePayload } from "@/types/settings";
 import type {
@@ -145,6 +145,14 @@ export async function importCsv(formData: FormData): Promise<CsvImportResult> {
     );
   }
 
+  return response.json();
+}
+
+export async function fetchImportHistory(): Promise<ImportHistoryItem[]> {
+  const response = await credentialedFetch(`${API_BASE_URL}/imports`, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error("Import-Historie konnte nicht geladen werden.");
+  }
   return response.json();
 }
 

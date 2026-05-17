@@ -20,3 +20,16 @@ class CsvImportResult(BaseModel):
     start_time: datetime | None
     end_time: datetime | None
     errors: list[CsvImportError]
+
+
+class ImportHistoryItem(BaseModel):
+    series_id: int
+    watchlist_item_id: int
+    symbol: str
+    timeframe: Timeframe
+    status: MarketDataStatus
+    candle_count: int
+    start_time: datetime | None
+    end_time: datetime | None
+    imported_at: datetime
+    file_name: str | None
