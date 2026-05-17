@@ -11,7 +11,7 @@ from app.models.types import enum_values
 if TYPE_CHECKING:
     from app.models.alert import Alert, NotificationLog
     from app.models.settings import Settings
-    from app.models.signal import Signal
+    from app.models.signal import Signal, SignalReviewEvent
     from app.models.trade import JournalEntry, Trade
     from app.models.watchlist import WatchlistItem
 
@@ -36,6 +36,7 @@ class User(Base):
     settings: Mapped["Settings"] = relationship(back_populates="user")
     watchlist_items: Mapped[list["WatchlistItem"]] = relationship(back_populates="user")
     signals: Mapped[list["Signal"]] = relationship(back_populates="user")
+    signal_review_events: Mapped[list["SignalReviewEvent"]] = relationship(back_populates="user")
     trades: Mapped[list["Trade"]] = relationship(back_populates="user")
     journal_entries: Mapped[list["JournalEntry"]] = relationship(back_populates="user")
     alerts: Mapped[list["Alert"]] = relationship(back_populates="user")

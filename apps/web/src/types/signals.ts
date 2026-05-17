@@ -40,6 +40,18 @@ export type Signal = {
   created_at: string;
   updated_at: string;
   triggered_at: string | null;
+  review_events: SignalReviewEvent[];
+};
+
+export type SignalReviewEvent = {
+  id: number;
+  signal_id: number;
+  user_id: number;
+  event_type: "status_change" | "review_note" | string;
+  previous_status: SignalStatus | null;
+  new_status: SignalStatus | null;
+  note: string | null;
+  created_at: string;
 };
 
 export type SignalStatusUpdatePayload = {
