@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
-import { createTrade, fetchSignals, fetchTrades, fetchWatchlist } from "@/lib/api";
+import { createTrade, exportTradesCsv, fetchSignals, fetchTrades, fetchWatchlist } from "@/lib/api";
 import type { Signal, StrategyType } from "@/types/signals";
 import type { Trade, TradeCreatePayload, TradeFilters } from "@/types/trades";
 import type { WatchlistItem } from "@/types/watchlist";
@@ -65,6 +65,7 @@ export default function TradesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   async function loadData() {
     setIsLoading(true);
@@ -121,6 +122,15 @@ export default function TradesPage() {
     [form.watchlist_item_id, watchlist],
   );
 
+  async function handleExport() {
+    setExportError(null);
+    try {
+      await exportTradesCsv();
+    } catch (err) {
+      setExportError(err instanceof Error ? err.message : "Export fehlgeschlagen.");
+    }
+  }
+
   async function submitTrade(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
@@ -163,12 +173,22 @@ export default function TradesPage() {
                 dokumentiert Risiko und R-Werte, fuehrt aber keine Orders aus.
               </p>
             </div>
-            <a className="text-sm text-emerald-300 hover:text-emerald-200" href="/">
-              Zurueck zum Dashboard
-            </a>
+            <div className="flex flex-wrap items-center gap-4 text-sm">
+              <button
+                className="rounded-xl bg-emerald-400 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-300"
+                onClick={() => void handleExport()}
+                type="button"
+              >
+                CSV exportieren
+              </button>
+              <a className="text-emerald-300 hover:text-emerald-200" href="/">
+                Zurueck zum Dashboard
+              </a>
+            </div>
           </div>
         </header>
 
+        {exportError ? <ErrorMessage message={exportError} /> : null}
         {error ? <ErrorMessage message={error} /> : null}
 
         <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">

@@ -302,6 +302,33 @@ export async function createJournalEntry(tradeId: number, payload: JournalEntryC
   return response.json();
 }
 
+export async function exportTradesCsv(): Promise<void> {
+  const response = await credentialedFetch(`${API_BASE_URL}/export/trades`, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error("Trade-Export konnte nicht geladen werden.");
+  }
+  const blob = await response.blob();
+  _triggerDownload(blob, "trades.csv");
+}
+
+export async function exportPerformanceCsv(): Promise<void> {
+  const response = await credentialedFetch(`${API_BASE_URL}/export/performance`, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error("Performance-Export konnte nicht geladen werden.");
+  }
+  const blob = await response.blob();
+  _triggerDownload(blob, "performance.csv");
+}
+
+function _triggerDownload(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
 function formatApiError(detail: unknown, fallback: string) {
   if (typeof detail === "string") {
     return detail;
