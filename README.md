@@ -186,6 +186,7 @@ Implementiert:
 - Erklaerbare Signal-Erzeugung fuer Trend Pullback Long und Base Breakout Long mit Score, Status, Risk Flags, No-Trade-Reasons und Next Action.
 - Manuelles Trade Logging mit Risk/R:R-Berechnung, Events, Close-Flow, Journal und Performance-Kennzahlen in R.
 - Risk Settings fuer Account Size, maximales Risiko, Mindest-R:R und maximale offene Trades.
+- TradingView Webhook-Ingestion, Alert Events UI und expliziter Telegram-Testversand als Alert-Foundation ohne automatische Zustellung oder Ausfuehrung.
 - Docker Compose fuer Web, API und PostgreSQL sowie Caddy-Konfiguration fuer spaeteres VPS-Routing.
 - CI fuer API lint/tests, Web build und PostgreSQL/Alembic Migration Smoke.
 
@@ -196,16 +197,17 @@ Teilweise umgesetzt oder noch MVP-limitiert:
 - Auth ist bewusst Single-User; Multi-User, Rollenmodell und Self-Service-Registrierung sind nicht Teil des MVP.
 - Risk Settings erzwingen Basisregeln beim manuellen Trade Logging, ersetzen aber kein vollstaendiges Portfolio-Risikomanagement.
 - Dashboard, Journal und Performance sind funktional, aber noch Basisansichten.
+- Alerting ist als Review-/Test-Foundation vorhanden; automatische Alert-Routing-Regeln und produktive Zustellung sind noch nicht abgeschlossen.
 
 Nicht enthalten:
 
 - Automatische Orderausfuehrung.
 - Broker- oder Exchange-Integration.
-- TradingView Webhooks und Telegram Alerts als produktiver Alert-Flow.
+- Automatische Telegram-Alert-Zustellung und produktive Alert-Routing-Regeln.
 - Live Market Data, Backtesting Engine, Mobile App oder Multi-User SaaS-Betrieb.
 
 Aktuelle Blocker und offene Punkte:
 
 - Keine Produktionsfreigabe: Deployment, Monitoring, Backups, Secrets-Betrieb und Security Review sind noch offen.
-- CSV Import braucht weitere Haertung gegen falsche Timeframe-Zuordnung und zu grosse Uploads, bis Issue `#66` gemerged ist.
+- Der dokumentierte MVP-Smoke-Test ist noch blockiert, bis Docker Engine Zugriff und deterministische Sample-CSV-Fixtures verfuegbar sind.
 - Dokumentation und Roadmap muessen nach jedem groesseren Slice weiter synchron gehalten werden.

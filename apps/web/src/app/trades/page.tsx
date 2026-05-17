@@ -387,7 +387,7 @@ function TradeCard({ trade }: { trade: Trade }) {
           className="mt-4 inline-flex rounded-xl border border-white/10 px-4 py-2 text-sm text-emerald-300 hover:border-emerald-300/50 hover:text-emerald-200"
           href={`/trades/${trade.id}`}
         >
-          Trade im Detail verwalten
+          Trade im Detail dokumentieren
         </a>
       </div>
       <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
