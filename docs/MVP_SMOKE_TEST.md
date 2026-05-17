@@ -11,6 +11,30 @@ This document records the MVP smoke-test workflow and the latest validation resu
 - Trades in this smoke test are manual documentation records only.
 - Performance views show documented historical/paper results, not forecasts.
 
+## Runner
+
+The `scripts/smoke_test.ps1` runner automates preflight, stack startup, and
+the API health check. It does not replace the browser portion of the smoke
+test — it only reduces manual setup ambiguity.
+
+```powershell
+# Bring the stack up and wait for /api/health
+.\scripts\smoke_test.ps1
+
+# Bring the stack down (volumes preserved)
+.\scripts\smoke_test.ps1 -Cleanup
+
+# Bring the stack down and wipe the Postgres volume
+.\scripts\smoke_test.ps1 -Cleanup -PurgeVolumes
+```
+
+The runner fails fast with a clear `[FAIL]` message when the Docker engine
+pipe is unreachable. Browser steps (login, watchlist, CSV import, analysis,
+trade log, journal, performance) continue manually using the fixtures under
+`test-data/csv/`.
+
+This script is release-validation tooling, not a production deployment claim.
+
 ## Target Workflow
 
 1. Start the local stack with Docker Compose.

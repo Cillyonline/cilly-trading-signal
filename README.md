@@ -76,6 +76,20 @@ Falls `uv` fehlt:
 winget install astral-sh.uv
 ```
 
+### MVP Smoke Runner
+
+Fuer den dokumentierten MVP Smoke Test gibt es einen Runner, der Preflight-Checks,
+Stack-Start und API-Health automatisiert. Der Runner ersetzt nicht den Browser-Teil
+des Smoke Tests und macht keine Produktionsfreigabe-Aussage:
+
+```powershell
+.\scripts\smoke_test.ps1                       # hochfahren + Health-Check
+.\scripts\smoke_test.ps1 -Cleanup              # herunterfahren (Volumes bleiben)
+.\scripts\smoke_test.ps1 -Cleanup -PurgeVolumes # herunterfahren + Volumes loeschen
+```
+
+Details und Browser-Workflow stehen in `docs/MVP_SMOKE_TEST.md`.
+
 ### Docker Compose
 
 Docker Compose ist der bevorzugte lokale Smoke-Test, weil Web, API und Postgres zusammen starten.
