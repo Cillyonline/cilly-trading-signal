@@ -2,11 +2,10 @@ import csv
 import io
 from decimal import Decimal
 
-from sqlalchemy import exists, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from app.models.enums import TradeStatus
-from app.models.trade import JournalEntry, Trade
+from app.models.trade import Trade
 from app.services.performance import get_performance_summary
 
 TRADES_CSV_HEADERS = [
@@ -47,7 +46,6 @@ PERFORMANCE_CSV_HEADERS = [
 
 
 def export_trades_csv(db: Session, user_id: int) -> str:
-    has_review = exists().where(JournalEntry.trade_id == Trade.id)
     trades = list(
         db.scalars(
             select(Trade)

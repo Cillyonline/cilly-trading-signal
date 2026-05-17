@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m uv run --no-sync ruff check app/services/export.py app/api/routes/export.py app/main.py tests/test_export_api.py)",
+      "Bash(ls apps/api/.venv/Scripts/ruff*)",
+      "Bash(ls apps/api/.venv/bin/ruff*)",
+      "Bash(Get-Command -Name ruff -ErrorAction SilentlyContinue)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(gh pr create --title 'Add CSV export for trades and performance' --body ' *)",
+      "Bash(gh pr *)",
+      "Bash(gh run *)",
+      "PowerShell(python -m py_compile \"C:\\\\repos\\\\cilly-trading-signal\\\\.claude\\\\worktrees\\\\adoring-kalam-7b00ad\\\\apps\\\\api\\\\app\\\\services\\\\export.py\" \"C:\\\\repos\\\\cilly-trading-signal\\\\.claude\\\\worktrees\\\\adoring-kalam-7b00ad\\\\apps\\\\api\\\\tests\\\\test_export_api.py\")"
+    ]
+  }
+}

@@ -44,17 +44,6 @@ def client() -> Iterator[TestClient]:
     Base.metadata.drop_all(bind=engine)
 
 
-@pytest.fixture()
-def second_client(client: TestClient) -> TestClient:
-    """A second authenticated client sharing the same DB — used to test user scoping."""
-    second = TestClient(client.app)
-    second.post(
-        "/api/auth/login",
-        json={"email": "admin@example.com", "password": "change-this-password"},
-    )
-    return second
-
-
 def login(client: TestClient) -> None:
     response = client.post(
         "/api/auth/login",
@@ -63,7 +52,9 @@ def login(client: TestClient) -> None:
     assert response.status_code == 200
 
 
-def create_watchlist_item(client: TestClient, symbol: str = "AAPL", asset_class: str = "stock") -> int:
+def create_watchlist_item(
+    client: TestClient, symbol: str = "AAPL", asset_class: str = "stock"
+) -> int:
     response = client.post(
         "/api/watchlist",
         json={"symbol": symbol, "asset_class": asset_class, "exchange": "NASDAQ"},
@@ -217,7 +208,7 @@ def test_trades_export_row_contains_performance_fields(client: TestClient) -> No
 
 
 def test_trades_export_review_complete_reflects_journal(client: TestClient) -> None:
-    open_trade = create_open_trade(client, "AAPL")
+    create_open_trade(client, "AAPL")
     reviewed_trade = create_open_trade(client, "MSFT")
     close_trade(client, reviewed_trade)
     add_journal_entry(client, reviewed_trade["id"])
@@ -285,7 +276,9 @@ def test_performance_export_empty_state_has_overall_row(client: TestClient) -> N
 
 
 def test_performance_export_includes_strategy_and_asset_class_rows(client: TestClient) -> None:
-    trade = create_open_trade(client, "AAPL", strategy_type="trend_pullback_long", asset_class="stock")
+    trade = create_open_trade(
+        client, "AAPL", strategy_type="trend_pullback_long", asset_class="stock"
+    )
     close_trade(client, trade)
 
     response = client.get("/api/export/performance")
