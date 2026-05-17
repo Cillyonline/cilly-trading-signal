@@ -161,8 +161,11 @@ uv run --no-project --with pytest --with "fastapi[standard]" --with pydantic-set
 - `docs/DATA_MODEL.md`
 - `docs/TECH_ARCHITECTURE.md`
 - `docs/DEPLOYMENT_RUNBOOK.md`
+- `docs/MVP_SMOKE_TEST.md`
 
 Operational deployment, PostgreSQL backup/restore, healthcheck, logging, and deployment smoke-test steps are documented in `docs/DEPLOYMENT_RUNBOOK.md`. Backup files and logs may contain sensitive app data and must not be committed or shared without review.
+
+The latest end-to-end MVP smoke-test attempt is documented in `docs/MVP_SMOKE_TEST.md`. The current recorded run is blocked by local Docker Desktop engine availability and missing deterministic sample CSV fixtures; it is not a production-readiness claim.
 
 ## Aktueller Stand
 
