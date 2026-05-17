@@ -316,6 +316,7 @@ function TradeSummary({ trade }: { trade: TradeDetail }) {
         <h2 className="text-2xl font-semibold">{trade.symbol}</h2>
         <span className="rounded-full bg-slate-800 px-3 py-1 text-xs uppercase text-slate-300">{trade.status}</span>
         <span className="rounded-full bg-slate-800 px-3 py-1 text-xs uppercase text-slate-300">{trade.asset_class}</span>
+        <ReviewStatusBadge trade={trade} />
         <span className="text-sm text-slate-400">{formatStrategy(trade.strategy_type)}</span>
       </div>
 
@@ -337,6 +338,16 @@ function TradeSummary({ trade }: { trade: TradeDetail }) {
       {trade.notes ? <p className="mt-5 text-sm text-slate-300">{trade.notes}</p> : null}
     </article>
   );
+}
+
+function ReviewStatusBadge({ trade }: { trade: TradeDetail }) {
+  if (trade.review_status === "reviewed") {
+    return <span className="rounded-full bg-emerald-300/10 px-3 py-1 text-xs text-emerald-100">Review komplett</span>;
+  }
+  if (trade.review_status === "needs_review") {
+    return <span className="rounded-full bg-yellow-300/10 px-3 py-1 text-xs text-yellow-100">Review offen</span>;
+  }
+  return <span className="rounded-full bg-slate-800 px-3 py-1 text-xs text-slate-400">Review nach Close</span>;
 }
 
 function JournalReviewCard({

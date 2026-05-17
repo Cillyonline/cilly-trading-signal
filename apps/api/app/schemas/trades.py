@@ -67,6 +67,8 @@ class TradeRead(BaseModel):
     target_2_potential_r: Decimal | None
     result_amount: Decimal | None
     result_r: Decimal | None
+    is_review_complete: bool
+    review_status: str
     notes: str | None
     created_at: datetime
     updated_at: datetime

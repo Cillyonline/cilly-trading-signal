@@ -536,6 +536,7 @@ function TradeCard({ trade }: { trade: Trade }) {
           <h3 className="text-lg font-semibold">{trade.symbol}</h3>
           <span className="rounded-full bg-slate-800 px-3 py-1 text-xs uppercase text-slate-300">{trade.status}</span>
           <span className="rounded-full bg-slate-800 px-3 py-1 text-xs uppercase text-slate-300">{trade.asset_class}</span>
+          <ReviewStatusBadge trade={trade} />
           <span className="text-sm text-slate-400">{formatStrategy(trade.strategy_type)}</span>
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-4">
@@ -562,6 +563,16 @@ function TradeCard({ trade }: { trade: Trade }) {
       </div>
     </article>
   );
+}
+
+function ReviewStatusBadge({ trade }: { trade: Trade }) {
+  if (trade.review_status === "reviewed") {
+    return <span className="rounded-full bg-emerald-300/10 px-3 py-1 text-xs text-emerald-100">Review komplett</span>;
+  }
+  if (trade.review_status === "needs_review") {
+    return <span className="rounded-full bg-yellow-300/10 px-3 py-1 text-xs text-yellow-100">Review offen</span>;
+  }
+  return <span className="rounded-full bg-slate-800 px-3 py-1 text-xs text-slate-400">Review nach Close</span>;
 }
 
 function Metric({ label, value }: { label: string; value: string }) {

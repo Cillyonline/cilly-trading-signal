@@ -93,6 +93,8 @@ def test_create_trade_from_watchlist_calculates_initial_risk(client: TestClient)
     assert trade["target_1_potential_r"] == "2.50"
     assert trade["target_2_potential_r"] == "4.00"
     assert trade["result_r"] is None
+    assert trade["is_review_complete"] is False
+    assert trade["review_status"] == "not_ready"
 
     list_response = client.get("/api/trades")
 
@@ -449,6 +451,8 @@ def test_close_trade_calculates_result_r(client: TestClient) -> None:
     assert closed["exit_reason"] == "target_1"
     assert closed["result_amount"] == "150.00"
     assert closed["result_r"] == "3.0000"
+    assert closed["is_review_complete"] is False
+    assert closed["review_status"] == "needs_review"
     assert closed["events"][-1]["event_type"] == "closed"
     assert closed["events"][-1]["notes"] == "Manual full close."
 
@@ -529,7 +533,10 @@ def test_create_journal_entry_for_closed_trade(client: TestClient) -> None:
     detail_response = client.get(f"/api/trades/{trade['id']}")
 
     assert detail_response.status_code == 200
-    assert detail_response.json()["journal_entry"]["id"] == journal_entry["id"]
+    detail = detail_response.json()
+    assert detail["journal_entry"]["id"] == journal_entry["id"]
+    assert detail["is_review_complete"] is True
+    assert detail["review_status"] == "reviewed"
 
 
 def test_create_journal_entry_rejects_unknown_trade(client: TestClient) -> None:
