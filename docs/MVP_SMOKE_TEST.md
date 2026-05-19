@@ -184,7 +184,7 @@ See `test-data/csv/README.md` for the full safety scope of these fixtures.
 
 ## Follow-Up Issues
 
-- `#132` Fix defects found during MVP smoke test. Current reproduced blocker: web Docker build fails because `apps/web/Dockerfile` copies `/app/public`, but no `public` directory exists in the web build context.
+- `#132` Fix defects found during MVP smoke test. Current reproduced blocker: web Docker build fails because `apps/web/Dockerfile` copies `/app/public`, but no `public` directory exists in the web build context. Fix status: code fix added by committing `apps/web/public/.gitkeep` so the expected Docker build path exists; rerun the Docker Compose smoke startup with Docker Desktop reachable to confirm the stack starts.
 - `#133` Add release candidate checklist status update.
 
 ## Next Smoke-Test Requirements
