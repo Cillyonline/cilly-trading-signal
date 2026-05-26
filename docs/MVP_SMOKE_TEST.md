@@ -50,6 +50,71 @@ This script is release-validation tooling, not a production deployment claim.
 
 ## Latest Run
 
+Date: 2026-05-26
+
+Environment:
+
+- Windows workspace: `C:\repos\cilly-trading-signal`
+- Branch used for rerun: `issue-134-verify-staging-deployment-path-rerun`
+- Deployment shape: Docker Compose proxy stack with PostgreSQL, API, web, and Caddy.
+- Scope: staging/VPS-like local rerun after `#139` was merged.
+- Data scope: local/sample smoke-test data only.
+
+Commands and checks recorded:
+
+```powershell
+docker compose -f .\infra\docker-compose.yml --profile proxy up --build -d
+docker compose -f .\infra\docker-compose.yml --profile proxy ps
+curl.exe -fsS http://localhost:8000/api/health
+curl.exe -k -fsS https://localhost/api/health
+curl.exe -k -I https://localhost
+```
+
+Additional frontend bundle check:
+
+```powershell
+docker compose -f .\infra\docker-compose.yml --profile proxy exec web sh -lc "grep -R 'http://localhost:8000/api' -n .next server.js 2>/dev/null | head -20 || true"
+```
+
+Result: returned no output.
+
+Results:
+
+- Docker Compose proxy stack rebuild: PASS.
+- PostgreSQL container health: PASS, Postgres reported healthy.
+- API service: PASS, running.
+- Web service: PASS, running.
+- Caddy service: PASS, running.
+- Direct API health: PASS with `curl.exe -fsS http://localhost:8000/api/health`.
+- Caddy API health: PASS with `curl.exe -k -fsS https://localhost/api/health`.
+- Caddy web load: PASS, `curl.exe -k -I https://localhost` returned `HTTP/1.1 200 OK` through Caddy.
+- Frontend API base URL bundle check: PASS, grep for `http://localhost:8000/api` returned no output.
+
+Browser workflow results:
+
+- Login/session: PASS. Login succeeded and authenticated browser workflow continued.
+- Dashboard: PASS. Dashboard loaded successfully after login.
+- Watchlist: PASS. Watchlist page loaded while authenticated.
+- CSV import: PASS. CSV import page loaded and sample CSV import worked.
+- Analysis: PASS. Analysis completed and produced a conservative `No Setup` / `No Trade` result under the strategy and risk rules. This is an expected conservative outcome, not a failed workflow.
+- Signals: PASS. Signals page loaded and showed the persisted AAPL `No Setup` signal.
+- Signal detail: PASS. Detail view loaded and showed reasoning, no-trade reasons, risk flags, and safety wording.
+- Trades page: PASS. Trades page loaded and showed manual trade logging only.
+- Logout: PASS. Logout completed.
+- Protected data after logout: PASS for data protection. After logout, protected API data was not accessible.
+
+Known gap from rerun:
+
+- After logout, opening `/watchlist` still renders the page shell and shows `Watchlist konnte nicht geladen werden` instead of redirecting cleanly to login. This is a UX/auth-guard follow-up gap. It was not observed to expose protected data.
+
+Interpretation:
+
+The staging/VPS-like Docker Compose proxy path passed this rerun for stack rebuild, service health, Caddy-routed API and web access, same-origin frontend API configuration, authenticated browser workflow, conservative analysis output, signal review, manual trade logging page access, logout, and protected API data behavior after logout.
+
+This evidence closes the previously documented release-validation blocker path for `#132` and the Caddy HTTPS frontend API base URL blocker fixed by `#139`. It does not claim production readiness, profitability, strategy validation, trading advice, broker integration, or automatic trading.
+
+## Previous Run
+
 Date: 2026-05-17
 
 Environment:
@@ -134,26 +199,27 @@ This is a reproduced smoke-test defect and should be handled under follow-up iss
 
 | Area | Result | Notes |
 | --- | --- | --- |
-| Docker CLI availability | PASS | Docker CLI returned `Docker version 29.1.3, build f52814d`. |
-| Docker Compose CLI availability | PASS | Compose returned `Docker Compose version v2.40.3-desktop.1`. |
-| Docker engine reachability | PASS | Initially unavailable, then reachable after Docker Desktop was started. |
-| Compose stack startup | BLOCKED | Web image build failed because `/app/public` was not found during Dockerfile runner-stage copy. |
-| API health | NOT RUN | Requires running stack. |
-| Web login | NOT RUN | Requires running stack. |
-| Watchlist workflow | NOT RUN | Requires running stack. |
-| CSV import 1W fixture | NOT RUN | Requires running stack. Fixture exists at `test-data/csv/sample_paper_1w.csv`. |
-| CSV import 1D fixture | NOT RUN | Requires running stack. Fixture exists at `test-data/csv/sample_paper_1d.csv`. |
-| CSV import 4H fixture | NOT RUN | Requires running stack. Fixture exists at `test-data/csv/sample_paper_4h.csv`. |
-| Analysis and signal review | NOT RUN | Requires running stack and imported sample data. |
-| Signal detail review | NOT RUN | Requires generated or persisted signals. |
-| Manual paper trade logging | NOT RUN | Requires running stack and sample signal/trade data. |
-| Trade close flow | NOT RUN | Requires manual paper trade record. |
-| Journal review | NOT RUN | Requires closed manual paper trade record. |
-| Performance review | NOT RUN | Requires trade records. |
-| Alerts review | NOT RUN | Requires running stack. |
-| Settings review | NOT RUN | Requires running stack. |
-| Dashboard review | NOT RUN | Requires running stack. |
-| Safety wording review | NOT RUN | Full browser review requires running stack. Existing smoke document keeps decision-support and no-execution boundaries explicit. |
+| Docker Compose proxy stack rebuild | PASS | Stack rebuilt successfully with the proxy profile. |
+| PostgreSQL health | PASS | Postgres reported healthy. |
+| API service | PASS | API was running and direct health passed. |
+| Web service | PASS | Web was running and loaded through Caddy. |
+| Caddy service | PASS | Caddy was running and routed API and web requests. |
+| Direct API health | PASS | `curl.exe -fsS http://localhost:8000/api/health` passed. |
+| Caddy API health | PASS | `curl.exe -k -fsS https://localhost/api/health` passed. |
+| Caddy web load | PASS | `curl.exe -k -I https://localhost` returned `HTTP/1.1 200 OK`. |
+| Frontend API base URL bundle check | PASS | Grep for `http://localhost:8000/api` returned no output. |
+| Login/session | PASS | Authenticated browser workflow continued after login. |
+| Dashboard review | PASS | Dashboard loaded successfully after login. |
+| Watchlist workflow | PASS | Watchlist page loaded while authenticated. |
+| CSV import | PASS | CSV import page loaded and sample CSV import worked. |
+| Analysis and signal review | PASS | Analysis completed with conservative `No Setup` / `No Trade`, which is valid under risk rules. |
+| Signals list | PASS | Signals page showed the persisted AAPL `No Setup` signal. |
+| Signal detail review | PASS | Detail showed reasoning, no-trade reasons, risk flags, and safety wording. |
+| Manual trade logging page | PASS | Trades page loaded and showed manual trade logging only. |
+| Logout | PASS | Logout completed. |
+| Protected API data after logout | PASS | Protected API data was not accessible after logout. |
+| Protected route UX after logout | FOLLOW-UP | `/watchlist` renders a page shell with `Watchlist konnte nicht geladen werden` instead of cleanly redirecting to login. No protected data exposure was observed. |
+| Safety wording review | PASS | Signal detail and workflow kept decision-support, No Trade, risk, and manual execution boundaries visible. |
 
 ## Sample Data
 
@@ -184,12 +250,14 @@ See `test-data/csv/README.md` for the full safety scope of these fixtures.
 
 ## Follow-Up Issues
 
-- `#132` Fix defects found during MVP smoke test. Current reproduced blocker: web Docker build fails because `apps/web/Dockerfile` copies `/app/public`, but no `public` directory exists in the web build context. Fix status: code fix added by committing `apps/web/public/.gitkeep` so the expected Docker build path exists; rerun the Docker Compose smoke startup with Docker Desktop reachable to confirm the stack starts.
+- `#132` Fix defects found during MVP smoke test. Status: no longer an active smoke-test blocker in the latest documented rerun; the Docker Compose proxy stack rebuilt and started successfully.
+- `#139` Fix Caddy HTTPS frontend API base URL. Status: no longer an active smoke-test blocker in the latest documented rerun; Caddy-routed API health passed and the frontend bundle check found no `http://localhost:8000/api` reference.
 - `#133` Add release candidate checklist status update.
+- UX/auth-guard follow-up: after logout, opening `/watchlist` renders the page shell with `Watchlist konnte nicht geladen werden` instead of redirecting cleanly to login. Protected API data was not accessible.
 
 ## Next Smoke-Test Requirements
 
-Before marking the MVP smoke flow as passed, rerun this document with:
+For future reruns, preserve the following evidence:
 
 - Docker Desktop Linux engine running and reachable.
 - Docker Compose stack startup passing successfully.

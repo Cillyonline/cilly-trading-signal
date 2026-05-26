@@ -7,19 +7,24 @@ This checklist records the current MVP v1.2 release-candidate posture for review
 ## Release Candidate Status
 
 - Version / candidate: v1.2 release candidate.
-- Evidence source: [2026-05-17 MVP smoke-test latest run](MVP_SMOKE_TEST.md#latest-run).
-- Status: Blocked.
-- Reason: the latest documented smoke-test run could not start the Docker Compose stack because the web image build failed before API health, login, CSV import, analysis, signal review, manual paper trade, journal, and performance checks could run.
+- Evidence source: [2026-05-26 MVP smoke-test latest run](MVP_SMOKE_TEST.md#latest-run).
+- Status: Staging/VPS-like deployment path passed with a documented UX/auth-guard follow-up.
+- Reason: the latest documented rerun rebuilt and started the Docker Compose proxy stack, passed direct and Caddy-routed API health checks, loaded the web app through Caddy, completed the authenticated browser workflow, and confirmed protected API data was not accessible after logout.
+- Boundary: this status is not a production-readiness statement, strategy validation, profitability claim, trading advice, or trading recommendation.
 
 ## Passed
 
 - Release boundary remains documented as a single-user, local or controlled staging review cockpit for long-only swing-trading analysis and manual documentation.
 - Safety scope remains explicit: decision-support only, manual trade execution, no broker integration in MVP, no automatic order execution, no profitability claims, and no trading advice.
-- Smoke-test tooling prerequisites passed in the latest run: Docker CLI, Docker Compose CLI, Docker engine reachability after Docker Desktop was started, Compose file presence, `.env` presence, and deterministic sample CSV fixture availability. See [MVP smoke-test coverage matrix](MVP_SMOKE_TEST.md#coverage-matrix).
+- Staging/VPS-like Docker Compose proxy path passed in the latest run: stack rebuild, PostgreSQL health, API running, web running, Caddy running, direct API health, Caddy API health, and Caddy web load. See [MVP smoke-test coverage matrix](MVP_SMOKE_TEST.md#coverage-matrix).
+- Frontend API base URL verification passed: bundle grep for `http://localhost:8000/api` returned no output after the `#139` fix.
+- Browser workflow passed for login/session, dashboard, watchlist, CSV import, analysis, signals, signal detail, trades page, logout, and protected API data denial after logout.
+- Analysis produced a conservative `No Setup` / `No Trade` result. This is valid behavior under the strategy and risk rules, not a failed workflow.
 - Operational deployment guidance remains documented in [Deployment Runbook](DEPLOYMENT_RUNBOOK.md), including health checks, deployment smoke steps, secret handling, backup/restore guidance, and safety boundaries.
 
 ## Known Gaps
 
+- After logout, opening `/watchlist` still renders the page shell and shows `Watchlist konnte nicht geladen werden` instead of redirecting cleanly to login. This is a UX/auth-guard follow-up gap, not observed protected data exposure.
 - Dashboard, Journal, Performance, Alerts, and Settings are MVP-level views, not full analytics or operations consoles.
 - Risk enforcement covers core manual trade logging rules, not full portfolio exposure, correlation, or account-level risk management.
 - Stale signal handling flags old saved signals, but does not refresh market data or re-run strategy automatically.
@@ -30,9 +35,8 @@ This checklist records the current MVP v1.2 release-candidate posture for review
 
 ## Blocked
 
-- Release-candidate smoke validation is blocked by the reproduced Docker Compose startup defect documented in [MVP smoke-test latest run](MVP_SMOKE_TEST.md#latest-run): the web Docker build expects `/app/public`, but no `public` directory existed in the tested checkout. Follow-up: `#132`.
-- API health, browser login, watchlist, CSV import, analysis, signal review, manual paper trade logging, trade close, journal, performance, alerts, settings, dashboard, and browser safety-wording checks were not run because stack startup was blocked.
-- A complete browser-based end-to-end review is still required before the MVP smoke flow can be marked passed.
+- No active release-candidate blocker is documented for `#132` or `#139` in the latest smoke-test rerun.
+- Production monitoring, operational alerting, restore-test evidence, and security review completion remain not documented as passed, so production readiness is not claimed.
 
 ## Not Included
 
@@ -49,9 +53,12 @@ This checklist records the current MVP v1.2 release-candidate posture for review
 | Gate | Status | Evidence |
 | --- | --- | --- |
 | Release boundary and safety wording documented | Passed | This checklist, [MVP Smoke Test](MVP_SMOKE_TEST.md#safety-scope), and [Deployment Runbook](DEPLOYMENT_RUNBOOK.md#safety-boundaries) keep decision-support and no-execution boundaries explicit. |
-| Docker and Compose preflight | Passed | Latest smoke run recorded Docker CLI, Docker Compose CLI, Docker engine reachability, Compose file presence, and `.env` presence as passing. |
-| Docker Compose stack startup | Blocked | Latest smoke run recorded stack startup as blocked by the web Docker build defect tracked by `#132`. |
-| API health | Not run | Requires successful stack startup. |
-| Browser MVP workflow | Not run | Login, watchlist, CSV import, analysis, signal review, manual paper trade, close, journal, performance, alerts, settings, dashboard, and safety-wording review require successful stack startup. |
-| Release blocker tracking | Conditional | The known documented startup blocker is linked to `#132`; any additional defects found after the stack starts need follow-up issues. |
+| Docker Compose proxy stack startup | Passed | Latest smoke run recorded successful proxy stack rebuild with Postgres healthy and API, web, and Caddy running. |
+| API health | Passed | Direct API health and Caddy-routed API health passed. |
+| Web through Caddy | Passed | `curl.exe -k -I https://localhost` returned `HTTP/1.1 200 OK` through Caddy. |
+| Frontend API base URL | Passed | Bundle grep for `http://localhost:8000/api` returned no output after `#139`. |
+| Browser MVP workflow | Passed | Dashboard, login/session, watchlist, CSV import, analysis, signals, signal detail, trades page, and logout were reviewed in the latest smoke run. |
+| Conservative signal behavior | Passed | Sample analysis produced `No Setup` / `No Trade` because of strategy/risk rules; this preserves No Trade as a first-class outcome. |
+| Logout protected-data behavior | Passed with UX follow-up | Protected API data was not accessible after logout; `/watchlist` still renders a page shell with an error instead of redirecting cleanly to login. |
+| Release blocker tracking | Passed | `#132` and `#139` are no longer documented as active smoke-test blockers; the logout route-shell behavior remains a follow-up gap. |
 | Production readiness | Not passed | No production-readiness gate is documented as passed; deployment docs remain operational guidance only. |
