@@ -8,8 +8,8 @@ This checklist records the current MVP v1.2 release-candidate posture for review
 
 - Version / candidate: v1.2 release candidate.
 - Evidence source: [2026-05-26 MVP smoke-test latest run](MVP_SMOKE_TEST.md#latest-run).
-- Status: Staging/VPS-like deployment path passed with a documented UX/auth-guard follow-up.
-- Reason: the latest documented rerun rebuilt and started the Docker Compose proxy stack, passed direct and Caddy-routed API health checks, loaded the web app through Caddy, completed the authenticated browser workflow, and confirmed protected API data was not accessible after logout.
+- Status: Staging/VPS-like deployment path and disposable PostgreSQL backup/restore verification passed with a documented UX/auth-guard follow-up.
+- Reason: the latest documented rerun rebuilt and started the Docker Compose proxy stack, passed direct and Caddy-routed API health checks, loaded the web app through Caddy, completed the authenticated browser workflow, confirmed protected API data was not accessible after logout, and verified PostgreSQL backup/restore mechanics on a disposable sample-data Compose project.
 - Boundary: this status is not a production-readiness statement, strategy validation, profitability claim, trading advice, or trading recommendation.
 
 ## Passed
@@ -21,6 +21,7 @@ This checklist records the current MVP v1.2 release-candidate posture for review
 - Browser workflow passed for login/session, dashboard, watchlist, CSV import, analysis, signals, signal detail, trades page, logout, and protected API data denial after logout.
 - Analysis produced a conservative `No Setup` / `No Trade` result. This is valid behavior under the strategy and risk rules, not a failed workflow.
 - Operational deployment guidance remains documented in [Deployment Runbook](DEPLOYMENT_RUNBOOK.md), including health checks, deployment smoke steps, secret handling, backup/restore guidance, and safety boundaries.
+- PostgreSQL backup/restore mechanics passed on a disposable Compose project using sample-only marker data. The backup and restore scripts created a custom-format dump, restored it into a fresh disposable volume, restarted app services, returned API health, and preserved the sample rows.
 
 ## Known Gaps
 
@@ -30,13 +31,13 @@ This checklist records the current MVP v1.2 release-candidate posture for review
 - Stale signal handling flags old saved signals, but does not refresh market data or re-run strategy automatically.
 - Telegram support currently covers explicit operator test messages; production alert routing is not complete.
 - TradingView webhook support persists review events, but does not trigger broker execution, auto-trade creation, or automatic Telegram delivery.
-- Production monitoring, operational alerting, restore-test evidence, and security review completion are not documented as passed.
+- Production monitoring, operational alerting, and security review completion are not documented as passed.
 - Full mobile app/PWA hardening beyond responsive MVP layouts is not documented as passed.
 
 ## Blocked
 
 - No active release-candidate blocker is documented for `#132` or `#139` in the latest smoke-test rerun.
-- Production monitoring, operational alerting, restore-test evidence, and security review completion remain not documented as passed, so production readiness is not claimed.
+- Production monitoring, operational alerting, and security review completion remain not documented as passed, so production readiness is not claimed.
 
 ## Not Included
 
@@ -60,5 +61,33 @@ This checklist records the current MVP v1.2 release-candidate posture for review
 | Browser MVP workflow | Passed | Dashboard, login/session, watchlist, CSV import, analysis, signals, signal detail, trades page, and logout were reviewed in the latest smoke run. |
 | Conservative signal behavior | Passed | Sample analysis produced `No Setup` / `No Trade` because of strategy/risk rules; this preserves No Trade as a first-class outcome. |
 | Logout protected-data behavior | Passed with UX follow-up | Protected API data was not accessible after logout; `/watchlist` still renders a page shell with an error instead of redirecting cleanly to login. |
+| PostgreSQL backup/restore evidence | Passed | `#135` verified `scripts/backup_postgres.sh` and `scripts/restore_postgres.sh` against disposable sample data; API health and restored sample-row query passed after restore. |
 | Release blocker tracking | Passed | `#132` and `#139` are no longer documented as active smoke-test blockers; the logout route-shell behavior remains a follow-up gap. |
 | Production readiness | Not passed | No production-readiness gate is documented as passed; deployment docs remain operational guidance only. |
+
+## PostgreSQL Backup/Restore Evidence
+
+Date: 2026-05-26
+
+Status: Passed.
+
+Evidence summary:
+
+- GitHub issue: `#135`.
+- Environment: disposable Docker Compose project `cilly_backup_restore_test`.
+- Data scope: sample-only marker rows; no production data, personal trading data, or secrets.
+- Backup: `scripts/backup_postgres.sh` created a PostgreSQL custom-format dump in a temporary directory outside the repository.
+- Restore: `scripts/restore_postgres.sh` restored the dump into a fresh disposable PostgreSQL volume.
+- Verification:
+  - API health returned `{"status":"ok"}` after restore.
+  - Restored sample marker rows were queryable:
+    - `manual_trade / SAMPLE-BR-001`
+    - `watchlist / SAMPLE-BR-001`
+- Cleanup: disposable containers, network, volume, temporary Compose override, and temporary backup dump were removed.
+
+Notes:
+
+- The Windows checkout had CRLF working-tree line endings for `.sh` files. The scripts were executed from normalized temporary copies inside an ephemeral Docker CLI helper container to match Linux/VPS execution semantics.
+- Repository scripts were not modified.
+- No backup dump files, `.env` files, secrets, database URLs, credentials, or private data were committed.
+- This evidence does not claim production readiness.
