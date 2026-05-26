@@ -59,7 +59,7 @@ Required values:
 - `POSTGRES_USER`: PostgreSQL user.
 - `POSTGRES_PASSWORD`: strong PostgreSQL password.
 - `POSTGRES_DB`: PostgreSQL database name.
-- `NEXT_PUBLIC_API_BASE_URL`: public API base URL, normally `https://<APP_DOMAIN>/api`.
+- `NEXT_PUBLIC_API_BASE_URL`: browser-facing API base URL. Use `/api` for same-origin Caddy routing, or an explicit `https://<APP_DOMAIN>/api` URL when needed.
 
 Optional values for later alert work:
 
@@ -95,7 +95,7 @@ ADMIN_INITIAL_PASSWORD=<strong-random-password>
 AUTH_COOKIE_SECURE=true
 TRADINGVIEW_WEBHOOK_SECRET=<strong-random-webhook-secret>
 CORS_ORIGINS=["https://trading.example.com"]
-NEXT_PUBLIC_API_BASE_URL=https://trading.example.com/api
+NEXT_PUBLIC_API_BASE_URL=/api
 POSTGRES_USER=cilly_app
 POSTGRES_PASSWORD=<strong-db-password>
 POSTGRES_DB=cilly_trading_signal
@@ -302,7 +302,7 @@ API does not start:
 Web does not load:
 
 - Check `docker compose -f infra/docker-compose.yml --profile proxy logs --tail=200 web`.
-- Confirm `NEXT_PUBLIC_API_BASE_URL` points to `https://<APP_DOMAIN>/api` for public deployments.
+- Confirm `NEXT_PUBLIC_API_BASE_URL` uses `/api` for same-origin Caddy routing, or points to `https://<APP_DOMAIN>/api` for an explicit public API URL.
 - Confirm the web container is running in `docker compose -f infra/docker-compose.yml --profile proxy ps`.
 - Check Caddy logs if the web container is healthy but the public domain fails.
 

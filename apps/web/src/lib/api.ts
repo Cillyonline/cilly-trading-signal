@@ -17,7 +17,7 @@ import type {
 } from "@/types/trades";
 import type { WatchlistItem } from "@/types/watchlist";
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
 
 const credentialedFetch: typeof fetch = (input, init) => fetch(input, { ...init, credentials: "include" });
 
