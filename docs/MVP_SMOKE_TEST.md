@@ -269,3 +269,5 @@ For future reruns, preserve the following evidence:
 ## Cleanup Notes
 
 The temporary local `.env` created during this run remains local and must not be committed. If future smoke runs create local data, logs, screenshots, or exports, review them for secrets or personal trading data before sharing.
+
+For disposable local demo data only, use the reset safety procedure in [Disposable Demo Data Reset](DEPLOYMENT_RUNBOOK.md#disposable-demo-data-reset). Do not delete staging, production-like, or real-data volumes as part of smoke-test cleanup.

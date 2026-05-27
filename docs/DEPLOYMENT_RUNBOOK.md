@@ -230,6 +230,150 @@ docker compose -f infra/docker-compose.yml --profile proxy down
 
 Do not run `down --volumes` on a VPS unless you intentionally want to remove PostgreSQL data and have a verified backup.
 
+## Disposable Demo Data Reset
+
+### Purpose
+
+Use this procedure only to return a local, disposable demo or validation stack to a clean sample state after smoke tests, CSV imports, signal review, manual trade logging, journal/performance checks, or backup/restore tests.
+
+This is a documentation-only reset path. It does not add automation and it must not be used as a shortcut for staging, production-like, or real data operations.
+
+### Preconditions
+
+Before removing any Docker volume, confirm all of the following:
+
+- You are working in a local or explicitly disposable environment.
+- The stack contains only sample, paper-trading, smoke-test, or backup/restore marker data.
+- No real trading journal, credentials, user data, production data, or staging evidence must be preserved.
+- The Compose project is the intended disposable project, not a VPS staging or production-like deployment.
+- Any backup dump you need to keep has already been created, verified, and stored outside the repository working tree.
+- `.env`, backup dumps, logs, screenshots, database URLs, credentials, cookies, and secrets have been reviewed and will not be committed or pasted into issues/PRs.
+
+### Safety Classification
+
+Safe only for local disposable demo data:
+
+- Local Docker Desktop stacks started from this repository for smoke-test or demo validation.
+- Temporary Compose projects created only for backup/restore verification.
+- Environments where the operator can intentionally recreate all data from sample fixtures or manual demo steps.
+
+Unsafe unless explicitly approved:
+
+- Staging or VPS environments that are used for release evidence, handoff, or shared review.
+- Production-like environments, even if they currently contain only a small amount of data.
+- Any database that may contain real trades, personal journal notes, credentials, private imports, or customer/user data.
+
+If the environment classification is unclear, stop and do not remove volumes.
+
+### What Gets Deleted
+
+For this Compose stack, `docker compose ... down --volumes` removes the named Docker volumes for the selected Compose project. That includes:
+
+- `postgres-data`: PostgreSQL database files, including watchlist items, imports, indicators, signals, manual trades, journal entries, settings, and auth data.
+- `caddy-data`: local Caddy state such as local certificates or ACME data for that Compose project.
+- `caddy-config`: Caddy runtime configuration state for that Compose project.
+
+It also stops and removes the project's containers and network. It does not delete committed repository files, but it can permanently delete unbacked database state.
+
+### What Must Never Be Deleted Accidentally
+
+Do not remove Docker volumes for:
+
+- Production, staging, or production-like PostgreSQL data.
+- VPS Caddy volumes that hold real certificate/account state unless a separate approved operations plan covers it.
+- Backup storage such as `/var/backups/cilly-trading-signal/postgres`.
+- Any dump that is the only copy of data you may need to restore.
+- `.env` files or secret material as part of a shared PR, issue, screenshot, or log bundle.
+
+Do not run broad Docker cleanup commands such as `docker volume prune` for this task. They can remove unrelated volumes from other projects.
+
+### PowerShell Example
+
+Use this only from the repository root on a local disposable stack after the preconditions above are true.
+
+```powershell
+git status --short
+docker compose -f .\infra\docker-compose.yml --profile proxy ps
+docker compose -f .\infra\docker-compose.yml --profile proxy down --volumes
+```
+
+The smoke-test runner also exposes an explicit disposable cleanup path:
+
+```powershell
+.\scripts\smoke_test.ps1 -Cleanup -PurgeVolumes
+```
+
+Run the `-PurgeVolumes` form only when the stack contains disposable demo data. Use `.\scripts\smoke_test.ps1 -Cleanup` when you want to stop containers while preserving volumes.
+
+### Linux/VPS Example
+
+Use this only for a disposable local or temporary Compose project. Do not use it on a staging or production VPS unless an approved operation explicitly says the target data may be destroyed.
+
+```bash
+git status --short
+docker compose -f infra/docker-compose.yml --profile proxy ps
+docker compose -f infra/docker-compose.yml --profile proxy down --volumes
+```
+
+For production-like VPS maintenance, prefer stopping without deleting volumes:
+
+```bash
+docker compose -f infra/docker-compose.yml --profile proxy down
+```
+
+### Backup Warning
+
+PostgreSQL dumps can contain watchlist symbols, imported candles, signals, trades, journal text, auth data, and settings. Treat dumps as sensitive operational data.
+
+- Store backups outside the repository working tree when possible.
+- Do not commit backups, `.env` files, database URLs, credentials, cookies, logs, screenshots with secrets, or private trading data.
+- Verify a backup before relying on it as the reason a volume can be deleted.
+- Do not call a reset safe just because a dump exists; confirm the dump belongs to the same environment and can be restored into a non-production copy.
+
+### Verification After Reset
+
+After removing disposable volumes, recreate and verify the stack before recording new smoke-test evidence.
+
+PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+docker compose -f .\infra\docker-compose.yml --profile proxy up --build -d
+docker compose -f .\infra\docker-compose.yml --profile proxy ps
+curl.exe -fsS http://localhost:8000/api/health
+curl.exe -k -fsS https://localhost/api/health
+```
+
+Linux/VPS-style shell for a disposable project:
+
+```bash
+cp .env.example .env
+docker compose -f infra/docker-compose.yml --profile proxy up --build -d
+docker compose -f infra/docker-compose.yml --profile proxy ps
+curl -fsS http://localhost:8000/api/health
+curl -k -fsS https://localhost/api/health
+```
+
+If the stack was started from a fresh database and migrations are not applied by the startup path, run the migration command from the [Updates And Migrations](#updates-and-migrations) section, then re-check health.
+
+### How To Recreate Demo State
+
+After the reset:
+
+1. Log in with local disposable admin credentials from `.env`.
+2. Create a clearly fake sample watchlist item, for example `SMOKE-PAPER-001`.
+3. Import deterministic sample CSV fixtures from `test-data/csv/` for the required timeframes.
+4. Run analysis and review conservative signal output, including `No Setup` or `No Trade` outcomes where applicable.
+5. Create manual trade and journal records only with sample or paper values.
+6. For backup/restore validation, create a fresh backup from the disposable state and restore it only into another disposable target.
+
+### References
+
+- [Deployment Smoke Test Checklist](#deployment-smoke-test-checklist)
+- [PostgreSQL Backups](#postgresql-backups)
+- [PostgreSQL Restore](#postgresql-restore)
+- [MVP Smoke Test](MVP_SMOKE_TEST.md)
+
 ## Healthchecks And Logs
 
 Use these checks after deploys, restarts, restores, and configuration changes. Do not paste full logs into issues or chat without reviewing them for secrets, cookies, tokens, database URLs, email addresses, and trade/journal content.
