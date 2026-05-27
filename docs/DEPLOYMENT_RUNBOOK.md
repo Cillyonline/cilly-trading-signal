@@ -20,6 +20,7 @@ VPS:
 - Linux VPS with a supported Docker installation.
 - SSH access with a non-root deploy user where possible.
 - Public ports `80` and `443` open when using Caddy/HTTPS.
+- Direct API and web service ports must not be publicly exposed for Caddy/prod-like deployments. In the provided Compose file they are bound to localhost only for operator checks and local development.
 - Sufficient disk space for Docker images, PostgreSQL volume data, and backups.
 
 Local/operator machine:
@@ -178,6 +179,9 @@ For public HTTPS:
 - `APP_DOMAIN` must be a real domain, not `localhost`.
 - DNS must point at the VPS before Caddy can obtain a certificate.
 - Ports `80` and `443` must be reachable from the internet.
+- Public browser and API access should use the Caddy HTTPS route, not the direct API or web service ports.
+- Direct API and web host ports are intended only for localhost operator checks or local development. If a deployment overrides these bindings, keep them bound to `127.0.0.1` or protect them with firewall rules so they are not internet-reachable.
+- Do not treat `http://localhost:8000` or `http://localhost:3000` as public deployment endpoints.
 
 ## Updates And Migrations
 
