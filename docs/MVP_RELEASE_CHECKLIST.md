@@ -9,6 +9,7 @@ This checklist records the current MVP v1.2 release-candidate posture for review
 - Version / candidate: v1.2 release candidate.
 - Evidence source: [2026-05-26 MVP smoke-test latest run](MVP_SMOKE_TEST.md#latest-run).
 - Status: Internal RC handoff is acceptable and ready for internal review. This is not production-ready, broker-ready, profitability-validated, or real-money trading evidence.
+- Decision gate: [v1.2 Release Candidate Decision Gate](V1_2_RC_DECISION_GATE.md) accepts the RC for controlled internal handoff only.
 - Reason: the latest documented rerun rebuilt and started the Docker Compose proxy stack, passed direct and Caddy-routed API health checks, loaded the web app through Caddy, completed the authenticated browser workflow, confirmed protected API data was not accessible after logout, and verified PostgreSQL backup/restore mechanics on a disposable sample-data Compose project. Follow-up issue `#143` then fixed the protected-route UX after logout, issue `#144` completed a light MVP security review, and issue `#145` documented the disposable demo data reset procedure.
 - Boundary: this status is not a production-readiness statement, strategy validation, profitability claim, trading advice, or trading recommendation.
 
@@ -71,7 +72,7 @@ This checklist records the current MVP v1.2 release-candidate posture for review
 
 - Ready for internal RC handoff / review.
 - Hold production-like public exposure until medium security follow-ups are addressed or explicitly accepted.
-- A separate decision gate is still required before any broader release, production-like exposure, broker readiness, real-money use, or profitability claim.
+- A separate decision gate has been recorded in [v1.2 Release Candidate Decision Gate](V1_2_RC_DECISION_GATE.md); any broader release, production-like exposure, broker readiness, real-money use, or profitability claim still requires a follow-up decision.
 
 ## Passed
 
