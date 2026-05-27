@@ -2,7 +2,15 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
-import { createTrade, exportTradesCsv, fetchSignals, fetchTrades, fetchWatchlist } from "@/lib/api";
+import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
+import {
+  createTrade,
+  exportTradesCsv,
+  fetchSignals,
+  fetchTrades,
+  fetchWatchlist,
+  redirectToLoginOnAuthError,
+} from "@/lib/api";
 import type { Signal, StrategyType } from "@/types/signals";
 import type { Trade, TradeCreatePayload, TradeFilters } from "@/types/trades";
 import type { WatchlistItem } from "@/types/watchlist";
@@ -56,6 +64,7 @@ const emptyFilters: FilterForm = {
 };
 
 export default function TradesPage() {
+  const authStatus = useProtectedRoute();
   const [trades, setTrades] = useState<Trade[]>([]);
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [signals, setSignals] = useState<Signal[]>([]);
@@ -85,6 +94,9 @@ export default function TradesPage() {
         signal_id: current.signal_id || loadedSignals[0]?.id.toString() || "",
       }));
     } catch (loadError) {
+      if (redirectToLoginOnAuthError(loadError)) {
+        return;
+      }
       setError(loadError instanceof Error ? loadError.message : "Unbekannter Fehler.");
     } finally {
       setIsLoading(false);
@@ -92,8 +104,10 @@ export default function TradesPage() {
   }
 
   useEffect(() => {
-    void loadData();
-  }, []);
+    if (authStatus === "authenticated") {
+      void loadData();
+    }
+  }, [authStatus]);
 
   async function submitFilters(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -107,6 +121,9 @@ export default function TradesPage() {
     try {
       setTrades(await fetchTrades());
     } catch (loadError) {
+      if (redirectToLoginOnAuthError(loadError)) {
+        return;
+      }
       setError(loadError instanceof Error ? loadError.message : "Unbekannter Fehler.");
     } finally {
       setIsLoading(false);
@@ -122,11 +139,18 @@ export default function TradesPage() {
     [form.watchlist_item_id, watchlist],
   );
 
+  if (authStatus !== "authenticated") {
+    return <ProtectedRouteLoading />;
+  }
+
   async function handleExport() {
     setExportError(null);
     try {
       await exportTradesCsv();
     } catch (err) {
+      if (redirectToLoginOnAuthError(err)) {
+        return;
+      }
       setExportError(err instanceof Error ? err.message : "Export fehlgeschlagen.");
     }
   }
@@ -154,6 +178,9 @@ export default function TradesPage() {
       });
       await loadData();
     } catch (saveError) {
+      if (redirectToLoginOnAuthError(saveError)) {
+        return;
+      }
       setError(saveError instanceof Error ? saveError.message : "Unbekannter Fehler.");
     } finally {
       setIsSaving(false);

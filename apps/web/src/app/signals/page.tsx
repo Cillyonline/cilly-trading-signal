@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { fetchSignals } from "@/lib/api";
+import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
+import { fetchSignals, redirectToLoginOnAuthError } from "@/lib/api";
 import type { Signal, SignalStatus } from "@/types/signals";
 
 const statusTone: Record<SignalStatus, string> = {
@@ -26,6 +27,7 @@ const statusLabel: Record<SignalStatus, string> = {
 };
 
 export default function SignalsPage() {
+  const authStatus = useProtectedRoute();
   const [signals, setSignals] = useState<Signal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +38,9 @@ export default function SignalsPage() {
     try {
       setSignals(await fetchSignals());
     } catch (loadError) {
+      if (redirectToLoginOnAuthError(loadError)) {
+        return;
+      }
       setError(loadError instanceof Error ? loadError.message : "Unbekannter Fehler.");
     } finally {
       setIsLoading(false);
@@ -43,10 +48,16 @@ export default function SignalsPage() {
   }
 
   useEffect(() => {
-    void loadSignals();
-  }, []);
+    if (authStatus === "authenticated") {
+      void loadSignals();
+    }
+  }, [authStatus]);
 
   const summary = useMemo(() => buildSummary(signals), [signals]);
+
+  if (authStatus !== "authenticated") {
+    return <ProtectedRouteLoading />;
+  }
 
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-8 text-slate-100">

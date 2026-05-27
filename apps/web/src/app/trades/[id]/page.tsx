@@ -2,7 +2,14 @@
 
 import { FormEvent, useEffect, useState } from "react";
 
-import { closeTrade, createJournalEntry, createTradeEvent, fetchTrade } from "@/lib/api";
+import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
+import {
+  closeTrade,
+  createJournalEntry,
+  createTradeEvent,
+  fetchTrade,
+  redirectToLoginOnAuthError,
+} from "@/lib/api";
 import type { StrategyType } from "@/types/signals";
 import type {
   ExitReason,
@@ -73,6 +80,7 @@ const emptyJournalForm: JournalForm = {
 };
 
 export default function TradeDetailPage({ params }: { params: { id: string } }) {
+  const authStatus = useProtectedRoute();
   const [trade, setTrade] = useState<TradeDetail | null>(null);
   const [form, setForm] = useState<EventForm>(emptyForm);
   const [closeForm, setCloseForm] = useState<CloseForm>(emptyCloseForm);
@@ -96,6 +104,9 @@ export default function TradeDetailPage({ params }: { params: { id: string } }) 
     try {
       setTrade(await fetchTrade(tradeId));
     } catch (loadError) {
+      if (redirectToLoginOnAuthError(loadError)) {
+        return;
+      }
       setError(loadError instanceof Error ? loadError.message : "Unbekannter Fehler.");
     } finally {
       setIsLoading(false);
@@ -103,8 +114,14 @@ export default function TradeDetailPage({ params }: { params: { id: string } }) 
   }
 
   useEffect(() => {
-    void loadTrade();
-  }, [params.id]);
+    if (authStatus === "authenticated") {
+      void loadTrade();
+    }
+  }, [authStatus, params.id]);
+
+  if (authStatus !== "authenticated") {
+    return <ProtectedRouteLoading />;
+  }
 
   async function submitEvent(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -125,6 +142,9 @@ export default function TradeDetailPage({ params }: { params: { id: string } }) 
       setForm({ ...emptyForm, event_time: form.event_time });
       await loadTrade();
     } catch (saveError) {
+      if (redirectToLoginOnAuthError(saveError)) {
+        return;
+      }
       setError(saveError instanceof Error ? saveError.message : "Unbekannter Fehler.");
     } finally {
       setIsSaving(false);
@@ -149,6 +169,9 @@ export default function TradeDetailPage({ params }: { params: { id: string } }) 
       setTrade(await closeTrade(trade.id, payload));
       setCloseForm(emptyCloseForm);
     } catch (closeError) {
+      if (redirectToLoginOnAuthError(closeError)) {
+        return;
+      }
       setError(closeError instanceof Error ? closeError.message : "Unbekannter Fehler.");
     } finally {
       setIsClosing(false);
@@ -174,6 +197,9 @@ export default function TradeDetailPage({ params }: { params: { id: string } }) 
       setJournalForm(emptyJournalForm);
       await loadTrade();
     } catch (reviewError) {
+      if (redirectToLoginOnAuthError(reviewError)) {
+        return;
+      }
       setError(reviewError instanceof Error ? reviewError.message : "Unbekannter Fehler.");
     } finally {
       setIsReviewing(false);

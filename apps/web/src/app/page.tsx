@@ -2,7 +2,15 @@
 
 import { useEffect, useState } from "react";
 
-import { fetchPerformanceSummary, fetchSignals, fetchTrades, fetchWatchlist, logout } from "@/lib/api";
+import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
+import {
+  fetchPerformanceSummary,
+  fetchSignals,
+  fetchTrades,
+  fetchWatchlist,
+  logout,
+  redirectToLoginOnAuthError,
+} from "@/lib/api";
 import type { PerformanceSummary } from "@/types/performance";
 import type { Signal } from "@/types/signals";
 import type { Trade } from "@/types/trades";
@@ -18,11 +26,18 @@ const workflowAreas = [
 ];
 
 export default function Home() {
+  const authStatus = useProtectedRoute();
   const [dashboard, setDashboard] = useState<DashboardResult | null>(null);
 
   useEffect(() => {
-    void loadDashboardData().then(setDashboard);
-  }, []);
+    if (authStatus === "authenticated") {
+      void loadDashboardData().then(setDashboard);
+    }
+  }, [authStatus]);
+
+  if (authStatus !== "authenticated") {
+    return <ProtectedRouteLoading />;
+  }
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#172554,transparent_32%),#050816] px-6 py-8 text-slate-100">
@@ -70,6 +85,10 @@ async function loadDashboardData(): Promise<DashboardResult> {
       data: buildDashboardData(watchlist, signals, trades, performance),
     };
   } catch (error) {
+    if (redirectToLoginOnAuthError(error)) {
+      return { ok: false, error: "" };
+    }
+
     return {
       ok: false,
       error: error instanceof Error ? error.message : "Dashboard-Daten konnten nicht geladen werden.",

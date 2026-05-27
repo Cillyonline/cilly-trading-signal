@@ -33,6 +33,36 @@ export class ApiError extends Error {
   }
 }
 
+export class AuthenticationRequiredError extends Error {
+  constructor(message = "Login erforderlich.") {
+    super(message);
+    this.name = "AuthenticationRequiredError";
+  }
+}
+
+export function isAuthenticationRequiredError(error: unknown): error is AuthenticationRequiredError {
+  return error instanceof AuthenticationRequiredError;
+}
+
+export function isUnauthorizedStatus(status: number): boolean {
+  return status === 401 || status === 403;
+}
+
+export function assertAuthenticatedResponse(response: Response): void {
+  if (isUnauthorizedStatus(response.status)) {
+    throw new AuthenticationRequiredError();
+  }
+}
+
+export function redirectToLoginOnAuthError(error: unknown): boolean {
+  if (!isAuthenticationRequiredError(error)) {
+    return false;
+  }
+
+  window.location.replace("/login");
+  return true;
+}
+
 export async function login(payload: LoginPayload): Promise<AuthUser> {
   const response = await credentialedFetch(`${API_BASE_URL}/auth/login`, {
     method: "POST",
@@ -54,6 +84,7 @@ export async function logout(): Promise<void> {
 
 export async function fetchCurrentUser(): Promise<AuthUser> {
   const response = await credentialedFetch(`${API_BASE_URL}/auth/me`, { cache: "no-store" });
+  assertAuthenticatedResponse(response);
   if (!response.ok) {
     throw new Error("Nicht angemeldet.");
   }
@@ -62,6 +93,7 @@ export async function fetchCurrentUser(): Promise<AuthUser> {
 
 export async function fetchWatchlist(): Promise<WatchlistItem[]> {
   const response = await credentialedFetch(`${API_BASE_URL}/watchlist`, { cache: "no-store" });
+  assertAuthenticatedResponse(response);
   if (!response.ok) {
     throw new Error("Watchlist konnte nicht geladen werden.");
   }
@@ -70,6 +102,7 @@ export async function fetchWatchlist(): Promise<WatchlistItem[]> {
 
 export async function fetchSignals(): Promise<Signal[]> {
   const response = await credentialedFetch(`${API_BASE_URL}/signals`, { cache: "no-store" });
+  assertAuthenticatedResponse(response);
   if (!response.ok) {
     throw new Error("Signale konnten nicht geladen werden.");
   }
@@ -78,6 +111,7 @@ export async function fetchSignals(): Promise<Signal[]> {
 
 export async function fetchAlerts(): Promise<AlertEvent[]> {
   const response = await credentialedFetch(`${API_BASE_URL}/alerts`, { cache: "no-store" });
+  assertAuthenticatedResponse(response);
   if (!response.ok) {
     throw new Error("Alert Events konnten nicht geladen werden.");
   }
@@ -89,6 +123,7 @@ export async function fetchSignal(signalId: number): Promise<Signal> {
   if (response.status === 404) {
     throw new Error("Signal wurde nicht gefunden.");
   }
+  assertAuthenticatedResponse(response);
   if (!response.ok) {
     throw new Error("Signal konnte nicht geladen werden.");
   }
@@ -105,6 +140,7 @@ export async function updateSignalStatus(
     body: JSON.stringify(payload),
   });
 
+  assertAuthenticatedResponse(response);
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     throw new Error(formatApiError(body?.detail, "Signal Status konnte nicht geaendert werden."));
@@ -123,6 +159,7 @@ export async function updateSignalReviewNote(
     body: JSON.stringify(payload),
   });
 
+  assertAuthenticatedResponse(response);
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     throw new Error(formatApiError(body?.detail, "Review Note konnte nicht gespeichert werden."));
@@ -137,6 +174,7 @@ export async function importCsv(formData: FormData): Promise<CsvImportResult> {
     body: formData,
   });
 
+  assertAuthenticatedResponse(response);
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     throw new ApiError(
@@ -151,6 +189,7 @@ export async function importCsv(formData: FormData): Promise<CsvImportResult> {
 
 export async function fetchImportHistory(): Promise<ImportHistoryItem[]> {
   const response = await credentialedFetch(`${API_BASE_URL}/imports`, { cache: "no-store" });
+  assertAuthenticatedResponse(response);
   if (!response.ok) {
     throw new Error("Import-Historie konnte nicht geladen werden.");
   }
@@ -162,6 +201,7 @@ export async function analyzeImport(seriesId: number): Promise<MarketDataAnalysi
     method: "POST",
   });
 
+  assertAuthenticatedResponse(response);
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     throw new Error(formatApiError(body?.detail, "Analyse konnte nicht gestartet werden."));
@@ -181,6 +221,7 @@ export async function fetchTrades(filters: TradeFilters = {}): Promise<Trade[]> 
   const response = await credentialedFetch(`${API_BASE_URL}/trades${query ? `?${query}` : ""}`, {
     cache: "no-store",
   });
+  assertAuthenticatedResponse(response);
   if (!response.ok) {
     throw new Error("Trades konnten nicht geladen werden.");
   }
@@ -189,6 +230,7 @@ export async function fetchTrades(filters: TradeFilters = {}): Promise<Trade[]> 
 
 export async function fetchPerformanceSummary(): Promise<PerformanceSummary> {
   const response = await credentialedFetch(`${API_BASE_URL}/performance/summary`, { cache: "no-store" });
+  assertAuthenticatedResponse(response);
   if (!response.ok) {
     throw new Error("Performance Summary konnte nicht geladen werden.");
   }
@@ -197,6 +239,7 @@ export async function fetchPerformanceSummary(): Promise<PerformanceSummary> {
 
 export async function fetchRiskSettings(): Promise<RiskSettings> {
   const response = await credentialedFetch(`${API_BASE_URL}/settings`, { cache: "no-store" });
+  assertAuthenticatedResponse(response);
   if (!response.ok) {
     throw new Error("Risk Settings konnten nicht geladen werden.");
   }
@@ -210,6 +253,7 @@ export async function updateRiskSettings(payload: RiskSettingsUpdatePayload): Pr
     body: JSON.stringify(payload),
   });
 
+  assertAuthenticatedResponse(response);
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     throw new Error(formatApiError(body?.detail, "Risk Settings konnten nicht gespeichert werden."));
@@ -223,6 +267,7 @@ export async function sendTelegramTestMessage(): Promise<TelegramTestMessageResu
     method: "POST",
   });
 
+  assertAuthenticatedResponse(response);
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     throw new Error(formatApiError(body?.detail, "Telegram Test konnte nicht gesendet werden."));
@@ -236,6 +281,7 @@ export async function fetchTrade(tradeId: number): Promise<TradeDetail> {
   if (response.status === 404) {
     throw new Error("Trade wurde nicht gefunden.");
   }
+  assertAuthenticatedResponse(response);
   if (!response.ok) {
     throw new Error("Trade konnte nicht geladen werden.");
   }
@@ -249,6 +295,7 @@ export async function createTrade(payload: TradeCreatePayload): Promise<Trade> {
     body: JSON.stringify(payload),
   });
 
+  assertAuthenticatedResponse(response);
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     throw new Error(formatApiError(body?.detail, "Trade konnte nicht gespeichert werden."));
@@ -264,6 +311,7 @@ export async function createTradeEvent(tradeId: number, payload: TradeEventCreat
     body: JSON.stringify(payload),
   });
 
+  assertAuthenticatedResponse(response);
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     throw new Error(formatApiError(body?.detail, "Trade Event konnte nicht gespeichert werden."));
@@ -279,6 +327,7 @@ export async function closeTrade(tradeId: number, payload: TradeClosePayload): P
     body: JSON.stringify(payload),
   });
 
+  assertAuthenticatedResponse(response);
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     throw new Error(formatApiError(body?.detail, "Trade konnte nicht geschlossen werden."));
@@ -294,6 +343,7 @@ export async function createJournalEntry(tradeId: number, payload: JournalEntryC
     body: JSON.stringify(payload),
   });
 
+  assertAuthenticatedResponse(response);
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     throw new Error(formatApiError(body?.detail, "Journal Review konnte nicht gespeichert werden."));
@@ -304,6 +354,7 @@ export async function createJournalEntry(tradeId: number, payload: JournalEntryC
 
 export async function exportTradesCsv(): Promise<void> {
   const response = await credentialedFetch(`${API_BASE_URL}/export/trades`, { cache: "no-store" });
+  assertAuthenticatedResponse(response);
   if (!response.ok) {
     throw new Error("Trade-Export konnte nicht geladen werden.");
   }
@@ -313,6 +364,7 @@ export async function exportTradesCsv(): Promise<void> {
 
 export async function exportPerformanceCsv(): Promise<void> {
   const response = await credentialedFetch(`${API_BASE_URL}/export/performance`, { cache: "no-store" });
+  assertAuthenticatedResponse(response);
   if (!response.ok) {
     throw new Error("Performance-Export konnte nicht geladen werden.");
   }

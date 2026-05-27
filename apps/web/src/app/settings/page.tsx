@@ -2,7 +2,13 @@
 
 import { FormEvent, useEffect, useState } from "react";
 
-import { fetchRiskSettings, sendTelegramTestMessage, updateRiskSettings } from "@/lib/api";
+import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
+import {
+  fetchRiskSettings,
+  redirectToLoginOnAuthError,
+  sendTelegramTestMessage,
+  updateRiskSettings,
+} from "@/lib/api";
 import type { RiskSettings, RiskSettingsUpdatePayload } from "@/types/settings";
 
 type SettingsForm = {
@@ -24,6 +30,7 @@ const emptyForm: SettingsForm = {
 };
 
 export default function SettingsPage() {
+  const authStatus = useProtectedRoute();
   const [form, setForm] = useState<SettingsForm>(emptyForm);
   const [settings, setSettings] = useState<RiskSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,6 +49,9 @@ export default function SettingsPage() {
       setSettings(loaded);
       setForm(formFromSettings(loaded));
     } catch (loadError) {
+      if (redirectToLoginOnAuthError(loadError)) {
+        return;
+      }
       setError(loadError instanceof Error ? loadError.message : "Unbekannter Fehler.");
     } finally {
       setIsLoading(false);
@@ -49,8 +59,14 @@ export default function SettingsPage() {
   }
 
   useEffect(() => {
-    void loadSettings();
-  }, []);
+    if (authStatus === "authenticated") {
+      void loadSettings();
+    }
+  }, [authStatus]);
+
+  if (authStatus !== "authenticated") {
+    return <ProtectedRouteLoading />;
+  }
 
   async function submitSettings(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -63,6 +79,9 @@ export default function SettingsPage() {
       setForm(formFromSettings(saved));
       setMessage("Risk Settings gespeichert. Sie gelten fuer neue manuell geloggte Trades.");
     } catch (saveError) {
+      if (redirectToLoginOnAuthError(saveError)) {
+        return;
+      }
       setError(saveError instanceof Error ? saveError.message : "Unbekannter Fehler.");
     } finally {
       setIsSaving(false);
@@ -77,6 +96,9 @@ export default function SettingsPage() {
       await sendTelegramTestMessage();
       setTelegramMessage("Telegram Test gesendet. Pruefe den konfigurierten Operator-Chat.");
     } catch (testError) {
+      if (redirectToLoginOnAuthError(testError)) {
+        return;
+      }
       setTelegramError(testError instanceof Error ? testError.message : "Unbekannter Fehler.");
     } finally {
       setIsTestingTelegram(false);
