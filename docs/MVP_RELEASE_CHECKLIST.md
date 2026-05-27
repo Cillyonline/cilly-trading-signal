@@ -8,9 +8,70 @@ This checklist records the current MVP v1.2 release-candidate posture for review
 
 - Version / candidate: v1.2 release candidate.
 - Evidence source: [2026-05-26 MVP smoke-test latest run](MVP_SMOKE_TEST.md#latest-run).
-- Status: Staging/VPS-like deployment path and disposable PostgreSQL backup/restore verification passed with a documented UX/auth-guard follow-up.
-- Reason: the latest documented rerun rebuilt and started the Docker Compose proxy stack, passed direct and Caddy-routed API health checks, loaded the web app through Caddy, completed the authenticated browser workflow, confirmed protected API data was not accessible after logout, and verified PostgreSQL backup/restore mechanics on a disposable sample-data Compose project.
+- Status: Internal RC handoff is acceptable and ready for internal review. This is not production-ready, broker-ready, profitability-validated, or real-money trading evidence.
+- Reason: the latest documented rerun rebuilt and started the Docker Compose proxy stack, passed direct and Caddy-routed API health checks, loaded the web app through Caddy, completed the authenticated browser workflow, confirmed protected API data was not accessible after logout, and verified PostgreSQL backup/restore mechanics on a disposable sample-data Compose project. Follow-up issue `#143` then fixed the protected-route UX after logout, issue `#144` completed a light MVP security review, and issue `#145` documented the disposable demo data reset procedure.
 - Boundary: this status is not a production-readiness statement, strategy validation, profitability claim, trading advice, or trading recommendation.
+
+## v1.2 Release Candidate Handoff Summary
+
+### Status
+
+- Internal RC handoff: acceptable / ready for internal review.
+- Not production-ready.
+- Not broker-ready.
+- Not profitability-validated.
+- Decision-support only, manual execution only, no broker integration, no automatic order execution, no profitability claims, no trading advice, and no production-readiness claim.
+
+### Passed Evidence
+
+- Staging/VPS-like deployment path evidence passed in the latest smoke-test run. See [MVP Smoke Test](MVP_SMOKE_TEST.md#latest-run).
+- Caddy HTTPS path evidence passed through Caddy-routed API health and web load checks. See [Deployment Runbook](DEPLOYMENT_RUNBOOK.md#deployment-smoke-test-checklist).
+- Browser MVP workflow evidence passed for login/session, dashboard, watchlist, CSV import, analysis, signals, signal detail, trades page, logout, and protected API data denial after logout. See [MVP Smoke Test](MVP_SMOKE_TEST.md#coverage-matrix).
+- PostgreSQL backup/restore evidence passed on disposable sample data. See [PostgreSQL Backup/Restore Evidence](#postgresql-backuprestore-evidence) and [Deployment Runbook](DEPLOYMENT_RUNBOOK.md#postgresql-backups).
+- Protected-route UX after logout was fixed in `#143`.
+- Light MVP security review was completed in `#144`. See [v1.2 Light MVP Security Review](reviews/v1-2-light-security-review.md).
+- Disposable demo data reset procedure was documented in `#145`. See [Deployment Runbook - Disposable Demo Data Reset](DEPLOYMENT_RUNBOOK.md#disposable-demo-data-reset).
+
+### Known Gaps
+
+- Medium security findings from `#144` are tracked follow-ups, not required blockers for internal RC handoff:
+  - `#150` Restrict direct API/web host port exposure in Caddy deployments.
+  - `#151` Make backup script default output path safer for sensitive dumps.
+- Broader or production-like internet exposure should wait until the medium security follow-ups are addressed or explicitly accepted.
+- Dashboard, Journal, Performance, Alerts, and Settings remain MVP-level views, not full analytics or operations consoles.
+- Risk enforcement covers core manual trade logging rules, not full portfolio exposure, correlation, or account-level risk management.
+- Production monitoring and operational alerting are not documented as passed.
+
+### Not Included
+
+- No broker integration.
+- No automatic order execution.
+- No real-money trading.
+- No production-readiness claim.
+- No profitability claim.
+- No trading advice.
+- No full penetration test.
+- No dependency/container vulnerability scan.
+
+### Operational Notes
+
+- Use [MVP Smoke Test](MVP_SMOKE_TEST.md) for RC validation evidence and future reruns.
+- Use [Deployment Runbook](DEPLOYMENT_RUNBOOK.md) for local/Caddy/startup procedures, health checks, backups, restore, and operational handling.
+- Use the [disposable demo data reset procedure](DEPLOYMENT_RUNBOOK.md#disposable-demo-data-reset) only for local/disposable data.
+- Do not delete staging, production-like, or real-data volumes unless separately approved.
+- Do not commit backups, dumps, `.env`, secrets, database URLs, cookies, logs, screenshots with sensitive data, or private trading data.
+
+### Follow-Up Recommendations
+
+- Keep `#150` and `#151` tracked as security follow-ups from `#144`.
+- Treat those medium findings as blockers for broader or production-like public exposure unless they are addressed or explicitly accepted.
+- Do not treat those medium findings as automatic blockers for controlled internal RC handoff.
+
+### Final Handoff Assessment
+
+- Ready for internal RC handoff / review.
+- Hold production-like public exposure until medium security follow-ups are addressed or explicitly accepted.
+- A separate decision gate is still required before any broader release, production-like exposure, broker readiness, real-money use, or profitability claim.
 
 ## Passed
 
@@ -20,24 +81,27 @@ This checklist records the current MVP v1.2 release-candidate posture for review
 - Frontend API base URL verification passed: bundle grep for `http://localhost:8000/api` returned no output after the `#139` fix.
 - Browser workflow passed for login/session, dashboard, watchlist, CSV import, analysis, signals, signal detail, trades page, logout, and protected API data denial after logout.
 - Analysis produced a conservative `No Setup` / `No Trade` result. This is valid behavior under the strategy and risk rules, not a failed workflow.
+- Protected-route UX after logout was fixed in `#143`.
+- Light MVP security review was completed in `#144` and found the RC posture acceptable for internal handoff, not production readiness.
+- Disposable demo data reset guidance was documented in `#145`.
 - Operational deployment guidance remains documented in [Deployment Runbook](DEPLOYMENT_RUNBOOK.md), including health checks, deployment smoke steps, secret handling, backup/restore guidance, and safety boundaries.
 - PostgreSQL backup/restore mechanics passed on a disposable Compose project using sample-only marker data. The backup and restore scripts created a custom-format dump, restored it into a fresh disposable volume, restarted app services, returned API health, and preserved the sample rows.
 
 ## Known Gaps
 
-- After logout, opening `/watchlist` still renders the page shell and shows `Watchlist konnte nicht geladen werden` instead of redirecting cleanly to login. This is a UX/auth-guard follow-up gap, not observed protected data exposure.
+- Medium findings from the light security review are tracked in `#150` and `#151`; they should be addressed or explicitly accepted before broader or production-like public exposure.
 - Dashboard, Journal, Performance, Alerts, and Settings are MVP-level views, not full analytics or operations consoles.
 - Risk enforcement covers core manual trade logging rules, not full portfolio exposure, correlation, or account-level risk management.
 - Stale signal handling flags old saved signals, but does not refresh market data or re-run strategy automatically.
 - Telegram support currently covers explicit operator test messages; production alert routing is not complete.
 - TradingView webhook support persists review events, but does not trigger broker execution, auto-trade creation, or automatic Telegram delivery.
-- Production monitoring, operational alerting, and security review completion are not documented as passed.
+- Production monitoring and operational alerting are not documented as passed.
 - Full mobile app/PWA hardening beyond responsive MVP layouts is not documented as passed.
 
 ## Blocked
 
 - No active release-candidate blocker is documented for `#132` or `#139` in the latest smoke-test rerun.
-- Production monitoring, operational alerting, and security review completion remain not documented as passed, so production readiness is not claimed.
+- Production monitoring, operational alerting, and the medium security follow-ups from `#144` remain not completed for broader exposure, so production readiness is not claimed.
 
 ## Not Included
 
@@ -60,9 +124,9 @@ This checklist records the current MVP v1.2 release-candidate posture for review
 | Frontend API base URL | Passed | Bundle grep for `http://localhost:8000/api` returned no output after `#139`. |
 | Browser MVP workflow | Passed | Dashboard, login/session, watchlist, CSV import, analysis, signals, signal detail, trades page, and logout were reviewed in the latest smoke run. |
 | Conservative signal behavior | Passed | Sample analysis produced `No Setup` / `No Trade` because of strategy/risk rules; this preserves No Trade as a first-class outcome. |
-| Logout protected-data behavior | Passed with UX follow-up | Protected API data was not accessible after logout; `/watchlist` still renders a page shell with an error instead of redirecting cleanly to login. |
+| Logout protected-data behavior | Passed | Protected API data was not accessible after logout in the smoke rerun; protected-route UX after logout was fixed in `#143`. |
 | PostgreSQL backup/restore evidence | Passed | `#135` verified `scripts/backup_postgres.sh` and `scripts/restore_postgres.sh` against disposable sample data; API health and restored sample-row query passed after restore. |
-| Release blocker tracking | Passed | `#132` and `#139` are no longer documented as active smoke-test blockers; the logout route-shell behavior remains a follow-up gap. |
+| Release blocker tracking | Passed | `#132` and `#139` are no longer documented as active smoke-test blockers; `#143`, `#144`, and `#145` are completed for internal RC handoff context. |
 | Production readiness | Not passed | No production-readiness gate is documented as passed; deployment docs remain operational guidance only. |
 
 ## PostgreSQL Backup/Restore Evidence
