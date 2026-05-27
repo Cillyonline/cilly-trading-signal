@@ -35,10 +35,9 @@ This checklist records the current MVP v1.2 release-candidate posture for review
 
 ### Known Gaps
 
-- Medium security findings from `#144` are tracked follow-ups, not required blockers for internal RC handoff:
-  - `#150` Restrict direct API/web host port exposure in Caddy deployments.
-  - `#151` Make backup script default output path safer for sensitive dumps.
-- Broader or production-like internet exposure should wait until the medium security follow-ups are addressed or explicitly accepted.
+- The direct API/web host port exposure follow-up (`#150`) has been addressed by binding direct API and web ports to localhost in the provided Compose file.
+- `#151` Make backup script default output path safer for sensitive dumps remains an open medium security follow-up.
+- Broader or production-like internet exposure should wait until remaining medium security follow-ups are addressed or explicitly accepted.
 - Dashboard, Journal, Performance, Alerts, and Settings remain MVP-level views, not full analytics or operations consoles.
 - Risk enforcement covers core manual trade logging rules, not full portfolio exposure, correlation, or account-level risk management.
 - Production monitoring and operational alerting are not documented as passed.
@@ -64,14 +63,14 @@ This checklist records the current MVP v1.2 release-candidate posture for review
 
 ### Follow-Up Recommendations
 
-- Keep `#150` and `#151` tracked as security follow-ups from `#144`.
-- Treat those medium findings as blockers for broader or production-like public exposure unless they are addressed or explicitly accepted.
+- Keep `#151` tracked as the remaining open medium security follow-up from `#144`.
+- Treat remaining medium findings as blockers for broader or production-like public exposure unless they are addressed or explicitly accepted.
 - Do not treat those medium findings as automatic blockers for controlled internal RC handoff.
 
 ### Final Handoff Assessment
 
 - Ready for internal RC handoff / review.
-- Hold production-like public exposure until medium security follow-ups are addressed or explicitly accepted.
+- Hold production-like public exposure until remaining medium security follow-ups are addressed or explicitly accepted.
 - A separate decision gate has been recorded in [v1.2 Release Candidate Decision Gate](V1_2_RC_DECISION_GATE.md); any broader release, production-like exposure, broker readiness, real-money use, or profitability claim still requires a follow-up decision.
 
 ## Passed
@@ -90,7 +89,7 @@ This checklist records the current MVP v1.2 release-candidate posture for review
 
 ## Known Gaps
 
-- Medium findings from the light security review are tracked in `#150` and `#151`; they should be addressed or explicitly accepted before broader or production-like public exposure.
+- The direct API/web host port exposure follow-up (`#150`) has been addressed by binding direct API and web ports to localhost in the provided Compose file; `#151` remains open before broader or production-like public exposure.
 - Dashboard, Journal, Performance, Alerts, and Settings are MVP-level views, not full analytics or operations consoles.
 - Risk enforcement covers core manual trade logging rules, not full portfolio exposure, correlation, or account-level risk management.
 - Stale signal handling flags old saved signals, but does not refresh market data or re-run strategy automatically.
@@ -102,7 +101,7 @@ This checklist records the current MVP v1.2 release-candidate posture for review
 ## Blocked
 
 - No active release-candidate blocker is documented for `#132` or `#139` in the latest smoke-test rerun.
-- Production monitoring, operational alerting, and the medium security follow-ups from `#144` remain not completed for broader exposure, so production readiness is not claimed.
+- Production monitoring, operational alerting, and the remaining medium security follow-up `#151` remain not completed for broader exposure, so production readiness is not claimed.
 
 ## Not Included
 
