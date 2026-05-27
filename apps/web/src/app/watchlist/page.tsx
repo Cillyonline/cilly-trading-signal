@@ -2,7 +2,12 @@
 
 import { FormEvent, useEffect, useState } from "react";
 
-import { API_BASE_URL } from "@/lib/api";
+import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
+import {
+  API_BASE_URL,
+  assertAuthenticatedResponse,
+  redirectToLoginOnAuthError,
+} from "@/lib/api";
 import type { AssetClass, WatchlistItem } from "@/types/watchlist";
 
 type WatchlistForm = {
@@ -24,6 +29,7 @@ const emptyForm: WatchlistForm = {
 };
 
 export default function WatchlistPage() {
+  const authStatus = useProtectedRoute();
   const [items, setItems] = useState<WatchlistItem[]>([]);
   const [form, setForm] = useState<WatchlistForm>(emptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -36,11 +42,15 @@ export default function WatchlistPage() {
     setError(null);
     try {
       const response = await fetch(`${API_BASE_URL}/watchlist`, { cache: "no-store", credentials: "include" });
+      assertAuthenticatedResponse(response);
       if (!response.ok) {
         throw new Error("Watchlist konnte nicht geladen werden.");
       }
       setItems(await response.json());
     } catch (loadError) {
+      if (redirectToLoginOnAuthError(loadError)) {
+        return;
+      }
       setError(loadError instanceof Error ? loadError.message : "Unbekannter Fehler.");
     } finally {
       setIsLoading(false);
@@ -48,8 +58,14 @@ export default function WatchlistPage() {
   }
 
   useEffect(() => {
-    void loadItems();
-  }, []);
+    if (authStatus === "authenticated") {
+      void loadItems();
+    }
+  }, [authStatus]);
+
+  if (authStatus !== "authenticated") {
+    return <ProtectedRouteLoading />;
+  }
 
   function resetForm() {
     setForm(emptyForm);
@@ -92,6 +108,7 @@ export default function WatchlistPage() {
         },
       );
 
+      assertAuthenticatedResponse(response);
       if (!response.ok) {
         const body = await response.json().catch(() => null);
         throw new Error(body?.detail ?? "Watchlist-Eintrag konnte nicht gespeichert werden.");
@@ -100,6 +117,9 @@ export default function WatchlistPage() {
       resetForm();
       await loadItems();
     } catch (saveError) {
+      if (redirectToLoginOnAuthError(saveError)) {
+        return;
+      }
       setError(saveError instanceof Error ? saveError.message : "Unbekannter Fehler.");
     } finally {
       setIsSaving(false);
@@ -113,11 +133,15 @@ export default function WatchlistPage() {
         method: "DELETE",
         credentials: "include",
       });
+      assertAuthenticatedResponse(response);
       if (!response.ok) {
         throw new Error("Watchlist-Eintrag konnte nicht deaktiviert werden.");
       }
       await loadItems();
     } catch (deleteError) {
+      if (redirectToLoginOnAuthError(deleteError)) {
+        return;
+      }
       setError(deleteError instanceof Error ? deleteError.message : "Unbekannter Fehler.");
     }
   }

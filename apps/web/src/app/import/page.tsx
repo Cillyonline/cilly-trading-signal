@@ -2,7 +2,15 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
-import { ApiError, analyzeImport, fetchImportHistory, fetchWatchlist, importCsv } from "@/lib/api";
+import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
+import {
+  ApiError,
+  analyzeImport,
+  fetchImportHistory,
+  fetchWatchlist,
+  importCsv,
+  redirectToLoginOnAuthError,
+} from "@/lib/api";
 import type {
   CsvImportError,
   CsvImportResult,
@@ -21,6 +29,7 @@ type ImportPageError = {
 };
 
 export default function ImportPage() {
+  const authStatus = useProtectedRoute();
   const [items, setItems] = useState<WatchlistItem[]>([]);
   const [watchlistItemId, setWatchlistItemId] = useState("");
   const [timeframe, setTimeframe] = useState<Timeframe>("1D");
@@ -42,6 +51,9 @@ export default function ImportPage() {
       setHistory(loadedHistory);
       setWatchlistItemId((current) => current || loadedItems[0]?.id.toString() || "");
     } catch (loadError) {
+      if (redirectToLoginOnAuthError(loadError)) {
+        return;
+      }
       setError(toSimpleError(loadError, "Import-Seite konnte nicht geladen werden."));
     } finally {
       setIsLoading(false);
@@ -49,13 +61,19 @@ export default function ImportPage() {
   }
 
   useEffect(() => {
-    void loadPageData();
-  }, []);
+    if (authStatus === "authenticated") {
+      void loadPageData();
+    }
+  }, [authStatus]);
 
   const selectedItem = useMemo(
     () => items.find((item) => item.id.toString() === watchlistItemId) ?? null,
     [items, watchlistItemId],
   );
+
+  if (authStatus !== "authenticated") {
+    return <ProtectedRouteLoading />;
+  }
 
   async function submitImport(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -79,6 +97,9 @@ export default function ImportPage() {
       setResult(imported);
       setHistory(await fetchImportHistory());
     } catch (importError) {
+      if (redirectToLoginOnAuthError(importError)) {
+        return;
+      }
       setError(toImportError(importError));
     } finally {
       setIsImporting(false);
@@ -102,6 +123,9 @@ export default function ImportPage() {
       setAnalysisResult(await analyzeImport(seriesId));
       setHistory(await fetchImportHistory());
     } catch (analysisError) {
+      if (redirectToLoginOnAuthError(analysisError)) {
+        return;
+      }
       setError(toSimpleError(analysisError, "Analyse konnte nicht gestartet werden."));
     } finally {
       setAnalyzingSeriesId(null);

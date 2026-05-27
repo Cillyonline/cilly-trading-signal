@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-import { fetchAlerts } from "@/lib/api";
+import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
+import { fetchAlerts, redirectToLoginOnAuthError } from "@/lib/api";
 import type { AlertDeliveryStatus, AlertEvent, AlertStatus } from "@/types/alerts";
 
 const statusTone: Record<AlertStatus, string> = {
@@ -21,6 +22,7 @@ const deliveryTone: Record<AlertDeliveryStatus, string> = {
 };
 
 export default function AlertsPage() {
+  const authStatus = useProtectedRoute();
   const [alerts, setAlerts] = useState<AlertEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +33,9 @@ export default function AlertsPage() {
     try {
       setAlerts(await fetchAlerts());
     } catch (loadError) {
+      if (redirectToLoginOnAuthError(loadError)) {
+        return;
+      }
       setError(loadError instanceof Error ? loadError.message : "Unbekannter Fehler.");
     } finally {
       setIsLoading(false);
@@ -38,10 +43,16 @@ export default function AlertsPage() {
   }
 
   useEffect(() => {
-    void loadAlerts();
-  }, []);
+    if (authStatus === "authenticated") {
+      void loadAlerts();
+    }
+  }, [authStatus]);
 
   const summary = useMemo(() => buildSummary(alerts), [alerts]);
+
+  if (authStatus !== "authenticated") {
+    return <ProtectedRouteLoading />;
+  }
 
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-8 text-slate-100">

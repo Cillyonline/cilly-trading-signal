@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 
-import { exportPerformanceCsv, fetchPerformanceSummary } from "@/lib/api";
+import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
+import { exportPerformanceCsv, fetchPerformanceSummary, redirectToLoginOnAuthError } from "@/lib/api";
 import type { PerformanceByAssetClass, PerformanceByStrategy, PerformanceSummary } from "@/types/performance";
 
 export default function PerformancePage() {
+  const authStatus = useProtectedRoute();
   const [summary, setSummary] = useState<PerformanceSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -15,18 +17,30 @@ export default function PerformancePage() {
       try {
         setSummary(await fetchPerformanceSummary());
       } catch (loadError) {
+        if (redirectToLoginOnAuthError(loadError)) {
+          return;
+        }
         setError(loadError instanceof Error ? loadError.message : "Performance Summary konnte nicht geladen werden.");
       }
     }
 
-    void loadSummary();
-  }, []);
+    if (authStatus === "authenticated") {
+      void loadSummary();
+    }
+  }, [authStatus]);
+
+  if (authStatus !== "authenticated") {
+    return <ProtectedRouteLoading />;
+  }
 
   async function handleExport() {
     setExportError(null);
     try {
       await exportPerformanceCsv();
     } catch (err) {
+      if (redirectToLoginOnAuthError(err)) {
+        return;
+      }
       setExportError(err instanceof Error ? err.message : "Export fehlgeschlagen.");
     }
   }

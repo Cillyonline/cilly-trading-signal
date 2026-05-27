@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from "react";
 
-import { fetchSignal, updateSignalReviewNote, updateSignalStatus } from "@/lib/api";
+import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
+import {
+  fetchSignal,
+  redirectToLoginOnAuthError,
+  updateSignalReviewNote,
+  updateSignalStatus,
+} from "@/lib/api";
 import type { Signal, SignalReviewEvent, SignalStatus } from "@/types/signals";
 
 const statusTone: Record<SignalStatus, string> = {
@@ -26,6 +32,7 @@ const statusLabel: Record<SignalStatus, string> = {
 };
 
 export default function SignalDetailPage({ params }: { params: { id: string } }) {
+  const authStatus = useProtectedRoute();
   const [signal, setSignal] = useState<Signal | null>(null);
   const [reviewNote, setReviewNote] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -52,6 +59,9 @@ export default function SignalDetailPage({ params }: { params: { id: string } })
       setSignal(loaded);
       setReviewNote(loaded.review_note ?? "");
     } catch (loadError) {
+      if (redirectToLoginOnAuthError(loadError)) {
+        return;
+      }
       setError(loadError instanceof Error ? loadError.message : "Unbekannter Fehler.");
     } finally {
       setIsLoading(false);
@@ -59,8 +69,14 @@ export default function SignalDetailPage({ params }: { params: { id: string } })
   }
 
   useEffect(() => {
-    void loadSignal();
-  }, [params.id]);
+    if (authStatus === "authenticated") {
+      void loadSignal();
+    }
+  }, [authStatus, params.id]);
+
+  if (authStatus !== "authenticated") {
+    return <ProtectedRouteLoading />;
+  }
 
   async function submitStatus(targetStatus: SignalStatus) {
     if (!signal) {
@@ -74,6 +90,9 @@ export default function SignalDetailPage({ params }: { params: { id: string } })
       setSignal(updated);
       setStatusMessage(`Status manuell auf ${statusLabel[targetStatus]} gesetzt.`);
     } catch (updateError) {
+      if (redirectToLoginOnAuthError(updateError)) {
+        return;
+      }
       setStatusError(updateError instanceof Error ? updateError.message : "Unbekannter Fehler.");
     } finally {
       setIsUpdatingStatus(false);
@@ -95,6 +114,9 @@ export default function SignalDetailPage({ params }: { params: { id: string } })
       setReviewNote(updated.review_note ?? "");
       setReviewNoteMessage("Review Note gespeichert. Strategie-Score und Setup-Bewertung bleiben unveraendert.");
     } catch (saveError) {
+      if (redirectToLoginOnAuthError(saveError)) {
+        return;
+      }
       setReviewNoteError(saveError instanceof Error ? saveError.message : "Unbekannter Fehler.");
     } finally {
       setIsSavingReviewNote(false);
