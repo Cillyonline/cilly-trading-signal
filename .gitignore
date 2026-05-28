@@ -33,6 +33,11 @@ venv/
 # Database / local data
 *.sqlite
 *.sqlite3
+*.dump
+*.sql
+*.backup
+*.bak
+backups/
 postgres-data/
 
 # Docker / deployment local overrides

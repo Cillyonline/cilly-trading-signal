@@ -329,8 +329,10 @@ docker compose -f infra/docker-compose.yml --profile proxy down
 
 PostgreSQL dumps can contain watchlist symbols, imported candles, signals, trades, journal text, auth data, and settings. Treat dumps as sensitive operational data.
 
-- Store backups outside the repository working tree when possible.
-- Do not commit backups, `.env` files, database URLs, credentials, cookies, logs, screenshots with secrets, or private trading data.
+- Store backups outside the repository working tree. Do not use repository-relative backup paths for staging, VPS, production-like, or real-data environments.
+- Set `BACKUP_DIR` explicitly for operational backups and point it to a directory outside this checkout, for example `/var/backups/cilly-trading-signal/postgres`.
+- Do not commit backups, dumps, `.sql`, `.dump`, `.backup`, `.bak`, `.env` files, database URLs, credentials, cookies, logs, screenshots with secrets, or private trading data.
+- Do not paste backup contents, database URLs, credentials, cookies, or secret-bearing logs into issues, PRs, screenshots, or support threads.
 - Verify a backup before relying on it as the reason a volume can be deleted.
 - Do not call a reset safe just because a dump exists; confirm the dump belongs to the same environment and can be restored into a non-production copy.
 
@@ -523,7 +525,7 @@ Record smoke-test findings outside committed secrets. If logs are needed for a f
 
 The MVP database stores watchlist items, imported candles, indicator snapshots, signals, trades, journal entries, settings, and auth data. Treat backups as sensitive data.
 
-Backup files must not be committed to the repository or attached to issues/PRs. Store them outside the repo working tree when possible, for example under `/var/backups/cilly-trading-signal/postgres` with restrictive permissions.
+Backup files must not be committed to the repository or attached to issues/PRs. Store them outside the repo working tree, for example under `/var/backups/cilly-trading-signal/postgres` with restrictive permissions.
 
 Create a backup with the helper script:
 
@@ -531,10 +533,19 @@ Create a backup with the helper script:
 BACKUP_DIR=/var/backups/cilly-trading-signal/postgres ./scripts/backup_postgres.sh
 ```
 
+Set `BACKUP_DIR` explicitly for staging, VPS, production-like, or real-data backups. If `BACKUP_DIR` is not set, the helper uses a repository-external default next to the checkout:
+
+```text
+../cilly-postgres-backups/postgres
+```
+
+The helper refuses to write a backup inside the repository working tree unless `ALLOW_REPO_BACKUP_DIR=true` is set. Use that override only for clearly disposable local tests, and delete the test dump after verification.
+
 The script creates a PostgreSQL custom-format dump using the running `postgres` Compose service. It reads these optional environment variables:
 
 - `COMPOSE_FILE`, default `infra/docker-compose.yml`.
-- `BACKUP_DIR`, default `backups/postgres`.
+- `BACKUP_DIR`, default `../cilly-postgres-backups/postgres` resolved outside the repository checkout.
+- `ALLOW_REPO_BACKUP_DIR`, default unset. Set to `true` only for disposable local tests that intentionally write inside the repository working tree.
 - `POSTGRES_DB`, default `cilly_trading_signal`.
 - `POSTGRES_USER`, default `postgres`.
 
@@ -550,10 +561,11 @@ Storage risks:
 - PostgreSQL dumps can contain trade notes, journal text, auth data, and market data.
 - Anyone with a backup may be able to inspect or restore sensitive app data.
 - Do not store backups in public buckets, synced folders, screenshots, or support tickets.
+- Keep local disposable backup tests separate from staging, VPS, production-like, and real-data backups.
 
 ## PostgreSQL Restore
 
-Restore only after confirming the target database can be replaced. A restore should be tested on a non-production copy before relying on it operationally.
+Restore only after confirming the target database can be replaced and the selected backup file is the intended source. A restore should be tested on a non-production copy before relying on it operationally.
 
 Restore with the helper script:
 
@@ -585,7 +597,7 @@ Then log in and check a small sample of user-owned data:
 Safe local verification path:
 
 1. Start a local Docker Compose stack with a disposable `.env`.
-2. Restore the dump into that local stack.
+2. Restore a consciously selected dump from outside the repository working tree into that local stack.
 3. Run the API health check.
 4. Log in and confirm sample data exists.
 5. Stop the local stack and remove disposable volumes only after confirming the test is complete.

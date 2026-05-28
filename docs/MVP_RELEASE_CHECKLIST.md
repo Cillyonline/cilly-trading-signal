@@ -36,8 +36,7 @@ This checklist records the current MVP v1.2 release-candidate posture for review
 ### Known Gaps
 
 - The direct API/web host port exposure follow-up (`#150`) has been addressed by binding direct API and web ports to localhost in the provided Compose file.
-- `#151` Make backup script default output path safer for sensitive dumps remains an open medium security follow-up.
-- Broader or production-like internet exposure should wait until remaining medium security follow-ups are addressed or explicitly accepted.
+- The backup output path follow-up (`#151`) has been addressed by making backup output safer by default and documenting that PostgreSQL dumps must stay outside the repository. Broader or production-like exposure still requires separate operational readiness decisions.
 - Dashboard, Journal, Performance, Alerts, and Settings remain MVP-level views, not full analytics or operations consoles.
 - Risk enforcement covers core manual trade logging rules, not full portfolio exposure, correlation, or account-level risk management.
 - Production monitoring and operational alerting are not documented as passed.
@@ -63,9 +62,8 @@ This checklist records the current MVP v1.2 release-candidate posture for review
 
 ### Follow-Up Recommendations
 
-- Keep `#151` tracked as the remaining open medium security follow-up from `#144`.
-- Treat remaining medium findings as blockers for broader or production-like public exposure unless they are addressed or explicitly accepted.
-- Do not treat those medium findings as automatic blockers for controlled internal RC handoff.
+- Continue to treat broader or production-like public exposure as requiring separate security and operational readiness decisions.
+- Do not treat addressed medium findings as automatic production-readiness evidence.
 
 ### Final Handoff Assessment
 
@@ -89,7 +87,7 @@ This checklist records the current MVP v1.2 release-candidate posture for review
 
 ## Known Gaps
 
-- The direct API/web host port exposure follow-up (`#150`) has been addressed by binding direct API and web ports to localhost in the provided Compose file; `#151` remains open before broader or production-like public exposure.
+- The direct API/web host port exposure follow-up (`#150`) has been addressed by binding direct API and web ports to localhost in the provided Compose file; the backup output path follow-up (`#151`) has been addressed by making backup output safer by default and documenting that PostgreSQL dumps must stay outside the repository.
 - Dashboard, Journal, Performance, Alerts, and Settings are MVP-level views, not full analytics or operations consoles.
 - Risk enforcement covers core manual trade logging rules, not full portfolio exposure, correlation, or account-level risk management.
 - Stale signal handling flags old saved signals, but does not refresh market data or re-run strategy automatically.
@@ -101,7 +99,7 @@ This checklist records the current MVP v1.2 release-candidate posture for review
 ## Blocked
 
 - No active release-candidate blocker is documented for `#132` or `#139` in the latest smoke-test rerun.
-- Production monitoring, operational alerting, and the remaining medium security follow-up `#151` remain not completed for broader exposure, so production readiness is not claimed.
+- Production monitoring and operational alerting remain not completed for broader exposure, so production readiness is not claimed.
 
 ## Not Included
 
