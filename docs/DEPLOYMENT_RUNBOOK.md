@@ -6,6 +6,8 @@ This runbook describes a repeatable VPS deployment path for the single-user MVP 
 
 It is an operational guide, not a production-readiness guarantee. Before real operation, backups, monitoring, restore tests, secret rotation, and a security review still need to be completed.
 
+For the private VPS staging plan based on the current server inventory, see `docs/VPS_STAGING_PLAN.md`. The staging plan must be reviewed before changing the existing VPS because other projects already run on that server.
+
 ## Safety Boundaries
 
 - The app is decision-support only.
