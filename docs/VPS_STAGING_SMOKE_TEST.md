@@ -32,16 +32,13 @@ Completed:
 
 Pending / gated:
 
-- DNS `A` record for the selected app subdomain must resolve to the VPS.
-- The real app domain is intentionally not recorded in this document unless explicitly approved.
-- VPS `.env` must be prepared from `docs/VPS_ENVIRONMENT_CHECKLIST.md` on the server only.
-- Firewall posture must be explicitly accepted or hardened before public binding.
+- No remaining smoke-test gate.
 
 ## Current Status
 
 - Issue: #163
-- Status: Blocked on DNS propagation and staging `.env` preparation
-- App domain: `<app-domain>`
+- Status: Passed
+- App domain: `trading.cillyonline.de`
 - VPS repository path: `/root/repos/cilly-trading-signal`
 - Compose project: `cilly-trading-signal`
 - Existing unrelated project to preserve: `staging`
@@ -120,13 +117,13 @@ Expected:
 Run only after DNS, environment, and pre-start checks pass.
 
 ```bash
-docker compose -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy up --build -d
+docker compose --env-file .env -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy up --build -d
 ```
 
 Check status:
 
 ```bash
-docker compose -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy ps
+docker compose --env-file .env -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy ps
 docker compose ls
 ```
 
@@ -219,11 +216,45 @@ Do not stop or restart the existing unrelated `staging` project.
 
 ## Current Result
 
-Status: Not run.
+Status: Passed.
 
-Reason: DNS record has been created at the provider but may take up to 48 hours to propagate. The HTTPS/Caddy smoke test is blocked until the selected app domain resolves to the VPS.
+Completed VPS technical evidence on 2026-05-29:
+
+- DNS: PASS. `trading.cillyonline.de` resolved to the approved VPS IPv4 from the default resolver, `1.1.1.1`, and `8.8.8.8`.
+- Repository checkout: PASS. VPS checkout used `/root/repos/cilly-trading-signal`.
+- Environment file: PASS. `.env` was created only on the VPS and left untracked; unsafe placeholders were replaced. A pasted initial admin password was treated as compromised and rotated.
+- Compose startup: PASS. Stack started with project `cilly-trading-signal`, proxy profile, and explicit `--env-file .env`.
+- Services: PASS. `postgres`, `api`, `web`, and `caddy` ran under the `cilly-trading-signal` Compose project.
+- Migrations: PASS. `alembic upgrade head` completed through `20260517_0005`.
+- Direct API health: PASS. `curl -fsS http://localhost:8000/api/health` returned successfully.
+- Direct web health: PASS. `curl -fsSI http://localhost:3000` returned successfully.
+- HTTPS API health: PASS. `curl -fsS https://trading.cillyonline.de/api/health` returned successfully.
+- HTTPS web health: PASS. `curl -fsSI https://trading.cillyonline.de/` returned successfully.
+- TLS certificate: PASS. Caddy obtained a Let's Encrypt certificate for `trading.cillyonline.de`.
+- Existing VPS project isolation: PASS. The unrelated Compose project `staging` remained separate and running.
+
+Known fixes applied during the smoke test:
+
+- PR #172 passed `APP_DOMAIN` into the Caddy container so Caddy routed the real staging domain instead of the localhost default.
+- PR #173 copied `alembic/` and `alembic.ini` into the API Docker image so migrations can run in the container.
+- The stack was recreated with explicit `--env-file .env` after Compose initially did not use the intended staging values.
+- The database password was rotated to URL-safe hex characters to avoid connection URL parsing issues.
+
+Browser evidence from operator-provided screenshots:
+
+- Login: PASS.
+- Dashboard: PASS.
+- Watchlist: PASS. The protected watchlist page loaded over `https://trading.cillyonline.de/watchlist` and showed sample symbols including `AAPL`, `BTCUSDT`, and `NVIDIA`.
+- CSV import: PASS. Sample CSV import for `1W`, `1D`, and `4H` completed.
+- Analysis: PASS. Analysis completed and produced a conservative result.
+- Signals list: PASS.
+- Signal detail: PASS. The AAPL signal detail page loaded and showed the expected conservative `No Setup` / `No Trade` state, no-trade reasons, risk flags, review workflow, timeframe context, setup evaluation data, and manual action text.
+- Trades page: PASS. The manual trade logging page loaded, showed the AAPL sample symbol, and clearly stated that manual documentation is separate from order execution.
+- Performance page: PASS. The closed-trade performance page loaded and showed the empty-state message for no closed trades.
+- Logout: PASS.
+- Protected route after logout: PASS. Protected data was not visible after logout.
+- Trading safety language: PASS. The shown pages preserved manual-review, no-order-execution, no-buy/sell-instruction, and historical/non-predictive wording.
 
 ## Follow-Ups
 
-- Complete this smoke test after DNS propagation.
 - Then document the private VPS go/no-go decision in #164.
