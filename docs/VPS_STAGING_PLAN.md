@@ -131,7 +131,7 @@ Required staging posture:
 - `DATABASE_URL` must use non-default PostgreSQL credentials.
 - Telegram values remain optional until alert routing is explicitly implemented and approved.
 
-Detailed environment checklist belongs to #159.
+Detailed environment checklist: `docs/VPS_ENVIRONMENT_CHECKLIST.md`.
 
 ## Firewall Decision Gate
 
