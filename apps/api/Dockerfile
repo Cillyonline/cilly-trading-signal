@@ -11,6 +11,8 @@ RUN pip install --no-cache-dir uv \
   && uv pip install --system .
 
 COPY app ./app
+COPY alembic ./alembic
+COPY alembic.ini ./
 
 EXPOSE 8000
 
