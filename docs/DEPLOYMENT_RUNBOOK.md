@@ -248,6 +248,188 @@ docker compose -f infra/docker-compose.yml --profile proxy down
 
 Do not run `down --volumes` on a VPS unless you intentionally want to remove PostgreSQL data and have a verified backup.
 
+## Minimum VPS Monitoring Checks
+
+These checks define the minimum manual monitoring baseline for private VPS staging. They are not a full observability stack and do not create a production-readiness claim.
+
+Run commands from `/root/repos/cilly-trading-signal` unless stated otherwise. Do not paste output that contains secrets, cookies, `.env` values, database URLs, private trading data, or backup contents into issues, PRs, docs, screenshots, or chat.
+
+### Check Frequency
+
+- After every deployment or restart: run all checks.
+- Daily during active staging use: health, containers, disk, and backup freshness.
+- Before and after any backup/restore test: containers, PostgreSQL, disk, and app health.
+- After DNS, firewall, or Caddy changes: HTTPS and public API health.
+
+### API Health
+
+```bash
+curl -fsS https://<app-domain>/api/health
+```
+
+Success:
+
+- Returns a healthy JSON response.
+- Completes without TLS, DNS, or connection errors.
+
+Investigate if:
+
+- The command fails or times out.
+- TLS certificate errors appear.
+- DNS resolves to the wrong server.
+- The response is not the expected health payload.
+
+### Docker Containers
+
+```bash
+docker compose -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy ps
+```
+
+Success:
+
+- `postgres`, `api`, `web`, and `caddy` are running.
+- PostgreSQL reports healthy if the health status is shown.
+- Containers are not restarting repeatedly.
+
+Investigate if:
+
+- Any app container is exited, unhealthy, or restarting.
+- The existing unrelated `staging` Compose project changed state unexpectedly.
+
+### Container Logs
+
+Use logs only for short troubleshooting windows and review output for sensitive data before sharing.
+
+```bash
+docker compose -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy logs --tail=100 api
+docker compose -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy logs --tail=100 web
+docker compose -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy logs --tail=100 caddy
+```
+
+Investigate if:
+
+- Config guard failures appear.
+- Authentication, database, Caddy, DNS, or certificate errors repeat.
+- Logs contain unexpected stack traces.
+
+### PostgreSQL Health
+
+```bash
+docker compose -p cilly-trading-signal -f infra/docker-compose.yml exec postgres pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+```
+
+Success:
+
+- PostgreSQL accepts connections for the configured database.
+
+Investigate if:
+
+- `pg_isready` reports no response or rejects connections.
+- The API is healthy but database-dependent pages fail.
+- Disk usage is high.
+
+### HTTPS / Caddy Route
+
+```bash
+curl -fsSI https://<app-domain>/
+curl -fsS https://<app-domain>/api/health
+```
+
+Success:
+
+- HTTPS responds through Caddy.
+- `/api/health` routes to the API.
+- No direct public API or web service ports are required.
+
+Investigate if:
+
+- `80` or `443` are not reachable after DNS propagation.
+- Caddy cannot obtain or renew certificates.
+- Browser calls bypass `/api` same-origin routing.
+
+### Disk Space
+
+```bash
+df -h /
+docker system df
+```
+
+Success:
+
+- Root filesystem has enough free space for Docker images, PostgreSQL data, logs, and backups.
+- Docker usage is expected for the current deployment.
+
+Investigate if:
+
+- Root filesystem usage exceeds 80%.
+- Docker image, container, or build cache usage grows unexpectedly.
+- Backup files are stored inside the repository checkout.
+
+Do not run cleanup commands such as `docker system prune`, `docker volume prune`, or broad `rm` commands without a separate approved operations plan.
+
+### Memory And Load
+
+```bash
+free -h
+uptime
+```
+
+Success:
+
+- Available memory remains sufficient for the app and existing projects.
+- Load average is reasonable for the VPS size.
+
+Investigate if:
+
+- Memory pressure is persistent.
+- The app is killed or restarts unexpectedly.
+- Load is elevated during normal usage.
+
+### Backup Freshness
+
+```bash
+ls -lah /srv/backups/cilly-trading-signal/postgres 2>/dev/null || true
+```
+
+Success:
+
+- Recent expected backup artifacts exist after backup automation or manual backup is approved.
+- Backup files are outside the repository checkout.
+
+Investigate if:
+
+- No recent backup exists after backup procedures are enabled.
+- Backups are stored under `/root/repos/cilly-trading-signal`.
+- Backup file sizes are unexpectedly zero or much smaller than expected.
+
+### Restart Behavior
+
+Restart only this app's Compose project when needed:
+
+```bash
+docker compose -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy restart
+```
+
+Stop only this app's Compose project when rollback is needed:
+
+```bash
+docker compose -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy down
+```
+
+Do not restart or stop the existing unrelated `staging` Compose project as part of this app's monitoring or rollback workflow.
+
+### Investigation Checklist
+
+If a check fails:
+
+1. Confirm the failing command targets `cilly-trading-signal`, not another project.
+2. Check container status.
+3. Check short logs for the failing service.
+4. Check disk space and PostgreSQL health.
+5. If public access fails, check Caddy logs, DNS, and HTTPS route.
+6. If rollback is needed, stop only the `cilly-trading-signal` Compose project.
+7. Document sanitized evidence and do not include secrets or private data.
+
 ## Disposable Demo Data Reset
 
 ### Purpose
