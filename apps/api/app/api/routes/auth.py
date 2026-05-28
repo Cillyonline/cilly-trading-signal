@@ -9,7 +9,7 @@ from app.core.security import create_session_token
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.auth import AuthUserRead, LoginRequest
-from app.services.auth import authenticate_admin
+from app.services.auth import LoginRateLimitExceededError, authenticate_admin
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 DbSession = Annotated[Session, Depends(get_db)]
@@ -18,7 +18,13 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 
 @router.post("/login", response_model=AuthUserRead)
 def login(payload: LoginRequest, response: Response, db: DbSession) -> AuthUserRead:
-    user = authenticate_admin(db, payload.email, payload.password)
+    try:
+        user = authenticate_admin(db, payload.email, payload.password)
+    except LoginRateLimitExceededError as error:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many login attempts. Try again later.",
+        ) from error
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
