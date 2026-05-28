@@ -4,6 +4,8 @@
 
 This document records the MVP smoke-test workflow and the latest validation result for the manual trading cockpit. The smoke test uses local/sample data only and does not make a production-readiness, profitability, or execution claim.
 
+For the private VPS staging smoke-test procedure and evidence template, see `docs/VPS_STAGING_SMOKE_TEST.md`.
+
 ## Safety Scope
 
 - Signals are review prompts, not buy/sell instructions.
