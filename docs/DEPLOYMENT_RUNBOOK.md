@@ -114,6 +114,18 @@ Rotation expectations:
 
 Do not store production secrets in shell history, screenshots, issue comments, PR descriptions, or copied terminal output.
 
+## Login Brute-Force Hardening
+
+The single-admin login flow applies a basic in-process failed-login throttle. By default, repeated failed attempts for the same normalized email are temporarily locked after five failures for 60 seconds.
+
+Notes:
+
+- The response remains generic for invalid credentials.
+- A throttled login returns HTTP `429`.
+- A successful login clears prior failed attempts for that email.
+- The throttle is process-local and resets when the API process restarts; it is MVP hardening, not a full intrusion-prevention system.
+- The default values can be overridden with `AUTH_LOGIN_MAX_FAILED_ATTEMPTS` and `AUTH_LOGIN_LOCKOUT_SECONDS` if a future deployment needs a different posture.
+
 ## First Deployment
 
 1. Connect to the VPS.

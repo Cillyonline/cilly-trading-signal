@@ -35,6 +35,8 @@ class Settings(BaseSettings):
     auth_cookie_name: str = "cilly_session"
     auth_cookie_secure: bool = False
     auth_session_ttl_seconds: int = 60 * 60 * 12
+    auth_login_max_failed_attempts: int = 5
+    auth_login_lockout_seconds: int = 60
     tradingview_webhook_secret: str = "change-me"
     telegram_bot_token: str | None = None
     telegram_chat_id: str | None = None
