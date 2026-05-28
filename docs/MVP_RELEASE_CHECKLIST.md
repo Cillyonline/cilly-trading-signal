@@ -129,6 +129,39 @@ This checklist records the current MVP v1.2 release-candidate posture for review
 
 ## PostgreSQL Backup/Restore Evidence
 
+### VPS-Like Disposable Verification
+
+Date: 2026-05-28
+
+Status: Passed.
+
+Evidence summary:
+
+- GitHub issue: `#162`.
+- Environment: existing VPS host, isolated disposable Docker Compose project `cilly_br_verify`.
+- Existing projects: the unrelated `staging` Compose project remained separate and running.
+- Data scope: disposable marker table only; no production data, personal trading data, real journal data, secrets, or committed dump contents.
+- Repository checkout: `/root/repos/cilly-trading-signal`.
+- Backup path: `/srv/backups/cilly-trading-signal/postgres`, outside the repository checkout.
+- Backup: `scripts/backup_postgres.sh` created a PostgreSQL custom-format dump at the external backup path when run with explicit `COMPOSE_PROJECT_NAME`, `COMPOSE_FILE`, `BACKUP_DIR`, `POSTGRES_USER`, and `POSTGRES_DB` values.
+- Restore: `scripts/restore_postgres.sh` restored the dump into the same disposable Compose project after the marker table was dropped.
+- Verification:
+  - Disposable API health returned `{"status":"ok","service":"Cilly Trading Signal API","version":"0.1.0","environment":"development"}` after restore.
+  - Restored marker row was queryable: `SAMPLE-BR-162 / issue-162 disposable marker`.
+  - `git status --short` in the VPS checkout returned no changes.
+  - A repository search for `*.dump`, `*.sql`, `*.backup`, and `*.bak` returned no files.
+
+Notes:
+
+- The helper scripts were invoked through `bash` because the VPS checkout did not have executable bits set on the shell scripts.
+- A first backup command without explicit environment variables failed safely because it targeted the default Compose project and reported that `postgres` was not running.
+- The app database schema migrations were not required for this mechanics check; the verification used a disposable marker table created directly in PostgreSQL.
+- The restore operation was intentionally limited to the disposable `cilly_br_verify` project. No restore was run against the existing `staging` project or any real data.
+- No backup dump files, `.env` files, secrets, database URLs, credentials, or private data were committed.
+- This evidence does not claim production readiness.
+
+### Prior Disposable Verification
+
 Date: 2026-05-26
 
 Status: Passed.
