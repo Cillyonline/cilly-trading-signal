@@ -19,7 +19,8 @@ Accept RC for internal handoff.
 - [#144](https://github.com/Cillyonline/cilly-trading-signal/issues/144) completed the light MVP security review and concluded that the reviewed posture is acceptable for internal RC handoff only.
 - [#145](https://github.com/Cillyonline/cilly-trading-signal/issues/145) documented the disposable demo data reset procedure.
 - [#146](https://github.com/Cillyonline/cilly-trading-signal/issues/146) created the v1.2 release-candidate handoff summary and identified this decision gate as the remaining step before broader release decisions.
-- The direct API/web host port exposure follow-up ([#150](https://github.com/Cillyonline/cilly-trading-signal/issues/150)) has been addressed by binding direct API and web ports to localhost in the provided Compose file; [#151](https://github.com/Cillyonline/cilly-trading-signal/issues/151) remains open.
+- The direct API/web host port exposure follow-up ([#150](https://github.com/Cillyonline/cilly-trading-signal/issues/150)) has been addressed by binding direct API and web ports to localhost in the provided Compose file.
+- The backup output path follow-up ([#151](https://github.com/Cillyonline/cilly-trading-signal/issues/151)) has been addressed by making backup output safer by default and documenting that PostgreSQL dumps must stay outside the repository. Broader or production-like exposure still requires separate operational readiness decisions.
 
 ## Blocker Classification
 
@@ -30,7 +31,7 @@ Accept RC for internal handoff.
 ### Non-blockers for internal RC handoff
 
 - [#150](https://github.com/Cillyonline/cilly-trading-signal/issues/150) Restrict direct API/web host port exposure in Caddy deployments has been addressed by binding direct API and web ports to localhost in the provided Compose file.
-- [#151](https://github.com/Cillyonline/cilly-trading-signal/issues/151) Make backup script default output path safer for sensitive dumps, while the RC remains controlled/internal, backups are treated as sensitive, and the risk is tracked.
+- [#151](https://github.com/Cillyonline/cilly-trading-signal/issues/151) Make backup script default output path safer for sensitive dumps has been addressed for this RC by using a repository-external default, blocking repository-internal backup paths unless explicitly overridden for disposable local tests, and documenting sensitive dump handling.
 - Dashboard, Journal, Performance, Alerts, and Settings remain MVP-level views, not full analytics or operations consoles.
 - Risk enforcement covers core manual trade logging rules, not full portfolio exposure, correlation, or account-level risk management.
 - Stale signal handling flags old saved signals, but does not refresh market data or re-run strategy automatically.
@@ -41,7 +42,6 @@ Accept RC for internal handoff.
 
 ### Blockers for broader/public/prod-like exposure
 
-- [#151](https://github.com/Cillyonline/cilly-trading-signal/issues/151) unless it is addressed or explicitly accepted in a separate broader-release decision.
 - No production-readiness evidence is documented as passed.
 - No full penetration test is documented as completed.
 - No dependency or container vulnerability scan is documented as completed.
@@ -65,7 +65,7 @@ Accept RC for internal handoff.
 ## Follow-Up Requirements
 
 - The direct API/web host port exposure follow-up ([#150](https://github.com/Cillyonline/cilly-trading-signal/issues/150)) has been addressed by binding direct API and web ports to localhost in the provided Compose file.
-- [#151](https://github.com/Cillyonline/cilly-trading-signal/issues/151) Make backup script default output path safer for sensitive dumps remains relevant before broader or production-like exposure.
+- The backup output path follow-up ([#151](https://github.com/Cillyonline/cilly-trading-signal/issues/151)) has been addressed by making backup output safer by default and documenting that PostgreSQL dumps must stay outside the repository.
 - Production monitoring and operational alerting must be handled separately before any production-like readiness claim.
 - Any broader release, production-like public exposure, broker-readiness claim, real-money use, profitability claim, or public SaaS readiness claim requires an explicit follow-up decision after the relevant security and operational gaps are addressed or explicitly accepted.
 
