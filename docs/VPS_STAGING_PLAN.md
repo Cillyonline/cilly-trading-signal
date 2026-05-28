@@ -232,5 +232,5 @@ No-go if:
 - #159: prepare VPS staging environment checklist.
 - #161: define minimum monitoring checks in `docs/DEPLOYMENT_RUNBOOK.md`.
 - #162: verify PostgreSQL backup and restore path on VPS-like staging. Evidence is recorded in `docs/MVP_RELEASE_CHECKLIST.md`.
-- #163: run first private VPS smoke test after deployment approval.
+- #163: run first private VPS smoke test after deployment approval. Procedure and evidence template: `docs/VPS_STAGING_SMOKE_TEST.md`.
 - #164: document private VPS go/no-go decision gate.
