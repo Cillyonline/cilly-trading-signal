@@ -2,7 +2,27 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.models.enums import AssetClass
+from app.models.enums import (
+    AssetClass,
+    MarketDataFreshnessStatus,
+    MarketDataSource,
+    MarketDataSyncStatus,
+    Timeframe,
+)
+
+
+class WatchlistMarketDataSummary(BaseModel):
+    series_id: int = Field(validation_alias="id")
+    source: MarketDataSource
+    freshness_status: MarketDataFreshnessStatus
+    sync_status: MarketDataSyncStatus
+    timeframe: Timeframe
+    end_time: datetime | None
+    imported_at: datetime
+    last_synced_at: datetime | None
+    provider_name: str | None
+
+    model_config = {"from_attributes": True, "populate_by_name": True}
 
 
 class WatchlistItemBase(BaseModel):
@@ -78,5 +98,6 @@ class WatchlistItemRead(WatchlistItemBase):
     created_at: datetime
     updated_at: datetime
     last_analyzed_at: datetime | None
+    latest_market_data: WatchlistMarketDataSummary | None = None
 
     model_config = {"from_attributes": True}

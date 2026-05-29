@@ -8,7 +8,13 @@ import {
   assertAuthenticatedResponse,
   redirectToLoginOnAuthError,
 } from "@/lib/api";
-import type { AssetClass, WatchlistItem } from "@/types/watchlist";
+import type {
+  AssetClass,
+  MarketDataFreshnessStatus,
+  MarketDataSource,
+  MarketDataSyncStatus,
+  WatchlistItem,
+} from "@/types/watchlist";
 
 type WatchlistForm = {
   symbol: string;
@@ -155,7 +161,8 @@ export default function WatchlistPage() {
             <h1 className="mt-3 text-4xl font-semibold tracking-tight">Symbole verwalten</h1>
             <p className="mt-3 max-w-2xl text-slate-300">
               Pflege Aktien und Krypto-Symbole als Grundlage fuer CSV-Import, Setup-Bewertungen
-              und manuelles Trade Logging.
+              und manuelles Trade Logging. Source/Freshness zeigt Datenkontext, keine Live-Preise
+              und keine Trade-Anweisung.
             </p>
           </div>
           <a className="text-sm text-emerald-300 hover:text-emerald-200" href="/">
@@ -294,6 +301,7 @@ export default function WatchlistPage() {
                             "Keine Zusatzdaten"}
                         </p>
                         {item.notes ? <p className="mt-3 text-sm text-slate-300">{item.notes}</p> : null}
+                        <MarketDataSummary item={item} />
                       </div>
                       <div className="flex gap-2">
                         <button
@@ -323,4 +331,97 @@ export default function WatchlistPage() {
       </section>
     </main>
   );
+}
+
+function MarketDataSummary({ item }: { item: WatchlistItem }) {
+  const summary = item.latest_market_data;
+  if (!summary) {
+    return (
+      <div className="mt-4 rounded-2xl border border-yellow-300/30 bg-yellow-300/10 p-3 text-sm text-yellow-100">
+        Keine Marktdaten gespeichert. Importiere zuerst CSV-Daten; ohne Daten gibt es kein aktuelles
+        Setup-Signal.
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-4 grid gap-3 rounded-2xl border border-white/10 bg-slate-950/70 p-3 text-sm text-slate-300">
+      <div className="flex flex-wrap gap-2">
+        <span className="rounded-full border border-sky-300/20 bg-sky-300/10 px-3 py-1 text-xs text-sky-100">
+          Source: {formatMarketDataSource(summary.source)}
+        </span>
+        <span className={`rounded-full border px-3 py-1 text-xs ${freshnessBadgeClass(summary.freshness_status)}`}>
+          Freshness: {formatLabel(summary.freshness_status)}
+        </span>
+        <span className="rounded-full border border-white/10 bg-slate-800 px-3 py-1 text-xs text-slate-300">
+          Sync: {formatLabel(summary.sync_status)}
+        </span>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-3">
+        <Metric label="Timeframe" value={summary.timeframe} />
+        <Metric label="Letzte Kerze" value={formatDateTime(summary.end_time)} />
+        <Metric label="Provider" value={summary.provider_name ?? "-"} />
+      </div>
+      <p className={`text-xs ${summary.freshness_status === "fresh" ? "text-slate-400" : "text-yellow-100"}`}>
+        {freshnessMessage(summary.freshness_status, summary.sync_status)}
+      </p>
+    </div>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-xs uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="mt-1 font-semibold text-slate-100">{value}</p>
+    </div>
+  );
+}
+
+function freshnessBadgeClass(status: MarketDataFreshnessStatus) {
+  if (status === "fresh") {
+    return "border-emerald-300/30 bg-emerald-300/10 text-emerald-100";
+  }
+  if (status === "stale" || status === "unknown") {
+    return "border-yellow-300/30 bg-yellow-300/10 text-yellow-100";
+  }
+  return "border-red-300/30 bg-red-300/10 text-red-100";
+}
+
+function freshnessMessage(status: MarketDataFreshnessStatus, syncStatus: MarketDataSyncStatus) {
+  if (status === "fresh") {
+    return "Fresh markiert, aber nicht live oder realtime. Manuelle Pruefung bleibt erforderlich.";
+  }
+  if (status === "stale") {
+    return "Stale Daten: nicht wie ein aktuelles Setup oder Trigger behandeln.";
+  }
+  if (status === "failed" || syncStatus === "failed") {
+    return "Fehlerhafter Datenstand: erst korrigieren, dann analysieren.";
+  }
+  if (status === "partial" || syncStatus === "partial") {
+    return "Teilweiser Datenstand: fehlende Kerzen oder Timeframes konservativ behandeln.";
+  }
+  return "Unbekannte Freshness: konservativ behandeln und vor Analyse aktualisieren.";
+}
+
+function formatMarketDataSource(source: MarketDataSource) {
+  if (source === "tradingview_csv") {
+    return "TradingView CSV";
+  }
+  if (source === "provider") {
+    return "Provider";
+  }
+  return formatLabel(source);
+}
+
+function formatLabel(value: string) {
+  return value.replaceAll("_", " ");
+}
+
+function formatDateTime(value: string | null) {
+  if (!value) {
+    return "-";
+  }
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleString("de-DE");
 }

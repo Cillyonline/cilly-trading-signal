@@ -1,6 +1,6 @@
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import settings
 from app.models.enums import UserRole
@@ -40,6 +40,7 @@ def list_watchlist_items(db: Session, user_id: int) -> list[WatchlistItem]:
     return list(
         db.scalars(
             select(WatchlistItem)
+            .options(selectinload(WatchlistItem.market_data_series))
             .where(WatchlistItem.user_id == user_id)
             .order_by(WatchlistItem.symbol)
         )
@@ -48,7 +49,9 @@ def list_watchlist_items(db: Session, user_id: int) -> list[WatchlistItem]:
 
 def get_watchlist_item(db: Session, user_id: int, item_id: int) -> WatchlistItem | None:
     return db.scalar(
-        select(WatchlistItem).where(
+        select(WatchlistItem)
+        .options(selectinload(WatchlistItem.market_data_series))
+        .where(
             WatchlistItem.id == item_id,
             WatchlistItem.user_id == user_id,
         )
