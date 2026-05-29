@@ -201,7 +201,7 @@ Done when:
 
 ## v1.4 - Market Data Preparation
 
-Goal: prepare the product for future provider-backed market data without broker
+Goal: prepare the product for provider-backed market data without broker
 integration, automatic execution, trading advice, or live-signal claims.
 
 Status: Done. Provider choice, source/freshness model, schema preparation, sync
@@ -220,7 +220,7 @@ Primary work:
 Done when:
 
 - Provider choice, open questions, and unsupported needs are documented.
-- CSV and future provider data can be represented distinctly.
+- CSV and provider-backed data can be represented distinctly.
 - Stale, failed, partial, or unknown market data is conservative and visible.
 - No API keys, provider secrets, subscription details, or private trading data are
   committed or pasted.

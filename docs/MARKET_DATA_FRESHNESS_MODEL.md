@@ -2,16 +2,16 @@
 
 ## Purpose
 
-This document defines the planned v1.4 market-data source, freshness, and stale-data
-model before database or provider implementation.
+This document defines the implemented market-data source, freshness, and stale-data
+model for TradingView CSV imports and guarded manual provider sync.
 
-This is a planning artifact. It is not a live-data claim, real-time signal claim,
+This is not a live-data claim, real-time signal claim,
 production-readiness statement, trading advice, profitability claim, broker-readiness
 claim, or approval for automatic execution.
 
 ## Goals
 
-- Track whether market data came from CSV or a future provider sync.
+- Track whether market data came from CSV or a provider-backed sync.
 - Track freshness per symbol and timeframe.
 - Make stale, failed, partial, and unknown data visible and conservative.
 - Preserve existing TradingView CSV workflows.
@@ -21,17 +21,18 @@ claim, or approval for automatic execution.
 
 Every market-data series should have an explicit source.
 
-Recommended source values:
+Implemented source values:
 
-- `csv`: uploaded TradingView CSV or equivalent manual import.
-- `provider`: future provider-backed sync.
+- `tradingview_csv`: uploaded TradingView CSV import.
+- `provider`: provider-backed sync persisted through the manual sync path.
 - `manual`: reserved for future operator-created data points, not used by current MVP.
-- `unknown`: migration fallback only; must be treated conservatively.
+- `unknown`: fallback only; must be treated conservatively.
+- `api_later`: legacy placeholder accepted for existing early data only.
 
 Provider-backed data should additionally track provider identity without making the
 schema depend on one vendor.
 
-Recommended provider fields:
+Implemented provider fields:
 
 - `provider_name`: symbolic provider identifier, for example `alpha_vantage`,
   `twelve_data`, `polygon`, or `tiingo`.
@@ -46,13 +47,13 @@ reference when available.
 
 Freshness must be evaluated per symbol/timeframe, not globally.
 
-Recommended fields for the latest data state:
+Implemented fields for the latest data state:
 
-- `source`: `csv`, `provider`, `manual`, or `unknown`.
+- `source`: `tradingview_csv`, `provider`, `manual`, `unknown`, or legacy `api_later`.
 - `timeframe`: `1W`, `1D`, or `4H`.
-- `data_start_at`: earliest candle timestamp in the series.
-- `data_end_at`: latest candle timestamp in the series.
-- `last_imported_at`: when CSV data was imported or provider data was persisted.
+- `start_time`: earliest candle timestamp in the series.
+- `end_time`: latest candle timestamp in the series.
+- `imported_at`: when the series was first imported or created.
 - `last_synced_at`: when a provider sync attempt completed, if applicable.
 - `freshness_status`: `fresh`, `stale`, `unknown`, `failed`, or `partial`.
 - `sync_status`: `not_applicable`, `success`, `skipped`, `failed`, or `partial`.
@@ -66,7 +67,7 @@ payloads, or account/subscription details in these fields.
 
 Freshness status should be derived conservatively.
 
-Suggested initial rules:
+Implemented rules:
 
 - `fresh`: data exists for the expected symbol/timeframe and is inside the configured
   freshness window.
@@ -76,7 +77,7 @@ Suggested initial rules:
 - `partial`: some data was imported/synced, but expected candles, timeframes, or ranges
   are incomplete.
 
-Suggested initial freshness windows:
+Implemented freshness windows:
 
 - `1W`: stale after 14 days without newer data.
 - `1D`: stale after 3 days without newer data.
@@ -90,7 +91,7 @@ claim that data is live or real-time.
 Sync status should describe the latest sync/import attempt separately from whether
 the available data is fresh.
 
-Recommended values:
+Implemented values:
 
 - `not_applicable`: CSV/manual data with no provider sync attempt.
 - `success`: provider sync completed and persisted expected data.
@@ -100,7 +101,7 @@ Recommended values:
 
 Examples:
 
-- CSV upload from yesterday: `source=csv`, `sync_status=not_applicable`,
+- CSV upload from yesterday: `source=tradingview_csv`, `sync_status=not_applicable`,
   `freshness_status=fresh` for `1D`.
 - Provider error with old data still present: `source=provider`, `sync_status=failed`,
   `freshness_status=stale` if the old data is outside the freshness window.
@@ -133,15 +134,15 @@ Suggested no-trade reason labels:
 
 ## Migration Direction
 
-Existing imported CSV series should migrate without changing candle values.
+Existing imported CSV series migrate without changing candle values.
 
-Recommended migration defaults for existing rows:
+Migration defaults for existing rows:
 
-- `source=csv` for current TradingView CSV imports.
+- `source=tradingview_csv` for current TradingView CSV imports.
 - `sync_status=not_applicable`.
 - `provider_name`, `provider_symbol`, `provider_exchange`, and `provider_timeframe`
   unset.
-- `last_imported_at` from existing `imported_at` when available.
+- `imported_at` remains the import timestamp.
 - `freshness_status` derived after migration from `data_end_at` and timeframe.
 
 If source cannot be inferred safely, use `source=unknown` and treat the data
@@ -149,7 +150,7 @@ conservatively until re-imported or re-synced.
 
 ## UI/API Expectations
 
-Future API responses and UI should expose source and freshness clearly.
+API responses and UI expose source and freshness clearly.
 
 Minimum display expectations:
 
@@ -163,6 +164,6 @@ as fresh data.
 
 ## Final Statement
 
-The v1.4 freshness model exists to make market-data provenance and age explicit before
-provider integration. It should reduce the risk of old or incomplete data being
-mistaken for current, trader-actionable information.
+The freshness model exists to make market-data provenance and age explicit for both
+CSV and provider-backed stored data. It should reduce the risk of old or incomplete
+data being mistaken for current, trader-actionable information.

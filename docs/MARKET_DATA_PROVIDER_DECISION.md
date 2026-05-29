@@ -2,27 +2,29 @@
 
 ## Purpose
 
-This document defines the v1.4 market-data provider decision matrix and initial
-scope for future provider-backed data sync.
+This document records the market-data provider decision matrix and the current
+manual provider-backed data sync scope.
 
-This is a planning artifact. It is not a live-trading claim, real-time signal claim,
+This is not a live-trading claim, real-time signal claim,
 production-readiness statement, broker-readiness claim, profitability claim, trading
 advice, or approval for automatic execution.
 
 ## Decision Summary
 
-Status: Provider-agnostic preparation for v1.4.
+Status: Manual provider sync MVP implemented for a guarded Daily/EOD path.
 
-Initial v1.4 recommendation:
+Current decision:
 
 - Keep TradingView CSV import as a supported data source.
-- Build provider-neutral configuration, source metadata, freshness metadata, and sync
-  status handling before integrating a real provider.
-- Treat Daily/EOD stock and crypto data as the first practical provider-backed target.
+- Keep provider-neutral configuration, source metadata, freshness metadata, and sync
+  status handling independent of any one vendor.
+- Treat Daily/EOD data as the first practical provider-backed target.
+- Use Alpha Vantage as the first implemented adapter path for Daily/EOD sync behind
+  the provider boundary.
 - Keep `4H`/intraday provider support unresolved until provider cost, licensing, and
   rate-limit constraints are confirmed.
-- Do not claim live, real-time, or trader-actionable data freshness from provider
-  preparation work.
+- Do not claim live, real-time, or trader-actionable data freshness from manual
+  provider sync.
 
 ## Safety Boundaries
 
@@ -42,31 +44,33 @@ Initial v1.4 recommendation:
 | Candidate | Stocks | Crypto | EOD/Daily | Intraday/4H | Operational Notes | v1.4 Fit |
 | --- | --- | --- | --- | --- | --- | --- |
 | TradingView CSV | Manual export only | Manual export only | Yes, via upload | Yes, via upload if exported manually | Already implemented; no provider key; manual and repeatable but not automated. | Keep as baseline and fallback. |
-| Alpha Vantage | Broad public-market coverage depends on plan | Limited crypto/FX coverage | Yes | Intraday exists but rate limits and adjusted-history details require review | Simple API shape; free/low-cost tiers can be restrictive; licensing must be checked before reliance. | Candidate for first stock EOD prototype only after limits are accepted. |
+| Alpha Vantage | Broad public-market coverage depends on plan | Limited crypto/FX coverage | Yes | Intraday exists but rate limits and adjusted-history details require review | Simple API shape; free/low-cost tiers can be restrictive; licensing must be checked before reliance. | First implemented guarded Daily/EOD adapter path. |
 | Twelve Data | Stocks/ETFs/FX depending on plan | Crypto support depending on plan | Yes | Intraday support depending on plan | Broad API surface; pricing and symbol mapping need review. | Candidate if combined stock/crypto coverage is prioritized. |
 | Polygon.io | Strong US market coverage depending on subscription | Crypto support depending on subscription | Yes | Strong intraday support on paid tiers | Higher-quality option but cost/licensing likely higher; useful if intraday becomes required. | Candidate for later paid/intraday path, not first low-risk default. |
 | Tiingo | US equities and ETFs depending on plan | Some crypto data depending on plan | Yes | Intraday depends on plan/API | Often suitable for adjusted daily equity data; crypto/intraday needs confirmation. | Candidate for daily stock data if licensing is acceptable. |
 | Yahoo Finance unofficial libraries | Broad visible coverage | Some crypto symbols | Yes | Some intraday windows | Unofficial interfaces can break and may have unclear terms; avoid relying on scraping-like paths for staging operations. | Not recommended for operational provider integration. |
 | Exchange-native crypto APIs | No | Exchange-specific | Yes, via candles | Yes | Good crypto candle availability, but symbol/exchange mapping and per-exchange quirks add complexity. | Candidate for later crypto-specific integration, not first unified provider. |
 
-## Initial Scope
+## Implemented Scope
 
-v1.4 should prepare the app for provider-backed data without binding to one vendor too
-early.
+The current implementation adds manual provider sync without binding domain models to
+one vendor.
 
-Included in the first preparation slice:
+Included:
 
-- Provider selection documentation.
+- Provider selection documentation and decision record.
 - Environment configuration placeholders and safety guards.
-- Data source metadata for `csv` and future `provider` data.
+- Data source metadata for `tradingview_csv` and `provider` data.
 - Freshness metadata by symbol/timeframe.
 - Sync result states such as `success`, `skipped`, `failed`, and `partial`.
 - UI/API wording that distinguishes CSV, provider, stale, failed, partial, and unknown
   data.
+- Authenticated manual `POST /api/imports/sync` endpoint.
+- Provider-backed candle persistence for provider series only.
+- First Alpha Vantage Daily/EOD provider adapter with mocked tests.
 
-Not included in the first preparation slice:
+Not included:
 
-- Real provider API calls.
 - Scheduler-driven imports.
 - Live price display.
 - Automatic signal generation from provider data.
@@ -94,9 +98,10 @@ Not included in the first preparation slice:
 - Multi-provider fallback is out of scope for the first integration.
 - Guaranteed real-time 4H/intraday coverage is unresolved until provider selection.
 
-## Review Gate For Real Provider Integration
+## Review Gate For Broader Provider Reliance
 
-Before adding a real provider API call, a follow-up issue must document:
+Before relying on broader provider coverage, intraday data, or production-like use, a
+follow-up issue must document:
 
 - Selected provider and subscription tier assumptions.
 - Allowed asset classes, exchanges, symbols, and timeframes.
@@ -108,7 +113,6 @@ Before adding a real provider API call, a follow-up issue must document:
 
 ## Final Statement
 
-v1.4 should prepare the product for market-data integration by making data source,
-freshness, sync status, and safety wording explicit. The first implementation should
-remain provider-neutral until provider cost, licensing, coverage, and rate-limit
-constraints are reviewed and accepted.
+The current provider work makes data source, freshness, sync status, and safety
+wording explicit. Manual Alpha Vantage Daily/EOD sync is a guarded stored-data path,
+not live data, not automatic analysis, and not broker or execution readiness.
