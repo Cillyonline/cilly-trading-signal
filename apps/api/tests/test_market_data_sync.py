@@ -345,6 +345,39 @@ def test_persist_provider_sync_result_rejects_duplicate_timestamps(db_session) -
     assert db_session.query(MarketDataCandle).count() == 0
 
 
+def test_persist_provider_sync_result_marks_empty_success_partial_without_deleting_old_candles(
+    db_session,
+) -> None:
+    series = make_series(source=MarketDataSource.PROVIDER)
+    db_session.add(series)
+    db_session.flush()
+    db_session.add(
+        MarketDataCandle(
+            series_id=series.id,
+            timestamp=datetime(2026, 5, 1, tzinfo=UTC),
+            open=Decimal("1"),
+            high=Decimal("1"),
+            low=Decimal("1"),
+            close=Decimal("1"),
+            volume=Decimal("1"),
+        )
+    )
+    db_session.flush()
+    result = MarketDataSyncResult(
+        sync_status=MarketDataSyncStatus.SUCCESS,
+        freshness_status=MarketDataFreshnessStatus.FRESH,
+        provider_name="alpha_vantage",
+        candles=(),
+    )
+
+    persist_provider_sync_result(db_session, series, result, datetime(2026, 5, 30, tzinfo=UTC))
+
+    assert series.sync_status == MarketDataSyncStatus.PARTIAL
+    assert series.freshness_status == MarketDataFreshnessStatus.PARTIAL
+    assert series.sync_error_code == "provider_empty_response"
+    assert db_session.query(MarketDataCandle).count() == 1
+
+
 def test_persist_provider_sync_result_does_not_mutate_csv_candles(db_session) -> None:
     series = make_series(source=MarketDataSource.TRADINGVIEW_CSV)
     db_session.add(series)
@@ -370,6 +403,7 @@ def test_persist_provider_sync_result_does_not_mutate_csv_candles(db_session) ->
 
     persist_provider_sync_result(db_session, series, result, datetime(2026, 5, 30, tzinfo=UTC))
 
+    assert series.source == MarketDataSource.TRADINGVIEW_CSV
     assert series.sync_status == MarketDataSyncStatus.FAILED
     assert series.sync_error_code == "provider_series_required"
     assert db_session.query(MarketDataCandle).count() == 1
