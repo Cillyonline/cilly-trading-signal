@@ -30,7 +30,8 @@ Done:
 - Manual trade logging, trade events, close flow, journal entries, and R-multiple performance summary.
 - Risk Settings API/UI with account size, max risk percent, minimum R:R, and max open trades.
 - Dashboard and safety wording for manual execution only.
-- TradingView webhook ingestion, Telegram test delivery, alert event review UI, manual signal review workflow, and stale signal visibility.
+- TradingView webhook ingestion, Telegram test delivery, policy-gated automatic Telegram routing with dedup/rate limiting, alert event review UI, manual signal review workflow, and stale signal visibility.
+- Private VPS staging smoke test and conditional staging-only decision gate for controlled owner/operator use.
 
 Partial:
 
@@ -43,7 +44,6 @@ Partial:
 Missing:
 
 - Live market data API integration.
-- Automatic Telegram delivery implementation for the documented v1.3 alert routing policy.
 - Monitoring and operational alerting.
 - Multi-user mode, roles beyond the MVP admin, public registration, and password reset flows.
 - Backtesting, strategy validation, or profitability reporting.
@@ -54,7 +54,7 @@ Current blockers and risks:
 - The app is not production-ready until deployment is repeatedly verified and monitoring, secrets operations, and security review are completed.
 - Strategy behavior remains a deterministic decision-support hypothesis and must not be presented as trading advice or validated profitability.
 - Local development depends on `uv`, Python 3.12, Node.js 20, Docker, and a reachable PostgreSQL database or Docker Compose.
-- The latest full MVP smoke-test attempt is documented in `docs/MVP_SMOKE_TEST.md` and is blocked until Docker Desktop engine access and deterministic sample CSV fixtures are available.
+- Private VPS staging is conditionally accepted for controlled owner/operator use only; production-like or public use remains blocked until security hardening, deploy-user posture, backup automation, monitoring automation, and data-handling readiness are addressed.
 - MVP release posture is tracked in `docs/MVP_RELEASE_CHECKLIST.md`; it separates Done, Partial, Missing, Blocked, and Not Included areas without claiming production readiness.
 
 ## v0.1 - Foundation
@@ -137,7 +137,7 @@ Done when:
 
 Goal: provide an end-to-end MVP flow that can be used for disciplined paper trading or small manual review workflows.
 
-Status: Mostly done for the local/manual MVP flow; production readiness and alerting are still missing.
+Status: Mostly done for the local/manual MVP flow; private VPS staging has a conditional owner/operator go, while production readiness is still missing.
 
 Expected work:
 
@@ -177,7 +177,7 @@ Done when:
 Goal: deliver Telegram notifications automatically only for policy-allowed review events,
 without broker execution, order creation, trading advice, or buy/sell wording.
 
-Status: Policy defined; implementation pending.
+Status: Done for local secret-free verification and CI coverage; private VPS Telegram provider delivery still needs an operator-run sanitized check before operational reliance.
 
 Primary work:
 
