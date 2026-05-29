@@ -1,4 +1,5 @@
 from collections.abc import Iterator
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -72,7 +73,39 @@ def test_create_and_list_watchlist_items(client: TestClient) -> None:
     list_response = client.get("/api/watchlist")
 
     assert list_response.status_code == 200
-    assert [item["symbol"] for item in list_response.json()] == ["AAPL"]
+    listed = list_response.json()
+    assert [item["symbol"] for item in listed] == ["AAPL"]
+    assert listed[0]["latest_market_data"] is None
+
+
+def test_list_watchlist_items_includes_latest_market_data(client: TestClient) -> None:
+    created = client.post("/api/watchlist", json={"symbol": "AAPL", "asset_class": "stock"}).json()
+
+    import_response = client.post(
+        "/api/imports/csv",
+        data={"watchlist_item_id": str(created["id"]), "timeframe": "1D"},
+        files={
+            "file": (
+                "recent.csv",
+                recent_daily_csv(),
+                "text/csv",
+            )
+        },
+    )
+    assert import_response.status_code == 200
+
+    response = client.get("/api/watchlist")
+
+    assert response.status_code == 200
+    item = response.json()[0]
+    summary = item["latest_market_data"]
+    assert summary["series_id"] == import_response.json()["series_id"]
+    assert summary["source"] == "tradingview_csv"
+    assert summary["freshness_status"] == "fresh"
+    assert summary["sync_status"] == "not_applicable"
+    assert summary["timeframe"] == "1D"
+    assert summary["end_time"] is not None
+    assert summary["provider_name"] is None
 
 
 def test_create_watchlist_item_rejects_duplicate_symbol(client: TestClient) -> None:
@@ -108,3 +141,12 @@ def test_get_unknown_watchlist_item_returns_404(client: TestClient) -> None:
     response = client.get("/api/watchlist/999")
 
     assert response.status_code == 404
+
+
+def recent_daily_csv() -> str:
+    rows = ["time,open,high,low,close,volume"]
+    start = (datetime.now(UTC) - timedelta(days=19)).date()
+    for index in range(20):
+        current_date = start + timedelta(days=index)
+        rows.append(f"{current_date.isoformat()},100,110,90,105,1000")
+    return "\n".join(rows)

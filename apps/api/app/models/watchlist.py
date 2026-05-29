@@ -46,3 +46,11 @@ class WatchlistItem(Base):
     signals: Mapped[list["Signal"]] = relationship(back_populates="watchlist_item")
     trades: Mapped[list["Trade"]] = relationship(back_populates="watchlist_item")
     alerts: Mapped[list["Alert"]] = relationship(back_populates="watchlist_item")
+
+    @property
+    def latest_market_data(self) -> "MarketDataSeries | None":
+        return max(
+            self.market_data_series,
+            key=lambda series: (series.end_time or series.imported_at, series.id),
+            default=None,
+        )
