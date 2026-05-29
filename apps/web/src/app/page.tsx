@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
 import {
+  fetchAlerts,
   fetchPerformanceSummary,
   fetchSignals,
   fetchTrades,
@@ -11,6 +12,7 @@ import {
   logout,
   redirectToLoginOnAuthError,
 } from "@/lib/api";
+import type { AlertEvent } from "@/types/alerts";
 import type { PerformanceSummary } from "@/types/performance";
 import type { Signal } from "@/types/signals";
 import type { Trade } from "@/types/trades";
@@ -73,16 +75,17 @@ type DashboardResult = { ok: true; data: DashboardData } | { ok: false; error: s
 
 async function loadDashboardData(): Promise<DashboardResult> {
   try {
-    const [watchlist, signals, trades, performance] = await Promise.all([
+    const [watchlist, signals, trades, performance, alerts] = await Promise.all([
       fetchWatchlist(),
       fetchSignals(),
       fetchTrades(),
       fetchPerformanceSummary(),
+      fetchAlerts(),
     ]);
 
     return {
       ok: true,
-      data: buildDashboardData(watchlist, signals, trades, performance),
+      data: buildDashboardData(watchlist, signals, trades, performance, alerts),
     };
   } catch (error) {
     if (redirectToLoginOnAuthError(error)) {
@@ -103,6 +106,14 @@ type DashboardData = {
   openTrades: Trade[];
   reviewNeededTrades: Trade[];
   marketDataQuality: MarketDataQualitySummary;
+  reviewPriorities: ReviewPriority[];
+};
+
+type ReviewPriority = {
+  title: string;
+  detail: string;
+  href: string;
+  tone: "red" | "yellow" | "emerald" | "slate";
 };
 
 type MarketDataQualityIssue = {
@@ -135,12 +146,24 @@ function buildDashboardData(
   signals: Signal[],
   trades: Trade[],
   performance: PerformanceSummary,
+  alerts: AlertEvent[],
 ): DashboardData {
   const openTrades = trades.filter((trade) => trade.status !== "closed" && trade.status !== "reviewed");
   const reviewNeededTrades = trades.filter((trade) => trade.review_status === "needs_review");
   const reviewSignals = signals.filter((signal) => signal.status === "armed" || signal.status === "triggered");
   const triggeredSignals = signals.filter((signal) => signal.status === "triggered");
+  const alertIssues = alerts.filter(
+    (alert) => alert.delivery_status === "failed" || alert.delivery_status === "pending",
+  );
   const marketDataQuality = buildMarketDataQuality(watchlist);
+  const reviewPriorities = buildReviewPriorities({
+    marketDataQuality,
+    triggeredSignals,
+    reviewSignals,
+    openTrades,
+    reviewNeededTrades,
+    alertIssues,
+  });
 
   return {
     cards: [
@@ -176,6 +199,13 @@ function buildDashboardData(
         tone: "border-green-400/40",
       },
       {
+        label: "Alert Issues",
+        value: String(alertIssues.length),
+        detail: alertIssues.length === 0 ? "Keine pending/failed Alerts" : "Delivery pruefen",
+        href: "/alerts",
+        tone: alertIssues.length === 0 ? "border-emerald-400/40" : "border-red-300/50",
+      },
+      {
         label: "Documented Total R",
         value: formatR(performance.total_r),
         detail: `${performance.closed_trade_count} manuell dokumentierte Abschluesse`,
@@ -195,7 +225,87 @@ function buildDashboardData(
     openTrades: openTrades.slice(0, 3),
     reviewNeededTrades: reviewNeededTrades.slice(0, 3),
     marketDataQuality,
+    reviewPriorities,
   };
+}
+
+function buildReviewPriorities({
+  marketDataQuality,
+  triggeredSignals,
+  reviewSignals,
+  openTrades,
+  reviewNeededTrades,
+  alertIssues,
+}: {
+  marketDataQuality: MarketDataQualitySummary;
+  triggeredSignals: Signal[];
+  reviewSignals: Signal[];
+  openTrades: Trade[];
+  reviewNeededTrades: Trade[];
+  alertIssues: AlertEvent[];
+}): ReviewPriority[] {
+  const priorities: ReviewPriority[] = [];
+
+  if (marketDataQuality.failedCount + marketDataQuality.partialCount > 0) {
+    priorities.push({
+      title: "Market Data Fehler zuerst klaeren",
+      detail: `${marketDataQuality.failedCount} failed / ${marketDataQuality.partialCount} partial Datensaetze`,
+      href: "/watchlist",
+      tone: "red",
+    });
+  } else if (marketDataQuality.issueCount > 0) {
+    priorities.push({
+      title: "Market Data Freshness pruefen",
+      detail: `${marketDataQuality.issueCount} missing, stale oder unknown Datensaetze`,
+      href: "/watchlist",
+      tone: "yellow",
+    });
+  }
+
+  if (alertIssues.length > 0) {
+    priorities.push({
+      title: "Alert Delivery pruefen",
+      detail: `${alertIssues.length} pending oder failed Alert Events`,
+      href: "/alerts",
+      tone: "red",
+    });
+  }
+
+  if (triggeredSignals.length > 0) {
+    priorities.push({
+      title: "Triggered Setups manuell pruefen",
+      detail: `${triggeredSignals.length} Trigger-Prompts ohne automatische Ausfuehrung`,
+      href: "/signals",
+      tone: "yellow",
+    });
+  } else if (reviewSignals.length > 0) {
+    priorities.push({
+      title: "Armed Setups reviewen",
+      detail: `${reviewSignals.length} gespeicherte Review-Kandidaten`,
+      href: "/signals",
+      tone: "slate",
+    });
+  }
+
+  if (openTrades.length > 0) {
+    priorities.push({
+      title: "Offene Trades dokumentieren",
+      detail: `${openTrades.length} manuelle Trade-Datensaetze offen`,
+      href: "/trades",
+      tone: "emerald",
+    });
+  }
+
+  if (reviewNeededTrades.length > 0) {
+    priorities.push({
+      title: "Trade Reviews nachtragen",
+      detail: `${reviewNeededTrades.length} geschlossene Trades brauchen Journal Review`,
+      href: "/trades",
+      tone: "yellow",
+    });
+  }
+
+  return priorities.slice(0, 5);
 }
 
 function buildMarketDataQuality(watchlist: WatchlistItem[]): MarketDataQualitySummary {
@@ -252,7 +362,7 @@ function buildMarketDataQuality(watchlist: WatchlistItem[]): MarketDataQualitySu
 function DashboardContent({ data }: { data: DashboardData }) {
   return (
     <>
-      <section className="grid gap-4 md:grid-cols-5">
+      <section className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
         {data.cards.map((card) => (
           <a
             key={card.label}
@@ -267,6 +377,7 @@ function DashboardContent({ data }: { data: DashboardData }) {
       </section>
 
       {!data.hasAnyData ? <DashboardEmptyState /> : null}
+      <ReviewPriorityCard priorities={data.reviewPriorities} />
       <MarketDataQualityCard quality={data.marketDataQuality} />
 
       <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
@@ -274,6 +385,45 @@ function DashboardContent({ data }: { data: DashboardData }) {
         <CockpitSnapshot data={data} />
       </section>
     </>
+  );
+}
+
+function ReviewPriorityCard({ priorities }: { priorities: ReviewPriority[] }) {
+  return (
+    <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
+      <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+        <div>
+          <p className="text-sm uppercase tracking-[0.25em] text-slate-400">Review Prioritaeten</p>
+          <h2 className="mt-2 text-xl font-semibold">Naechste manuelle Pruefpunkte</h2>
+          <p className="mt-2 max-w-3xl text-sm text-slate-300">
+            Diese Liste priorisiert Datenqualitaet, Alerts, Setups und Trade-Dokumentation. Sie ist
+            keine Live-Ansicht und keine Handlungsanweisung.
+          </p>
+        </div>
+        <a className="text-sm text-emerald-300 hover:text-emerald-200" href="/signals">
+          Signale pruefen
+        </a>
+      </div>
+
+      {priorities.length > 0 ? (
+        <div className="mt-5 grid gap-3 lg:grid-cols-2">
+          {priorities.map((priority) => (
+            <a
+              key={`${priority.title}-${priority.href}`}
+              className={`rounded-2xl border p-4 text-sm hover:bg-slate-900/70 ${priorityTone(priority.tone)}`}
+              href={priority.href}
+            >
+              <p className="font-semibold">{priority.title}</p>
+              <p className="mt-1 opacity-80">{priority.detail}</p>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-5 rounded-2xl border border-emerald-300/20 bg-emerald-300/5 p-4 text-sm text-emerald-100">
+          Keine priorisierten Warnungen. Pruefe trotzdem Datenstand, Setups und offene Trades manuell.
+        </p>
+      )}
+    </section>
   );
 }
 
@@ -337,6 +487,19 @@ function QualityMetric({ label, value }: { label: string; value: number }) {
       <p className="mt-1 text-2xl font-semibold text-slate-100">{value}</p>
     </div>
   );
+}
+
+function priorityTone(tone: ReviewPriority["tone"]) {
+  if (tone === "red") {
+    return "border-red-300/30 bg-red-300/10 text-red-100";
+  }
+  if (tone === "yellow") {
+    return "border-yellow-300/30 bg-yellow-300/10 text-yellow-100";
+  }
+  if (tone === "emerald") {
+    return "border-emerald-300/30 bg-emerald-300/10 text-emerald-100";
+  }
+  return "border-slate-400/30 bg-slate-800/70 text-slate-200";
 }
 
 function DashboardError({ message }: { message: string }) {
