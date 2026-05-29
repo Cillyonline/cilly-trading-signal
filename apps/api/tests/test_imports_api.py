@@ -15,7 +15,7 @@ from app.core.config import settings
 from app.main import create_app
 from app.models import *  # noqa: F403
 from app.models.enums import MarketDataFreshnessStatus, MarketDataSyncStatus
-from app.services.market_data_sync import MarketDataSyncResult
+from app.services.market_data_sync import MarketDataSyncResult, ProviderCandle
 
 
 @pytest.fixture()
@@ -236,6 +236,7 @@ def test_manual_market_data_sync_applies_mock_success(
             provider_symbol="AAPL",
             provider_timeframe="1D",
             data_end_at=datetime(2026, 5, 29, tzinfo=UTC),
+            candles=(provider_candle("2026-05-29"),),
         )
     )
     monkeypatch.setattr(settings, "market_data_provider_sync_enabled", True)
@@ -312,6 +313,17 @@ def test_manual_market_data_sync_rejects_unauthenticated_request(client: TestCli
     )
 
     assert response.status_code == 401
+
+
+def provider_candle(date_text: str) -> ProviderCandle:
+    return ProviderCandle(
+        timestamp=datetime.fromisoformat(date_text).replace(tzinfo=UTC),
+        open=Decimal("100"),
+        high=Decimal("101"),
+        low=Decimal("99"),
+        close=Decimal("100"),
+        volume=Decimal("1000"),
+    )
 
 
 def test_import_csv_accepts_valid_four_hour_spacing(client: TestClient) -> None:

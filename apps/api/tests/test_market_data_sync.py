@@ -1,21 +1,48 @@
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
+from collections.abc import Iterator
 
+import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import StaticPool
+
+from app.db.base import Base
 from app.models.enums import (
     MarketDataFreshnessStatus,
     MarketDataSource,
     MarketDataSyncStatus,
     Timeframe,
 )
-from app.models.market_data import MarketDataSeries
+from app.models.market_data import MarketDataCandle, MarketDataSeries
 from app.services.market_data_sync import (
     AlphaVantageDailyProvider,
     MarketDataSyncPlan,
     MarketDataSyncResult,
+    ProviderCandle,
     build_market_data_sync_plan,
     evaluate_market_data_freshness,
+    persist_provider_sync_result,
     parse_alpha_vantage_daily_response,
     sync_market_data_series,
 )
+
+
+@pytest.fixture()
+def db_session() -> Iterator[Session]:
+    engine = create_engine(
+        "sqlite+pysqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    testing_session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    Base.metadata.create_all(bind=engine)
+    db = testing_session()
+    try:
+        yield db
+    finally:
+        db.close()
+        Base.metadata.drop_all(bind=engine)
 
 
 class FakeMarketDataProvider:
@@ -254,14 +281,109 @@ def test_alpha_vantage_parser_rejects_invalid_payload() -> None:
     assert error_code == "provider_invalid_response"
 
 
+def test_persist_provider_sync_result_replaces_provider_candles(db_session) -> None:
+    series = make_series(source=MarketDataSource.PROVIDER)
+    db_session.add(series)
+    db_session.flush()
+    db_session.add(
+        MarketDataCandle(
+            series_id=series.id,
+            timestamp=datetime(2026, 5, 1, tzinfo=UTC),
+            open=Decimal("1"),
+            high=Decimal("1"),
+            low=Decimal("1"),
+            close=Decimal("1"),
+            volume=Decimal("1"),
+        )
+    )
+    db_session.flush()
+    result = MarketDataSyncResult(
+        sync_status=MarketDataSyncStatus.SUCCESS,
+        freshness_status=MarketDataFreshnessStatus.FRESH,
+        provider_name="alpha_vantage",
+        provider_symbol="AAPL",
+        provider_timeframe="1D",
+        candles=(
+            provider_candle("2026-05-28", "100"),
+            provider_candle("2026-05-29", "101"),
+        ),
+    )
+
+    persist_provider_sync_result(db_session, series, result, datetime(2026, 5, 30, tzinfo=UTC))
+    db_session.flush()
+
+    candles = db_session.query(MarketDataCandle).order_by(MarketDataCandle.timestamp).all()
+    assert [candle.close for candle in candles] == [
+        Decimal("100.00000000"),
+        Decimal("101.00000000"),
+    ]
+    assert series.candle_count == 2
+    assert series.start_time == datetime(2026, 5, 28, tzinfo=UTC)
+    assert series.end_time == datetime(2026, 5, 29, tzinfo=UTC)
+    assert series.sync_status == MarketDataSyncStatus.SUCCESS
+
+
+def test_persist_provider_sync_result_rejects_duplicate_timestamps(db_session) -> None:
+    series = make_series(source=MarketDataSource.PROVIDER)
+    db_session.add(series)
+    db_session.flush()
+    result = MarketDataSyncResult(
+        sync_status=MarketDataSyncStatus.SUCCESS,
+        freshness_status=MarketDataFreshnessStatus.FRESH,
+        provider_name="alpha_vantage",
+        candles=(
+            provider_candle("2026-05-29", "100"),
+            provider_candle("2026-05-29", "101"),
+        ),
+    )
+
+    persist_provider_sync_result(db_session, series, result, datetime(2026, 5, 30, tzinfo=UTC))
+
+    assert series.sync_status == MarketDataSyncStatus.FAILED
+    assert series.freshness_status == MarketDataFreshnessStatus.FAILED
+    assert series.sync_error_code == "duplicate_provider_candles"
+    assert db_session.query(MarketDataCandle).count() == 0
+
+
+def test_persist_provider_sync_result_does_not_mutate_csv_candles(db_session) -> None:
+    series = make_series(source=MarketDataSource.TRADINGVIEW_CSV)
+    db_session.add(series)
+    db_session.flush()
+    db_session.add(
+        MarketDataCandle(
+            series_id=series.id,
+            timestamp=datetime(2026, 5, 1, tzinfo=UTC),
+            open=Decimal("1"),
+            high=Decimal("1"),
+            low=Decimal("1"),
+            close=Decimal("1"),
+            volume=Decimal("1"),
+        )
+    )
+    db_session.flush()
+    result = MarketDataSyncResult(
+        sync_status=MarketDataSyncStatus.SUCCESS,
+        freshness_status=MarketDataFreshnessStatus.FRESH,
+        provider_name="alpha_vantage",
+        candles=(provider_candle("2026-05-29", "100"),),
+    )
+
+    persist_provider_sync_result(db_session, series, result, datetime(2026, 5, 30, tzinfo=UTC))
+
+    assert series.sync_status == MarketDataSyncStatus.FAILED
+    assert series.sync_error_code == "provider_series_required"
+    assert db_session.query(MarketDataCandle).count() == 1
+
+
 def make_series(
     *,
     end_time: datetime | None = None,
     timeframe: Timeframe = Timeframe.ONE_DAY,
+    source: MarketDataSource = MarketDataSource.TRADINGVIEW_CSV,
 ) -> MarketDataSeries:
     return MarketDataSeries(
         watchlist_item_id=1,
-        source=MarketDataSource.TRADINGVIEW_CSV,
+        source=source,
         timeframe=timeframe,
         end_time=end_time,
         candle_count=0,
@@ -283,3 +405,15 @@ def alpha_vantage_payload(date_text: str) -> dict[str, object]:
             }
         },
     }
+
+
+def provider_candle(date_text: str, close: str) -> ProviderCandle:
+    value = Decimal(close)
+    return ProviderCandle(
+        timestamp=datetime.fromisoformat(date_text).replace(tzinfo=UTC),
+        open=value,
+        high=value,
+        low=value,
+        close=value,
+        volume=Decimal("1000"),
+    )
