@@ -69,6 +69,9 @@ Optional values for later alert work:
 - `TRADINGVIEW_WEBHOOK_SECRET`
 - `TELEGRAM_BOT_TOKEN`
 - `TELEGRAM_CHAT_ID`
+- `TELEGRAM_ALERT_ROUTING_ENABLED`: keep `false` unless automatic Telegram alert routing has been deliberately enabled for the environment.
+
+Automatic Telegram alert routing fails closed. If `TELEGRAM_ALERT_ROUTING_ENABLED=true`, the API requires non-empty, non-placeholder `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` values at startup. Do not infer production readiness from a successful Telegram test message.
 
 Do not commit `.env` or paste secrets into issues, PRs, logs, or screenshots.
 
