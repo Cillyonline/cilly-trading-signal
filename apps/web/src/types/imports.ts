@@ -55,6 +55,28 @@ export type ImportHistoryItem = {
   file_name: string | null;
 };
 
+export type MarketDataSyncRequest = {
+  watchlist_item_id: number;
+  timeframe: Timeframe;
+};
+
+export type MarketDataSyncResult = {
+  watchlist_item_id: number;
+  series_id: number;
+  source: MarketDataSource;
+  timeframe: Timeframe;
+  provider_name: string | null;
+  provider_symbol: string | null;
+  provider_exchange: string | null;
+  provider_timeframe: string | null;
+  sync_status: MarketDataSyncStatus;
+  freshness_status: MarketDataFreshnessStatus;
+  last_synced_at: string | null;
+  end_time: string | null;
+  sync_error_code: string | null;
+  sync_error_message: string | null;
+};
+
 export type SignalAnalysisResult = {
   strategy_type: StrategyType;
   status: SignalStatus;

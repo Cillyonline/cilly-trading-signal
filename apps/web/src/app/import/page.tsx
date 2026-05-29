@@ -10,6 +10,7 @@ import {
   fetchWatchlist,
   importCsv,
   redirectToLoginOnAuthError,
+  syncMarketData,
 } from "@/lib/api";
 import type {
   CsvImportError,
@@ -19,6 +20,7 @@ import type {
   MarketDataSource,
   MarketDataSyncStatus,
   MarketDataAnalysisResult,
+  MarketDataSyncResult,
   Timeframe,
 } from "@/types/imports";
 import type { WatchlistItem } from "@/types/watchlist";
@@ -38,10 +40,12 @@ export default function ImportPage() {
   const [timeframe, setTimeframe] = useState<Timeframe>("1D");
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<CsvImportResult | null>(null);
+  const [syncResult, setSyncResult] = useState<MarketDataSyncResult | null>(null);
   const [history, setHistory] = useState<ImportHistoryItem[]>([]);
   const [analysisResult, setAnalysisResult] = useState<MarketDataAnalysisResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isImporting, setIsImporting] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [analyzingSeriesId, setAnalyzingSeriesId] = useState<number | null>(null);
   const [error, setError] = useState<ImportPageError | null>(null);
 
@@ -82,6 +86,7 @@ export default function ImportPage() {
     event.preventDefault();
     setError(null);
     setResult(null);
+    setSyncResult(null);
     setAnalysisResult(null);
 
     if (!watchlistItemId || !file) {
@@ -132,6 +137,32 @@ export default function ImportPage() {
       setError(toSimpleError(analysisError, "Analyse konnte nicht gestartet werden."));
     } finally {
       setAnalyzingSeriesId(null);
+    }
+  }
+
+  async function runProviderSync() {
+    setError(null);
+    setResult(null);
+    setSyncResult(null);
+    setAnalysisResult(null);
+
+    if (!watchlistItemId) {
+      setError(toSimpleError("Waehle ein Symbol fuer den Provider-Sync aus."));
+      return;
+    }
+
+    setIsSyncing(true);
+    try {
+      const synced = await syncMarketData({ watchlist_item_id: Number(watchlistItemId), timeframe });
+      setSyncResult(synced);
+      setHistory(await fetchImportHistory());
+    } catch (syncError) {
+      if (redirectToLoginOnAuthError(syncError)) {
+        return;
+      }
+      setError(toSimpleError(syncError, "Provider-Sync konnte nicht gestartet werden."));
+    } finally {
+      setIsSyncing(false);
     }
   }
 
@@ -265,6 +296,46 @@ export default function ImportPage() {
               ) : (
                 <EmptyState />
               )}
+            </div>
+          </section>
+        </section>
+
+        <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+          <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
+            <h2 className="text-xl font-semibold">Provider manuell synchronisieren</h2>
+            <p className="mt-2 text-sm text-slate-400">
+              Fordert einen einmaligen, serverseitig geschuetzten Provider-Sync fuer das ausgewaehlte
+              Symbol und den Timeframe an. Das ist kein Live-Preis, kein Signal und keine
+              Trade-Anweisung.
+            </p>
+            <div className="mt-5 grid gap-4 rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-sm text-slate-300">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Metric label="Symbol" value={selectedItem?.symbol ?? "-"} />
+                <Metric label="Timeframe" value={timeframe} />
+              </div>
+              <p className="rounded-2xl border border-yellow-300/20 bg-yellow-300/10 p-3 text-yellow-50">
+                Wenn Provider-Sync im Backend deaktiviert oder nicht konfiguriert ist, wird der
+                Request sicher als skipped/failed markiert und ohne Provider-Daten fortgesetzt.
+              </p>
+              <button
+                disabled={isSyncing || isLoading || items.length === 0}
+                onClick={() => void runProviderSync()}
+                type="button"
+                className="rounded-xl border border-emerald-300/40 px-5 py-3 font-semibold text-emerald-200 hover:bg-emerald-300/10 disabled:opacity-60"
+              >
+                {isSyncing ? "Synchronisiere..." : "Provider-Sync anfragen"}
+              </button>
+            </div>
+          </section>
+
+          <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
+            <h2 className="text-xl font-semibold">Provider-Sync Ergebnis</h2>
+            <p className="mt-2 text-sm text-slate-400">
+              Pruefe Status, Freshness und Provider-Kontext, bevor du Daten fuer Analyse-Workflows
+              nutzt.
+            </p>
+            <div className="mt-6 overflow-hidden rounded-2xl border border-white/10">
+              {syncResult ? <ProviderSyncResultCard result={syncResult} /> : <ProviderSyncEmptyState />}
             </div>
           </section>
         </section>
@@ -530,6 +601,53 @@ function ImportHistoryCard({
         {isAnalyzing ? "Analysiere..." : "Analyse starten"}
       </button>
     </article>
+  );
+}
+
+function ProviderSyncResultCard({ result }: { result: MarketDataSyncResult }) {
+  return (
+    <article className="grid gap-5 p-5">
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="rounded-full border border-sky-300/20 bg-sky-300/10 px-3 py-1 text-xs text-sky-100">
+          Provider: {result.provider_name ?? "-"}
+        </span>
+        <MarketDataStateBadges
+          freshnessStatus={result.freshness_status}
+          source={result.source}
+          syncStatus={result.sync_status}
+        />
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Metric label="Series ID" value={result.series_id.toString()} />
+        <Metric label="Provider Symbol" value={result.provider_symbol ?? "-"} />
+        <Metric label="Provider Timeframe" value={result.provider_timeframe ?? result.timeframe} />
+        <Metric label="Letzte Kerze" value={formatDateTime(result.end_time)} />
+        <Metric label="Letzter Sync" value={formatDateTime(result.last_synced_at)} />
+        <Metric label="Exchange" value={result.provider_exchange ?? "-"} />
+        <Metric label="Fehler-Code" value={result.sync_error_code ?? "-"} />
+        <Metric label="Status" value={formatLabel(result.sync_status)} />
+      </div>
+
+      <MarketDataFreshnessNotice freshnessStatus={result.freshness_status} syncStatus={result.sync_status} />
+
+      {result.sync_error_message ? (
+        <p className="rounded-2xl border border-yellow-300/30 bg-yellow-300/10 p-3 text-sm text-yellow-100">
+          {result.sync_error_message}
+        </p>
+      ) : null}
+    </article>
+  );
+}
+
+function ProviderSyncEmptyState() {
+  return (
+    <div className="p-8 text-center">
+      <p className="text-lg font-semibold text-slate-200">Noch kein Provider-Sync angefragt.</p>
+      <p className="mx-auto mt-2 max-w-xl text-sm text-slate-400">
+        Starte den Sync manuell. Das Ergebnis erscheint hier und in der Import-Historie.
+      </p>
+    </div>
   );
 }
 
