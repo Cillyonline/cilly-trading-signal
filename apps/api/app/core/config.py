@@ -7,6 +7,14 @@ SAFE_LOCAL_ENVIRONMENTS = {"development", "test"}
 UNSAFE_SECRET_VALUES = {"", "change-me", "change-this-secret-key", "change-this-webhook-secret"}
 UNSAFE_PASSWORD_VALUES = {"", "postgres", "password", "change-me", "change-this-password"}
 UNSAFE_ADMIN_EMAILS = {"", "admin@example.com"}
+UNSAFE_TELEGRAM_VALUES = {
+    "",
+    "change-me",
+    "change-this-telegram-bot-token",
+    "change-this-telegram-chat-id",
+    "telegram-bot-token",
+    "telegram-chat-id",
+}
 
 
 def _has_unsafe_database_credentials(database_url: str) -> bool:
@@ -21,6 +29,10 @@ def _has_unsafe_database_credentials(database_url: str) -> bool:
 
 def _has_unsafe_cors_origin(cors_origins: list[str]) -> bool:
     return any("*" in origin for origin in cors_origins)
+
+
+def _is_unsafe_optional_secret(value: str | None, unsafe_values: set[str]) -> bool:
+    return value is None or value.strip() in unsafe_values
 
 
 class Settings(BaseSettings):
@@ -40,10 +52,12 @@ class Settings(BaseSettings):
     tradingview_webhook_secret: str = "change-me"
     telegram_bot_token: str | None = None
     telegram_chat_id: str | None = None
+    telegram_alert_routing_enabled: bool = False
 
     def __init__(self, **values: object) -> None:
         super().__init__(**values)
         self._validate_deployment_safety()
+        self._validate_telegram_alert_routing()
 
     def _validate_deployment_safety(self) -> None:
         if self.environment.strip().lower() in SAFE_LOCAL_ENVIRONMENTS:
@@ -69,6 +83,25 @@ class Settings(BaseSettings):
 
         if errors:
             raise ValueError("Unsafe production configuration: " + "; ".join(errors))
+
+    def _validate_telegram_alert_routing(self) -> None:
+        if not self.telegram_alert_routing_enabled:
+            return
+
+        errors: list[str] = []
+        if _is_unsafe_optional_secret(self.telegram_bot_token, UNSAFE_TELEGRAM_VALUES):
+            errors.append(
+                "TELEGRAM_BOT_TOKEN must be set before TELEGRAM_ALERT_ROUTING_ENABLED can be true"
+            )
+        if _is_unsafe_optional_secret(self.telegram_chat_id, UNSAFE_TELEGRAM_VALUES):
+            errors.append(
+                "TELEGRAM_CHAT_ID must be set before TELEGRAM_ALERT_ROUTING_ENABLED can be true"
+            )
+
+        if errors:
+            raise ValueError(
+                "Unsafe Telegram alert routing configuration: " + "; ".join(errors)
+            )
 
     model_config = SettingsConfigDict(
         env_file=".env",

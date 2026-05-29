@@ -26,6 +26,7 @@ def test_production_allows_safe_values() -> None:
     settings = Settings(_env_file=None, **SAFE_PRODUCTION_SETTINGS)
 
     assert settings.environment == "production"
+    assert settings.telegram_alert_routing_enabled is False
 
 
 @pytest.mark.parametrize(
@@ -61,4 +62,51 @@ def test_staging_rejects_unsafe_settings() -> None:
     payload = SAFE_PRODUCTION_SETTINGS | {"environment": "staging", "secret_key": "change-me"}
 
     with pytest.raises(ValueError, match="SECRET_KEY"):
+        Settings(_env_file=None, **payload)
+
+
+def test_telegram_alert_routing_defaults_to_disabled() -> None:
+    settings = Settings(_env_file=None, environment="development")
+
+    assert settings.telegram_alert_routing_enabled is False
+    assert settings.telegram_bot_token is None
+    assert settings.telegram_chat_id is None
+
+
+def test_telegram_alert_routing_allows_safe_configuration() -> None:
+    settings = Settings(
+        _env_file=None,
+        **SAFE_PRODUCTION_SETTINGS,
+        telegram_alert_routing_enabled=True,
+        telegram_bot_token="1234567890:valid-test-token",
+        telegram_chat_id="123456789",
+    )
+
+    assert settings.telegram_alert_routing_enabled is True
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "expected_message"),
+    [
+        ("telegram_bot_token", None, "TELEGRAM_BOT_TOKEN"),
+        ("telegram_bot_token", "", "TELEGRAM_BOT_TOKEN"),
+        ("telegram_bot_token", "change-this-telegram-bot-token", "TELEGRAM_BOT_TOKEN"),
+        ("telegram_chat_id", None, "TELEGRAM_CHAT_ID"),
+        ("telegram_chat_id", "", "TELEGRAM_CHAT_ID"),
+        ("telegram_chat_id", "change-this-telegram-chat-id", "TELEGRAM_CHAT_ID"),
+    ],
+)
+def test_telegram_alert_routing_rejects_missing_or_placeholder_config(
+    field: str,
+    value: object,
+    expected_message: str,
+) -> None:
+    payload = SAFE_PRODUCTION_SETTINGS | {
+        "telegram_alert_routing_enabled": True,
+        "telegram_bot_token": "1234567890:valid-test-token",
+        "telegram_chat_id": "123456789",
+        field: value,
+    }
+
+    with pytest.raises(ValueError, match=expected_message):
         Settings(_env_file=None, **payload)

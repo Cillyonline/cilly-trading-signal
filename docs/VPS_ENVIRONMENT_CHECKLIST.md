@@ -59,6 +59,7 @@ Use this table as a completion checklist. Record only status, not actual values.
 | --- | --- | --- | --- |
 | `TELEGRAM_BOT_TOKEN` | Explicit Telegram test delivery and future alert routing | TBD | Optional until alert routing is approved. |
 | `TELEGRAM_CHAT_ID` | Explicit Telegram test delivery and future alert routing | TBD | Optional until alert routing is approved. |
+| `TELEGRAM_ALERT_ROUTING_ENABLED` | Automatic Telegram alert routing | TBD | Keep `false` until the v1.3 routing implementation and smoke test are ready. If set to `true`, token and chat ID must be safe real values. |
 
 ## Disallowed Values Outside Local Development
 
@@ -114,6 +115,7 @@ CORS_ORIGINS=["https://trading.<domain>"]
 NEXT_PUBLIC_API_BASE_URL=/api
 TELEGRAM_BOT_TOKEN=
 TELEGRAM_CHAT_ID=
+TELEGRAM_ALERT_ROUTING_ENABLED=false
 POSTGRES_USER=<app-db-user>
 POSTGRES_PASSWORD=<strong-db-password>
 POSTGRES_DB=cilly_trading_signal
