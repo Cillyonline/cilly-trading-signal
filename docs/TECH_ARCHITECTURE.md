@@ -309,6 +309,8 @@ Current direction:
 - Keep `4H`/intraday support unresolved until provider cost, licensing, coverage, and
   rate-limit constraints are accepted.
 - Make stale, failed, partial, and unknown data states visible and conservative.
+- Keep the sync service as an internal provider-agnostic boundary until a real provider
+  integration is explicitly approved.
 
 Planned source/freshness states:
 
@@ -318,6 +320,10 @@ Planned source/freshness states:
 
 Existing CSV imports should remain supported and migrate as `source=csv` with
 `sync_status=not_applicable`.
+
+The v1.4 sync service skeleton may build sync plans, accept fake/no-op provider
+results, and update source/freshness/sync metadata. It must not perform real network
+provider calls, scheduling, broker actions, or automatic signal generation.
 
 Explicit non-goals for provider preparation:
 
