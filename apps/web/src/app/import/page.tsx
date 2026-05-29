@@ -15,6 +15,9 @@ import type {
   CsvImportError,
   CsvImportResult,
   ImportHistoryItem,
+  MarketDataFreshnessStatus,
+  MarketDataSource,
+  MarketDataSyncStatus,
   MarketDataAnalysisResult,
   Timeframe,
 } from "@/types/imports";
@@ -244,7 +247,8 @@ export default function ImportPage() {
             <h2 className="text-xl font-semibold">Import-Ergebnis</h2>
             <p className="mt-2 text-sm text-slate-400">
               Nach einem erfolgreichen Import kannst du die Analyse im naechsten Workflow-Schritt
-              starten. Diese Seite fuehrt keine Trade- oder Broker-Aktion aus.
+              starten. Source/Freshness sind Entscheidungs-Kontext, keine Live-Daten und keine
+              Trade-Anweisung.
             </p>
 
             <div className="mt-6 overflow-hidden rounded-2xl border border-white/10">
@@ -270,8 +274,8 @@ export default function ImportPage() {
             <div>
               <h2 className="text-xl font-semibold">Import-Historie</h2>
               <p className="mt-2 text-sm text-slate-400">
-                Read-only Uebersicht deiner gespeicherten CSV-Importe. Sie zeigt importierte Daten,
-                keine Live-Daten-Frische und keine Trade-Ausfuehrung.
+                Read-only Uebersicht deiner gespeicherten Marktdaten. Stale oder unbekannte Daten
+                sind konservativ markiert und nicht als Live-Signal zu verstehen.
               </p>
             </div>
             <span className="text-sm text-slate-400">{history.length} Importe</span>
@@ -413,6 +417,10 @@ function toImportResult(item: ImportHistoryItem): CsvImportResult {
     candle_count: item.candle_count,
     start_time: item.start_time,
     end_time: item.end_time,
+    source: item.source,
+    freshness_status: item.freshness_status,
+    sync_status: item.sync_status,
+    last_synced_at: item.last_synced_at,
     errors: [],
   };
 }
@@ -440,6 +448,11 @@ function ImportResultCard({
         <span className="rounded-full bg-slate-800 px-3 py-1 text-xs uppercase text-slate-300">
           {result.timeframe}
         </span>
+        <MarketDataStateBadges
+          freshnessStatus={result.freshness_status}
+          source={result.source}
+          syncStatus={result.sync_status}
+        />
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -449,8 +462,13 @@ function ImportResultCard({
         <Metric label="Ende" value={formatDateTime(result.end_time)} />
       </div>
 
+      <MarketDataFreshnessNotice freshnessStatus={result.freshness_status} syncStatus={result.sync_status} />
+
       <div className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-sm text-slate-300 sm:flex-row sm:items-center sm:justify-between">
-        <p>CSV gespeichert. Starte die Analyse, um Indikatoren und eine Signal-Karte zu erzeugen.</p>
+        <p>
+          Marktdaten gespeichert. Starte die Analyse nur nach manueller Pruefung von Source und
+          Freshness.
+        </p>
         <button
           disabled={isAnalyzing || !result.series_id}
           onClick={onAnalyze}
@@ -486,13 +504,21 @@ function ImportHistoryCard({
           <span className="rounded-full border border-emerald-300/30 bg-emerald-300/10 px-3 py-1 text-xs text-emerald-100">
             {item.status}
           </span>
+          <MarketDataStateBadges
+            freshnessStatus={item.freshness_status}
+            source={item.source}
+            syncStatus={item.sync_status}
+          />
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <Metric label="Kerzen" value={item.candle_count.toString()} />
           <Metric label="Start" value={formatDateTime(item.start_time)} />
           <Metric label="Ende" value={formatDateTime(item.end_time)} />
           <Metric label="Importiert" value={formatDateTime(item.imported_at)} />
-          <Metric label="Datei" value={item.file_name ?? "-"} />
+          <Metric label="Sync" value={formatSyncDetail(item)} />
+        </div>
+        <div className="mt-4">
+          <MarketDataFreshnessNotice freshnessStatus={item.freshness_status} syncStatus={item.sync_status} />
         </div>
       </div>
       <button
@@ -618,6 +644,94 @@ function Metric({ label, value }: { label: string; value: string }) {
       <p className="mt-1 font-semibold text-slate-100">{value}</p>
     </div>
   );
+}
+
+function MarketDataStateBadges({
+  freshnessStatus,
+  source,
+  syncStatus,
+}: {
+  freshnessStatus: MarketDataFreshnessStatus;
+  source: MarketDataSource;
+  syncStatus: MarketDataSyncStatus;
+}) {
+  return (
+    <>
+      <span className="rounded-full border border-sky-300/20 bg-sky-300/10 px-3 py-1 text-xs text-sky-100">
+        Source: {formatMarketDataSource(source)}
+      </span>
+      <span className={`rounded-full border px-3 py-1 text-xs ${freshnessBadgeClass(freshnessStatus)}`}>
+        Freshness: {formatLabel(freshnessStatus)}
+      </span>
+      <span className="rounded-full border border-white/10 bg-slate-800 px-3 py-1 text-xs text-slate-300">
+        Sync: {formatLabel(syncStatus)}
+      </span>
+    </>
+  );
+}
+
+function MarketDataFreshnessNotice({
+  freshnessStatus,
+  syncStatus,
+}: {
+  freshnessStatus: MarketDataFreshnessStatus;
+  syncStatus: MarketDataSyncStatus;
+}) {
+  if (freshnessStatus === "fresh") {
+    return (
+      <p className="rounded-2xl border border-emerald-300/20 bg-emerald-300/5 p-3 text-sm text-emerald-100">
+        Daten sind als fresh markiert, aber nicht live oder realtime. Ausfuehrung bleibt manuell.
+      </p>
+    );
+  }
+
+  const message =
+    freshnessStatus === "stale"
+      ? "Daten sind stale. Nicht als aktuelles Setup oder Trigger interpretieren."
+      : freshnessStatus === "failed" || syncStatus === "failed"
+        ? "Letzter Sync/Import-Status ist failed. Analyse nur als Fehlerkontext verwenden."
+        : freshnessStatus === "partial" || syncStatus === "partial"
+          ? "Daten sind partial. Fehlende Kerzen oder Timeframes koennen die Analyse blockieren."
+          : "Freshness ist unknown. Behandle diese Daten konservativ und nicht als actionable.";
+
+  return (
+    <p className="rounded-2xl border border-yellow-300/30 bg-yellow-300/10 p-3 text-sm text-yellow-100">
+      {message}
+    </p>
+  );
+}
+
+function freshnessBadgeClass(status: MarketDataFreshnessStatus) {
+  if (status === "fresh") {
+    return "border-emerald-300/30 bg-emerald-300/10 text-emerald-100";
+  }
+  if (status === "stale" || status === "unknown") {
+    return "border-yellow-300/30 bg-yellow-300/10 text-yellow-100";
+  }
+  return "border-red-300/30 bg-red-300/10 text-red-100";
+}
+
+function formatMarketDataSource(source: MarketDataSource) {
+  if (source === "tradingview_csv") {
+    return "TradingView CSV";
+  }
+  if (source === "provider") {
+    return "Provider";
+  }
+  return formatLabel(source);
+}
+
+function formatSyncDetail(item: ImportHistoryItem) {
+  if (item.source === "provider") {
+    return item.provider_name
+      ? `${item.provider_name} / ${formatDateTime(item.last_synced_at)}`
+      : formatDateTime(item.last_synced_at);
+  }
+  return item.file_name ?? "CSV";
+}
+
+function formatLabel(value: string) {
+  return value.replaceAll("_", " ");
 }
 
 function formatDateTime(value: string | null) {
