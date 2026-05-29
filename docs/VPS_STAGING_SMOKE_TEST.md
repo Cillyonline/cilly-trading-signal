@@ -255,6 +255,44 @@ Browser evidence from operator-provided screenshots:
 - Protected route after logout: PASS. Protected data was not visible after logout.
 - Trading safety language: PASS. The shown pages preserved manual-review, no-order-execution, no-buy/sell-instruction, and historical/non-predictive wording.
 
+## Post-Hardening Re-Run
+
+Status: Passed for private VPS staging operations.
+
+Completed post-hardening VPS smoke evidence on 2026-05-29 for issue #181:
+
+- Repository update: PASS. VPS checkout reached `main...origin/main` after configuring the existing read-only GitHub deploy key for the root checkout.
+- Stack rebuild and restart: PASS. `docker compose --env-file .env -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy up --build -d` rebuilt API and web images and restarted the app stack.
+- Migrations: PASS. `alembic upgrade head` completed from the API container.
+- Firewall runtime apply: PASS. The minimal nftables host filter allowed SSH, `80/tcp`, and `443/tcp` while direct app ports stayed private.
+- Firewall persistence: PASS. `nftables` was enabled and active, and the `cilly_host_filter` table was present after reload/restart.
+- External port posture: PASS. Operator-side checks showed `22`, `80`, and `443` reachable, while `3000`, `8000`, and `18000` were not externally reachable.
+- Direct local API health: PASS. `curl -fsS http://localhost:8000/api/health` returned the staging health payload.
+- Direct local web health: PASS. `curl -fsSI http://localhost:3000` returned HTTP 200.
+- HTTPS API health: PASS. `curl -fsS https://trading.cillyonline.de/api/health` returned the staging health payload.
+- HTTPS web health: PASS. `curl -fsSI https://trading.cillyonline.de/` returned HTTP 200 through Caddy.
+- Compose project status: PASS. `cilly-trading-signal` reported `running(4)`.
+- Existing VPS project isolation: PASS. The unrelated Compose project `staging` remained separate and `running(1)`.
+- Non-root deploy user: PASS. `cillydeploy` SSH login worked with the operator public key, GitHub deploy-key authentication worked, Git fetch/pull worked, Docker Compose status worked without `sudo`, API and web health passed, and broad passwordless sudo was not granted.
+- Backup automation: PASS. `cilly-postgres-backup.timer` was enabled and active. A manual service run created a non-zero custom-format dump under `/srv/backups/cilly-trading-signal/postgres`, outside the repository checkout, and API health still passed.
+- Health-check automation: PASS. `cilly-vps-health-check.timer` was enabled and active. A manual service run reported `PASS` for API health, HTTPS route, Compose services, disk usage, backup freshness, and `SUMMARY failed_checks=0`.
+- Browser app load: PASS.
+- Login: PASS.
+- Dashboard: PASS.
+- Watchlist: PASS.
+- Signals list or signal detail: PASS.
+- Trades page: PASS.
+- Performance page: PASS.
+- Logout: PASS.
+- Protected page after logout: PASS.
+- Trading safety wording: PASS. The checked pages continued to avoid automatic execution, broker integration, buy/sell instructions, and profit/prognosis claims.
+
+Known gaps after the post-hardening smoke test:
+
+- The smoke test validates private staging availability, authentication, operational hardening, and safety wording only; it does not validate that current page content is trader-actionable or suitable for real-money decisions.
+- The VPS remains approved only for controlled owner/operator private staging with sample or paper data.
+- No production-readiness, public SaaS readiness, broker-readiness, trading advice, profitability, or automatic-execution claim is made.
+
 ## Follow-Ups
 
 - Then document the private VPS go/no-go decision in #164.
