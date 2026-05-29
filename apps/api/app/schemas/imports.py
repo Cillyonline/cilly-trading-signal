@@ -2,7 +2,13 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-from app.models.enums import MarketDataStatus, Timeframe
+from app.models.enums import (
+    MarketDataFreshnessStatus,
+    MarketDataSource,
+    MarketDataStatus,
+    MarketDataSyncStatus,
+    Timeframe,
+)
 
 
 class CsvImportError(BaseModel):
@@ -19,6 +25,10 @@ class CsvImportResult(BaseModel):
     candle_count: int
     start_time: datetime | None
     end_time: datetime | None
+    source: MarketDataSource
+    freshness_status: MarketDataFreshnessStatus
+    sync_status: MarketDataSyncStatus
+    last_synced_at: datetime | None
     errors: list[CsvImportError]
 
 
@@ -32,4 +42,9 @@ class ImportHistoryItem(BaseModel):
     start_time: datetime | None
     end_time: datetime | None
     imported_at: datetime
+    source: MarketDataSource
+    freshness_status: MarketDataFreshnessStatus
+    sync_status: MarketDataSyncStatus
+    last_synced_at: datetime | None
+    provider_name: str | None
     file_name: str | None

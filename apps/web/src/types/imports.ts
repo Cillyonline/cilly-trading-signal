@@ -2,6 +2,12 @@ export type Timeframe = "1W" | "1D" | "4H";
 
 export type MarketDataStatus = "imported" | "validated" | "failed" | "analyzed";
 
+export type MarketDataSource = "tradingview_csv" | "manual" | "api_later" | "provider" | "unknown";
+
+export type MarketDataFreshnessStatus = "fresh" | "stale" | "unknown" | "failed" | "partial";
+
+export type MarketDataSyncStatus = "not_applicable" | "success" | "skipped" | "failed" | "partial";
+
 export type SignalStatus = "watchlist" | "armed" | "triggered" | "invalidated" | "no_setup" | "missed" | "expired";
 
 export type ScoreClass = "a_setup" | "b_setup" | "watchlist" | "no_trade";
@@ -24,6 +30,10 @@ export type CsvImportResult = {
   candle_count: number;
   start_time: string | null;
   end_time: string | null;
+  source: MarketDataSource;
+  freshness_status: MarketDataFreshnessStatus;
+  sync_status: MarketDataSyncStatus;
+  last_synced_at: string | null;
   errors: CsvImportError[];
 };
 
@@ -37,6 +47,11 @@ export type ImportHistoryItem = {
   start_time: string | null;
   end_time: string | null;
   imported_at: string;
+  source: MarketDataSource;
+  freshness_status: MarketDataFreshnessStatus;
+  sync_status: MarketDataSyncStatus;
+  last_synced_at: string | null;
+  provider_name: string | null;
   file_name: string | null;
 };
 

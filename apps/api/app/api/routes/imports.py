@@ -92,6 +92,11 @@ def list_imports(db: DbSession, user: CurrentUser) -> list[ImportHistoryItem]:
             start_time=series.start_time,
             end_time=series.end_time,
             imported_at=series.imported_at,
+            source=series.source,
+            freshness_status=series.freshness_status,
+            sync_status=series.sync_status,
+            last_synced_at=series.last_synced_at,
+            provider_name=series.provider_name,
             file_name=series.file_name,
         )
         for series in series_rows

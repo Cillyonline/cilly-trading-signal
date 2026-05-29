@@ -7,7 +7,13 @@ from io import StringIO
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.models.enums import MarketDataSource, MarketDataStatus, Timeframe
+from app.models.enums import (
+    MarketDataFreshnessStatus,
+    MarketDataSource,
+    MarketDataStatus,
+    MarketDataSyncStatus,
+    Timeframe,
+)
 from app.models.market_data import MarketDataCandle, MarketDataSeries
 from app.models.watchlist import WatchlistItem
 from app.schemas.imports import CsvImportError, CsvImportResult
@@ -63,6 +69,10 @@ def import_tradingview_csv(
             candle_count=0,
             start_time=None,
             end_time=None,
+            source=MarketDataSource.TRADINGVIEW_CSV,
+            freshness_status=MarketDataFreshnessStatus.UNKNOWN,
+            sync_status=MarketDataSyncStatus.NOT_APPLICABLE,
+            last_synced_at=None,
             errors=errors,
         )
 
@@ -74,6 +84,8 @@ def import_tradingview_csv(
         end_time=candles[-1].timestamp,
         candle_count=len(candles),
         status=MarketDataStatus.VALIDATED,
+        freshness_status=MarketDataFreshnessStatus.UNKNOWN,
+        sync_status=MarketDataSyncStatus.NOT_APPLICABLE,
         validation_errors=None,
         file_name=file_name,
     )
@@ -105,6 +117,10 @@ def import_tradingview_csv(
             candle_count=0,
             start_time=None,
             end_time=None,
+            source=MarketDataSource.TRADINGVIEW_CSV,
+            freshness_status=MarketDataFreshnessStatus.FAILED,
+            sync_status=MarketDataSyncStatus.NOT_APPLICABLE,
+            last_synced_at=None,
             errors=[CsvImportError(message=f"Duplicate candle timestamp detected: {error}")],
         )
 
@@ -117,6 +133,10 @@ def import_tradingview_csv(
         candle_count=series.candle_count,
         start_time=series.start_time,
         end_time=series.end_time,
+        source=series.source,
+        freshness_status=series.freshness_status,
+        sync_status=series.sync_status,
+        last_synced_at=series.last_synced_at,
         errors=[],
     )
 

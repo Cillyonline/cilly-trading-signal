@@ -122,6 +122,10 @@ def test_import_csv_persists_valid_candles(client: TestClient) -> None:
     assert result["candle_count"] == 20
     assert result["start_time"].startswith("2024-01-01")
     assert result["end_time"].startswith("2024-01-20")
+    assert result["source"] == "tradingview_csv"
+    assert result["freshness_status"] == "unknown"
+    assert result["sync_status"] == "not_applicable"
+    assert result["last_synced_at"] is None
     assert result["errors"] == []
 
 
@@ -148,6 +152,11 @@ def test_list_imports_returns_authenticated_user_history(client: TestClient) -> 
     assert body[0]["start_time"].startswith("2024-01-01")
     assert body[0]["end_time"].startswith("2024-01-20")
     assert body[0]["imported_at"] is not None
+    assert body[0]["source"] == "tradingview_csv"
+    assert body[0]["freshness_status"] == "unknown"
+    assert body[0]["sync_status"] == "not_applicable"
+    assert body[0]["last_synced_at"] is None
+    assert body[0]["provider_name"] is None
     assert body[0]["file_name"] == "aapl-daily.csv"
 
 
