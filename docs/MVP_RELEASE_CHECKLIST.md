@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This checklist records the current MVP v1.2 release-candidate posture for review and handoff. It is not a production-readiness statement, strategy validation, profitability claim, trading advice, or trading recommendation.
+This checklist records the current MVP release-candidate posture for review and handoff. It is not a production-readiness statement, strategy validation, profitability claim, trading advice, or trading recommendation.
 
 ## Release Candidate Status
 
@@ -42,6 +42,7 @@ This checklist records the current MVP v1.2 release-candidate posture for review
 - Production monitoring and operational alerting are not documented as passed.
 - Private VPS staging has a separate Conditional Go for controlled owner/operator use only. See [Private VPS Staging Decision Gate](VPS_STAGING_DECISION_GATE.md).
 - v1.3 alert routing has local secret-free smoke evidence. See [v1.3 Alert Routing Smoke Test](V1_3_ALERT_ROUTING_SMOKE_TEST.md).
+- v1.4-v1.6 added market-data source/freshness visibility and guarded manual provider sync. This is disabled-by-default provider support for stored Daily/EOD data, not live/realtime market data, broker readiness, automatic analysis, or production-readiness evidence.
 
 ### Not Included
 
@@ -95,6 +96,7 @@ This checklist records the current MVP v1.2 release-candidate posture for review
 - Stale signal handling flags old saved signals, but does not refresh market data or re-run strategy automatically.
 - Telegram support covers explicit operator test messages and policy-gated automatic review alerts with dedup/rate limiting; the real VPS Telegram provider smoke remains an operator-run sanitized check.
 - TradingView webhook support persists review events and may route policy-allowed Telegram review prompts, but does not trigger broker execution, auto-trade creation, buy/sell instructions, or trading advice.
+- Provider sync support is manual, guarded, and disabled by default. Current provider support starts with Daily/EOD data and does not cover promised `4H`/intraday sync, scheduler-driven imports, or automatic analysis refresh.
 - Production monitoring and operational alerting are not documented as passed.
 - Full mobile app/PWA hardening beyond responsive MVP layouts is not documented as passed.
 

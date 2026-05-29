@@ -214,3 +214,13 @@ Entscheidungen:
 Begruendung: sicher, pragmatisch, modern und passend fuer VPS, Webhooks und spaetere PWA.
 
 Konsequenz: Tech Architecture und Implementierung folgen diesen Vorgaben.
+
+## 21. Manueller Provider-Sync Vor Automatischer Marktaktualisierung
+
+Status: entschieden
+
+Entscheidung: Provider-gestuetzte Marktdaten werden zuerst als manueller, disabled-by-default Sync umgesetzt. Der erste implementierte Provider-Pfad ist Alpha Vantage Daily/EOD hinter einer provider-neutralen Boundary.
+
+Begruendung: Manuelle Syncs sind pruefbar, testbar und sicherer als Scheduler. Daily/EOD ist der kleinste sinnvolle Provider-Scope; `4H`/Intraday bleibt von Kosten, Lizenz, Coverage und Rate Limits abhaengig.
+
+Konsequenz: TradingView CSV bleibt Baseline und Fallback. Provider-Daten werden mit Source/Freshness/Sync-Metadaten gespeichert und konservativ bewertet. Es gibt keinen Live-/Realtime-Claim, keine automatische Analyse nach Sync, keine Broker-Anbindung und keine automatische Orderausfuehrung.

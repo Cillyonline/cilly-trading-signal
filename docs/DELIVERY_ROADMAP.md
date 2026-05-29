@@ -8,7 +8,7 @@ The goal is to keep the project focused: build a stable foundation first, then a
 
 ## Current Status
 
-The project is past the initial skeleton. The current MVP can run the core manual workflow from watchlist maintenance through CSV import, deterministic analysis, signal review, manual trade logging, journal notes, and basic performance review. It is still not production-ready and must remain decision-support only.
+The project is past the initial skeleton. The current MVP can run the core manual workflow from watchlist maintenance through CSV import or guarded manual Daily/EOD provider sync, deterministic analysis, signal review, manual trade logging, journal notes, and basic performance review. It is still not production-ready and must remain decision-support only.
 
 Done:
 
@@ -22,6 +22,8 @@ Done:
 - Production/staging config guards for default secrets, unsafe credentials, wildcard CORS, and insecure auth cookies.
 - Watchlist CRUD for stock and crypto symbols.
 - TradingView CSV import and persisted market data series/candles.
+- Market data source, freshness, and sync metadata for CSV and provider-backed series.
+- Manual provider sync endpoint and UI action, disabled by default, with the first Alpha Vantage Daily/EOD adapter and persisted provider candles.
 - Indicator calculation foundation for EMA, RSI, ATR, volume, relative volume, and swing structure.
 - Persisted multi-timeframe analysis using real `1W`, `1D`, and `4H` data.
 - Trend Pullback Long and Base Breakout Long signal generation with conservative `No Setup` outcomes.
@@ -35,15 +37,16 @@ Done:
 
 Partial:
 
-- CSV import is hardened for upload size, candle count, and timeframe consistency, but still depends on manual TradingView exports.
+- CSV import is hardened for upload size, candle count, and timeframe consistency, and remains the supported manual baseline/fallback.
+- Manual provider sync currently targets Daily/EOD data first; `4H`/intraday provider support remains unresolved and not promised.
 - Dashboard, journal, and performance views are MVP-level summaries, not full analytics modules.
 - Risk enforcement covers manual trade creation basics, not complete portfolio-level exposure management.
-- Multi-timeframe analysis requires manually imported `1W`, `1D`, and `4H` datasets; there is no live data sync.
+- Multi-timeframe analysis still requires current stored data for required `1W`, `1D`, and `4H` timeframes; provider sync does not automatically fill unsupported timeframes or rerun analysis.
 - Auth is intentionally single-user and admin-only for MVP use.
 
 Missing:
 
-- Provider-backed market data API integration.
+- Scheduled or automatic market-data sync.
 - Production-grade monitoring and operational alerting.
 - Multi-user mode, roles beyond the MVP admin, public registration, and password reset flows.
 - Backtesting, strategy validation, or profitability reporting.
@@ -201,8 +204,8 @@ Done when:
 Goal: prepare the product for future provider-backed market data without broker
 integration, automatic execution, trading advice, or live-signal claims.
 
-Status: Planned. Provider selection is not final; the initial path is documented in
-`docs/MARKET_DATA_PROVIDER_DECISION.md`.
+Status: Done. Provider choice, source/freshness model, schema preparation, sync
+metadata, and UI visibility were implemented across v1.4 and refined in v1.5.
 
 Primary work:
 
@@ -210,7 +213,7 @@ Primary work:
 - Preserve TradingView CSV import as a supported baseline and fallback.
 - Add provider-neutral configuration, data source metadata, freshness metadata, and
   sync status handling.
-- Prepare schema and service boundaries before adding any real provider API calls.
+- Prepare schema and service boundaries before adding guarded provider API calls.
 - Make data source and freshness visible in API/UI so stale or unknown data cannot look
   equivalent to fresh data.
 
@@ -223,6 +226,51 @@ Done when:
   committed or pasted.
 - No real-time, production-readiness, profitability, broker-readiness, trading advice,
   or automatic-execution claim is introduced.
+
+## v1.5 - Market Data Usability
+
+Goal: make market-data source and freshness useful in normal review workflows
+without broker integration, automatic execution, trading advice, or live-signal
+claims.
+
+Status: Done.
+
+Primary work:
+
+- Derive CSV freshness automatically from stored candle end time and timeframe.
+- Show latest market-data freshness on Watchlist and Dashboard.
+- Treat stale, failed, partial, missing, or unknown required timeframe data
+  conservatively in analysis.
+
+Done when:
+
+- Source/freshness is visible in review workflows.
+- Required timeframe data that is not fresh adds conservative analysis flags.
+- CSV workflows remain supported.
+
+## v1.6 - Manual Provider Sync MVP
+
+Goal: add controlled manual provider-backed market-data sync, disabled by default
+and without scheduler, broker integration, automatic execution, or live/realtime
+signal claims.
+
+Status: Done.
+
+Primary work:
+
+- Implement a mocked provider client adapter boundary and first Alpha Vantage
+  Daily/EOD path.
+- Add authenticated manual provider sync endpoint.
+- Persist provider candles safely to provider-backed series only.
+- Add UI action and result visibility for manual provider sync.
+
+Done when:
+
+- Manual sync can be requested only through guarded API/UI paths.
+- Sync states are visible as success, skipped, failed, or partial.
+- Provider data is persisted with source/freshness/sync metadata.
+- No scheduler, automatic analysis, broker action, live/realtime claim, or trading
+  instruction is introduced.
 
 ## Not Now
 
