@@ -73,6 +73,8 @@ Optional values for later alert work:
 
 Automatic Telegram alert routing fails closed. If `TELEGRAM_ALERT_ROUTING_ENABLED=true`, the API requires non-empty, non-placeholder `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` values at startup. Do not infer production readiness from a successful Telegram test message.
 
+Automatic Telegram delivery is deduplicated by `symbol + alert_type + timeframe` for 30 minutes and rate-limited to 10 Telegram deliveries per user within 5 minutes. Deduped or rate-limited webhook events remain stored for manual review and are marked skipped rather than silently deleted.
+
 Do not commit `.env` or paste secrets into issues, PRs, logs, or screenshots.
 
 ## Production Secrets And Config Guards

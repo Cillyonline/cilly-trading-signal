@@ -1,4 +1,5 @@
 from collections.abc import Iterator
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -6,11 +7,11 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
+from app.core.config import settings
 from app.db.base import Base
 from app.db.session import get_db
 from app.main import create_app
 from app.models import *  # noqa: F403
-from app.core.config import settings
 from app.models.alert import Alert, NotificationLog
 from app.models.enums import AlertDeliveryStatus, AlertSource, AlertStatus, AlertType
 from app.models.trade import Trade
@@ -113,6 +114,7 @@ def test_tradingview_webhook_routes_allowed_alert_to_telegram(
     assert len(notifications) == 1
     assert notifications[0].status == AlertDeliveryStatus.SENT
     assert notifications[0].recipient == "12345"
+    assert notifications[0].provider_payload["dedup_key"] == "AAPL:near_trigger:4H"
     assert notifications[0].sent_at is not None
     assert messages == [notifications[0].message]
     assert "AAPL" in messages[0]
@@ -200,6 +202,135 @@ def test_tradingview_webhook_records_missing_telegram_config_without_rejecting_w
     assert len(notifications) == 1
     assert notifications[0].status == AlertDeliveryStatus.FAILED
     assert notifications[0].error_message == "TelegramConfigurationError"
+
+
+def test_tradingview_webhook_deduplicates_repeated_payload_within_window(
+    client: TestClient, db_session: Session, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "telegram_alert_routing_enabled", True)
+    monkeypatch.setattr(settings, "telegram_bot_token", "test-token")
+    monkeypatch.setattr(settings, "telegram_chat_id", "12345")
+    messages: list[str] = []
+
+    def fake_send(message: str) -> None:
+        messages.append(message)
+
+    monkeypatch.setattr("app.services.alerts.send_telegram_message", fake_send)
+
+    first_response = client.post("/api/webhooks/tradingview", json=valid_payload())
+    duplicate_response = client.post("/api/webhooks/tradingview", json=valid_payload())
+
+    assert first_response.status_code == 202
+    assert duplicate_response.status_code == 202
+    assert first_response.json()["delivery_status"] == "sent"
+    assert duplicate_response.json()["delivery_status"] == "skipped"
+    duplicate_alert = db_session.scalar(
+        select(Alert).where(Alert.id == duplicate_response.json()["alert_id"])
+    )
+    assert duplicate_alert is not None
+    assert duplicate_alert.delivery_status == AlertDeliveryStatus.SKIPPED
+    assert duplicate_alert.delivery_error == "Telegram alert deduplicated within 30 minutes."
+    assert len(messages) == 1
+    assert len(db_session.scalars(select(Alert)).all()) == 2
+    assert len(db_session.scalars(select(NotificationLog)).all()) == 1
+
+
+def test_tradingview_webhook_allows_same_key_after_dedup_window(
+    client: TestClient, db_session: Session, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "telegram_alert_routing_enabled", True)
+    monkeypatch.setattr(settings, "telegram_bot_token", "test-token")
+    monkeypatch.setattr(settings, "telegram_chat_id", "12345")
+    messages: list[str] = []
+    current_time = datetime.now(UTC)
+
+    def fake_send(message: str) -> None:
+        messages.append(message)
+
+    monkeypatch.setattr("app.services.alerts.send_telegram_message", fake_send)
+    monkeypatch.setattr("app.services.alerts.utc_now", lambda: current_time)
+
+    first_response = client.post("/api/webhooks/tradingview", json=valid_payload())
+    current_time = current_time + timedelta(minutes=31)
+    second_response = client.post("/api/webhooks/tradingview", json=valid_payload())
+
+    assert first_response.status_code == 202
+    assert second_response.status_code == 202
+    assert first_response.json()["delivery_status"] == "sent"
+    assert second_response.json()["delivery_status"] == "sent"
+    assert len(messages) == 2
+    assert len(db_session.scalars(select(NotificationLog)).all()) == 2
+
+
+def test_tradingview_webhook_dedup_key_separates_symbol_timeframe_and_alert_type(
+    client: TestClient, db_session: Session, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "telegram_alert_routing_enabled", True)
+    monkeypatch.setattr(settings, "telegram_bot_token", "test-token")
+    monkeypatch.setattr(settings, "telegram_chat_id", "12345")
+    messages: list[str] = []
+
+    def fake_send(message: str) -> None:
+        messages.append(message)
+
+    monkeypatch.setattr("app.services.alerts.send_telegram_message", fake_send)
+    payloads = [
+        valid_payload(),
+        valid_payload() | {"symbol": "MSFT"},
+        valid_payload() | {"timeframe": "1D"},
+        valid_payload() | {"trigger": "invalidation"},
+    ]
+
+    responses = [client.post("/api/webhooks/tradingview", json=payload) for payload in payloads]
+
+    assert [response.status_code for response in responses] == [202, 202, 202, 202]
+    assert [response.json()["delivery_status"] for response in responses] == [
+        "sent",
+        "sent",
+        "sent",
+        "sent",
+    ]
+    assert len(messages) == 4
+    dedup_keys = {
+        log.provider_payload["dedup_key"]
+        for log in db_session.scalars(select(NotificationLog)).all()
+    }
+    assert dedup_keys == {
+        "AAPL:near_trigger:4H",
+        "MSFT:near_trigger:4H",
+        "AAPL:near_trigger:1D",
+        "AAPL:invalidation:4H",
+    }
+
+
+def test_tradingview_webhook_rate_limits_burst_events(
+    client: TestClient, db_session: Session, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "telegram_alert_routing_enabled", True)
+    monkeypatch.setattr(settings, "telegram_bot_token", "test-token")
+    monkeypatch.setattr(settings, "telegram_chat_id", "12345")
+    messages: list[str] = []
+
+    def fake_send(message: str) -> None:
+        messages.append(message)
+
+    monkeypatch.setattr("app.services.alerts.send_telegram_message", fake_send)
+
+    responses = []
+    for index in range(11):
+        payload = valid_payload() | {"symbol": f"SYM{index}"}
+        responses.append(client.post("/api/webhooks/tradingview", json=payload))
+
+    assert [response.status_code for response in responses] == [202] * 11
+    assert [response.json()["delivery_status"] for response in responses[:10]] == ["sent"] * 10
+    assert responses[10].json()["delivery_status"] == "skipped"
+    rate_limited_alert = db_session.scalar(
+        select(Alert).where(Alert.id == responses[10].json()["alert_id"])
+    )
+    assert rate_limited_alert is not None
+    assert rate_limited_alert.delivery_error == "Telegram alert rate limit reached."
+    assert len(messages) == 10
+    assert len(db_session.scalars(select(NotificationLog)).all()) == 10
 
 
 def test_tradingview_webhook_rejects_invalid_secret(
