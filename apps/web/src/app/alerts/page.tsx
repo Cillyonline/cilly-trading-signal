@@ -75,9 +75,9 @@ export default function AlertsPage() {
 
         <section className="grid gap-4 md:grid-cols-4">
           <SummaryCard label="Alle Events" value={alerts.length.toString()} />
-          <SummaryCard label="Triggered" value={summary.triggered.toString()} tone="border-emerald-300/40" />
-          <SummaryCard label="Pending" value={summary.pending.toString()} tone="border-yellow-300/40" />
+          <SummaryCard label="Sent" value={summary.sent.toString()} tone="border-emerald-300/40" />
           <SummaryCard label="Failed" value={summary.failed.toString()} tone="border-red-300/40" />
+          <SummaryCard label="Skipped" value={summary.skipped.toString()} tone="border-slate-300/30" />
         </section>
 
         {error ? (
@@ -145,7 +145,7 @@ function AlertCard({ alert }: { alert: AlertEvent }) {
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
           <Metric label="Type" value={formatLabel(alert.alert_type)} />
           <Metric label="Source" value={formatLabel(alert.source)} />
-          <Metric label="Delivery" value={formatLabel(alert.delivery_status)} />
+          <Metric label="Delivery" value={getDeliveryTitle(alert.delivery_status)} />
         </div>
 
         <p className="mt-4 text-sm text-slate-300">{alert.message ?? "Keine Event-Nachricht gespeichert."}</p>
@@ -165,11 +165,12 @@ function AlertCard({ alert }: { alert: AlertEvent }) {
           <Metric label="Created" value={formatDate(alert.created_at)} compact />
           <Metric label="Triggered" value={formatDate(alert.last_triggered_at)} compact />
           <div className={`rounded-xl border p-3 text-sm ${deliveryTone[alert.delivery_status]}`}>
-            Delivery: {formatLabel(alert.delivery_status)}
+            <p className="font-semibold">{getDeliveryTitle(alert.delivery_status)}</p>
+            <p className="mt-1 text-xs opacity-80">{getDeliveryDescription(alert.delivery_status)}</p>
           </div>
           {alert.delivery_error ? (
             <p className="rounded-xl border border-red-300/30 bg-red-300/10 p-3 text-sm text-red-100">
-              {alert.delivery_error}
+              {formatDeliveryError(alert.delivery_error)}
             </p>
           ) : null}
         </div>
@@ -211,7 +212,9 @@ function buildSummary(alerts: AlertEvent[]) {
   return {
     triggered: alerts.filter((alert) => alert.status === "triggered").length,
     pending: alerts.filter((alert) => alert.delivery_status === "pending").length,
+    sent: alerts.filter((alert) => alert.delivery_status === "sent").length,
     failed: alerts.filter((alert) => alert.delivery_status === "failed").length,
+    skipped: alerts.filter((alert) => alert.delivery_status === "skipped").length,
   };
 }
 
@@ -225,6 +228,38 @@ function getPayloadText(payload: AlertEvent["source_payload"], key: string) {
 
 function formatLabel(value: string) {
   return value.replaceAll("_", " ");
+}
+
+function getDeliveryTitle(status: AlertDeliveryStatus) {
+  const labels: Record<AlertDeliveryStatus, string> = {
+    pending: "Pending",
+    sent: "Telegram sent",
+    failed: "Delivery failed",
+    skipped: "Delivery skipped",
+  };
+  return labels[status];
+}
+
+function getDeliveryDescription(status: AlertDeliveryStatus) {
+  const descriptions: Record<AlertDeliveryStatus, string> = {
+    pending: "Zustellung ist vorgemerkt oder noch nicht abgeschlossen.",
+    sent: "Telegram-Zustellung wurde dokumentiert. Weiterhin manuell pruefen.",
+    failed: "Zustellung ist fehlgeschlagen. Alert bleibt zur manuellen Pruefung sichtbar.",
+    skipped: "Nicht gesendet, z.B. wegen Policy, deaktiviertem Routing, Dedup oder Rate Limit.",
+  };
+  return descriptions[status];
+}
+
+function formatDeliveryError(error: string) {
+  const safeMessages: Record<string, string> = {
+    "Telegram alert routing is disabled.": "Routing deaktiviert: Telegram wurde nicht automatisch gesendet.",
+    "Alert type is manual-review only.": "Policy: Dieser Alert-Typ bleibt manual-only.",
+    "Telegram alert deduplicated within 30 minutes.": "Dedup: In den letzten 30 Minuten wurde dieser Alert-Key bereits gesendet.",
+    "Telegram alert rate limit reached.": "Rate Limit: Zu viele Telegram-Zustellungen in kurzer Zeit.",
+    TelegramConfigurationError: "Telegram-Konfiguration fehlt oder ist unvollstaendig.",
+    TelegramDeliveryError: "Telegram-Provider konnte die Nachricht nicht zustellen.",
+  };
+  return safeMessages[error] ?? "Delivery-Hinweis: Bitte Alert und Konfiguration manuell pruefen.";
 }
 
 function formatDate(value: string | null) {
