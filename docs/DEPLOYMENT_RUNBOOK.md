@@ -294,6 +294,121 @@ These checks define the minimum manual monitoring baseline for private VPS stagi
 
 Run commands from `/srv/apps/cilly-trading-signal` unless stated otherwise. Do not paste output that contains secrets, cookies, `.env` values, database URLs, private trading data, or backup contents into issues, PRs, docs, screenshots, or chat.
 
+### Automated VPS Health Check
+
+Use `scripts/vps_health_check.sh` for a minimal automated private staging check. The
+script emits sanitized `PASS` / `FAIL` lines only and does not read `.env` contents,
+container logs, database rows, cookies, tokens, or private trading data.
+
+It checks:
+
+- API health through `https://<app-domain>/api/health`.
+- HTTPS web route through `https://<app-domain>/`.
+- Expected Compose services are running: `postgres`, `api`, `web`, and `caddy`.
+- Root filesystem usage is below the configured threshold.
+- A recent PostgreSQL dump exists in the configured backup directory.
+
+Run manually as `cillydeploy`:
+
+```bash
+cd /srv/apps/cilly-trading-signal
+APP_DOMAIN=trading.cillyonline.de \
+COMPOSE_ENV_FILE=.env \
+COMPOSE_PROJECT_NAME=cilly-trading-signal \
+BACKUP_DIR=/srv/backups/cilly-trading-signal/postgres \
+bash ./scripts/vps_health_check.sh
+```
+
+Configuration:
+
+- `APP_DOMAIN`, default `trading.cillyonline.de`.
+- `COMPOSE_FILE`, default `infra/docker-compose.yml`.
+- `COMPOSE_ENV_FILE`, default `.env`.
+- `COMPOSE_PROJECT_NAME`, default `cilly-trading-signal`.
+- `BACKUP_DIR`, default `/srv/backups/cilly-trading-signal/postgres`.
+- `BACKUP_MAX_AGE_HOURS`, default `30`.
+- `DISK_PATH`, default `/`.
+- `DISK_MAX_USED_PERCENT`, default `85`.
+
+Expected successful output shape:
+
+```text
+PASS api_health
+PASS https_route
+PASS compose_postgres_running
+PASS compose_api_running
+PASS compose_web_running
+PASS compose_caddy_running
+PASS disk_usage_percent=<number>
+PASS backup_freshness_hours=<number>
+SUMMARY failed_checks=0
+```
+
+Create `/etc/systemd/system/cilly-vps-health-check.service`:
+
+```ini
+[Unit]
+Description=Cilly Trading Signal private VPS health check
+Wants=docker.service
+After=docker.service network-online.target
+
+[Service]
+Type=oneshot
+User=cillydeploy
+Group=cillydeploy
+WorkingDirectory=/srv/apps/cilly-trading-signal
+Environment=APP_DOMAIN=trading.cillyonline.de
+Environment=COMPOSE_ENV_FILE=.env
+Environment=COMPOSE_PROJECT_NAME=cilly-trading-signal
+Environment=BACKUP_DIR=/srv/backups/cilly-trading-signal/postgres
+Environment=BACKUP_MAX_AGE_HOURS=30
+Environment=DISK_MAX_USED_PERCENT=85
+ExecStart=/usr/bin/env bash scripts/vps_health_check.sh
+```
+
+Create `/etc/systemd/system/cilly-vps-health-check.timer`:
+
+```ini
+[Unit]
+Description=Run Cilly Trading Signal private VPS health check
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=15min
+Persistent=true
+RandomizedDelaySec=2min
+
+[Install]
+WantedBy=timers.target
+```
+
+Enable and run once:
+
+```bash
+systemctl daemon-reload
+systemctl enable --now cilly-vps-health-check.timer
+systemctl start cilly-vps-health-check.service
+systemctl status cilly-vps-health-check.service --no-pager
+systemctl list-timers cilly-vps-health-check.timer
+```
+
+Review recent sanitized output:
+
+```bash
+journalctl -u cilly-vps-health-check.service -n 80 --no-pager
+```
+
+If the service fails:
+
+1. Do not paste raw logs until they have been reviewed for secrets or private data.
+2. Run the manual checks below to isolate API, HTTPS, Compose, disk, or backup freshness.
+3. Confirm the unrelated `staging` Compose project remains running and separate.
+4. Fix only the failing boundary for this app; do not restart unrelated services.
+5. Record sanitized evidence with PASS/FAIL status and the follow-up issue if needed.
+
+This timer is a private staging safety net, not a paging system, SLA, SLO, public
+status page, production observability platform, trading alert, or trading advice.
+
 ### Check Frequency
 
 - After every deployment or restart: run all checks.

@@ -22,6 +22,7 @@ Decision rationale:
 - The minimal host firewall hardening plan is documented in `docs/VPS_FIREWALL_HARDENING_PLAN.md`; application remains an operator-run follow-up until sanitized VPS evidence is recorded.
 - The non-root deploy-user path is documented in `docs/VPS_DEPLOY_USER_RUNBOOK.md`; application remains an operator-run follow-up until sanitized VPS evidence is recorded.
 - The private VPS PostgreSQL backup schedule and retention policy are documented in `docs/DEPLOYMENT_RUNBOOK.md`; application remains an operator-run follow-up until sanitized VPS evidence is recorded.
+- The minimum automated VPS health-check timer is documented in `docs/DEPLOYMENT_RUNBOOK.md`; application remains an operator-run follow-up until sanitized VPS evidence is recorded.
 - Remaining operational hardening items are acceptable for private staging only, not for broader production-like or public use.
 
 ## Approved Use
@@ -90,7 +91,7 @@ Smoke test:
 - Host firewall hardening is planned but not yet operator-applied; the current private staging acceptance relies on the documented provider/iptables posture.
 - Deployment currently used root SSH access; the non-root deploy-user path is planned but not yet operator-applied.
 - Backup automation and retention policy are planned but not yet operator-applied for ongoing staging use.
-- Monitoring is documented as a manual baseline, not an automated alerting system.
+- Automated health monitoring is planned but not yet operator-applied; it is a private staging safety net, not an SLA or production observability platform.
 - Swap is not configured on the VPS.
 - This gate is based on sample/paper data only and does not validate real-money operations or private trading data handling.
 
@@ -99,7 +100,7 @@ Smoke test:
 - Apply the documented minimal host firewall plan and record sanitized evidence that SSH, Caddy, Docker behavior, localhost-only direct app ports, and the existing project routing remain intact.
 - Apply the documented non-root deploy-user procedure and record sanitized evidence that routine Docker Compose checks and HTTPS health checks work without modifying the unrelated `staging` project.
 - Apply the documented PostgreSQL backup timer and record sanitized evidence that a non-zero dump is created outside the repository and API health still passes.
-- Add or document automated uptime/health monitoring if staging becomes relied on regularly.
+- Apply the documented VPS health-check timer and record sanitized evidence that API, HTTPS, Compose, disk, and backup freshness checks run without leaking secrets or private data.
 - Re-run the smoke test after any DNS, Caddy, firewall, Docker, migration, or environment change.
 
 ## Reopen The Gate If
