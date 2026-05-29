@@ -95,13 +95,13 @@ Automatic Telegram alert routing fails closed. If `TELEGRAM_ALERT_ROUTING_ENABLE
 
 Automatic Telegram delivery is deduplicated by `symbol + alert_type + timeframe` for 30 minutes and rate-limited to 10 Telegram deliveries per user within 5 minutes. Deduped or rate-limited webhook events remain stored for manual review and are marked skipped rather than silently deleted.
 
-Optional values for future market data provider work:
+Optional values for manual market data provider sync:
 
 - `MARKET_DATA_PROVIDER_SYNC_ENABLED`: keep `false` unless provider sync has been deliberately enabled for the environment.
-- `MARKET_DATA_PROVIDER`: provider identifier, for example `alpha_vantage`, `twelve_data`, `polygon`, or `tiingo`.
+- `MARKET_DATA_PROVIDER`: provider identifier. The current implemented provider path is `alpha_vantage` for guarded Daily/EOD sync.
 - `MARKET_DATA_API_KEY`: provider API key. Store only in the environment file or secret store, never in git, issues, PRs, logs, screenshots, or chat.
 
-Market data provider sync fails closed. If `MARKET_DATA_PROVIDER_SYNC_ENABLED=true`, the API requires a supported `MARKET_DATA_PROVIDER` and a non-empty, non-placeholder `MARKET_DATA_API_KEY` at startup. These settings are placeholders for provider preparation and do not imply automatic trading, broker execution, live/realtime signals, or production readiness.
+Market data provider sync is manual and fails closed. If `MARKET_DATA_PROVIDER_SYNC_ENABLED=false`, manual sync requests return a safe skipped state. If `MARKET_DATA_PROVIDER_SYNC_ENABLED=true`, the API requires a supported `MARKET_DATA_PROVIDER` and a non-empty, non-placeholder `MARKET_DATA_API_KEY` at startup. These settings do not enable scheduling, automatic analysis, broker execution, live/realtime signals, or production readiness.
 
 Do not commit `.env` or paste secrets into issues, PRs, logs, or screenshots.
 
