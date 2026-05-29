@@ -19,6 +19,7 @@ Decision rationale:
 - The unrelated existing `staging` Compose project remained separate and running.
 - Backup/restore mechanics were verified on a disposable VPS-like Compose project with external backup storage, documented in `docs/MVP_RELEASE_CHECKLIST.md`.
 - Minimum monitoring checks are documented in `docs/DEPLOYMENT_RUNBOOK.md`.
+- The minimal host firewall hardening plan is documented in `docs/VPS_FIREWALL_HARDENING_PLAN.md`; application remains an operator-run follow-up until sanitized VPS evidence is recorded.
 - Remaining operational hardening items are acceptable for private staging only, not for broader production-like or public use.
 
 ## Approved Use
@@ -84,7 +85,7 @@ Smoke test:
 
 ## Known Risks
 
-- Host firewall hardening is not yet implemented; the current private staging acceptance relies on the documented provider/iptables posture.
+- Host firewall hardening is planned but not yet operator-applied; the current private staging acceptance relies on the documented provider/iptables posture.
 - Deployment currently uses root SSH access; a non-root deploy user remains a follow-up.
 - Backup automation and retention policy are not yet fully operationalized for ongoing staging use.
 - Monitoring is documented as a manual baseline, not an automated alerting system.
@@ -93,7 +94,7 @@ Smoke test:
 
 ## Required Follow-Ups
 
-- Add a minimal host firewall hardening plan that preserves SSH access, Docker behavior, and existing project routing.
+- Apply the documented minimal host firewall plan and record sanitized evidence that SSH, Caddy, Docker behavior, localhost-only direct app ports, and the existing project routing remain intact.
 - Create or document a non-root deploy user for routine operations where feasible.
 - Automate PostgreSQL backups and define retention for private staging.
 - Add or document automated uptime/health monitoring if staging becomes relied on regularly.
