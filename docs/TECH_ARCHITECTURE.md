@@ -297,7 +297,8 @@ Pflichtfelder:
 
 v1.4 prepares provider-backed market data without adding a real provider integration
 yet. The provider decision matrix and initial scope are documented in
-`docs/MARKET_DATA_PROVIDER_DECISION.md`.
+`docs/MARKET_DATA_PROVIDER_DECISION.md`. The planned source/freshness model is
+documented in `docs/MARKET_DATA_FRESHNESS_MODEL.md`.
 
 Current direction:
 
@@ -308,6 +309,15 @@ Current direction:
 - Keep `4H`/intraday support unresolved until provider cost, licensing, coverage, and
   rate-limit constraints are accepted.
 - Make stale, failed, partial, and unknown data states visible and conservative.
+
+Planned source/freshness states:
+
+- `source`: `csv`, `provider`, `manual`, or `unknown`.
+- `freshness_status`: `fresh`, `stale`, `unknown`, `failed`, or `partial`.
+- `sync_status`: `not_applicable`, `success`, `skipped`, `failed`, or `partial`.
+
+Existing CSV imports should remain supported and migrate as `source=csv` with
+`sync_status=not_applicable`.
 
 Explicit non-goals for provider preparation:
 

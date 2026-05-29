@@ -66,12 +66,18 @@ Regel:
 
 MVP-Signale basieren auf gespeicherten Analysen aus manuell importierten CSV-Daten. Die App behauptet keine Live-Freshness.
 
+The planned v1.4 source/freshness model is documented in
+`docs/MARKET_DATA_FRESHNESS_MODEL.md`. It keeps CSV and future provider data explicit
+and treats stale, failed, partial, missing, or unknown data conservatively.
+
 Konservative Regel:
 
 - aktive Review-Kandidaten (`watchlist`, `armed`, `triggered`) gelten nach 7 Tagen seit dem letzten gespeicherten Signal-Update als stale.
 - stale bedeutet: nicht als aktuellen Review-Kandidaten behandeln, bis neue CSV-Daten importiert und analysiert wurden.
 - stale erzeugt keine automatische Order, keinen Alert und keine Strategie-Neubewertung.
 - terminale Review-Zustaende wie `invalidated`, `missed` oder `expired` werden nicht als stale markiert, weil sie bereits manuell eingeordnet sind.
+- provider-backed data that is stale, failed, partial, missing, or unknown must not be treated as current without explicit freshness checks.
+- insufficient freshness should add clear no-trade reasons such as `market_data_stale`, `market_data_missing_timeframe`, `market_data_sync_failed`, `market_data_partial`, or `market_data_source_unknown`.
 
 ## Strategie A: Trend Pullback Long
 
