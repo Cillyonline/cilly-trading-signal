@@ -279,16 +279,13 @@ def persist_provider_sync_result(
     completed_at: datetime,
 ) -> None:
     if series.source != MarketDataSource.PROVIDER:
-        result = provider_failure(
-            MarketDataSyncPlan(
-                symbol="",
-                timeframe=series.timeframe,
-                provider_name=result.provider_name,
-            ),
-            "provider_series_required",
-            "Provider candles can only be persisted to provider-backed series.",
+        series.last_synced_at = completed_at
+        series.sync_status = MarketDataSyncStatus.FAILED
+        series.freshness_status = MarketDataFreshnessStatus.FAILED
+        series.sync_error_code = "provider_series_required"
+        series.sync_error_message = (
+            "Provider candles can only be persisted to provider-backed series."
         )
-        apply_market_data_sync_result(series, result, completed_at)
         return
 
     if result.sync_status == MarketDataSyncStatus.SUCCESS:
