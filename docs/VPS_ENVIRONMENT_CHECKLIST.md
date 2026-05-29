@@ -57,12 +57,12 @@ Use this table as a completion checklist. Record only status, not actual values.
 
 | Variable | When Needed | Status | Notes |
 | --- | --- | --- | --- |
-| `TELEGRAM_BOT_TOKEN` | Explicit Telegram test delivery and future alert routing | TBD | Optional until alert routing is approved. |
-| `TELEGRAM_CHAT_ID` | Explicit Telegram test delivery and future alert routing | TBD | Optional until alert routing is approved. |
-| `TELEGRAM_ALERT_ROUTING_ENABLED` | Automatic Telegram alert routing | TBD | Keep `false` until the v1.3 routing implementation and smoke test are ready. If set to `true`, token and chat ID must be safe real values. |
-| `MARKET_DATA_PROVIDER_SYNC_ENABLED` | Future market data provider sync | TBD | Keep `false` unless provider sync is deliberately enabled for the environment. |
-| `MARKET_DATA_PROVIDER` | Future market data provider sync | TBD | Required only when provider sync is enabled. Supported placeholders are `alpha_vantage`, `twelve_data`, `polygon`, and `tiingo`. |
-| `MARKET_DATA_API_KEY` | Future market data provider sync | TBD | Required only when provider sync is enabled. Never paste the real key into docs, issues, PRs, logs, screenshots, or chat. |
+| `TELEGRAM_BOT_TOKEN` | Explicit Telegram test delivery and alert routing | TBD | Optional unless Telegram routing is deliberately enabled. |
+| `TELEGRAM_CHAT_ID` | Explicit Telegram test delivery and alert routing | TBD | Optional unless Telegram routing is deliberately enabled. |
+| `TELEGRAM_ALERT_ROUTING_ENABLED` | Automatic Telegram alert routing | TBD | Keep `false` unless routing is deliberately enabled and smoke-tested. If set to `true`, token and chat ID must be safe real values. |
+| `MARKET_DATA_PROVIDER_SYNC_ENABLED` | Manual market data provider sync | TBD | Keep `false` unless provider sync is deliberately enabled for the environment. Disabled sync requests should return skipped rather than attempting provider calls. |
+| `MARKET_DATA_PROVIDER` | Manual market data provider sync | TBD | Required only when provider sync is enabled. The current implemented provider path is `alpha_vantage` for guarded Daily/EOD sync. |
+| `MARKET_DATA_API_KEY` | Manual market data provider sync | TBD | Required only when provider sync is enabled. Never paste the real key into docs, issues, PRs, logs, screenshots, or chat. |
 
 ## Disallowed Values Outside Local Development
 
@@ -85,6 +85,7 @@ Do not use these values in VPS staging:
 - Wildcard CORS origins such as `*`
 
 The API should fail fast in non-local environments when unsafe values are present.
+Manual provider sync does not imply live/realtime data, automatic analysis, broker readiness, or production readiness.
 
 ## Secret Generation Guidance
 
