@@ -25,7 +25,7 @@ from app.services.market_data_sync import (
     AlphaVantageDailyProvider,
     MarketDataProvider,
     build_market_data_sync_plan,
-    sync_market_data_series,
+    sync_and_persist_market_data_series,
 )
 from app.services.watchlist import get_watchlist_item
 
@@ -145,7 +145,7 @@ def sync_market_data(
         provider_sync_enabled=settings.market_data_provider_sync_enabled,
         provider_name=settings.market_data_provider,
     )
-    sync_market_data_series(series, plan, provider)
+    sync_and_persist_market_data_series(db, series, plan, provider)
     db.commit()
     db.refresh(series)
     return to_market_data_sync_response(series)

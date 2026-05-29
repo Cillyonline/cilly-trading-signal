@@ -6,13 +6,16 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
+from sqlalchemy import delete
+from sqlalchemy.orm import Session
+
 from app.models.enums import (
     MarketDataFreshnessStatus,
     MarketDataSource,
     MarketDataSyncStatus,
     Timeframe,
 )
-from app.models.market_data import MarketDataSeries
+from app.models.market_data import MarketDataCandle, MarketDataSeries
 
 FRESHNESS_WINDOWS = {
     Timeframe.ONE_WEEK: timedelta(days=14),
@@ -42,6 +45,7 @@ class MarketDataSyncResult:
     provider_exchange: str | None = None
     provider_timeframe: str | None = None
     data_end_at: datetime | None = None
+    candles: tuple["ProviderCandle", ...] = ()
     error_code: str | None = None
     error_message: str | None = None
 
@@ -122,6 +126,7 @@ class AlphaVantageDailyProvider:
             provider_exchange=plan.provider_exchange,
             provider_timeframe=plan.provider_timeframe,
             data_end_at=latest_timestamp,
+            candles=tuple(candles),
         )
 
 
@@ -236,6 +241,119 @@ def sync_market_data_series(
     result = (provider or NoopMarketDataProvider()).sync(plan)
     apply_market_data_sync_result(series, result, completed_at)
     return result
+
+
+def sync_and_persist_market_data_series(
+    db: Session,
+    series: MarketDataSeries,
+    plan: MarketDataSyncPlan,
+    provider: MarketDataProvider | None = None,
+    *,
+    now: datetime | None = None,
+) -> MarketDataSyncResult:
+    completed_at = now or datetime.now(UTC)
+    if not plan.enabled:
+        result = MarketDataSyncResult(
+            sync_status=MarketDataSyncStatus.SKIPPED,
+            freshness_status=evaluate_market_data_freshness(series, completed_at),
+            provider_name=plan.provider_name,
+            provider_symbol=plan.provider_symbol,
+            provider_exchange=plan.provider_exchange,
+            provider_timeframe=plan.provider_timeframe,
+            data_end_at=series.end_time,
+            error_code="sync_disabled",
+            error_message="Market data provider sync is disabled.",
+        )
+        apply_market_data_sync_result(series, result, completed_at)
+        return result
+
+    result = (provider or NoopMarketDataProvider()).sync(plan)
+    persist_provider_sync_result(db, series, result, completed_at)
+    return result
+
+
+def persist_provider_sync_result(
+    db: Session,
+    series: MarketDataSeries,
+    result: MarketDataSyncResult,
+    completed_at: datetime,
+) -> None:
+    if series.source != MarketDataSource.PROVIDER:
+        result = provider_failure(
+            MarketDataSyncPlan(
+                symbol="",
+                timeframe=series.timeframe,
+                provider_name=result.provider_name,
+            ),
+            "provider_series_required",
+            "Provider candles can only be persisted to provider-backed series.",
+        )
+        apply_market_data_sync_result(series, result, completed_at)
+        return
+
+    if result.sync_status == MarketDataSyncStatus.SUCCESS:
+        duplicate_count = len({candle.timestamp for candle in result.candles})
+        if not result.candles:
+            result = MarketDataSyncResult(
+                sync_status=MarketDataSyncStatus.PARTIAL,
+                freshness_status=MarketDataFreshnessStatus.PARTIAL,
+                provider_name=result.provider_name,
+                provider_symbol=result.provider_symbol,
+                provider_exchange=result.provider_exchange,
+                provider_timeframe=result.provider_timeframe,
+                error_code="provider_empty_response",
+                error_message="Provider returned no candles.",
+            )
+        elif duplicate_count != len(result.candles):
+            result = MarketDataSyncResult(
+                sync_status=MarketDataSyncStatus.FAILED,
+                freshness_status=MarketDataFreshnessStatus.FAILED,
+                provider_name=result.provider_name,
+                provider_symbol=result.provider_symbol,
+                provider_exchange=result.provider_exchange,
+                provider_timeframe=result.provider_timeframe,
+                error_code="duplicate_provider_candles",
+                error_message="Provider returned duplicate candle timestamps.",
+            )
+        else:
+            persist_provider_candles(db, series, result.candles)
+            result = MarketDataSyncResult(
+                sync_status=result.sync_status,
+                freshness_status=result.freshness_status,
+                provider_name=result.provider_name,
+                provider_symbol=result.provider_symbol,
+                provider_exchange=result.provider_exchange,
+                provider_timeframe=result.provider_timeframe,
+                data_end_at=max(candle.timestamp for candle in result.candles),
+                candles=result.candles,
+            )
+
+    apply_market_data_sync_result(series, result, completed_at)
+
+
+def persist_provider_candles(
+    db: Session,
+    series: MarketDataSeries,
+    candles: tuple[ProviderCandle, ...],
+) -> None:
+    sorted_candles = sorted(candles, key=lambda candle: candle.timestamp)
+    db.execute(delete(MarketDataCandle).where(MarketDataCandle.series_id == series.id))
+    db.flush()
+    db.add_all(
+        MarketDataCandle(
+            series_id=series.id,
+            timestamp=candle.timestamp,
+            open=candle.open,
+            high=candle.high,
+            low=candle.low,
+            close=candle.close,
+            volume=candle.volume,
+        )
+        for candle in sorted_candles
+    )
+    series.start_time = sorted_candles[0].timestamp
+    series.end_time = sorted_candles[-1].timestamp
+    series.candle_count = len(sorted_candles)
 
 
 def apply_market_data_sync_result(
