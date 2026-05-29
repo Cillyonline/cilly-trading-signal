@@ -293,39 +293,41 @@ Pflichtfelder:
 - close
 - volume
 
-## Market Data Provider Preparation
+## Market Data Provider Sync
 
-v1.4 prepares provider-backed market data without adding a real provider integration
-yet. The provider decision matrix and initial scope are documented in
-`docs/MARKET_DATA_PROVIDER_DECISION.md`. The planned source/freshness model is
+v1.4-v1.6 added provider-backed market data support as a guarded manual sync path.
+The provider decision matrix and current scope are documented in
+`docs/MARKET_DATA_PROVIDER_DECISION.md`. The source/freshness model is
 documented in `docs/MARKET_DATA_FRESHNESS_MODEL.md`.
 
-Current direction:
+Current implementation:
 
 - Keep TradingView CSV import as a supported baseline and fallback.
-- Add provider-neutral configuration, source metadata, freshness metadata, and sync
-  status before any external API calls.
+- Store provider-neutral source metadata, freshness metadata, and sync status.
 - Treat Daily/EOD data as the first practical provider-backed target.
+- Use a provider boundary with the first Alpha Vantage Daily/EOD adapter.
+- Expose authenticated manual sync through `POST /api/imports/sync`.
+- Persist provider candles only to provider-backed `MarketDataSeries` rows.
 - Keep `4H`/intraday support unresolved until provider cost, licensing, coverage, and
   rate-limit constraints are accepted.
 - Make stale, failed, partial, and unknown data states visible and conservative.
-- Keep the sync service as an internal provider-agnostic boundary until a real provider
-  integration is explicitly approved.
+- Keep provider sync disabled by default and fail closed on unsafe or missing config.
 
-Planned source/freshness states:
+Source/freshness states:
 
-- `source`: `csv`, `provider`, `manual`, or `unknown`.
+- `source`: `tradingview_csv`, `provider`, `manual`, `unknown`, or legacy `api_later`.
 - `freshness_status`: `fresh`, `stale`, `unknown`, `failed`, or `partial`.
 - `sync_status`: `not_applicable`, `success`, `skipped`, `failed`, or `partial`.
 
-Existing CSV imports should remain supported and migrate as `source=csv` with
+Existing CSV imports remain supported and map as `source=tradingview_csv` with
 `sync_status=not_applicable`.
 
-The v1.4 sync service skeleton may build sync plans, accept fake/no-op provider
-results, and update source/freshness/sync metadata. It must not perform real network
-provider calls, scheduling, broker actions, or automatic signal generation.
+The sync service builds sync plans, calls the configured provider only through the
+provider interface, persists sanitized sync metadata, and replaces provider-series
+candles on successful sync. CSV-backed series are not mutated by provider candle
+persistence.
 
-Explicit non-goals for provider preparation:
+Explicit non-goals for provider sync:
 
 - No broker integration.
 - No automatic order execution.
