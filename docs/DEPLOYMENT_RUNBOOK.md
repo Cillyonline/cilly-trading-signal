@@ -6,7 +6,7 @@ This runbook describes a repeatable VPS deployment path for the single-user MVP 
 
 It is an operational guide, not a production-readiness guarantee. Before real operation, backups, monitoring, restore tests, secret rotation, and a security review still need to be completed.
 
-For the private VPS staging plan based on the current server inventory, see `docs/VPS_STAGING_PLAN.md`. The staging plan must be reviewed before changing the existing VPS because other projects already run on that server. For the sanitized staging environment checklist, see `docs/VPS_ENVIRONMENT_CHECKLIST.md`. For the private VPS smoke-test procedure and evidence template, see `docs/VPS_STAGING_SMOKE_TEST.md`.
+For the private VPS staging plan based on the current server inventory, see `docs/VPS_STAGING_PLAN.md`. The staging plan must be reviewed before changing the existing VPS because other projects already run on that server. For the sanitized staging environment checklist, see `docs/VPS_ENVIRONMENT_CHECKLIST.md`. For the private VPS smoke-test procedure and evidence template, see `docs/VPS_STAGING_SMOKE_TEST.md`. For the minimal host firewall plan and rollback procedure, see `docs/VPS_FIREWALL_HARDENING_PLAN.md`.
 For v1.3 alert-routing smoke-test evidence and the remaining operator-run Telegram provider check, see `docs/V1_3_ALERT_ROUTING_SMOKE_TEST.md`.
 
 ## Safety Boundaries
@@ -202,6 +202,20 @@ For public HTTPS:
 - Public browser and API access should use the Caddy HTTPS route, not the direct API or web service ports.
 - Direct API and web host ports are intended only for localhost operator checks or local development. If a deployment overrides these bindings, keep them bound to `127.0.0.1` or protect them with firewall rules so they are not internet-reachable.
 - Do not treat `http://localhost:8000` or `http://localhost:3000` as public deployment endpoints.
+
+## VPS Host Firewall
+
+The private VPS staging firewall posture is documented in `docs/VPS_FIREWALL_HARDENING_PLAN.md`.
+
+Before applying firewall rules on the VPS:
+
+- Keep an active SSH session and open a second SSH session for verification.
+- Preserve SSH, public Caddy ports `80` and `443`, Docker networking, and the existing unrelated `staging` Compose project.
+- Keep direct app ports `3000` and `8000` localhost-only.
+- Keep existing localhost-bound `18000` private to the host.
+- Use the documented rollback timer and record only sanitized evidence.
+
+Firewall changes are operator-run server changes. Do not claim they are applied until sanitized VPS evidence has been recorded.
 
 ## Updates And Migrations
 
