@@ -17,6 +17,7 @@ from app.models.enums import (
 from app.models.market_data import MarketDataCandle, MarketDataSeries
 from app.models.watchlist import WatchlistItem
 from app.schemas.imports import CsvImportError, CsvImportResult
+from app.services.market_data_sync import evaluate_market_data_freshness
 
 REQUIRED_COLUMNS = {"time", "open", "high", "low", "close", "volume"}
 MIN_CANDLE_COUNT = 20
@@ -76,6 +77,7 @@ def import_tradingview_csv(
             errors=errors,
         )
 
+    freshness_status = evaluate_csv_freshness(candles[-1].timestamp, timeframe)
     series = MarketDataSeries(
         watchlist_item_id=watchlist_item.id,
         source=MarketDataSource.TRADINGVIEW_CSV,
@@ -84,7 +86,7 @@ def import_tradingview_csv(
         end_time=candles[-1].timestamp,
         candle_count=len(candles),
         status=MarketDataStatus.VALIDATED,
-        freshness_status=MarketDataFreshnessStatus.UNKNOWN,
+        freshness_status=freshness_status,
         sync_status=MarketDataSyncStatus.NOT_APPLICABLE,
         validation_errors=None,
         file_name=file_name,
@@ -139,6 +141,18 @@ def import_tradingview_csv(
         last_synced_at=series.last_synced_at,
         errors=[],
     )
+
+
+def evaluate_csv_freshness(end_time: datetime, timeframe: Timeframe) -> MarketDataFreshnessStatus:
+    series = MarketDataSeries(
+        watchlist_item_id=0,
+        source=MarketDataSource.TRADINGVIEW_CSV,
+        timeframe=timeframe,
+        end_time=end_time,
+        candle_count=0,
+        sync_status=MarketDataSyncStatus.NOT_APPLICABLE,
+    )
+    return evaluate_market_data_freshness(series)
 
 
 def parse_tradingview_csv(content: str, errors: list[CsvImportError]) -> list[ParsedCandle]:
