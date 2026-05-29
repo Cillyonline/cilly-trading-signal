@@ -10,8 +10,12 @@ from sqlalchemy.pool import StaticPool
 
 from app.db.base import Base
 from app.db.session import get_db
+from app.api.routes.imports import get_market_data_provider
+from app.core.config import settings
 from app.main import create_app
 from app.models import *  # noqa: F403
+from app.models.enums import MarketDataFreshnessStatus, MarketDataSyncStatus
+from app.services.market_data_sync import MarketDataSyncResult
 
 
 @pytest.fixture()
@@ -41,6 +45,14 @@ def client() -> Iterator[TestClient]:
 
     app.dependency_overrides.clear()
     Base.metadata.drop_all(bind=engine)
+
+
+class FakeMarketDataProvider:
+    def __init__(self, result: MarketDataSyncResult) -> None:
+        self.result = result
+
+    def sync(self, plan: object) -> MarketDataSyncResult:
+        return self.result
 
 
 def login(client: TestClient) -> None:
@@ -192,6 +204,114 @@ def test_list_imports_rejects_unauthenticated_request(client: TestClient) -> Non
 
     assert response.status_code == 401
     assert response.json()["detail"] == "Authentication required."
+
+
+def test_manual_market_data_sync_skips_when_provider_disabled(client: TestClient) -> None:
+    watchlist_item_id = create_watchlist_item(client)
+
+    response = client.post(
+        "/api/imports/sync",
+        json={"watchlist_item_id": watchlist_item_id, "timeframe": "1D"},
+    )
+
+    assert response.status_code == 200
+    result = response.json()
+    assert result["watchlist_item_id"] == watchlist_item_id
+    assert result["source"] == "provider"
+    assert result["sync_status"] == "skipped"
+    assert result["sync_error_code"] == "sync_disabled"
+    assert "api" not in (result["sync_error_message"] or "").lower()
+
+
+def test_manual_market_data_sync_applies_mock_success(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    watchlist_item_id = create_watchlist_item(client)
+    success_provider = FakeMarketDataProvider(
+        MarketDataSyncResult(
+            sync_status=MarketDataSyncStatus.SUCCESS,
+            freshness_status=MarketDataFreshnessStatus.FRESH,
+            provider_name="alpha_vantage",
+            provider_symbol="AAPL",
+            provider_timeframe="1D",
+            data_end_at=datetime(2026, 5, 29, tzinfo=UTC),
+        )
+    )
+    monkeypatch.setattr(settings, "market_data_provider_sync_enabled", True)
+    monkeypatch.setattr(settings, "market_data_provider", "alpha_vantage")
+    client.app.dependency_overrides[get_market_data_provider] = lambda: success_provider
+
+    try:
+        response = client.post(
+            "/api/imports/sync",
+            json={"watchlist_item_id": watchlist_item_id, "timeframe": "1D"},
+        )
+    finally:
+        client.app.dependency_overrides.pop(get_market_data_provider, None)
+
+    assert response.status_code == 200
+    result = response.json()
+    assert result["sync_status"] == "success"
+    assert result["freshness_status"] == "fresh"
+    assert result["provider_name"] == "alpha_vantage"
+    assert result["provider_symbol"] == "AAPL"
+    assert result["sync_error_code"] is None
+
+
+def test_manual_market_data_sync_applies_mock_failure(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    watchlist_item_id = create_watchlist_item(client)
+    failed_provider = FakeMarketDataProvider(
+        MarketDataSyncResult(
+            sync_status=MarketDataSyncStatus.FAILED,
+            freshness_status=MarketDataFreshnessStatus.FAILED,
+            provider_name="alpha_vantage",
+            error_code="provider_rate_limited",
+            error_message="Provider response could not be used.",
+        )
+    )
+    monkeypatch.setattr(settings, "market_data_provider_sync_enabled", True)
+    monkeypatch.setattr(settings, "market_data_provider", "alpha_vantage")
+    client.app.dependency_overrides[get_market_data_provider] = lambda: failed_provider
+
+    try:
+        response = client.post(
+            "/api/imports/sync",
+            json={"watchlist_item_id": watchlist_item_id, "timeframe": "1D"},
+        )
+    finally:
+        client.app.dependency_overrides.pop(get_market_data_provider, None)
+
+    assert response.status_code == 200
+    result = response.json()
+    assert result["sync_status"] == "failed"
+    assert result["freshness_status"] == "failed"
+    assert result["sync_error_code"] == "provider_rate_limited"
+    assert "api" not in (result["sync_error_message"] or "").lower()
+
+
+def test_manual_market_data_sync_rejects_unknown_watchlist_item(client: TestClient) -> None:
+    response = client.post(
+        "/api/imports/sync",
+        json={"watchlist_item_id": 999, "timeframe": "1D"},
+    )
+
+    assert response.status_code == 404
+
+
+def test_manual_market_data_sync_rejects_unauthenticated_request(client: TestClient) -> None:
+    watchlist_item_id = create_watchlist_item(client)
+    client.post("/api/auth/logout")
+
+    response = client.post(
+        "/api/imports/sync",
+        json={"watchlist_item_id": watchlist_item_id, "timeframe": "1D"},
+    )
+
+    assert response.status_code == 401
 
 
 def test_import_csv_accepts_valid_four_hour_spacing(client: TestClient) -> None:

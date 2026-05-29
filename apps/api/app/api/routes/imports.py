@@ -5,20 +5,41 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
+from app.core.config import settings
 from app.db.session import get_db
+from app.models.enums import MarketDataSource, MarketDataStatus, MarketDataSyncStatus
 from app.models.enums import Timeframe
 from app.models.market_data import MarketDataSeries
 from app.models.user import User
 from app.models.watchlist import WatchlistItem
 from app.schemas.analysis import MarketDataAnalysisResult
-from app.schemas.imports import CsvImportResult, ImportHistoryItem
+from app.schemas.imports import (
+    CsvImportResult,
+    ImportHistoryItem,
+    MarketDataSyncRequest,
+    MarketDataSyncResponse,
+)
 from app.services.analysis import analyze_market_data_series
 from app.services.csv_import import MAX_CSV_UPLOAD_BYTES, import_tradingview_csv
+from app.services.market_data_sync import (
+    AlphaVantageDailyProvider,
+    MarketDataProvider,
+    build_market_data_sync_plan,
+    sync_market_data_series,
+)
 from app.services.watchlist import get_watchlist_item
 
 router = APIRouter(prefix="/imports", tags=["imports"])
 DbSession = Annotated[Session, Depends(get_db)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+def get_market_data_provider() -> MarketDataProvider | None:
+    if not settings.market_data_provider_sync_enabled:
+        return None
+    if settings.market_data_provider == "alpha_vantage" and settings.market_data_api_key:
+        return AlphaVantageDailyProvider(settings.market_data_api_key)
+    return None
 
 
 @router.post("/csv", response_model=CsvImportResult)
@@ -103,6 +124,33 @@ def list_imports(db: DbSession, user: CurrentUser) -> list[ImportHistoryItem]:
     ]
 
 
+@router.post("/sync", response_model=MarketDataSyncResponse)
+def sync_market_data(
+    payload: MarketDataSyncRequest,
+    db: DbSession,
+    user: CurrentUser,
+    provider: Annotated[MarketDataProvider | None, Depends(get_market_data_provider)],
+) -> MarketDataSyncResponse:
+    watchlist_item = get_watchlist_item(db, user.id, payload.watchlist_item_id)
+    if watchlist_item is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Watchlist item not found.",
+        )
+
+    series = get_or_create_provider_series(db, watchlist_item, payload.timeframe)
+    plan = build_market_data_sync_plan(
+        symbol=watchlist_item.symbol,
+        timeframe=payload.timeframe,
+        provider_sync_enabled=settings.market_data_provider_sync_enabled,
+        provider_name=settings.market_data_provider,
+    )
+    sync_market_data_series(series, plan, provider)
+    db.commit()
+    db.refresh(series)
+    return to_market_data_sync_response(series)
+
+
 @router.post("/{series_id}/analyze", response_model=MarketDataAnalysisResult)
 def analyze_import(series_id: int, db: DbSession, user: CurrentUser) -> MarketDataAnalysisResult:
     series = db.get(MarketDataSeries, series_id)
@@ -112,3 +160,50 @@ def analyze_import(series_id: int, db: DbSession, user: CurrentUser) -> MarketDa
             detail="Market data series not found.",
         )
     return analyze_market_data_series(db, series)
+
+
+def get_or_create_provider_series(
+    db: Session,
+    watchlist_item: WatchlistItem,
+    timeframe: Timeframe,
+) -> MarketDataSeries:
+    series = db.scalar(
+        select(MarketDataSeries)
+        .where(MarketDataSeries.watchlist_item_id == watchlist_item.id)
+        .where(MarketDataSeries.timeframe == timeframe)
+        .where(MarketDataSeries.source == MarketDataSource.PROVIDER)
+        .order_by(MarketDataSeries.imported_at.desc(), MarketDataSeries.id.desc())
+    )
+    if series is not None:
+        return series
+
+    series = MarketDataSeries(
+        watchlist_item_id=watchlist_item.id,
+        source=MarketDataSource.PROVIDER,
+        timeframe=timeframe,
+        candle_count=0,
+        status=MarketDataStatus.IMPORTED,
+        sync_status=MarketDataSyncStatus.NOT_APPLICABLE,
+    )
+    db.add(series)
+    db.flush()
+    return series
+
+
+def to_market_data_sync_response(series: MarketDataSeries) -> MarketDataSyncResponse:
+    return MarketDataSyncResponse(
+        watchlist_item_id=series.watchlist_item_id,
+        series_id=series.id,
+        source=series.source,
+        timeframe=series.timeframe,
+        provider_name=series.provider_name,
+        provider_symbol=series.provider_symbol,
+        provider_exchange=series.provider_exchange,
+        provider_timeframe=series.provider_timeframe,
+        sync_status=series.sync_status,
+        freshness_status=series.freshness_status,
+        last_synced_at=series.last_synced_at,
+        end_time=series.end_time,
+        sync_error_code=series.sync_error_code,
+        sync_error_message=series.sync_error_message,
+    )
