@@ -5,6 +5,7 @@
 This document records the MVP smoke-test workflow and the latest validation result for the manual trading cockpit. The smoke test uses local/sample data only and does not make a production-readiness, profitability, or execution claim.
 
 For the private VPS staging smoke-test procedure and evidence template, see `docs/VPS_STAGING_SMOKE_TEST.md`.
+For the guarded manual provider sync checklist, see `docs/PROVIDER_SYNC_SMOKE_TEST.md`.
 
 ## Safety Scope
 
@@ -12,6 +13,8 @@ For the private VPS staging smoke-test procedure and evidence template, see `doc
 - The app must not create broker orders or connect to a broker.
 - Trades in this smoke test are manual documentation records only.
 - Performance views show documented historical/paper results, not forecasts.
+- Provider sync smoke evidence, if run separately, validates only guarded stored-data
+  sync behavior and is not live/realtime or production-readiness evidence.
 
 ## Runner
 
