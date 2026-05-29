@@ -8,7 +8,7 @@ Das Datenmodell bildet ab:
 
 - Single-User Account
 - Watchlist
-- Market Data aus TradingView CSV
+- Market Data aus TradingView CSV und vorbereiteter Provider-Sync-Metadaten
 - technische Indikatoren
 - Signale / Setups
 - Alerts
@@ -133,21 +133,39 @@ Felder:
 - id
 - watchlist_item_id
 - source
+- provider_name
+- provider_symbol
+- provider_exchange
+- provider_timeframe
 - timeframe
 - imported_at
+- last_synced_at
 - start_time
 - end_time
 - candle_count
 - status
+- freshness_status
+- sync_status
+- sync_error_code
+- sync_error_message
 - validation_errors
 - file_name
 - created_at
 
 Werte:
 
-- source: tradingview_csv, manual, api_later
+- source: csv, provider, manual, unknown
 - timeframe: 1W, 1D, 4H
 - status: imported, validated, failed, analyzed
+- freshness_status: fresh, stale, unknown, failed, partial
+- sync_status: not_applicable, success, skipped, failed, partial
+
+Notes:
+
+- Existing TradingView CSV imports should map to `source=csv` and `sync_status=not_applicable`.
+- Provider fields stay unset for CSV data.
+- Freshness is evaluated per symbol/timeframe and must be conservative.
+- See `docs/MARKET_DATA_FRESHNESS_MODEL.md` for the planned v1.4 source/freshness model.
 
 ## MarketDataCandle
 
