@@ -6,7 +6,7 @@ This runbook describes a repeatable VPS deployment path for the single-user MVP 
 
 It is an operational guide, not a production-readiness guarantee. Before real operation, backups, monitoring, restore tests, secret rotation, and a security review still need to be completed.
 
-For the private VPS staging plan based on the current server inventory, see `docs/VPS_STAGING_PLAN.md`. The staging plan must be reviewed before changing the existing VPS because other projects already run on that server. For the sanitized staging environment checklist, see `docs/VPS_ENVIRONMENT_CHECKLIST.md`. For the private VPS smoke-test procedure and evidence template, see `docs/VPS_STAGING_SMOKE_TEST.md`. For the minimal host firewall plan and rollback procedure, see `docs/VPS_FIREWALL_HARDENING_PLAN.md`.
+For the private VPS staging plan based on the current server inventory, see `docs/VPS_STAGING_PLAN.md`. The staging plan must be reviewed before changing the existing VPS because other projects already run on that server. For the sanitized staging environment checklist, see `docs/VPS_ENVIRONMENT_CHECKLIST.md`. For the private VPS smoke-test procedure and evidence template, see `docs/VPS_STAGING_SMOKE_TEST.md`. For the minimal host firewall plan and rollback procedure, see `docs/VPS_FIREWALL_HARDENING_PLAN.md`. For the non-root deploy-user procedure, see `docs/VPS_DEPLOY_USER_RUNBOOK.md`.
 For v1.3 alert-routing smoke-test evidence and the remaining operator-run Telegram provider check, see `docs/V1_3_ALERT_ROUTING_SMOKE_TEST.md`.
 
 ## Safety Boundaries
@@ -21,7 +21,7 @@ For v1.3 alert-routing smoke-test evidence and the remaining operator-run Telegr
 VPS:
 
 - Linux VPS with a supported Docker installation.
-- SSH access with a non-root deploy user where possible.
+- SSH access with the non-root deploy user from `docs/VPS_DEPLOY_USER_RUNBOOK.md` where possible.
 - Public ports `80` and `443` open when using Caddy/HTTPS.
 - Direct API and web service ports must not be publicly exposed for Caddy/prod-like deployments. In the provided Compose file they are bound to localhost only for operator checks and local development.
 - Sufficient disk space for Docker images, PostgreSQL volume data, and backups.
@@ -43,6 +43,25 @@ Repository files used by this runbook:
 - `infra/docker-compose.yml`
 - `infra/caddy/Caddyfile`
 - `.env.example`
+
+## VPS Deploy User
+
+Routine private VPS staging operations should use the app-specific non-root deploy
+user documented in `docs/VPS_DEPLOY_USER_RUNBOOK.md`.
+
+Target routine checkout path:
+
+```text
+/srv/apps/cilly-trading-signal
+```
+
+Use root only for one-time host setup, firewall changes, emergency recovery, or
+repairs that cannot be performed by the deploy user. Root emergency access must be
+preserved.
+
+The deploy user can run Docker Compose through the `docker` group. This is practical
+for single-operator private staging, but Docker group membership is root-equivalent
+host access and must not be treated as strong multi-user isolation.
 
 ## Environment File
 
@@ -137,7 +156,7 @@ Notes:
 1. Connect to the VPS.
 
 ```bash
-ssh deploy@your-vps
+ssh cillydeploy@your-vps
 ```
 
 2. Install Docker and the Docker Compose plugin using the operating system's documented package source.
@@ -145,6 +164,7 @@ ssh deploy@your-vps
 3. Clone the repository.
 
 ```bash
+cd /srv/apps
 git clone https://github.com/Cillyonline/cilly-trading-signal.git
 cd cilly-trading-signal
 ```
@@ -222,8 +242,8 @@ Firewall changes are operator-run server changes. Do not claim they are applied 
 1. Connect to the VPS and enter the repository.
 
 ```bash
-ssh deploy@your-vps
-cd cilly-trading-signal
+ssh cillydeploy@your-vps
+cd /srv/apps/cilly-trading-signal
 ```
 
 2. Fetch and update the deployment branch.
@@ -272,7 +292,7 @@ Do not run `down --volumes` on a VPS unless you intentionally want to remove Pos
 
 These checks define the minimum manual monitoring baseline for private VPS staging. They are not a full observability stack and do not create a production-readiness claim.
 
-Run commands from `/root/repos/cilly-trading-signal` unless stated otherwise. Do not paste output that contains secrets, cookies, `.env` values, database URLs, private trading data, or backup contents into issues, PRs, docs, screenshots, or chat.
+Run commands from `/srv/apps/cilly-trading-signal` unless stated otherwise. Do not paste output that contains secrets, cookies, `.env` values, database URLs, private trading data, or backup contents into issues, PRs, docs, screenshots, or chat.
 
 ### Check Frequency
 
@@ -419,7 +439,7 @@ Success:
 Investigate if:
 
 - No recent backup exists after backup procedures are enabled.
-- Backups are stored under `/root/repos/cilly-trading-signal`.
+- Backups are stored under the repository checkout, such as `/srv/apps/cilly-trading-signal` or the earlier root-owned checkout path.
 - Backup file sizes are unexpectedly zero or much smaller than expected.
 
 ### Restart Behavior

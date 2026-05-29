@@ -20,6 +20,7 @@ Decision rationale:
 - Backup/restore mechanics were verified on a disposable VPS-like Compose project with external backup storage, documented in `docs/MVP_RELEASE_CHECKLIST.md`.
 - Minimum monitoring checks are documented in `docs/DEPLOYMENT_RUNBOOK.md`.
 - The minimal host firewall hardening plan is documented in `docs/VPS_FIREWALL_HARDENING_PLAN.md`; application remains an operator-run follow-up until sanitized VPS evidence is recorded.
+- The non-root deploy-user path is documented in `docs/VPS_DEPLOY_USER_RUNBOOK.md`; application remains an operator-run follow-up until sanitized VPS evidence is recorded.
 - Remaining operational hardening items are acceptable for private staging only, not for broader production-like or public use.
 
 ## Approved Use
@@ -53,7 +54,7 @@ Inventory and constraints:
 - The server already hosts an unrelated Compose project named `staging` that must not be modified.
 - Existing public `80` and `443` listeners were not observed before this app's Caddy profile started.
 - The existing staging API uses `127.0.0.1:18000`, so this app avoids that port.
-- Runtime data, backups, logs, and `.env` files must stay outside `/root/repos/cilly-trading-signal`.
+- Runtime data, backups, and logs must stay outside the repository checkout; `.env` remains untracked and server-local.
 
 Deployment and environment posture:
 
@@ -86,7 +87,7 @@ Smoke test:
 ## Known Risks
 
 - Host firewall hardening is planned but not yet operator-applied; the current private staging acceptance relies on the documented provider/iptables posture.
-- Deployment currently uses root SSH access; a non-root deploy user remains a follow-up.
+- Deployment currently used root SSH access; the non-root deploy-user path is planned but not yet operator-applied.
 - Backup automation and retention policy are not yet fully operationalized for ongoing staging use.
 - Monitoring is documented as a manual baseline, not an automated alerting system.
 - Swap is not configured on the VPS.
@@ -95,7 +96,7 @@ Smoke test:
 ## Required Follow-Ups
 
 - Apply the documented minimal host firewall plan and record sanitized evidence that SSH, Caddy, Docker behavior, localhost-only direct app ports, and the existing project routing remain intact.
-- Create or document a non-root deploy user for routine operations where feasible.
+- Apply the documented non-root deploy-user procedure and record sanitized evidence that routine Docker Compose checks and HTTPS health checks work without modifying the unrelated `staging` project.
 - Automate PostgreSQL backups and define retention for private staging.
 - Add or document automated uptime/health monitoring if staging becomes relied on regularly.
 - Re-run the smoke test after any DNS, Caddy, firewall, Docker, migration, or environment change.
