@@ -14,6 +14,24 @@ class MarketDataSource(StrEnum):
     TRADINGVIEW_CSV = "tradingview_csv"
     MANUAL = "manual"
     API_LATER = "api_later"
+    PROVIDER = "provider"
+    UNKNOWN = "unknown"
+
+
+class MarketDataFreshnessStatus(StrEnum):
+    FRESH = "fresh"
+    STALE = "stale"
+    UNKNOWN = "unknown"
+    FAILED = "failed"
+    PARTIAL = "partial"
+
+
+class MarketDataSyncStatus(StrEnum):
+    NOT_APPLICABLE = "not_applicable"
+    SUCCESS = "success"
+    SKIPPED = "skipped"
+    FAILED = "failed"
+    PARTIAL = "partial"
 
 
 class Timeframe(StrEnum):

@@ -14,9 +14,11 @@ from app.models import (
     IndicatorSnapshot,
     JournalEntry,
     MarketDataCandle,
+    MarketDataFreshnessStatus,
     MarketDataSeries,
     NotificationLog,
     NotificationChannel,
+    MarketDataSyncStatus,
     Settings,
     Signal,
     Timeframe,
@@ -68,6 +70,36 @@ def test_market_data_candle_has_series_timestamp_unique_constraint() -> None:
     constraints = {constraint.name for constraint in candle_table.constraints}
 
     assert "uq_candles_series_timestamp" in constraints
+
+
+def test_market_data_series_has_source_freshness_metadata() -> None:
+    series_table = Base.metadata.tables["market_data_series"]
+
+    for column_name in (
+        "provider_name",
+        "provider_symbol",
+        "provider_exchange",
+        "provider_timeframe",
+        "last_synced_at",
+        "freshness_status",
+        "sync_status",
+        "sync_error_code",
+        "sync_error_message",
+    ):
+        assert column_name in series_table.c
+
+
+def test_market_data_freshness_and_sync_enums_support_safe_states() -> None:
+    assert MarketDataFreshnessStatus.FRESH == "fresh"
+    assert MarketDataFreshnessStatus.STALE == "stale"
+    assert MarketDataFreshnessStatus.UNKNOWN == "unknown"
+    assert MarketDataFreshnessStatus.FAILED == "failed"
+    assert MarketDataFreshnessStatus.PARTIAL == "partial"
+    assert MarketDataSyncStatus.NOT_APPLICABLE == "not_applicable"
+    assert MarketDataSyncStatus.SUCCESS == "success"
+    assert MarketDataSyncStatus.SKIPPED == "skipped"
+    assert MarketDataSyncStatus.FAILED == "failed"
+    assert MarketDataSyncStatus.PARTIAL == "partial"
 
 
 def test_signal_reasoning_and_risk_flags_are_json_columns() -> None:
