@@ -126,6 +126,52 @@ def test_tradingview_webhook_routes_allowed_alert_to_telegram(
     assert "verkaufen" not in messages[0].lower()
 
 
+@pytest.mark.parametrize(
+    ("trigger", "expected_alert_type", "expected_priority"),
+    [
+        ("near_trigger", AlertType.NEAR_TRIGGER, "p2"),
+        ("entry_trigger", AlertType.ENTRY_TRIGGER, "p1"),
+        ("long_entry", AlertType.ENTRY_TRIGGER, "p1"),
+        ("invalidation", AlertType.INVALIDATION, "p2"),
+        ("exit_warning", AlertType.EXIT_WARNING, "p2"),
+    ],
+)
+def test_tradingview_webhook_routes_all_policy_allowed_alert_types(
+    trigger: str,
+    expected_alert_type: AlertType,
+    expected_priority: str,
+    client: TestClient,
+    db_session: Session,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(settings, "telegram_alert_routing_enabled", True)
+    monkeypatch.setattr(settings, "telegram_bot_token", "test-token")
+    monkeypatch.setattr(settings, "telegram_chat_id", "12345")
+    messages: list[str] = []
+
+    def fake_send(message: str) -> None:
+        messages.append(message)
+
+    monkeypatch.setattr("app.services.alerts.send_telegram_message", fake_send)
+    payload = valid_payload() | {"trigger": trigger}
+
+    response = client.post("/api/webhooks/tradingview", json=payload)
+
+    assert response.status_code == 202
+    assert response.json()["delivery_status"] == "sent"
+    alert = db_session.scalar(select(Alert).where(Alert.id == response.json()["alert_id"]))
+    assert alert is not None
+    assert alert.alert_type == expected_alert_type
+    assert alert.priority == expected_priority
+    notification = db_session.scalar(select(NotificationLog))
+    assert notification is not None
+    assert notification.status == AlertDeliveryStatus.SENT
+    assert notification.provider_payload["dedup_key"] == (
+        f"AAPL:{expected_alert_type.value}:4H"
+    )
+    assert messages == [notification.message]
+
+
 def test_tradingview_webhook_skips_manual_only_alert_type(
     client: TestClient, db_session: Session, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -149,6 +195,47 @@ def test_tradingview_webhook_skips_manual_only_alert_type(
     alert = db_session.scalar(select(Alert).where(Alert.id == result["alert_id"]))
     assert alert is not None
     assert alert.alert_type == AlertType.WATCHLIST
+    assert alert.delivery_status == AlertDeliveryStatus.SKIPPED
+    assert alert.delivery_error == "Alert type is manual-review only."
+    assert sent_messages == []
+    assert db_session.scalars(select(NotificationLog)).all() == []
+
+
+@pytest.mark.parametrize(
+    ("trigger", "expected_alert_type"),
+    [
+        ("info", AlertType.INFO),
+        ("watchlist", AlertType.WATCHLIST),
+        ("armed", AlertType.ARMED),
+        ("management", AlertType.MANAGEMENT),
+        ("exit_signal", AlertType.EXIT_SIGNAL),
+    ],
+)
+def test_tradingview_webhook_skips_all_policy_manual_only_alert_types(
+    trigger: str,
+    expected_alert_type: AlertType,
+    client: TestClient,
+    db_session: Session,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(settings, "telegram_alert_routing_enabled", True)
+    monkeypatch.setattr(settings, "telegram_bot_token", "test-token")
+    monkeypatch.setattr(settings, "telegram_chat_id", "12345")
+    sent_messages: list[str] = []
+
+    def fake_send(message: str) -> None:
+        sent_messages.append(message)
+
+    monkeypatch.setattr("app.services.alerts.send_telegram_message", fake_send)
+    payload = valid_payload() | {"trigger": trigger}
+
+    response = client.post("/api/webhooks/tradingview", json=payload)
+
+    assert response.status_code == 202
+    assert response.json()["delivery_status"] == "skipped"
+    alert = db_session.scalar(select(Alert).where(Alert.id == response.json()["alert_id"]))
+    assert alert is not None
+    assert alert.alert_type == expected_alert_type
     assert alert.delivery_status == AlertDeliveryStatus.SKIPPED
     assert alert.delivery_error == "Alert type is manual-review only."
     assert sent_messages == []
