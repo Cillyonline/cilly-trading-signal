@@ -60,6 +60,9 @@ Use this table as a completion checklist. Record only status, not actual values.
 | `TELEGRAM_BOT_TOKEN` | Explicit Telegram test delivery and future alert routing | TBD | Optional until alert routing is approved. |
 | `TELEGRAM_CHAT_ID` | Explicit Telegram test delivery and future alert routing | TBD | Optional until alert routing is approved. |
 | `TELEGRAM_ALERT_ROUTING_ENABLED` | Automatic Telegram alert routing | TBD | Keep `false` until the v1.3 routing implementation and smoke test are ready. If set to `true`, token and chat ID must be safe real values. |
+| `MARKET_DATA_PROVIDER_SYNC_ENABLED` | Future market data provider sync | TBD | Keep `false` unless provider sync is deliberately enabled for the environment. |
+| `MARKET_DATA_PROVIDER` | Future market data provider sync | TBD | Required only when provider sync is enabled. Supported placeholders are `alpha_vantage`, `twelve_data`, `polygon`, and `tiingo`. |
+| `MARKET_DATA_API_KEY` | Future market data provider sync | TBD | Required only when provider sync is enabled. Never paste the real key into docs, issues, PRs, logs, screenshots, or chat. |
 
 ## Disallowed Values Outside Local Development
 
@@ -75,6 +78,9 @@ Do not use these values in VPS staging:
 - `TRADINGVIEW_WEBHOOK_SECRET=change-me`
 - `POSTGRES_USER=postgres`
 - `POSTGRES_PASSWORD=postgres`
+- `MARKET_DATA_API_KEY=change-this-market-data-api-key`
+- `MARKET_DATA_API_KEY=market-data-api-key`
+- `MARKET_DATA_API_KEY=provider-api-key`
 - Empty passwords or empty secrets
 - Wildcard CORS origins such as `*`
 
@@ -116,6 +122,9 @@ NEXT_PUBLIC_API_BASE_URL=/api
 TELEGRAM_BOT_TOKEN=
 TELEGRAM_CHAT_ID=
 TELEGRAM_ALERT_ROUTING_ENABLED=false
+MARKET_DATA_PROVIDER_SYNC_ENABLED=false
+MARKET_DATA_PROVIDER=
+MARKET_DATA_API_KEY=
 POSTGRES_USER=<app-db-user>
 POSTGRES_PASSWORD=<strong-db-password>
 POSTGRES_DB=cilly_trading_signal
