@@ -351,6 +351,7 @@ v1.3 soll Telegram-Zustellung fail-safe und noise-arm halten:
 - Dedup-Key: `symbol + alert_type + timeframe`.
 - Innerhalb von 30 Minuten soll pro Dedup-Key hoechstens eine Telegram-Nachricht gesendet werden.
 - Wiederholte Webhooks innerhalb des Dedup-Fensters bleiben als Alert-Events speicherbar, sollen aber nicht erneut Telegram senden.
+- Burst-Limit: maximal 10 automatische Telegram-Zustellungen pro Nutzer innerhalb von 5 Minuten.
 - Bei fehlender Telegram-Konfiguration wird nicht gesendet; das Alert-Event bleibt fuer manuelle Review sichtbar.
 - Bei Telegram-Fehlern darf Webhook-Ingestion nicht fehlschlagen, sofern das Alert-Event gespeichert werden konnte.
 

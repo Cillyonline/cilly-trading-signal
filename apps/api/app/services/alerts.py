@@ -1,6 +1,7 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from secrets import compare_digest
 
+from sqlalchemy import desc, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -44,6 +45,13 @@ TELEGRAM_MANUAL_REVIEW_NOTICE = (
     "Manual review required. Keine automatische Order. "
     "Keine Kauf- oder Verkaufsanweisung."
 )
+TELEGRAM_DEDUP_WINDOW = timedelta(minutes=30)
+TELEGRAM_BURST_WINDOW = timedelta(minutes=5)
+TELEGRAM_BURST_LIMIT = 10
+TELEGRAM_DELIVERY_BLOCKING_STATUSES = {
+    AlertDeliveryStatus.PENDING,
+    AlertDeliveryStatus.SENT,
+}
 
 
 class InvalidWebhookSecretError(Exception):
@@ -98,6 +106,23 @@ def route_telegram_delivery_for_alert(
         _mark_alert_delivery_skipped(db, alert, "Alert type is manual-review only.")
         return
 
+    now = utc_now()
+    dedup_key = build_telegram_dedup_key(alert, payload)
+    if has_recent_telegram_delivery(db, alert.user_id, dedup_key, now):
+        _mark_alert_delivery_skipped(
+            db,
+            alert,
+            "Telegram alert deduplicated within 30 minutes.",
+        )
+        return
+    if has_recent_telegram_burst(db, alert.user_id, now):
+        _mark_alert_delivery_skipped(
+            db,
+            alert,
+            "Telegram alert rate limit reached.",
+        )
+        return
+
     message = build_telegram_alert_message(alert, payload)
     notification = NotificationLog(
         user_id=alert.user_id,
@@ -106,7 +131,11 @@ def route_telegram_delivery_for_alert(
         recipient=settings.telegram_chat_id,
         message=message,
         status=AlertDeliveryStatus.PENDING,
-        provider_payload={"source": "tradingview_webhook", "policy": "v1.3"},
+        provider_payload={
+            "source": "tradingview_webhook",
+            "policy": "v1.3",
+            "dedup_key": dedup_key,
+        },
     )
     db.add(notification)
     db.flush()
@@ -123,7 +152,7 @@ def route_telegram_delivery_for_alert(
         alert.delivery_status = AlertDeliveryStatus.SENT
         alert.delivery_error = None
         notification.status = AlertDeliveryStatus.SENT
-        notification.sent_at = datetime.now(UTC)
+        notification.sent_at = now
 
     db.commit()
 
@@ -139,6 +168,64 @@ def build_telegram_alert_message(alert: Alert, payload: TradingViewWebhookPayloa
             TELEGRAM_MANUAL_REVIEW_NOTICE,
         ]
     )
+
+
+def build_telegram_dedup_key(alert: Alert, payload: TradingViewWebhookPayload) -> str:
+    return ":".join(
+        [
+            payload.symbol.strip().upper(),
+            alert.alert_type.value,
+            payload.timeframe.value,
+        ]
+    )
+
+
+def has_recent_telegram_delivery(
+    db: Session,
+    user_id: int,
+    dedup_key: str,
+    now: datetime,
+) -> bool:
+    cutoff = now - TELEGRAM_DEDUP_WINDOW
+    recent_logs = _recent_telegram_logs(db, user_id, cutoff)
+    return any(
+        log.status in TELEGRAM_DELIVERY_BLOCKING_STATUSES
+        and isinstance(log.provider_payload, dict)
+        and log.provider_payload.get("dedup_key") == dedup_key
+        for log in recent_logs
+    )
+
+
+def has_recent_telegram_burst(db: Session, user_id: int, now: datetime) -> bool:
+    cutoff = now - TELEGRAM_BURST_WINDOW
+    recent_logs = _recent_telegram_logs(db, user_id, cutoff)
+    sent_or_pending_count = sum(
+        1 for log in recent_logs if log.status in TELEGRAM_DELIVERY_BLOCKING_STATUSES
+    )
+    return sent_or_pending_count >= TELEGRAM_BURST_LIMIT
+
+
+def _recent_telegram_logs(
+    db: Session,
+    user_id: int,
+    cutoff: datetime,
+) -> list[NotificationLog]:
+    return list(
+        db.scalars(
+            select(NotificationLog)
+            .where(
+                NotificationLog.user_id == user_id,
+                NotificationLog.channel == NotificationChannel.TELEGRAM,
+                NotificationLog.created_at >= cutoff,
+            )
+            .order_by(desc(NotificationLog.created_at), desc(NotificationLog.id))
+            .limit(100)
+        )
+    )
+
+
+def utc_now() -> datetime:
+    return datetime.now(UTC)
 
 
 def _mark_alert_delivery_skipped(db: Session, alert: Alert, reason: str) -> None:
