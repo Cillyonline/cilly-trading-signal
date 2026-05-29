@@ -166,13 +166,13 @@ dig +short trading.example.com
 7. Build and start the stack with Caddy.
 
 ```bash
-docker compose -f infra/docker-compose.yml --profile proxy up --build -d
+docker compose --env-file .env -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy up --build -d
 ```
 
 8. Check container state.
 
 ```bash
-docker compose -f infra/docker-compose.yml --profile proxy ps
+docker compose --env-file .env -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy ps
 ```
 
 9. Check API health through the public route.
@@ -223,13 +223,13 @@ git pull --ff-only origin main
 3. Rebuild and restart services.
 
 ```bash
-docker compose -f infra/docker-compose.yml --profile proxy up --build -d
+docker compose --env-file .env -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy up --build -d
 ```
 
 4. Run database migrations from the API container.
 
 ```bash
-docker compose -f infra/docker-compose.yml exec api uv run --with alembic --with pydantic-settings --with sqlalchemy --with "psycopg[binary]" alembic upgrade head
+docker compose --env-file .env -p cilly-trading-signal -f infra/docker-compose.yml exec api uv run --with alembic --with pydantic-settings --with sqlalchemy --with "psycopg[binary]" alembic upgrade head
 ```
 
 5. Re-check health and login.
@@ -243,13 +243,13 @@ curl -fsS https://trading.example.com/api/health
 Restart all services:
 
 ```bash
-docker compose -f infra/docker-compose.yml --profile proxy restart
+docker compose --env-file .env -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy restart
 ```
 
 Stop services without deleting volumes:
 
 ```bash
-docker compose -f infra/docker-compose.yml --profile proxy down
+docker compose --env-file .env -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy down
 ```
 
 Do not run `down --volumes` on a VPS unless you intentionally want to remove PostgreSQL data and have a verified backup.
@@ -288,7 +288,7 @@ Investigate if:
 ### Docker Containers
 
 ```bash
-docker compose -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy ps
+docker compose --env-file .env -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy ps
 ```
 
 Success:
@@ -307,9 +307,9 @@ Investigate if:
 Use logs only for short troubleshooting windows and review output for sensitive data before sharing.
 
 ```bash
-docker compose -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy logs --tail=100 api
-docker compose -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy logs --tail=100 web
-docker compose -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy logs --tail=100 caddy
+docker compose --env-file .env -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy logs --tail=100 api
+docker compose --env-file .env -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy logs --tail=100 web
+docker compose --env-file .env -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy logs --tail=100 caddy
 ```
 
 Investigate if:
@@ -321,7 +321,7 @@ Investigate if:
 ### PostgreSQL Health
 
 ```bash
-docker compose -p cilly-trading-signal -f infra/docker-compose.yml exec postgres pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+docker compose --env-file .env -p cilly-trading-signal -f infra/docker-compose.yml exec postgres pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
 ```
 
 Success:
@@ -413,13 +413,13 @@ Investigate if:
 Restart only this app's Compose project when needed:
 
 ```bash
-docker compose -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy restart
+docker compose --env-file .env -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy restart
 ```
 
 Stop only this app's Compose project when rollback is needed:
 
 ```bash
-docker compose -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy down
+docker compose --env-file .env -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy down
 ```
 
 Do not restart or stop the existing unrelated `staging` Compose project as part of this app's monitoring or rollback workflow.
@@ -517,14 +517,14 @@ Use this only for a disposable local or temporary Compose project. Do not use it
 
 ```bash
 git status --short
-docker compose -f infra/docker-compose.yml --profile proxy ps
-docker compose -f infra/docker-compose.yml --profile proxy down --volumes
+docker compose --env-file .env -f infra/docker-compose.yml --profile proxy ps
+docker compose --env-file .env -f infra/docker-compose.yml --profile proxy down --volumes
 ```
 
 For production-like VPS maintenance, prefer stopping without deleting volumes:
 
 ```bash
-docker compose -f infra/docker-compose.yml --profile proxy down
+docker compose --env-file .env -f infra/docker-compose.yml --profile proxy down
 ```
 
 ### Backup Warning
@@ -556,8 +556,8 @@ Linux/VPS-style shell for a disposable project:
 
 ```bash
 cp .env.example .env
-docker compose -f infra/docker-compose.yml --profile proxy up --build -d
-docker compose -f infra/docker-compose.yml --profile proxy ps
+docker compose --env-file .env -f infra/docker-compose.yml --profile proxy up --build -d
+docker compose --env-file .env -f infra/docker-compose.yml --profile proxy ps
 curl -fsS http://localhost:8000/api/health
 curl -k -fsS https://localhost/api/health
 ```
@@ -589,7 +589,7 @@ Use these checks after deploys, restarts, restores, and configuration changes. D
 Container status:
 
 ```bash
-docker compose -f infra/docker-compose.yml --profile proxy ps
+docker compose --env-file .env -f infra/docker-compose.yml --profile proxy ps
 ```
 
 API health through Caddy:
@@ -613,28 +613,28 @@ curl -I https://trading.example.com
 PostgreSQL health from the Compose service:
 
 ```bash
-docker compose -f infra/docker-compose.yml exec postgres pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+docker compose --env-file .env -f infra/docker-compose.yml exec postgres pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
 ```
 
 Recent logs:
 
 ```bash
-docker compose -f infra/docker-compose.yml --profile proxy logs --tail=200 api
-docker compose -f infra/docker-compose.yml --profile proxy logs --tail=200 web
-docker compose -f infra/docker-compose.yml --profile proxy logs --tail=200 postgres
-docker compose -f infra/docker-compose.yml --profile proxy logs --tail=200 caddy
+docker compose --env-file .env -f infra/docker-compose.yml --profile proxy logs --tail=200 api
+docker compose --env-file .env -f infra/docker-compose.yml --profile proxy logs --tail=200 web
+docker compose --env-file .env -f infra/docker-compose.yml --profile proxy logs --tail=200 postgres
+docker compose --env-file .env -f infra/docker-compose.yml --profile proxy logs --tail=200 caddy
 ```
 
 Follow logs while reproducing an issue:
 
 ```bash
-docker compose -f infra/docker-compose.yml --profile proxy logs -f api
-docker compose -f infra/docker-compose.yml --profile proxy logs -f web
+docker compose --env-file .env -f infra/docker-compose.yml --profile proxy logs -f api
+docker compose --env-file .env -f infra/docker-compose.yml --profile proxy logs -f web
 ```
 
 Expected healthy signals after restart or deploy:
 
-- `postgres` is `healthy` in `docker compose -f infra/docker-compose.yml --profile proxy ps`.
+- `postgres` is `healthy` in `docker compose --env-file .env -f infra/docker-compose.yml --profile proxy ps`.
 - `api`, `web`, and `caddy` are running or restarting only briefly.
 - `/api/health` returns successfully through the public domain.
 - The web route returns an HTTP success or redirect response through Caddy.
@@ -645,7 +645,7 @@ Expected healthy signals after restart or deploy:
 
 API does not start:
 
-- Check `docker compose -f infra/docker-compose.yml --profile proxy logs --tail=200 api`.
+- Check `docker compose --env-file .env -f infra/docker-compose.yml --profile proxy logs --tail=200 api`.
 - Look for unsafe production configuration errors first.
 - Confirm `.env` exists on the VPS and does not use local placeholder secrets.
 - Confirm `DATABASE_URL` matches `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB`.
@@ -653,21 +653,21 @@ API does not start:
 
 Web does not load:
 
-- Check `docker compose -f infra/docker-compose.yml --profile proxy logs --tail=200 web`.
+- Check `docker compose --env-file .env -f infra/docker-compose.yml --profile proxy logs --tail=200 web`.
 - Confirm `NEXT_PUBLIC_API_BASE_URL` uses `/api` for same-origin Caddy routing, or points to `https://<APP_DOMAIN>/api` for an explicit public API URL.
-- Confirm the web container is running in `docker compose -f infra/docker-compose.yml --profile proxy ps`.
+- Confirm the web container is running in `docker compose --env-file .env -f infra/docker-compose.yml --profile proxy ps`.
 - Check Caddy logs if the web container is healthy but the public domain fails.
 
 Database is unhealthy:
 
-- Check `docker compose -f infra/docker-compose.yml --profile proxy logs --tail=200 postgres`.
+- Check `docker compose --env-file .env -f infra/docker-compose.yml --profile proxy logs --tail=200 postgres`.
 - Confirm the PostgreSQL volume exists and disk space is available.
 - Confirm `POSTGRES_USER`, `POSTGRES_PASSWORD`, and `POSTGRES_DB` are consistent with `.env`.
 - Do not remove volumes while troubleshooting unless a verified restore path is ready.
 
 Caddy or HTTPS fails:
 
-- Check `docker compose -f infra/docker-compose.yml --profile proxy logs --tail=200 caddy`.
+- Check `docker compose --env-file .env -f infra/docker-compose.yml --profile proxy logs --tail=200 caddy`.
 - Confirm `APP_DOMAIN` is a real domain and DNS points to the VPS public IP.
 - Confirm ports `80` and `443` are open to the internet.
 - Confirm `infra/caddy/Caddyfile` routes `/api/*` to `api:8000` and all other traffic to `web:3000`.
@@ -692,7 +692,7 @@ Run this checklist after first deployment, restart, restore, or a production-lik
 
 | Step | Check | Expected Result | If It Fails |
 | --- | --- | --- | --- |
-| 1 | `docker compose -f infra/docker-compose.yml --profile proxy ps` | `postgres` is healthy and `api`, `web`, `caddy` are running. | Inspect service logs before retrying. |
+| 1 | `docker compose --env-file .env -f infra/docker-compose.yml --profile proxy ps` | `postgres` is healthy and `api`, `web`, `caddy` are running. | Inspect service logs before retrying. |
 | 2 | `curl -fsS https://<APP_DOMAIN>/api/health` | API health returns successfully. | Check API, Caddy, DNS, and database health. |
 | 3 | Open `https://<APP_DOMAIN>` | Web app loads over HTTPS. | Check web and Caddy logs. |
 | 4 | Log in with configured admin credentials. | Login succeeds and a secure session cookie is set. | Confirm `ADMIN_EMAIL`, password, API health, HTTPS, and `AUTH_COOKIE_SECURE`. |
@@ -823,7 +823,7 @@ git switch --detach <commit-sha>
 3. Rebuild and restart.
 
 ```bash
-docker compose -f infra/docker-compose.yml --profile proxy up --build -d
+docker compose --env-file .env -f infra/docker-compose.yml --profile proxy up --build -d
 ```
 
 4. Check health and core manual workflow.
@@ -838,7 +838,7 @@ If a migration has already changed the database, do not assume code rollback is 
 
 Minimum checks after first deploy or update:
 
-- `docker compose -f infra/docker-compose.yml --profile proxy ps` shows expected services running.
+- `docker compose --env-file .env -f infra/docker-compose.yml --profile proxy ps` shows expected services running.
 - `https://<APP_DOMAIN>/api/health` returns a healthy response.
 - Web app loads over HTTPS.
 - Admin login succeeds.

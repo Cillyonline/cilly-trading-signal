@@ -177,10 +177,12 @@ uv run --no-project --with pytest --with "fastapi[standard]" --with pydantic-set
 - `docs/DEPLOYMENT_RUNBOOK.md`
 - `docs/MVP_SMOKE_TEST.md`
 - `docs/MVP_RELEASE_CHECKLIST.md`
+- `docs/VPS_STAGING_DECISION_GATE.md`
+- `docs/V1_3_ALERT_ROUTING_SMOKE_TEST.md`
 
 Operational deployment, PostgreSQL backup/restore, healthcheck, logging, and deployment smoke-test steps are documented in `docs/DEPLOYMENT_RUNBOOK.md`. Backup files and logs may contain sensitive app data and must not be committed or shared without review.
 
-The latest end-to-end MVP smoke-test attempt is documented in `docs/MVP_SMOKE_TEST.md`. The current recorded run is blocked by local Docker Desktop engine availability and missing deterministic sample CSV fixtures; it is not a production-readiness claim.
+The local MVP smoke-test history is documented in `docs/MVP_SMOKE_TEST.md`. Private VPS staging smoke evidence and the conditional staging-only decision gate are documented in `docs/VPS_STAGING_SMOKE_TEST.md` and `docs/VPS_STAGING_DECISION_GATE.md`; this is not a production-readiness claim.
 
 The current MVP release posture is summarized in `docs/MVP_RELEASE_CHECKLIST.md`. The checklist separates Done, Partial, Missing, Blocked, and Not Included areas and must not be read as a production or profitability claim.
 
@@ -200,9 +202,10 @@ Implementiert:
 - Erklaerbare Signal-Erzeugung fuer Trend Pullback Long und Base Breakout Long mit Score, Status, Risk Flags, No-Trade-Reasons und Next Action.
 - Manuelles Trade Logging mit Risk/R:R-Berechnung, Events, Close-Flow, Journal und Performance-Kennzahlen in R.
 - Risk Settings fuer Account Size, maximales Risiko, Mindest-R:R und maximale offene Trades.
-- TradingView Webhook-Ingestion, Alert Events UI und expliziter Telegram-Testversand als Alert-Foundation ohne automatische Zustellung oder Ausfuehrung.
+- TradingView Webhook-Ingestion, Alert Events UI, expliziter Telegram-Testversand und policy-gesteuerte automatische Telegram-Alert-Zustellung mit Dedup/Rate-Limit ohne Ausfuehrung.
 - Docker Compose fuer Web, API und PostgreSQL sowie Caddy-Konfiguration fuer spaeteres VPS-Routing.
 - CI fuer API lint/tests, Web build und PostgreSQL/Alembic Migration Smoke.
+- Private VPS Staging Smoke Test und Conditional-Go-Entscheidung fuer kontrollierte Owner/Operator-Nutzung.
 
 Teilweise umgesetzt oder noch MVP-limitiert:
 
@@ -211,17 +214,16 @@ Teilweise umgesetzt oder noch MVP-limitiert:
 - Auth ist bewusst Single-User; Multi-User, Rollenmodell und Self-Service-Registrierung sind nicht Teil des MVP.
 - Risk Settings erzwingen Basisregeln beim manuellen Trade Logging, ersetzen aber kein vollstaendiges Portfolio-Risikomanagement.
 - Dashboard, Journal und Performance sind funktional, aber noch Basisansichten.
-- Alerting ist als Review-/Test-Foundation vorhanden; automatische Alert-Routing-Regeln und produktive Zustellung sind noch nicht abgeschlossen.
+- Alerting ist fuer v1.3 als Review-Routing implementiert; echter Telegram-Provider-Smoke auf dem VPS bleibt ein operator-run Schritt mit redigierter Evidenz.
 
 Nicht enthalten:
 
 - Automatische Orderausfuehrung.
 - Broker- oder Exchange-Integration.
-- Automatische Telegram-Alert-Zustellung und produktive Alert-Routing-Regeln.
 - Live Market Data, Backtesting Engine, Mobile App oder Multi-User SaaS-Betrieb.
 
 Aktuelle Blocker und offene Punkte:
 
 - Keine Produktionsfreigabe: Deployment, Monitoring, Backups, Secrets-Betrieb und Security Review sind noch offen.
-- Der dokumentierte MVP-Smoke-Test ist noch blockiert, bis Docker Engine Zugriff hergestellt ist. Deterministische Sample-CSV-Fixtures liegen unter `test-data/csv/` bereit (siehe `docs/MVP_SMOKE_TEST.md`).
+- Private VPS Staging ist nur conditional-go fuer kontrollierte Owner/Operator-Nutzung; Firewall-Hardening, Non-Root-Deploy-User, Backup-Automation, Monitoring-Automation und ein post-hardening Smoke Test bleiben offen.
 - Dokumentation und Roadmap muessen nach jedem groesseren Slice weiter synchron gehalten werden.

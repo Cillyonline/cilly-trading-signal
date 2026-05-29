@@ -161,7 +161,7 @@ This is a planned sequence, not an instruction to run now.
 9. Start stack with the Caddy proxy profile:
 
 ```bash
-docker compose -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy up --build -d
+docker compose --env-file .env -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy up --build -d
 ```
 
 10. Check services:
@@ -233,4 +233,4 @@ No-go if:
 - #161: define minimum monitoring checks in `docs/DEPLOYMENT_RUNBOOK.md`.
 - #162: verify PostgreSQL backup and restore path on VPS-like staging. Evidence is recorded in `docs/MVP_RELEASE_CHECKLIST.md`.
 - #163: run first private VPS smoke test after deployment approval. Procedure and evidence template: `docs/VPS_STAGING_SMOKE_TEST.md`.
-- #164: document private VPS go/no-go decision gate.
+- #164: private VPS staging decision gate is documented in `docs/VPS_STAGING_DECISION_GATE.md` and records a Conditional Go for private staging only.

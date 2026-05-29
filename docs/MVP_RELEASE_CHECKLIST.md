@@ -40,6 +40,8 @@ This checklist records the current MVP v1.2 release-candidate posture for review
 - Dashboard, Journal, Performance, Alerts, and Settings remain MVP-level views, not full analytics or operations consoles.
 - Risk enforcement covers core manual trade logging rules, not full portfolio exposure, correlation, or account-level risk management.
 - Production monitoring and operational alerting are not documented as passed.
+- Private VPS staging has a separate Conditional Go for controlled owner/operator use only. See [Private VPS Staging Decision Gate](VPS_STAGING_DECISION_GATE.md).
+- v1.3 alert routing has local secret-free smoke evidence. See [v1.3 Alert Routing Smoke Test](V1_3_ALERT_ROUTING_SMOKE_TEST.md).
 
 ### Not Included
 
@@ -91,8 +93,8 @@ This checklist records the current MVP v1.2 release-candidate posture for review
 - Dashboard, Journal, Performance, Alerts, and Settings are MVP-level views, not full analytics or operations consoles.
 - Risk enforcement covers core manual trade logging rules, not full portfolio exposure, correlation, or account-level risk management.
 - Stale signal handling flags old saved signals, but does not refresh market data or re-run strategy automatically.
-- Telegram support currently covers explicit operator test messages; production alert routing is not complete.
-- TradingView webhook support persists review events, but does not trigger broker execution, auto-trade creation, or automatic Telegram delivery.
+- Telegram support covers explicit operator test messages and policy-gated automatic review alerts with dedup/rate limiting; the real VPS Telegram provider smoke remains an operator-run sanitized check.
+- TradingView webhook support persists review events and may route policy-allowed Telegram review prompts, but does not trigger broker execution, auto-trade creation, buy/sell instructions, or trading advice.
 - Production monitoring and operational alerting are not documented as passed.
 - Full mobile app/PWA hardening beyond responsive MVP layouts is not documented as passed.
 
