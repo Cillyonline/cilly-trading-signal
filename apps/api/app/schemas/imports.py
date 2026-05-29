@@ -48,3 +48,25 @@ class ImportHistoryItem(BaseModel):
     last_synced_at: datetime | None
     provider_name: str | None
     file_name: str | None
+
+
+class MarketDataSyncRequest(BaseModel):
+    watchlist_item_id: int
+    timeframe: Timeframe
+
+
+class MarketDataSyncResponse(BaseModel):
+    watchlist_item_id: int
+    series_id: int
+    source: MarketDataSource
+    timeframe: Timeframe
+    provider_name: str | None
+    provider_symbol: str | None
+    provider_exchange: str | None
+    provider_timeframe: str | None
+    sync_status: MarketDataSyncStatus
+    freshness_status: MarketDataFreshnessStatus
+    last_synced_at: datetime | None
+    end_time: datetime | None
+    sync_error_code: str | None
+    sync_error_message: str | None
