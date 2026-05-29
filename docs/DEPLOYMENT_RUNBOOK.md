@@ -428,16 +428,22 @@ Investigate if:
 ### Backup Freshness
 
 ```bash
-ls -lah /srv/backups/cilly-trading-signal/postgres 2>/dev/null || true
+systemctl list-timers cilly-postgres-backup.timer
+systemctl status cilly-postgres-backup.service --no-pager
+find /srv/backups/cilly-trading-signal/postgres -maxdepth 1 -type f -name 'cilly_trading_signal_*.dump' -printf '%TY-%Tm-%Td %TH:%TM %s %f\n' | sort
 ```
 
 Success:
 
-- Recent expected backup artifacts exist after backup automation or manual backup is approved.
+- The `cilly-postgres-backup.timer` exists and has a next run time.
+- The latest service run succeeded or any failure is understood and tracked.
+- Recent expected non-zero backup artifacts exist after backup automation or manual backup is approved.
 - Backup files are outside the repository checkout.
 
 Investigate if:
 
+- The timer is missing, disabled, or has no next run time.
+- The service failed.
 - No recent backup exists after backup procedures are enabled.
 - Backups are stored under the repository checkout, such as `/srv/apps/cilly-trading-signal` or the earlier root-owned checkout path.
 - Backup file sizes are unexpectedly zero or much smaller than expected.
@@ -761,12 +767,20 @@ Record smoke-test findings outside committed secrets. If logs are needed for a f
 
 The MVP database stores watchlist items, imported candles, indicator snapshots, signals, trades, journal entries, settings, and auth data. Treat backups as sensitive data.
 
-Backup files must not be committed to the repository or attached to issues/PRs. Store them outside the repo working tree, for example under `/var/backups/cilly-trading-signal/postgres` with restrictive permissions.
+Backup files must not be committed to the repository or attached to issues/PRs. Store them outside the repo working tree. The private VPS staging path is:
+
+```text
+/srv/backups/cilly-trading-signal/postgres
+```
 
 Create a backup with the helper script:
 
 ```bash
-BACKUP_DIR=/var/backups/cilly-trading-signal/postgres ./scripts/backup_postgres.sh
+BACKUP_DIR=/srv/backups/cilly-trading-signal/postgres \
+COMPOSE_ENV_FILE=.env \
+RETENTION_DAYS=14 \
+RETENTION_MIN_KEEP=7 \
+./scripts/backup_postgres.sh
 ```
 
 Set `BACKUP_DIR` explicitly for staging, VPS, production-like, or real-data backups. If `BACKUP_DIR` is not set, the helper uses a repository-external default next to the checkout:
@@ -780,15 +794,21 @@ The helper refuses to write a backup inside the repository working tree unless `
 The script creates a PostgreSQL custom-format dump using the running `postgres` Compose service. It reads these optional environment variables:
 
 - `COMPOSE_FILE`, default `infra/docker-compose.yml`.
+- `COMPOSE_PROJECT_NAME`, optional Docker Compose variable. Set to `cilly-trading-signal` for private VPS staging.
+- `COMPOSE_ENV_FILE`, default unset. Set to `.env` for private VPS staging so Compose uses the intended server-local environment file.
 - `BACKUP_DIR`, default `../cilly-postgres-backups/postgres` resolved outside the repository checkout.
 - `ALLOW_REPO_BACKUP_DIR`, default unset. Set to `true` only for disposable local tests that intentionally write inside the repository working tree.
 - `POSTGRES_DB`, default `cilly_trading_signal`.
 - `POSTGRES_USER`, default `postgres`.
+- `RETENTION_DAYS`, default unset. When set, old matching dump files are removed after a successful backup.
+- `RETENTION_MIN_KEEP`, default `7`. Retention never deletes below this number of matching dump files.
 
-Minimum retention guidance:
+Private VPS staging retention policy:
 
 - Keep at least one known-good backup before each deployment.
-- Keep several recent daily backups while operating the MVP.
+- Run one automated backup per day.
+- Keep backups for 14 days.
+- Always keep at least seven matching dumps, even if older than 14 days.
 - Move important backups off the VPS or to encrypted storage when handling real user data.
 - Periodically delete old backups intentionally; do not let disk usage grow without review.
 
@@ -799,6 +819,87 @@ Storage risks:
 - Do not store backups in public buckets, synced folders, screenshots, or support tickets.
 - Keep local disposable backup tests separate from staging, VPS, production-like, and real-data backups.
 
+### Private VPS Backup Automation
+
+Use a systemd timer on the VPS to run daily backups as the non-root deploy user from
+`docs/VPS_DEPLOY_USER_RUNBOOK.md`. This avoids storing a long shell command in a user
+crontab and keeps logs visible through `journalctl`.
+
+Create the backup directory as root:
+
+```bash
+install -d -o cillydeploy -g cillydeploy -m 750 /srv/backups/cilly-trading-signal/postgres
+```
+
+Create `/etc/systemd/system/cilly-postgres-backup.service`:
+
+```ini
+[Unit]
+Description=Cilly Trading Signal PostgreSQL backup
+Wants=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+User=cillydeploy
+Group=cillydeploy
+WorkingDirectory=/srv/apps/cilly-trading-signal
+Environment=BACKUP_DIR=/srv/backups/cilly-trading-signal/postgres
+Environment=COMPOSE_PROJECT_NAME=cilly-trading-signal
+Environment=COMPOSE_ENV_FILE=.env
+Environment=RETENTION_DAYS=14
+Environment=RETENTION_MIN_KEEP=7
+ExecStart=/usr/bin/env bash ./scripts/backup_postgres.sh
+```
+
+Create `/etc/systemd/system/cilly-postgres-backup.timer`:
+
+```ini
+[Unit]
+Description=Run Cilly Trading Signal PostgreSQL backup daily
+
+[Timer]
+OnCalendar=*-*-* 03:15:00
+Persistent=true
+RandomizedDelaySec=15m
+
+[Install]
+WantedBy=timers.target
+```
+
+Enable and start the timer:
+
+```bash
+systemctl daemon-reload
+systemctl enable --now cilly-postgres-backup.timer
+systemctl list-timers cilly-postgres-backup.timer
+```
+
+Trigger one backup manually after enabling the unit:
+
+```bash
+systemctl start cilly-postgres-backup.service
+systemctl status cilly-postgres-backup.service --no-pager
+```
+
+Verify backup freshness without exposing dump contents:
+
+```bash
+find /srv/backups/cilly-trading-signal/postgres -maxdepth 1 -type f -name 'cilly_trading_signal_*.dump' -printf '%TY-%Tm-%Td %TH:%TM %s %f\n' | sort
+curl -fsS https://trading.cillyonline.de/api/health
+```
+
+Expected:
+
+- A non-zero `.dump` file exists under `/srv/backups/cilly-trading-signal/postgres`.
+- No dump files exist inside `/srv/apps/cilly-trading-signal`.
+- API health still passes after the backup.
+- The unrelated `staging` Compose project remains separate and running.
+
+Record only sanitized evidence: date/time, service/timer status PASS/FAIL, backup
+directory path, non-zero artifact PASS/FAIL, API health PASS/FAIL, and whether a
+restore test was performed or intentionally deferred.
+
 ## PostgreSQL Restore
 
 Restore only after confirming the target database can be replaced and the selected backup file is the intended source. A restore should be tested on a non-production copy before relying on it operationally.
@@ -806,7 +907,7 @@ Restore only after confirming the target database can be replaced and the select
 Restore with the helper script:
 
 ```bash
-./scripts/restore_postgres.sh /var/backups/cilly-trading-signal/postgres/cilly_trading_signal_YYYYMMDDTHHMMSSZ.dump
+./scripts/restore_postgres.sh /srv/backups/cilly-trading-signal/postgres/cilly_trading_signal_YYYYMMDDTHHMMSSZ.dump
 ```
 
 The restore script:
