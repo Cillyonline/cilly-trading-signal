@@ -1,7 +1,13 @@
 import type { Signal, SignalReviewNoteUpdatePayload, SignalStatusUpdatePayload } from "@/types/signals";
 import type { AlertEvent, TelegramTestMessageResult } from "@/types/alerts";
 import type { AuthUser, LoginPayload } from "@/types/auth";
-import type { CsvImportResult, ImportHistoryItem, MarketDataAnalysisResult } from "@/types/imports";
+import type {
+  CsvImportResult,
+  ImportHistoryItem,
+  MarketDataAnalysisResult,
+  MarketDataSyncRequest,
+  MarketDataSyncResult,
+} from "@/types/imports";
 import type { PerformanceSummary } from "@/types/performance";
 import type { RiskSettings, RiskSettingsUpdatePayload } from "@/types/settings";
 import type {
@@ -205,6 +211,22 @@ export async function analyzeImport(seriesId: number): Promise<MarketDataAnalysi
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     throw new Error(formatApiError(body?.detail, "Analyse konnte nicht gestartet werden."));
+  }
+
+  return response.json();
+}
+
+export async function syncMarketData(payload: MarketDataSyncRequest): Promise<MarketDataSyncResult> {
+  const response = await credentialedFetch(`${API_BASE_URL}/imports/sync`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  assertAuthenticatedResponse(response);
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(formatApiError(body?.detail, "Provider-Sync konnte nicht gestartet werden."));
   }
 
   return response.json();
