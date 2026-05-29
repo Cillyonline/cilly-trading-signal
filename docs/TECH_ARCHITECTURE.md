@@ -293,6 +293,31 @@ Pflichtfelder:
 - close
 - volume
 
+## Market Data Provider Preparation
+
+v1.4 prepares provider-backed market data without adding a real provider integration
+yet. The provider decision matrix and initial scope are documented in
+`docs/MARKET_DATA_PROVIDER_DECISION.md`.
+
+Current direction:
+
+- Keep TradingView CSV import as a supported baseline and fallback.
+- Add provider-neutral configuration, source metadata, freshness metadata, and sync
+  status before any external API calls.
+- Treat Daily/EOD data as the first practical provider-backed target.
+- Keep `4H`/intraday support unresolved until provider cost, licensing, coverage, and
+  rate-limit constraints are accepted.
+- Make stale, failed, partial, and unknown data states visible and conservative.
+
+Explicit non-goals for provider preparation:
+
+- No broker integration.
+- No automatic order execution.
+- No live or real-time data claim.
+- No automatic signal generation from provider data.
+- No buy/sell instruction, trading advice, profitability, or production-readiness
+  claim.
+
 ## Signal Engine Flow
 
 1. Relevante MarketDataSeries laden.

@@ -31,7 +31,7 @@ Done:
 - Risk Settings API/UI with account size, max risk percent, minimum R:R, and max open trades.
 - Dashboard and safety wording for manual execution only.
 - TradingView webhook ingestion, Telegram test delivery, policy-gated automatic Telegram routing with dedup/rate limiting, alert event review UI, manual signal review workflow, and stale signal visibility.
-- Private VPS staging smoke test and conditional staging-only decision gate for controlled owner/operator use.
+- Private VPS staging smoke test, operations hardening, and staging-only decision gate for controlled owner/operator use.
 
 Partial:
 
@@ -43,8 +43,8 @@ Partial:
 
 Missing:
 
-- Live market data API integration.
-- Monitoring and operational alerting.
+- Provider-backed market data API integration.
+- Production-grade monitoring and operational alerting.
 - Multi-user mode, roles beyond the MVP admin, public registration, and password reset flows.
 - Backtesting, strategy validation, or profitability reporting.
 - Broker integration or automatic order execution.
@@ -54,7 +54,7 @@ Current blockers and risks:
 - The app is not production-ready until deployment is repeatedly verified and monitoring, secrets operations, and security review are completed.
 - Strategy behavior remains a deterministic decision-support hypothesis and must not be presented as trading advice or validated profitability.
 - Local development depends on `uv`, Python 3.12, Node.js 20, Docker, and a reachable PostgreSQL database or Docker Compose.
-- Private VPS staging is conditionally accepted for controlled owner/operator use only; production-like or public use remains blocked until security hardening, deploy-user posture, backup automation, monitoring automation, and data-handling readiness are addressed.
+- Private VPS staging is accepted for controlled owner/operator use only after documented operations hardening; production-like or public use remains blocked until a separate operational readiness decision addresses data-handling readiness, offsite backups, security review, and monitoring expectations.
 - MVP release posture is tracked in `docs/MVP_RELEASE_CHECKLIST.md`; it separates Done, Partial, Missing, Blocked, and Not Included areas without claiming production readiness.
 
 ## v0.1 - Foundation
@@ -196,13 +196,41 @@ Done when:
 - Message wording remains manual-review only and contains no buy/sell instruction.
 - No secrets, chat IDs, webhook secrets, or private trading data are exposed in docs, logs, issues, or PRs.
 
+## v1.4 - Market Data Preparation
+
+Goal: prepare the product for future provider-backed market data without broker
+integration, automatic execution, trading advice, or live-signal claims.
+
+Status: Planned. Provider selection is not final; the initial path is documented in
+`docs/MARKET_DATA_PROVIDER_DECISION.md`.
+
+Primary work:
+
+- Define the provider decision matrix for stocks and crypto.
+- Preserve TradingView CSV import as a supported baseline and fallback.
+- Add provider-neutral configuration, data source metadata, freshness metadata, and
+  sync status handling.
+- Prepare schema and service boundaries before adding any real provider API calls.
+- Make data source and freshness visible in API/UI so stale or unknown data cannot look
+  equivalent to fresh data.
+
+Done when:
+
+- Provider choice, open questions, and unsupported needs are documented.
+- CSV and future provider data can be represented distinctly.
+- Stale, failed, partial, or unknown market data is conservative and visible.
+- No API keys, provider secrets, subscription details, or private trading data are
+  committed or pasted.
+- No real-time, production-readiness, profitability, broker-readiness, trading advice,
+  or automatic-execution claim is introduced.
+
 ## Not Now
 
 These are intentionally outside the near-term delivery plan:
 
 - Automatic order execution.
 - Broker or Trade Republic integration.
-- Live market data API.
+- Real-time market data claims.
 - Multi-user mode.
 - Native Android app.
 - Complex backtesting engine.
