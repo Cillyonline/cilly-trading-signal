@@ -197,6 +197,8 @@ Implementiert:
 - Single-User Auth mit HttpOnly Session-Cookie, ohne oeffentliche Registrierung und ohne clientseitige Token-Speicherung.
 - Watchlist-Verwaltung fuer Aktien und Krypto.
 - TradingView CSV Import fuer `1W`, `1D` und `4H` mit Pflichtfeld-, Plausibilitaets- und Kerzenanzahl-Pruefung.
+- Marktdaten-Source/Freshness/Sync-Metadaten fuer CSV- und Provider-Serien, inklusive konservativer Stale-/Failed-/Partial-Anzeige.
+- Manueller, serverseitig geschuetzter Provider-Sync fuer Daily/EOD-Daten ueber den ersten Alpha-Vantage-Adapter, disabled-by-default und ohne Scheduler.
 - Persistierte Multi-Timeframe-Analyse mit echten `1W`, `1D` und `4H` Daten als Grundlage fuer konservative Signale.
 - Indikator-Basis fuer EMA, RSI, ATR, Volumen, Relative Volume und Swing-Struktur.
 - Erklaerbare Signal-Erzeugung fuer Trend Pullback Long und Base Breakout Long mit Score, Status, Risk Flags, No-Trade-Reasons und Next Action.
@@ -209,7 +211,8 @@ Implementiert:
 
 Teilweise umgesetzt oder noch MVP-limitiert:
 
-- CSV-Daten kommen weiterhin manuell aus TradingView; es gibt keine Live-Marktdaten-API.
+- TradingView CSV bleibt die manuelle Baseline und der Fallback; Provider-Sync ist optional, manuell ausgeloest und nicht als Live- oder Realtime-Datenquelle zu verstehen.
+- Der aktuelle Provider-Pfad deckt Daily/EOD zuerst ab; `4H`/Intraday-Providerdaten bleiben nicht zugesagt.
 - Analyse und Signale sind deterministisch und konservativ, aber keine validierte Strategie und keine Gewinnprognose.
 - Auth ist bewusst Single-User; Multi-User, Rollenmodell und Self-Service-Registrierung sind nicht Teil des MVP.
 - Risk Settings erzwingen Basisregeln beim manuellen Trade Logging, ersetzen aber kein vollstaendiges Portfolio-Risikomanagement.
@@ -220,10 +223,10 @@ Nicht enthalten:
 
 - Automatische Orderausfuehrung.
 - Broker- oder Exchange-Integration.
-- Live Market Data, Backtesting Engine, Mobile App oder Multi-User SaaS-Betrieb.
+- Live Market Data, Realtime-Signale, Backtesting Engine, Mobile App oder Multi-User SaaS-Betrieb.
 
 Aktuelle Blocker und offene Punkte:
 
 - Keine Produktionsfreigabe: Deployment, Monitoring, Backups, Secrets-Betrieb und Security Review sind noch offen.
-- Private VPS Staging ist nur conditional-go fuer kontrollierte Owner/Operator-Nutzung; Firewall-Hardening, Non-Root-Deploy-User, Backup-Automation, Monitoring-Automation und ein post-hardening Smoke Test bleiben offen.
+- Private VPS Staging ist nur conditional-go fuer kontrollierte Owner/Operator-Nutzung; breitere oder produktionsnahe Nutzung braucht weiterhin separate Operational-Readiness-Entscheidungen.
 - Dokumentation und Roadmap muessen nach jedem groesseren Slice weiter synchron gehalten werden.

@@ -141,11 +141,12 @@ MVP+:
 
 - TradingView Webhook Alerts
 - Telegram Notifications
+- manueller Provider-Sync fuer Daily/EOD-Marktdaten, disabled-by-default und mit Source/Freshness-Kontext
 
 Spaeter:
 
 - TradingView Screener CSV
-- Kursdaten-API
+- weitere Kursdaten-APIs und Provider-Timeframes nach Kosten-, Lizenz- und Rate-Limit-Pruefung
 - automatische Marktaktualisierung
 - Broker-/Exchange-Import optional
 
@@ -248,7 +249,7 @@ Spaeter:
 
 - TradingView Screener CSV importieren
 - viele Symbole vorfiltern
-- automatische Watchlist-Kandidaten erzeugen
+- manuell bestaetigte Watchlist-Kandidaten erzeugen
 - Marktregime beruecksichtigen
 
 ### Phase 10: PWA / Mobile

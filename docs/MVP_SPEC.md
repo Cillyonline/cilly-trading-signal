@@ -45,9 +45,13 @@ Pro Symbol werden gespeichert:
 - aktiv/inaktiv
 - Notizen
 
-### 2. CSV Hochladen
+### 2. Marktdaten Bereitstellen
 
-Der Nutzer laedt TradingView CSV-Daten hoch.
+Der Nutzer laedt TradingView CSV-Daten hoch. Optional kann ein manueller, serverseitig
+geschuetzter Provider-Sync fuer unterstuetzte Daily/EOD-Daten angefragt werden, wenn
+die Umgebung bewusst dafuer konfiguriert ist. Provider-Sync ist disabled-by-default,
+kein Live-Datenfeed und erzeugt keine automatische Analyse, kein Signal und keinen
+Trade.
 
 Pflichtfelder:
 
@@ -64,7 +68,7 @@ Zusatzangaben:
 - Timeframe: 1W / 1D / 4H
 - Asset Class
 
-Das Tool prueft Pflichtfelder, ausreichend Kerzen, fehlende Werte, Plausibilitaet und Timeframe-Zuordnung.
+Das Tool prueft Pflichtfelder, ausreichend Kerzen, fehlende Werte, Plausibilitaet und Timeframe-Zuordnung. Gespeicherte Marktdaten tragen Source-, Freshness- und Sync-Status, damit stale, failed, partial oder unknown Daten konservativ behandelt werden.
 
 ### 3. Analyse Starten
 
@@ -205,6 +209,14 @@ Funktionen:
 - Daten pruefen
 - Import starten
 - Analyse starten
+
+### Provider Sync
+
+Funktionen:
+
+- manuelle Sync-Anfrage fuer ein Watchlist-Symbol und einen Timeframe
+- Anzeige von Sync-Status, Freshness, Provider-Kontext und sanitisierten Fehlern
+- keine Scheduler, keine Live-/Realtime-Anzeige, keine automatische Analyse und keine Trade-Erstellung
 
 ### Signals
 
