@@ -1,5 +1,5 @@
 from collections.abc import Iterator
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 
 import pytest
@@ -51,9 +51,9 @@ def login(client: TestClient) -> None:
     assert response.status_code == 200
 
 
-def valid_csv(row_count: int = 20) -> str:
+def valid_csv(row_count: int = 20, start: date | None = None) -> str:
     rows = ["time,open,high,low,close,volume"]
-    start = date(2024, 1, 1)
+    start = start or date(2024, 1, 1)
     for index in range(row_count):
         current_date = start + timedelta(days=index)
         rows.append(f"{current_date.isoformat()},100,110,90,105,1000")
@@ -123,7 +123,7 @@ def test_import_csv_persists_valid_candles(client: TestClient) -> None:
     assert result["start_time"].startswith("2024-01-01")
     assert result["end_time"].startswith("2024-01-20")
     assert result["source"] == "tradingview_csv"
-    assert result["freshness_status"] == "unknown"
+    assert result["freshness_status"] == "stale"
     assert result["sync_status"] == "not_applicable"
     assert result["last_synced_at"] is None
     assert result["errors"] == []
@@ -153,11 +153,36 @@ def test_list_imports_returns_authenticated_user_history(client: TestClient) -> 
     assert body[0]["end_time"].startswith("2024-01-20")
     assert body[0]["imported_at"] is not None
     assert body[0]["source"] == "tradingview_csv"
-    assert body[0]["freshness_status"] == "unknown"
+    assert body[0]["freshness_status"] == "stale"
     assert body[0]["sync_status"] == "not_applicable"
     assert body[0]["last_synced_at"] is None
     assert body[0]["provider_name"] is None
     assert body[0]["file_name"] == "aapl-daily.csv"
+
+
+def test_import_csv_marks_recent_daily_data_fresh(client: TestClient) -> None:
+    watchlist_item_id = create_watchlist_item(client)
+    start = (datetime.now(UTC) - timedelta(days=19)).date()
+
+    response = post_csv_import(client, watchlist_item_id, valid_csv(start=start))
+
+    assert response.status_code == 200
+    result = response.json()
+    assert result["source"] == "tradingview_csv"
+    assert result["freshness_status"] == "fresh"
+    assert result["sync_status"] == "not_applicable"
+
+
+def test_import_csv_marks_old_daily_data_stale(client: TestClient) -> None:
+    watchlist_item_id = create_watchlist_item(client)
+
+    response = post_csv_import(client, watchlist_item_id, valid_csv(start=date(2024, 1, 1)))
+
+    assert response.status_code == 200
+    result = response.json()
+    assert result["source"] == "tradingview_csv"
+    assert result["freshness_status"] == "stale"
+    assert result["sync_status"] == "not_applicable"
 
 
 def test_list_imports_rejects_unauthenticated_request(client: TestClient) -> None:
