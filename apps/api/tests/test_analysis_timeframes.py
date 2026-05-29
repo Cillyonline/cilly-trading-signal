@@ -9,6 +9,7 @@ from app.db.base import Base
 from app.models.enums import (
     AssetClass,
     MarketDataSource,
+    MarketDataFreshnessStatus,
     MarketDataStatus,
     SignalStatus,
     StrategyType,
@@ -197,8 +198,63 @@ def test_missing_4h_trigger_data_prevents_armed_status() -> None:
             )
         )
 
+    assert result.status == SignalStatus.NO_SETUP
+    assert "missing_4H_data" in result.risk_flags
+
+
+def test_stale_required_timeframe_data_prevents_armed_status() -> None:
+    with make_session() as db:
+        watchlist_item = create_watchlist_item(db)
+        create_series_with_data(db, watchlist_item, Timeframe.ONE_WEEK, Decimal("120"))
+        daily = create_series_with_data(
+            db,
+            watchlist_item,
+            Timeframe.ONE_DAY,
+            Decimal("100"),
+            freshness_status=MarketDataFreshnessStatus.STALE,
+        )
+        create_series_with_data(db, watchlist_item, Timeframe.FOUR_HOURS, Decimal("103"))
+
+        result = evaluate_mvp_signal_engine(
+            build_signal_engine_input(
+                db,
+                daily,
+                load_series_candles(db, daily),
+                load_series_snapshots(db, daily),
+            )
+        )
+
         assert result.status == SignalStatus.NO_SETUP
-        assert "missing_4H_data" in result.risk_flags
+        assert "market_data_stale_1D" in result.risk_flags
+        assert "poor_data_quality" in result.no_trade_reasons
+
+
+def test_unknown_required_timeframe_data_prevents_armed_status() -> None:
+    with make_session() as db:
+        watchlist_item = create_watchlist_item(db)
+        weekly = create_series_with_data(
+            db,
+            watchlist_item,
+            Timeframe.ONE_WEEK,
+            Decimal("120"),
+            freshness_status=MarketDataFreshnessStatus.UNKNOWN,
+        )
+        daily = create_series_with_data(db, watchlist_item, Timeframe.ONE_DAY, Decimal("100"))
+        create_series_with_data(db, watchlist_item, Timeframe.FOUR_HOURS, Decimal("103"))
+
+        result = evaluate_mvp_signal_engine(
+            build_signal_engine_input(
+                db,
+                daily,
+                load_series_candles(db, daily),
+                load_series_snapshots(db, daily),
+            )
+        )
+
+        assert weekly.freshness_status == MarketDataFreshnessStatus.UNKNOWN
+        assert result.status == SignalStatus.NO_SETUP
+        assert "market_data_unknown_1W" in result.risk_flags
+        assert "poor_data_quality" in result.no_trade_reasons
 
 
 def test_single_daily_import_cannot_produce_armed_setup() -> None:
@@ -287,6 +343,7 @@ def create_series_with_data(
     timeframe: Timeframe,
     latest_close: Decimal,
     candle_count: int = 201,
+    freshness_status: MarketDataFreshnessStatus = MarketDataFreshnessStatus.FRESH,
 ) -> MarketDataSeries:
     series = MarketDataSeries(
         watchlist_item_id=watchlist_item.id,
@@ -294,6 +351,7 @@ def create_series_with_data(
         timeframe=timeframe,
         candle_count=candle_count,
         status=MarketDataStatus.ANALYZED,
+        freshness_status=freshness_status,
         validation_errors=None,
         file_name=f"{timeframe.value}.csv",
     )
@@ -341,6 +399,7 @@ def create_series_with_base_breakout(
     breakout_close: Decimal,
     breakout_high: Decimal | None = None,
     with_snapshots: bool = True,
+    freshness_status: MarketDataFreshnessStatus = MarketDataFreshnessStatus.FRESH,
 ) -> MarketDataSeries:
     candle_count = 201
     series = MarketDataSeries(
@@ -349,6 +408,7 @@ def create_series_with_base_breakout(
         timeframe=timeframe,
         candle_count=candle_count,
         status=MarketDataStatus.ANALYZED,
+        freshness_status=freshness_status,
         validation_errors=None,
         file_name=f"{timeframe.value}-base.csv",
     )

@@ -3,7 +3,13 @@ from decimal import Decimal
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from app.models.enums import Bias, MarketDataStatus, StrategyType, Timeframe
+from app.models.enums import (
+    Bias,
+    MarketDataFreshnessStatus,
+    MarketDataStatus,
+    StrategyType,
+    Timeframe,
+)
 from app.models.market_data import IndicatorSnapshot, MarketDataCandle, MarketDataSeries
 from app.schemas.analysis import MarketDataAnalysisResult, SignalAnalysisResult
 from app.services.indicators import (
@@ -349,6 +355,8 @@ def base_range_too_wide(base_high: Decimal | None, base_low: Decimal | None) -> 
 def timeframe_quality_flags(timeframe_data: dict[Timeframe, TimeframeAnalysisData]) -> list[str]:
     flags: list[str] = []
     for timeframe, data in timeframe_data.items():
+        if data.series.freshness_status != MarketDataFreshnessStatus.FRESH:
+            flags.append(f"market_data_{data.series.freshness_status.value}_{timeframe.value}")
         latest_snapshot = data.latest_snapshot
         if len(data.candles) < MIN_ANALYSIS_CANDLES:
             flags.append(f"{timeframe.value}_insufficient_candle_history")
