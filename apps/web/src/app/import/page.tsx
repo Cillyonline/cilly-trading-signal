@@ -315,7 +315,8 @@ export default function ImportPage() {
               </div>
               <p className="rounded-2xl border border-yellow-300/20 bg-yellow-300/10 p-3 text-yellow-50">
                 Wenn Provider-Sync im Backend deaktiviert oder nicht konfiguriert ist, wird der
-                Request sicher als skipped/failed markiert und ohne Provider-Daten fortgesetzt.
+                Request sicher als skipped oder failed markiert. Es wird keine Analyse und kein
+                Trade automatisch erstellt.
               </p>
               <button
                 disabled={isSyncing || isLoading || items.length === 0}
@@ -605,8 +606,15 @@ function ImportHistoryCard({
 }
 
 function ProviderSyncResultCard({ result }: { result: MarketDataSyncResult }) {
+  const state = providerSyncState(result);
+
   return (
     <article className="grid gap-5 p-5">
+      <div className={`rounded-2xl border p-4 ${state.className}`}>
+        <p className="text-sm font-semibold">{state.title}</p>
+        <p className="mt-2 text-sm">{state.message}</p>
+      </div>
+
       <div className="flex flex-wrap items-center gap-3">
         <span className="rounded-full border border-sky-300/20 bg-sky-300/10 px-3 py-1 text-xs text-sky-100">
           Provider: {result.provider_name ?? "-"}
@@ -632,7 +640,7 @@ function ProviderSyncResultCard({ result }: { result: MarketDataSyncResult }) {
       <MarketDataFreshnessNotice freshnessStatus={result.freshness_status} syncStatus={result.sync_status} />
 
       {result.sync_error_message ? (
-        <p className="rounded-2xl border border-yellow-300/30 bg-yellow-300/10 p-3 text-sm text-yellow-100">
+        <p className="rounded-2xl border border-yellow-300/30 bg-yellow-300/10 p-3 text-sm text-yellow-100 break-words">
           {result.sync_error_message}
         </p>
       ) : null}
@@ -649,6 +657,51 @@ function ProviderSyncEmptyState() {
       </p>
     </div>
   );
+}
+
+function providerSyncState(result: MarketDataSyncResult) {
+  if (result.sync_status === "success") {
+    return result.freshness_status === "fresh"
+      ? {
+          title: "Sync gespeichert",
+          message:
+            "Provider-Daten wurden gespeichert und als fresh markiert. Das ist weiterhin kein Live-Preis und startet keine Analyse automatisch.",
+          className: "border-emerald-300/30 bg-emerald-300/10 text-emerald-100",
+        }
+      : {
+          title: "Sync gespeichert, aber Freshness pruefen",
+          message:
+            "Provider-Daten wurden gespeichert, sind aber nicht fresh. Nutze sie nur als Kontext und pruefe den Datenstand vor einer Analyse.",
+          className: "border-yellow-300/30 bg-yellow-300/10 text-yellow-100",
+        };
+  }
+
+  if (result.sync_status === "skipped") {
+    return {
+      title: "Provider-Sync uebersprungen",
+      message:
+        result.sync_error_code === "sync_disabled"
+          ? "Provider-Sync ist im Backend deaktiviert. Das ist der sichere Default und es wurden keine Provider-Daten abgerufen."
+          : "Der Sync wurde sicher uebersprungen. Pruefe die Backend-Konfiguration, falls du Provider-Daten erwartest.",
+      className: "border-slate-500/30 bg-slate-800/70 text-slate-200",
+    };
+  }
+
+  if (result.sync_status === "partial") {
+    return {
+      title: "Provider-Sync teilweise nutzbar",
+      message:
+        "Der Sync hat nur einen Teilzustand geliefert. Fehlende Kerzen oder Timeframes koennen Analyse-Ergebnisse konservativ blockieren.",
+      className: "border-yellow-300/30 bg-yellow-300/10 text-yellow-100",
+    };
+  }
+
+  return {
+    title: "Provider-Sync fehlgeschlagen",
+    message:
+      "Der Sync wurde nicht als nutzbarer Datenstand gespeichert. Pruefe den Fehler-Code und behandle den Datenstand konservativ.",
+    className: "border-red-300/30 bg-red-300/10 text-red-100",
+  };
 }
 
 function AnalysisResultCard({ result }: { result: MarketDataAnalysisResult }) {
