@@ -110,3 +110,55 @@ def test_telegram_alert_routing_rejects_missing_or_placeholder_config(
 
     with pytest.raises(ValueError, match=expected_message):
         Settings(_env_file=None, **payload)
+
+
+def test_market_data_provider_sync_defaults_to_disabled() -> None:
+    settings = Settings(_env_file=None, environment="development")
+
+    assert settings.market_data_provider_sync_enabled is False
+    assert settings.market_data_provider is None
+    assert settings.market_data_api_key is None
+
+
+def test_market_data_provider_sync_allows_safe_configuration() -> None:
+    settings = Settings(
+        _env_file=None,
+        **SAFE_PRODUCTION_SETTINGS,
+        market_data_provider_sync_enabled=True,
+        market_data_provider="alpha_vantage",
+        market_data_api_key="strong-provider-api-key",
+    )
+
+    assert settings.market_data_provider_sync_enabled is True
+    assert settings.market_data_provider == "alpha_vantage"
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "expected_message"),
+    [
+        ("market_data_provider", None, "MARKET_DATA_PROVIDER"),
+        ("market_data_provider", "", "MARKET_DATA_PROVIDER"),
+        ("market_data_provider", "unknown_provider", "MARKET_DATA_PROVIDER"),
+        ("market_data_api_key", None, "MARKET_DATA_API_KEY"),
+        ("market_data_api_key", "", "MARKET_DATA_API_KEY"),
+        (
+            "market_data_api_key",
+            "change-this-market-data-api-key",
+            "MARKET_DATA_API_KEY",
+        ),
+    ],
+)
+def test_market_data_provider_sync_rejects_missing_or_placeholder_config(
+    field: str,
+    value: object,
+    expected_message: str,
+) -> None:
+    payload = SAFE_PRODUCTION_SETTINGS | {
+        "market_data_provider_sync_enabled": True,
+        "market_data_provider": "alpha_vantage",
+        "market_data_api_key": "strong-provider-api-key",
+        field: value,
+    }
+
+    with pytest.raises(ValueError, match=expected_message):
+        Settings(_env_file=None, **payload)

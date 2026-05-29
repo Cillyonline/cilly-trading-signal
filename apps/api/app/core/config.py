@@ -15,6 +15,19 @@ UNSAFE_TELEGRAM_VALUES = {
     "telegram-bot-token",
     "telegram-chat-id",
 }
+UNSAFE_MARKET_DATA_VALUES = {
+    "",
+    "change-me",
+    "change-this-market-data-api-key",
+    "market-data-api-key",
+    "provider-api-key",
+}
+SUPPORTED_MARKET_DATA_PROVIDERS = {
+    "alpha_vantage",
+    "twelve_data",
+    "polygon",
+    "tiingo",
+}
 
 
 def _has_unsafe_database_credentials(database_url: str) -> bool:
@@ -53,11 +66,15 @@ class Settings(BaseSettings):
     telegram_bot_token: str | None = None
     telegram_chat_id: str | None = None
     telegram_alert_routing_enabled: bool = False
+    market_data_provider_sync_enabled: bool = False
+    market_data_provider: str | None = None
+    market_data_api_key: str | None = None
 
     def __init__(self, **values: object) -> None:
         super().__init__(**values)
         self._validate_deployment_safety()
         self._validate_telegram_alert_routing()
+        self._validate_market_data_provider_sync()
 
     def _validate_deployment_safety(self) -> None:
         if self.environment.strip().lower() in SAFE_LOCAL_ENVIRONMENTS:
@@ -101,6 +118,29 @@ class Settings(BaseSettings):
         if errors:
             raise ValueError(
                 "Unsafe Telegram alert routing configuration: " + "; ".join(errors)
+            )
+
+    def _validate_market_data_provider_sync(self) -> None:
+        if not self.market_data_provider_sync_enabled:
+            return
+
+        errors: list[str] = []
+        provider = (self.market_data_provider or "").strip().lower()
+        if provider not in SUPPORTED_MARKET_DATA_PROVIDERS:
+            errors.append(
+                "MARKET_DATA_PROVIDER must be one of "
+                + ", ".join(sorted(SUPPORTED_MARKET_DATA_PROVIDERS))
+                + " before MARKET_DATA_PROVIDER_SYNC_ENABLED can be true"
+            )
+        if _is_unsafe_optional_secret(self.market_data_api_key, UNSAFE_MARKET_DATA_VALUES):
+            errors.append(
+                "MARKET_DATA_API_KEY must be set before "
+                "MARKET_DATA_PROVIDER_SYNC_ENABLED can be true"
+            )
+
+        if errors:
+            raise ValueError(
+                "Unsafe market data provider configuration: " + "; ".join(errors)
             )
 
     model_config = SettingsConfigDict(
