@@ -310,6 +310,61 @@ Aktion:
 Manuell pruefen. Keine automatische Order und keine Kaufanweisung.
 ```
 
+## Telegram-Routing-Policy Fuer v1.3
+
+Automatische Telegram-Zustellung ist nur fuer ausgewaehlte Review-Ereignisse erlaubt.
+Sie darf keine Orders erstellen, keine Trades anlegen und keine Kauf-/Verkaufsanweisung
+formulieren. Wenn Policy, Konfiguration oder Datenlage unklar sind, wird nicht gesendet
+und das Alert-Event bleibt zur manuellen Pruefung in der App.
+
+### Automatisch Erlaubt
+
+- Near Trigger Alert (`near_trigger`): P2, Preis naehert sich einem vorbereiteten Trigger; manuell pruefen, ob das Setup noch gueltig ist.
+- Entry Trigger Alert (`entry_trigger` / `long_entry`): P1, Trigger-Bedingung wurde gemeldet; manuell pruefen, keine Entry-Anweisung.
+- Invalidation Alert (`invalidation`): P2, Setup vor Entry moeglicherweise ungueltig; manuell pruefen und ggf. verwerfen.
+- Exit Warning (`exit_warning`): P1-P2, offener Trade oder Setup verschlechtert sich; manuell pruefen, keine Exit-Anweisung.
+
+### Manual-Only Oder Geblockt
+
+- Info Alert (`info`): keine automatische Telegram-Zustellung, damit reine Statusmeldungen nicht rauschen.
+- Watchlist Alert (`watchlist`): manual-only; noch kein konkreter Trigger.
+- Armed Alert (`armed`): manual-only; vorbereitetes Setup, aber kein bestaetigtes Review-Ereignis.
+- Management Alert (`management`): manual-only in v1.3, weil Positionsmanagement mehr Kontext braucht.
+- Exit Signal (`exit_signal`): manual-only in v1.3, weil die Formulierung sonst zu leicht als Verkaufsanweisung verstanden wird.
+- Unbekannte oder nicht gemappte Trigger: geblockt, nicht senden.
+
+### Message-Wording-Regeln
+
+Telegram-Nachrichten muessen review-orientiert formuliert sein:
+
+- Immer enthalten: Symbol, Timeframe, Alert-Typ, Prioritaet, Trigger-Preis oder Referenzlevel falls vorhanden, Zeitstempel und naechster manueller Pruefschritt.
+- Immer enthalten: Hinweis `Manual review required. Keine automatische Order. Keine Kauf- oder Verkaufsanweisung.`
+- Erlaubte Verben: `pruefen`, `reviewen`, `validieren`, `dokumentieren`, `beobachten`.
+- Nicht erlaubt: `kaufen`, `verkaufen`, `einsteigen`, `aussteigen`, `jetzt handeln`, `sicher`, `garantiert`, Gewinn- oder Trefferwahrscheinlichkeiten.
+- Scores duerfen nur als Setup-Qualitaet beschrieben werden, nie als Gewinnwahrscheinlichkeit.
+- `Triggered` bedeutet nur, dass ein Review-Ereignis eingegangen ist.
+
+### Deduplication Und Rate Limit Erwartungen
+
+v1.3 soll Telegram-Zustellung fail-safe und noise-arm halten:
+
+- Dedup-Key: `symbol + alert_type + timeframe`.
+- Innerhalb von 30 Minuten soll pro Dedup-Key hoechstens eine Telegram-Nachricht gesendet werden.
+- Wiederholte Webhooks innerhalb des Dedup-Fensters bleiben als Alert-Events speicherbar, sollen aber nicht erneut Telegram senden.
+- Bei fehlender Telegram-Konfiguration wird nicht gesendet; das Alert-Event bleibt fuer manuelle Review sichtbar.
+- Bei Telegram-Fehlern darf Webhook-Ingestion nicht fehlschlagen, sofern das Alert-Event gespeichert werden konnte.
+
+### Smoke-Test-Evidence Fuer v1.3
+
+Ein v1.3 Smoke Test braucht nicht geheime, bereinigte Evidenz fuer:
+
+- Erlaubtes Event sendet Telegram automatisch, z.B. `near_trigger` oder `entry_trigger`.
+- Manual-only Event sendet nicht, z.B. `watchlist`, `armed`, `management` oder `exit_signal`.
+- Fehlende oder deaktivierte Telegram-Konfiguration sendet nicht und bleibt sicher.
+- Wiederholtes gleiches Event innerhalb von 30 Minuten wird nicht mehrfach gesendet.
+- Zustellfehler wird sichtbar dokumentiert, ohne Webhook-Persistenz oder manuelle Review zu blockieren.
+- Keine Evidenz enthaelt Telegram Token, Chat IDs, Webhook Secrets oder private Trading-Daten.
+
 ## TradingView Webhook Payload
 
 ```json

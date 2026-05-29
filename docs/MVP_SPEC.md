@@ -355,7 +355,7 @@ Fuer Aktien wird Earnings-Risiko mindestens als Warnung angezeigt. Fuer Krypto w
 ## MVP+ Erweiterungen
 
 - TradingView Webhook Endpoint
-- Telegram Bot Alerts
+- Telegram Bot Alerts fuer policy-erlaubte Review-Ereignisse (`near_trigger`, `entry_trigger`, `invalidation`, `exit_warning`)
 - Alert-Historie
 - Triggered Status automatisch setzen
 - Exit Warning Basisregeln
