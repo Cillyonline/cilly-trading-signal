@@ -14,7 +14,7 @@ import {
 import type { PerformanceSummary } from "@/types/performance";
 import type { Signal } from "@/types/signals";
 import type { Trade } from "@/types/trades";
-import type { WatchlistItem } from "@/types/watchlist";
+import type { MarketDataFreshnessStatus, WatchlistItem } from "@/types/watchlist";
 
 const workflowAreas = [
   { label: "Watchlist", href: "/watchlist", description: "Symbole und Asset-Klassen pflegen." },
@@ -102,6 +102,24 @@ type DashboardData = {
   recentSignals: Signal[];
   openTrades: Trade[];
   reviewNeededTrades: Trade[];
+  marketDataQuality: MarketDataQualitySummary;
+};
+
+type MarketDataQualityIssue = {
+  symbol: string;
+  status: MarketDataFreshnessStatus | "missing";
+  detail: string;
+};
+
+type MarketDataQualitySummary = {
+  issueCount: number;
+  missingCount: number;
+  staleCount: number;
+  unknownCount: number;
+  failedCount: number;
+  partialCount: number;
+  freshCount: number;
+  issues: MarketDataQualityIssue[];
 };
 
 type DashboardCard = {
@@ -122,6 +140,7 @@ function buildDashboardData(
   const reviewNeededTrades = trades.filter((trade) => trade.review_status === "needs_review");
   const reviewSignals = signals.filter((signal) => signal.status === "armed" || signal.status === "triggered");
   const triggeredSignals = signals.filter((signal) => signal.status === "triggered");
+  const marketDataQuality = buildMarketDataQuality(watchlist);
 
   return {
     cards: [
@@ -131,6 +150,16 @@ function buildDashboardData(
         detail: watchlist.length === 0 ? "Noch keine Symbole" : "Aktive Analyse-Basis",
         href: "/watchlist",
         tone: "border-blue-400/40",
+      },
+      {
+        label: "Market Data Issues",
+        value: String(marketDataQuality.issueCount),
+        detail:
+          marketDataQuality.issueCount === 0
+            ? `${marketDataQuality.freshCount} fresh datasets`
+            : "Missing, stale, unknown, failed oder partial",
+        href: "/watchlist",
+        tone: marketDataQuality.issueCount === 0 ? "border-emerald-400/40" : "border-yellow-300/50",
       },
       {
         label: "Signals To Review",
@@ -165,6 +194,58 @@ function buildDashboardData(
     recentSignals: signals.slice(0, 3),
     openTrades: openTrades.slice(0, 3),
     reviewNeededTrades: reviewNeededTrades.slice(0, 3),
+    marketDataQuality,
+  };
+}
+
+function buildMarketDataQuality(watchlist: WatchlistItem[]): MarketDataQualitySummary {
+  const issues: MarketDataQualityIssue[] = [];
+  let missingCount = 0;
+  let staleCount = 0;
+  let unknownCount = 0;
+  let failedCount = 0;
+  let partialCount = 0;
+  let freshCount = 0;
+
+  for (const item of watchlist) {
+    const latest = item.latest_market_data;
+    if (!latest) {
+      missingCount += 1;
+      issues.push({ symbol: item.symbol, status: "missing", detail: "Keine Marktdaten gespeichert" });
+      continue;
+    }
+
+    if (latest.freshness_status === "fresh") {
+      freshCount += 1;
+      continue;
+    }
+
+    if (latest.freshness_status === "stale") {
+      staleCount += 1;
+    } else if (latest.freshness_status === "unknown") {
+      unknownCount += 1;
+    } else if (latest.freshness_status === "failed") {
+      failedCount += 1;
+    } else if (latest.freshness_status === "partial") {
+      partialCount += 1;
+    }
+
+    issues.push({
+      symbol: item.symbol,
+      status: latest.freshness_status,
+      detail: `${latest.timeframe} / ${formatDate(latest.end_time)}`,
+    });
+  }
+
+  return {
+    issueCount: issues.length,
+    missingCount,
+    staleCount,
+    unknownCount,
+    failedCount,
+    partialCount,
+    freshCount,
+    issues: issues.slice(0, 5),
   };
 }
 
@@ -186,12 +267,75 @@ function DashboardContent({ data }: { data: DashboardData }) {
       </section>
 
       {!data.hasAnyData ? <DashboardEmptyState /> : null}
+      <MarketDataQualityCard quality={data.marketDataQuality} />
 
       <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
         <WorkflowCard />
         <CockpitSnapshot data={data} />
       </section>
     </>
+  );
+}
+
+function MarketDataQualityCard({ quality }: { quality: MarketDataQualitySummary }) {
+  const hasIssues = quality.issueCount > 0;
+  return (
+    <section
+      className={`rounded-3xl border p-6 ${
+        hasIssues ? "border-yellow-300/30 bg-yellow-300/10" : "border-emerald-300/20 bg-emerald-300/5"
+      }`}
+    >
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <p className="text-sm uppercase tracking-[0.25em] text-slate-400">Market Data Quality</p>
+          <h2 className="mt-2 text-xl font-semibold">
+            {hasIssues ? "Daten vor Setup-Review pruefen" : "Keine Market-Data-Warnungen"}
+          </h2>
+          <p className="mt-2 max-w-3xl text-sm text-slate-300">
+            Diese Warnungen sind Datenkontext, keine Live-Daten, kein Signal und keine
+            Trade-Anweisung. Stale, unknown, failed, partial oder fehlende Daten muessen vor
+            aktueller Analyse konservativ behandelt werden.
+          </p>
+        </div>
+        <a className="text-sm text-emerald-300 hover:text-emerald-200" href="/watchlist">
+          Zur Watchlist
+        </a>
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
+        <QualityMetric label="Missing" value={quality.missingCount} />
+        <QualityMetric label="Stale" value={quality.staleCount} />
+        <QualityMetric label="Unknown" value={quality.unknownCount} />
+        <QualityMetric label="Failed" value={quality.failedCount} />
+        <QualityMetric label="Partial" value={quality.partialCount} />
+        <QualityMetric label="Fresh" value={quality.freshCount} />
+      </div>
+
+      {hasIssues ? (
+        <ul className="mt-5 grid gap-2 text-sm text-yellow-50 md:grid-cols-2">
+          {quality.issues.map((issue) => (
+            <li
+              key={`${issue.symbol}-${issue.status}`}
+              className="rounded-2xl border border-yellow-200/20 bg-slate-950/40 p-3"
+            >
+              <span className="font-semibold">{issue.symbol}</span>
+              <span className="ml-2 text-yellow-100/80">
+                {formatStatus(issue.status)}: {issue.detail}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </section>
+  );
+}
+
+function QualityMetric({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-3">
+      <p className="text-xs uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="mt-1 text-2xl font-semibold text-slate-100">{value}</p>
+    </div>
   );
 }
 
@@ -341,6 +485,10 @@ function formatDate(value: string | null) {
     return "ohne Datum";
   }
   return new Intl.DateTimeFormat("de-DE", { dateStyle: "medium" }).format(new Date(value));
+}
+
+function formatStatus(value: string) {
+  return value.replaceAll("_", " ");
 }
 
 function formatR(value: string | null) {
