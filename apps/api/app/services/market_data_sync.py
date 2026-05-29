@@ -1,6 +1,10 @@
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal, InvalidOperation
 from typing import Protocol
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlencode
+from urllib.request import urlopen
 
 from app.models.enums import (
     MarketDataFreshnessStatus,
@@ -15,6 +19,7 @@ FRESHNESS_WINDOWS = {
     Timeframe.ONE_DAY: timedelta(days=3),
     Timeframe.FOUR_HOURS: timedelta(hours=24),
 }
+ALPHA_VANTAGE_DAILY_URL = "https://www.alphavantage.co/query"
 
 
 @dataclass(frozen=True)
@@ -41,6 +46,16 @@ class MarketDataSyncResult:
     error_message: str | None = None
 
 
+@dataclass(frozen=True)
+class ProviderCandle:
+    timestamp: datetime
+    open: Decimal
+    high: Decimal
+    low: Decimal
+    close: Decimal
+    volume: Decimal
+
+
 class MarketDataProvider(Protocol):
     def sync(self, plan: MarketDataSyncPlan) -> MarketDataSyncResult:
         pass
@@ -58,6 +73,120 @@ class NoopMarketDataProvider:
             error_code="provider_not_configured",
             error_message="Market data provider sync is not configured.",
         )
+
+
+class AlphaVantageDailyProvider:
+    def __init__(
+        self,
+        api_key: str,
+        *,
+        transport: "ProviderTransport | None" = None,
+    ) -> None:
+        self.api_key = api_key
+        self.transport = transport or UrllibProviderTransport()
+
+    def sync(self, plan: MarketDataSyncPlan) -> MarketDataSyncResult:
+        if plan.timeframe != Timeframe.ONE_DAY:
+            return provider_failure(
+                plan,
+                "unsupported_timeframe",
+                "Provider adapter currently supports daily data only.",
+            )
+
+        try:
+            payload = self.transport.get_json(build_alpha_vantage_daily_url(plan, self.api_key))
+        except ProviderTransportError:
+            return provider_failure(plan, "provider_transport_error", "Provider request failed.")
+
+        candles, error_code = parse_alpha_vantage_daily_response(payload)
+        if error_code is not None:
+            return provider_failure(plan, error_code, "Provider response could not be used.")
+        if not candles:
+            return MarketDataSyncResult(
+                sync_status=MarketDataSyncStatus.PARTIAL,
+                freshness_status=MarketDataFreshnessStatus.PARTIAL,
+                provider_name=plan.provider_name,
+                provider_symbol=plan.provider_symbol,
+                provider_exchange=plan.provider_exchange,
+                provider_timeframe=plan.provider_timeframe,
+                error_code="provider_empty_response",
+                error_message="Provider returned no candles.",
+            )
+
+        latest_timestamp = max(candle.timestamp for candle in candles)
+        return MarketDataSyncResult(
+            sync_status=MarketDataSyncStatus.SUCCESS,
+            freshness_status=evaluate_timestamp_freshness(latest_timestamp, plan.timeframe),
+            provider_name=plan.provider_name,
+            provider_symbol=plan.provider_symbol,
+            provider_exchange=plan.provider_exchange,
+            provider_timeframe=plan.provider_timeframe,
+            data_end_at=latest_timestamp,
+        )
+
+
+class ProviderTransport(Protocol):
+    def get_json(self, url: str) -> object:
+        pass
+
+
+class ProviderTransportError(Exception):
+    pass
+
+
+class UrllibProviderTransport:
+    def get_json(self, url: str) -> object:
+        import json
+
+        try:
+            with urlopen(url, timeout=20) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except (HTTPError, URLError, TimeoutError, ValueError) as error:
+            raise ProviderTransportError from error
+
+
+def build_alpha_vantage_daily_url(plan: MarketDataSyncPlan, api_key: str) -> str:
+    params = urlencode(
+        {
+            "function": "TIME_SERIES_DAILY_ADJUSTED",
+            "symbol": plan.provider_symbol or plan.symbol,
+            "apikey": api_key,
+            "outputsize": "compact",
+        }
+    )
+    return f"{ALPHA_VANTAGE_DAILY_URL}?{params}"
+
+
+def parse_alpha_vantage_daily_response(payload: object) -> tuple[list[ProviderCandle], str | None]:
+    if not isinstance(payload, dict):
+        return [], "provider_invalid_response"
+    if "Error Message" in payload:
+        return [], "provider_error"
+    if "Note" in payload or "Information" in payload:
+        return [], "provider_rate_limited"
+
+    raw_series = payload.get("Time Series (Daily)")
+    if not isinstance(raw_series, dict):
+        return [], "provider_invalid_response"
+
+    candles: list[ProviderCandle] = []
+    for date_text, raw_candle in raw_series.items():
+        if not isinstance(date_text, str) or not isinstance(raw_candle, dict):
+            return [], "provider_invalid_response"
+        try:
+            candles.append(
+                ProviderCandle(
+                    timestamp=datetime.fromisoformat(date_text).replace(tzinfo=UTC),
+                    open=_decimal_field(raw_candle, "1. open"),
+                    high=_decimal_field(raw_candle, "2. high"),
+                    low=_decimal_field(raw_candle, "3. low"),
+                    close=_decimal_field(raw_candle, "4. close"),
+                    volume=_decimal_field(raw_candle, "6. volume"),
+                )
+            )
+        except (InvalidOperation, KeyError, TypeError, ValueError):
+            return [], "provider_invalid_response"
+    return candles, None
 
 
 def build_market_data_sync_plan(
@@ -139,9 +268,17 @@ def evaluate_market_data_freshness(
     if series.end_time is None:
         return MarketDataFreshnessStatus.UNKNOWN
 
+    return evaluate_timestamp_freshness(series.end_time, series.timeframe, now)
+
+
+def evaluate_timestamp_freshness(
+    end_time: datetime,
+    timeframe: Timeframe,
+    now: datetime | None = None,
+) -> MarketDataFreshnessStatus:
     checked_at = now or datetime.now(UTC)
-    freshness_window = FRESHNESS_WINDOWS[series.timeframe]
-    if checked_at - _as_aware_datetime(series.end_time) <= freshness_window:
+    freshness_window = FRESHNESS_WINDOWS[timeframe]
+    if checked_at - _as_aware_datetime(end_time) <= freshness_window:
         return MarketDataFreshnessStatus.FRESH
     return MarketDataFreshnessStatus.STALE
 
@@ -150,3 +287,27 @@ def _as_aware_datetime(value: datetime) -> datetime:
     if value.tzinfo is None:
         return value.replace(tzinfo=UTC)
     return value
+
+
+def _decimal_field(payload: dict[object, object], key: str) -> Decimal:
+    value = payload[key]
+    if not isinstance(value, str | int | float | Decimal):
+        raise TypeError
+    return Decimal(str(value))
+
+
+def provider_failure(
+    plan: MarketDataSyncPlan,
+    error_code: str,
+    message: str,
+) -> MarketDataSyncResult:
+    return MarketDataSyncResult(
+        sync_status=MarketDataSyncStatus.FAILED,
+        freshness_status=MarketDataFreshnessStatus.FAILED,
+        provider_name=plan.provider_name,
+        provider_symbol=plan.provider_symbol,
+        provider_exchange=plan.provider_exchange,
+        provider_timeframe=plan.provider_timeframe,
+        error_code=error_code,
+        error_message=message,
+    )
