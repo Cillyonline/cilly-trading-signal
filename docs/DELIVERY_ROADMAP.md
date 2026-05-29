@@ -43,7 +43,7 @@ Partial:
 Missing:
 
 - Live market data API integration.
-- Full notification routing and automatic Telegram alert delivery rules.
+- Automatic Telegram delivery implementation for the documented v1.3 alert routing policy.
 - Monitoring and operational alerting.
 - Multi-user mode, roles beyond the MVP admin, public registration, and password reset flows.
 - Backtesting, strategy validation, or profitability reporting.
@@ -171,6 +171,30 @@ Done when:
 - CSV import rejects common wrong-timeframe and oversized-upload mistakes.
 - Documentation clearly separates implemented, partial, missing, and blocked areas.
 - The app still makes no production-readiness, profitability, or execution claims.
+
+## v1.3 - Reliable Alert Routing
+
+Goal: deliver Telegram notifications automatically only for policy-allowed review events,
+without broker execution, order creation, trading advice, or buy/sell wording.
+
+Status: Policy defined; implementation pending.
+
+Primary work:
+
+- Route only `near_trigger`, `entry_trigger`, `invalidation`, and `exit_warning` automatically.
+- Keep `info`, `watchlist`, `armed`, `management`, `exit_signal`, and unknown triggers manual-only or blocked.
+- Add explicit configuration guards so automatic delivery fails closed.
+- Add deduplication and rate limiting for `symbol + alert_type + timeframe` within 30 minutes.
+- Persist delivery outcomes and make failures reviewable without breaking webhook ingestion.
+- Add backend tests and a sanitized smoke-test record.
+
+Done when:
+
+- Allowed events send Telegram automatically in staging with sanitized evidence.
+- Manual-only and unknown events do not send Telegram.
+- Missing config, Telegram failures, duplicates, and rate limits are covered by tests.
+- Message wording remains manual-review only and contains no buy/sell instruction.
+- No secrets, chat IDs, webhook secrets, or private trading data are exposed in docs, logs, issues, or PRs.
 
 ## Not Now
 
