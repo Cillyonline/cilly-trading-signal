@@ -154,7 +154,7 @@ Felder:
 
 Werte:
 
-- source: csv, provider, manual, unknown
+- source: tradingview_csv, provider, manual, unknown; legacy `api_later` remains accepted for existing early placeholder data.
 - timeframe: 1W, 1D, 4H
 - status: imported, validated, failed, analyzed
 - freshness_status: fresh, stale, unknown, failed, partial

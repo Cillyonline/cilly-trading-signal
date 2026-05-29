@@ -7,8 +7,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.models.enums import (
+    MarketDataFreshnessStatus,
     MarketDataSource,
     MarketDataStatus,
+    MarketDataSyncStatus,
     StructureState,
     Timeframe,
     TrendState,
@@ -25,16 +27,29 @@ class MarketDataSeries(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     watchlist_item_id: Mapped[int] = mapped_column(ForeignKey("watchlist_items.id"), index=True)
     source: Mapped[MarketDataSource] = mapped_column(enum_values(MarketDataSource))
+    provider_name: Mapped[str | None] = mapped_column(String(64))
+    provider_symbol: Mapped[str | None] = mapped_column(String(64))
+    provider_exchange: Mapped[str | None] = mapped_column(String(64))
+    provider_timeframe: Mapped[str | None] = mapped_column(String(32))
     timeframe: Mapped[Timeframe] = mapped_column(enum_values(Timeframe))
     imported_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+    last_synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     start_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     end_time: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     candle_count: Mapped[int] = mapped_column(Integer, default=0)
     status: Mapped[MarketDataStatus] = mapped_column(
         enum_values(MarketDataStatus), default=MarketDataStatus.IMPORTED
     )
+    freshness_status: Mapped[MarketDataFreshnessStatus] = mapped_column(
+        enum_values(MarketDataFreshnessStatus), default=MarketDataFreshnessStatus.UNKNOWN
+    )
+    sync_status: Mapped[MarketDataSyncStatus] = mapped_column(
+        enum_values(MarketDataSyncStatus), default=MarketDataSyncStatus.NOT_APPLICABLE
+    )
+    sync_error_code: Mapped[str | None] = mapped_column(String(64))
+    sync_error_message: Mapped[str | None] = mapped_column(String(512))
     validation_errors: Mapped[dict | list | None] = mapped_column(JSON)
     file_name: Mapped[str | None] = mapped_column(String(255))
     created_at: Mapped[datetime] = mapped_column(
