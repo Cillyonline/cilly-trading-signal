@@ -41,6 +41,7 @@ ATTENTION_LABELS = {
     ManualReviewLabel.TOO_STRICT.value,
     ManualReviewLabel.UNCLEAR.value,
 }
+REPEATED_FINDING_THRESHOLD = 2
 
 
 class ReviewEntryError(Exception):
@@ -117,10 +118,12 @@ def build_review_batch_summary(batch: ReviewBatch) -> ReviewBatchSummary:
         repeated_attention_labels=sorted(
             label
             for label, count in label_counts.items()
-            if label in ATTENTION_LABELS and count >= 2
+            if label in ATTENTION_LABELS and count >= REPEATED_FINDING_THRESHOLD
         ),
         repeated_blocker_patterns=sorted(
-            pattern for pattern, count in blocker_counts.items() if count >= 2
+            pattern
+            for pattern, count in blocker_counts.items()
+            if count >= REPEATED_FINDING_THRESHOLD
         ),
         evidence_only_notice=EVIDENCE_ONLY_NOTICE,
     )

@@ -156,7 +156,7 @@ export default function ReviewBatchDetailPage({ params }: { params: { id: string
 
             <section className="grid gap-4 md:grid-cols-2">
               <PatternPanel title="Label Counts" items={Object.entries(batch.summary.label_counts).map(([label, count]) => `${formatLabel(label)}: ${count}`)} />
-              <PatternPanel title="Repeated Follow-ups" items={[...batch.summary.repeated_attention_labels.map(formatLabel), ...batch.summary.repeated_blocker_patterns.map((pattern) => `blocker: ${formatLabel(pattern)}`)]} />
+              <RepeatedFindingPanel batch={batch} />
             </section>
 
             <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
@@ -283,6 +283,33 @@ function PatternPanel({ title, items }: { title: string; items: string[] }) {
         <div className="mt-4 flex flex-wrap gap-2">
           {items.map((item) => (
             <span key={item} className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-300">
+              {item}
+            </span>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function RepeatedFindingPanel({ batch }: { batch: ReviewBatch }) {
+  const items = [
+    ...batch.summary.repeated_attention_labels.map((label) => `label >=2: ${formatLabel(label)}`),
+    ...batch.summary.repeated_blocker_patterns.map((pattern) => `blocker >=2: ${formatLabel(pattern)}`),
+  ];
+  return (
+    <section className="rounded-3xl border border-yellow-300/30 bg-yellow-300/10 p-6">
+      <h2 className="text-xl font-semibold text-yellow-50">Repeated Finding Summary</h2>
+      <p className="mt-2 text-sm text-yellow-100/80">
+        Schwelle: mindestens 2 gleiche Attention-Labels oder Blocker. Das ist Follow-up Evidence only,
+        keine automatische Regelanpassung und keine Performance-Aussage.
+      </p>
+      {items.length === 0 ? (
+        <p className="mt-4 text-sm text-yellow-100/70">Noch keine wiederholten Findings ueber der Schwelle.</p>
+      ) : (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {items.map((item) => (
+            <span key={item} className="rounded-full border border-yellow-200/30 px-3 py-1 text-xs text-yellow-50">
               {item}
             </span>
           ))}

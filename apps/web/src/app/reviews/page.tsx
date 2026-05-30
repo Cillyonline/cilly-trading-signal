@@ -341,10 +341,30 @@ function BatchCard({ batch }: { batch: ReviewBatch }) {
         ))}
         {batch.summary.repeated_blocker_patterns.map((pattern) => (
           <span key={pattern} className="rounded-full border border-yellow-300/40 bg-yellow-300/10 px-3 py-1 text-xs text-yellow-100">
-            repeated blocker: {pattern}
+            repeated blocker &gt;=2: {pattern}
           </span>
         ))}
       </div>
+      {(batch.summary.repeated_attention_labels.length > 0 || batch.summary.repeated_blocker_patterns.length > 0) ? (
+        <div className="mt-4 rounded-2xl border border-yellow-300/30 bg-yellow-300/10 p-4 text-sm text-yellow-50">
+          <p className="font-semibold">Repeated Finding Summary</p>
+          <p className="mt-1 text-yellow-100/80">
+            Schwelle: mindestens 2 gleiche Attention-Labels oder Blocker. Follow-up Evidence only; keine automatische Regelanpassung.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {batch.summary.repeated_attention_labels.map((label) => (
+              <span key={label} className="rounded-full border border-yellow-200/30 px-3 py-1 text-xs">
+                repeated label &gt;=2: {label.replaceAll("_", " ")}
+              </span>
+            ))}
+            {batch.summary.repeated_blocker_patterns.map((pattern) => (
+              <span key={pattern} className="rounded-full border border-yellow-200/30 px-3 py-1 text-xs">
+                repeated blocker &gt;=2: {pattern}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
       <div className="mt-4 divide-y divide-white/10 rounded-xl border border-white/10">
         {batch.entries.slice(0, 5).map((entry) => (
           <div key={entry.id} className="grid gap-2 p-3 text-sm md:grid-cols-[1fr_auto_auto] md:items-center">
