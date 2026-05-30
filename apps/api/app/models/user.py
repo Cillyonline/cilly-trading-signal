@@ -10,6 +10,7 @@ from app.models.types import enum_values
 
 if TYPE_CHECKING:
     from app.models.alert import Alert, NotificationLog
+    from app.models.screener import ScreenerImport, ScreenerResult
     from app.models.settings import Settings
     from app.models.signal import Signal, SignalReviewEvent
     from app.models.trade import JournalEntry, Trade
@@ -41,3 +42,5 @@ class User(Base):
     journal_entries: Mapped[list["JournalEntry"]] = relationship(back_populates="user")
     alerts: Mapped[list["Alert"]] = relationship(back_populates="user")
     notification_logs: Mapped[list["NotificationLog"]] = relationship(back_populates="user")
+    screener_imports: Mapped[list["ScreenerImport"]] = relationship(back_populates="user")
+    screener_results: Mapped[list["ScreenerResult"]] = relationship(back_populates="user")

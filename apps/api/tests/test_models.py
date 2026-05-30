@@ -19,6 +19,11 @@ from app.models import (
     NotificationLog,
     NotificationChannel,
     MarketDataSyncStatus,
+    ScreenerImport,
+    ScreenerImportSource,
+    ScreenerImportStatus,
+    ScreenerResult,
+    ScreenerResultStatus,
     Settings,
     Signal,
     Timeframe,
@@ -28,6 +33,7 @@ from app.models import (
     WatchlistItem,
 )
 from app.schemas.alerts import AlertRead, NotificationLogRead
+from app.schemas.screener import ScreenerImportRead, ScreenerResultRead
 
 
 def test_mvp_model_tables_are_registered() -> None:
@@ -41,6 +47,8 @@ def test_mvp_model_tables_are_registered() -> None:
         "signals",
         "alerts",
         "notification_logs",
+        "screener_imports",
+        "screener_results",
         "trades",
         "trade_events",
         "journal_entries",
@@ -59,6 +67,8 @@ def test_core_models_use_expected_table_names() -> None:
     assert Signal.__tablename__ == "signals"
     assert Alert.__tablename__ == "alerts"
     assert NotificationLog.__tablename__ == "notification_logs"
+    assert ScreenerImport.__tablename__ == "screener_imports"
+    assert ScreenerResult.__tablename__ == "screener_results"
     assert Trade.__tablename__ == "trades"
     assert TradeEvent.__tablename__ == "trade_events"
     assert JournalEntry.__tablename__ == "journal_entries"
@@ -100,6 +110,33 @@ def test_market_data_freshness_and_sync_enums_support_safe_states() -> None:
     assert MarketDataSyncStatus.SKIPPED == "skipped"
     assert MarketDataSyncStatus.FAILED == "failed"
     assert MarketDataSyncStatus.PARTIAL == "partial"
+
+
+def test_screener_enums_support_manual_review_states() -> None:
+    assert ScreenerImportSource.TRADINGVIEW_SCREENER_CSV == "tradingview_screener_csv"
+    assert ScreenerImportStatus.PENDING == "pending"
+    assert ScreenerImportStatus.PARTIAL == "partial"
+    assert ScreenerResultStatus.CANDIDATE == "candidate"
+    assert ScreenerResultStatus.WATCHLIST_ADDED == "watchlist_added"
+    assert ScreenerResultStatus.DUPLICATE == "duplicate"
+
+
+def test_screener_models_do_not_contain_execution_fields() -> None:
+    import_columns = set(Base.metadata.tables["screener_imports"].c.keys())
+    result_columns = set(Base.metadata.tables["screener_results"].c.keys())
+
+    forbidden_columns = {"order_id", "broker_order_id", "execution_id", "trade_id", "signal_id"}
+
+    assert import_columns.isdisjoint(forbidden_columns)
+    assert result_columns.isdisjoint(forbidden_columns)
+
+
+def test_screener_result_has_import_symbol_exchange_unique_constraint() -> None:
+    result_table = Base.metadata.tables["screener_results"]
+
+    constraints = {constraint.name for constraint in result_table.constraints}
+
+    assert "uq_screener_results_import_symbol_exchange" in constraints
 
 
 def test_signal_reasoning_and_risk_flags_are_json_columns() -> None:
@@ -179,3 +216,68 @@ def test_notification_log_read_schema_accepts_model_attributes() -> None:
     assert result.channel == NotificationChannel.TELEGRAM
     assert result.status == AlertDeliveryStatus.SENT
     assert result.provider_payload == {"message_id": 42}
+
+
+def test_screener_import_read_schema_accepts_model_attributes() -> None:
+    now = datetime(2026, 5, 30, tzinfo=UTC)
+    screener_import = SimpleNamespace(
+        id=1,
+        user_id=1,
+        source=ScreenerImportSource.TRADINGVIEW_SCREENER_CSV,
+        file_name="tradingview-screener.csv",
+        asset_class="stock",
+        screener_preset="US review candidates",
+        snapshot_at=now,
+        row_count=3,
+        accepted_count=2,
+        rejected_count=1,
+        duplicate_count=0,
+        status=ScreenerImportStatus.PARTIAL,
+        validation_errors=[{"row": 3, "message": "Missing symbol."}],
+        created_at=now,
+    )
+
+    result = ScreenerImportRead.model_validate(screener_import)
+
+    assert result.source == ScreenerImportSource.TRADINGVIEW_SCREENER_CSV
+    assert result.status == ScreenerImportStatus.PARTIAL
+    assert result.accepted_count == 2
+
+
+def test_screener_result_read_schema_accepts_model_attributes() -> None:
+    now = datetime(2026, 5, 30, tzinfo=UTC)
+    screener_result = SimpleNamespace(
+        id=1,
+        screener_import_id=2,
+        user_id=1,
+        watchlist_item_id=None,
+        symbol="AAPL",
+        name="Apple Inc.",
+        asset_class="stock",
+        exchange="NASDAQ",
+        currency="USD",
+        sector="Technology",
+        industry="Consumer Electronics",
+        price=Decimal("190.50"),
+        change_percent=Decimal("1.25"),
+        volume=Decimal("1000000"),
+        relative_volume=Decimal("1.10"),
+        market_cap=Decimal("2500000000000"),
+        rsi14=Decimal("55.2"),
+        ema20=Decimal("188.1"),
+        ema50=Decimal("180.3"),
+        ema200=Decimal("170.4"),
+        rank=1,
+        status=ScreenerResultStatus.CANDIDATE,
+        duplicate_of_result_id=None,
+        validation_errors=None,
+        raw_metadata={"source_column": "value"},
+        created_at=now,
+        updated_at=now,
+    )
+
+    result = ScreenerResultRead.model_validate(screener_result)
+
+    assert result.symbol == "AAPL"
+    assert result.status == ScreenerResultStatus.CANDIDATE
+    assert result.watchlist_item_id is None

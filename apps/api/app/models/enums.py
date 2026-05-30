@@ -158,3 +158,23 @@ class AlertDeliveryStatus(StrEnum):
 
 class NotificationChannel(StrEnum):
     TELEGRAM = "telegram"
+
+
+class ScreenerImportSource(StrEnum):
+    TRADINGVIEW_SCREENER_CSV = "tradingview_screener_csv"
+
+
+class ScreenerImportStatus(StrEnum):
+    PENDING = "pending"
+    VALIDATED = "validated"
+    FAILED = "failed"
+    IMPORTED = "imported"
+    PARTIAL = "partial"
+
+
+class ScreenerResultStatus(StrEnum):
+    CANDIDATE = "candidate"
+    WATCHLIST_ADDED = "watchlist_added"
+    DUPLICATE = "duplicate"
+    REJECTED = "rejected"
+    IGNORED = "ignored"

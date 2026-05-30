@@ -57,6 +57,33 @@ def test_market_data_source_freshness_migration_adds_metadata_columns() -> None:
     assert "server_default=\"not_applicable\"" in migration
 
 
+def test_screener_imports_migration_exists() -> None:
+    migration_path = Path("alembic/versions/20260530_0007_screener_imports.py")
+
+    assert migration_path.exists()
+
+
+def test_screener_imports_migration_adds_review_candidate_tables() -> None:
+    migration = Path("alembic/versions/20260530_0007_screener_imports.py").read_text()
+
+    for table_name in ("screener_imports", "screener_results"):
+        assert f'"{table_name}"' in migration
+
+    for column_name in (
+        "source",
+        "asset_class",
+        "screener_preset",
+        "accepted_count",
+        "duplicate_count",
+        "watchlist_item_id",
+        "duplicate_of_result_id",
+        "raw_metadata",
+    ):
+        assert f'"{column_name}"' in migration
+
+    assert "uq_screener_results_import_symbol_exchange" in migration
+
+
 def test_alembic_migrations_apply_cleanly_to_sqlite(tmp_path: Path) -> None:
     database_path = tmp_path / "migration-smoke.db"
     engine = create_engine(f"sqlite:///{database_path.as_posix()}")
