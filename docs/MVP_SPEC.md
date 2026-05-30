@@ -16,6 +16,10 @@ Der Fokus liegt auf:
 - Basis-Performance in R
 - Risk Settings
 
+Der praktische Tages-/Wochenablauf ueber Dashboard, Watchlist, Import/Provider Sync,
+Signals, Alerts, Trades, Journal und Performance ist in
+`docs/COCKPIT_REVIEW_WORKFLOW.md` beschrieben.
+
 Nicht enthalten sind automatische Orderausfuehrung, Broker-Anbindung und Kauf-/Verkaufsanweisungen.
 
 ## Nutzer
