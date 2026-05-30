@@ -85,6 +85,7 @@ export default function ScreenerPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isImporting, setIsImporting] = useState(false);
   const [convertingResultId, setConvertingResultId] = useState<number | null>(null);
+  const [selectedResult, setSelectedResult] = useState<ScreenerResult | null>(null);
   const [error, setError] = useState<ScreenerPageError | null>(null);
   const [createdImport, setCreatedImport] = useState<ScreenerImport | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -352,6 +353,7 @@ export default function ScreenerPage() {
                     result={result}
                     isConverting={convertingResultId === result.id}
                     onAddToWatchlist={addToWatchlist}
+                    onSelect={setSelectedResult}
                   />
                 ))}
               </div>
@@ -386,6 +388,15 @@ export default function ScreenerPage() {
             )}
           </div>
         </section>
+
+        {selectedResult ? (
+          <ScreenerResultDetailPanel
+            result={selectedResult}
+            onClose={() => setSelectedResult(null)}
+            onAddToWatchlist={addToWatchlist}
+            isConverting={convertingResultId === selectedResult.id}
+          />
+        ) : null}
       </section>
     </main>
   );
@@ -531,10 +542,12 @@ function ScreenerResultCard({
   result,
   isConverting,
   onAddToWatchlist,
+  onSelect,
 }: {
   result: ScreenerResult;
   isConverting: boolean;
   onAddToWatchlist: (result: ScreenerResult) => void;
+  onSelect: (result: ScreenerResult) => void;
 }) {
   const canAddToWatchlist = result.status === "candidate" || result.status === "duplicate";
   return (
@@ -560,6 +573,13 @@ function ScreenerResultCard({
           <Metric label="Rel Volume" value={formatNumber(result.relative_volume)} />
         </div>
         <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <button
+            type="button"
+            onClick={() => onSelect(result)}
+            className="rounded-xl border border-white/10 px-4 py-2 text-sm font-semibold text-slate-100 hover:border-emerald-300/50"
+          >
+            Details pruefen
+          </button>
           <button
             type="button"
             disabled={!canAddToWatchlist || isConverting}
@@ -593,6 +613,127 @@ function ScreenerResultCard({
         ) : null}
       </aside>
     </article>
+  );
+}
+
+function ScreenerResultDetailPanel({
+  result,
+  isConverting,
+  onClose,
+  onAddToWatchlist,
+}: {
+  result: ScreenerResult;
+  isConverting: boolean;
+  onClose: () => void;
+  onAddToWatchlist: (result: ScreenerResult) => void;
+}) {
+  const canAddToWatchlist = result.status === "candidate" || result.status === "duplicate";
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 px-4 py-6 backdrop-blur">
+      <aside className="mx-auto max-w-4xl rounded-3xl border border-white/10 bg-slate-950 p-6 shadow-2xl shadow-black/40">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-emerald-300">Screener Candidate</p>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <h2 className="text-3xl font-semibold">{result.symbol}</h2>
+              <span className={`rounded-full border px-3 py-1 text-xs ${statusTone[result.status]}`}>
+                {formatLabel(result.status)}
+              </span>
+              <span className="rounded-full bg-slate-800 px-3 py-1 text-xs uppercase text-slate-300">
+                {result.asset_class}
+              </span>
+            </div>
+            <p className="mt-2 text-slate-300">{result.name ?? "Kein Name im Screener-Export."}</p>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:border-emerald-300/50">
+            Schliessen
+          </button>
+        </div>
+
+        <p className="mt-5 rounded-2xl border border-yellow-300/20 bg-yellow-300/10 p-4 text-sm text-yellow-50">
+          Detaildaten sind nur Review-Kontext aus dem gespeicherten Screener-Snapshot. Keine Live-Daten,
+          keine Analyse, kein Signal, kein Trade und keine Empfehlung.
+        </p>
+
+        <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <Metric label="Exchange" value={result.exchange ?? "-"} />
+          <Metric label="Currency" value={result.currency ?? "-"} />
+          <Metric label="Price" value={formatNumber(result.price)} />
+          <Metric label="Change %" value={formatPercent(result.change_percent)} />
+          <Metric label="Volume" value={formatCompact(result.volume)} />
+          <Metric label="Rel Volume" value={formatNumber(result.relative_volume)} />
+          <Metric label="Market Cap" value={formatCompact(result.market_cap)} />
+          <Metric label="RSI14" value={formatNumber(result.rsi14)} />
+          <Metric label="EMA20" value={formatNumber(result.ema20)} />
+          <Metric label="EMA50" value={formatNumber(result.ema50)} />
+          <Metric label="EMA200" value={formatNumber(result.ema200)} />
+          <Metric label="Rank" value={result.rank?.toString() ?? "-"} />
+        </div>
+
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <DetailBlock title="Classification">
+            <DetailRow label="Sector" value={result.sector ?? "-"} />
+            <DetailRow label="Industry" value={result.industry ?? "-"} />
+            <DetailRow label="Import ID" value={`#${result.screener_import_id}`} />
+            <DetailRow label="Result ID" value={`#${result.id}`} />
+          </DetailBlock>
+          <DetailBlock title="Duplicate / Watchlist Context">
+            <DetailRow label="Watchlist Item" value={result.watchlist_item_id ? `#${result.watchlist_item_id}` : "not linked"} />
+            <DetailRow label="Duplicate Of" value={result.duplicate_of_result_id ? `#${result.duplicate_of_result_id}` : "none"} />
+            <DetailRow label="Created" value={formatDateTime(result.created_at)} />
+            <DetailRow label="Updated" value={formatDateTime(result.updated_at)} />
+          </DetailBlock>
+        </div>
+
+        {asErrors(result.validation_errors).length > 0 ? <InlineErrors errors={asErrors(result.validation_errors)} /> : null}
+        <RawMetadata value={result.raw_metadata} />
+
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <button
+            type="button"
+            disabled={!canAddToWatchlist || isConverting}
+            onClick={() => onAddToWatchlist(result)}
+            className="rounded-xl bg-sky-300 px-4 py-2 text-sm font-semibold text-slate-950 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isConverting ? "Fuege hinzu..." : "Zur Watchlist hinzufuegen"}
+          </button>
+          <span className="text-xs text-slate-500">
+            Explizite Nutzeraktion: keine automatische Analyse, kein Signal, kein Trade, kein Alert.
+          </span>
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+function DetailBlock({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+      <h3 className="text-sm font-semibold text-slate-200">{title}</h3>
+      <div className="mt-3 grid gap-2 text-sm">{children}</div>
+    </section>
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-4 border-b border-white/5 pb-2 last:border-0 last:pb-0">
+      <span className="text-slate-500">{label}</span>
+      <span className="text-right text-slate-200">{value}</span>
+    </div>
+  );
+}
+
+function RawMetadata({ value }: { value: ScreenerResult["raw_metadata"] }) {
+  if (!value || (Array.isArray(value) && value.length === 0)) {
+    return null;
+  }
+  const text = JSON.stringify(value, null, 2);
+  return (
+    <section className="mt-6 rounded-2xl border border-white/10 bg-black/30 p-4">
+      <h3 className="text-sm font-semibold text-slate-200">Raw Metadata</h3>
+      <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap text-xs text-slate-300">{text}</pre>
+    </section>
   );
 }
 
