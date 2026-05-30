@@ -61,3 +61,12 @@ class ScreenerResultRead(BaseModel):
     raw_metadata: dict[str, Any] | list[Any] | None
     created_at: datetime
     updated_at: datetime
+
+
+class ScreenerImportResult(BaseModel):
+    import_record: ScreenerImportRead | None
+    errors: list[dict[str, object | None]]
+
+
+class ScreenerImportDetail(ScreenerImportRead):
+    results: list[ScreenerResultRead]
