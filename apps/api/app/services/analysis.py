@@ -17,6 +17,10 @@ from app.services.indicators import (
     indicator_input_from_model,
 )
 from app.services.signals import upsert_signal_from_analysis
+from app.services.swing_structure import (
+    latest_meaningful_swing_high,
+    latest_meaningful_swing_low,
+)
 from app.strategies.base_breakout_long import BaseBreakoutInput
 from app.strategies.contracts import IndicatorContext, SignalEvaluationInput
 from app.strategies.orchestrator import SignalEngineInput, evaluate_mvp_signal_engine
@@ -139,23 +143,27 @@ def build_signal_engine_input(
     trigger_data = timeframe_data[Timeframe.FOUR_HOURS]
     daily_context = context_from_timeframe(daily_data)
     trigger_context = context_from_timeframe(trigger_data)
-    recent_daily_lows = [candle.low for candle in daily_data.candles[-20:]]
-    recent_trigger_highs = [candle.high for candle in trigger_data.candles[-20:]]
+    daily_highs = [candle.high for candle in daily_data.candles]
+    daily_lows = [candle.low for candle in daily_data.candles]
+    trigger_highs = [candle.high for candle in trigger_data.candles]
+    trigger_lows = [candle.low for candle in trigger_data.candles]
+    recent_swing_low = latest_meaningful_swing_low(daily_highs, daily_lows)
+    trigger_lower_high = latest_meaningful_swing_high(trigger_highs, trigger_lows)
     previous_daily_snapshot = previous_snapshot(daily_data.snapshots)
     trend_input = TrendPullbackInput(
         signal_input=fallback_input,
         daily=daily_context,
         trigger=trigger_context,
         previous_ema50=getattr(previous_daily_snapshot, "ema50", None),
-        recent_swing_low=min(recent_daily_lows) if recent_daily_lows else None,
-        small_lower_high=max(recent_trigger_highs) if recent_trigger_highs else None,
+        recent_swing_low=recent_swing_low,
+        small_lower_high=trigger_lower_high,
         close_above_small_lower_high=close_above_level(
             trigger_context.close,
-            max(recent_trigger_highs[:-1]) if len(recent_trigger_highs) > 1 else None,
+            trigger_lower_high,
         ),
         close_back_above_ema20=close_above_level(trigger_context.close, trigger_context.ema20),
         close_back_above_ema50=close_above_level(trigger_context.close, trigger_context.ema50),
-        support_level=min(recent_daily_lows) if recent_daily_lows else None,
+        support_level=recent_swing_low,
         previous_trend_clear=True,
         pullback_controlled=True,
     )
