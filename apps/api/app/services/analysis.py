@@ -16,6 +16,7 @@ from app.services.indicators import (
     calculate_indicator_snapshots,
     indicator_input_from_model,
 )
+from app.services.market_context import assess_market_context
 from app.services.signals import upsert_signal_from_analysis
 from app.services.swing_structure import (
     latest_meaningful_swing_high,
@@ -123,6 +124,12 @@ def build_signal_engine_input(
     data_quality: list[str] = []
     data_quality.extend(f"missing_{timeframe}_data" for timeframe in missing_timeframes)
     data_quality.extend(timeframe_quality_flags(timeframe_data))
+    daily_data = timeframe_data.get(Timeframe.ONE_DAY)
+    market_context = assess_market_context(
+        db,
+        series,
+        daily_data.candles if daily_data is not None else [],
+    )
 
     fallback_input = SignalEvaluationInput(
         symbol=series.watchlist_item.symbol,
@@ -134,6 +141,9 @@ def build_signal_engine_input(
         daily_indicators=context_from_timeframe(timeframe_data.get(Timeframe.ONE_DAY)),
         trigger_indicators=context_from_timeframe(timeframe_data.get(Timeframe.FOUR_HOURS)),
         data_quality_flags=data_quality,
+        context_risk_flags=market_context.risk_flags,
+        context_no_trade_reasons=market_context.no_trade_reasons,
+        score_cap=market_context.score_cap,
     )
 
     if missing_timeframes or data_quality:

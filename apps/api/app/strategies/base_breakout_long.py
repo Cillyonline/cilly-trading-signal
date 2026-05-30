@@ -61,6 +61,9 @@ def evaluate_base_breakout_long(payload: BaseBreakoutInput) -> SignalEvaluationR
             *data_quality_flags(payload),
             *base_quality_gate_flags(payload),
         ],
+        context_risk_flags=payload.signal_input.context_risk_flags,
+        context_no_trade_reasons=payload.signal_input.context_no_trade_reasons,
+        score_cap=payload.signal_input.score_cap,
         setup_invalidated=payload.signal_input.setup_invalidated or payload.setup_invalidated,
     )
     risk_flags = initial_risk_flags(payload)
