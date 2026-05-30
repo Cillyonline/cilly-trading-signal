@@ -16,15 +16,13 @@ from app.models.watchlist import WatchlistItem
 from app.services.indicators import calculate_indicator_snapshots, indicator_input_from_model
 
 STOCK_BENCHMARK_SYMBOLS = ("SPY", "QQQ")
+CRYPTO_BENCHMARK_GROUPS = {
+    "BTC": ("BTC", "BTCUSD", "BTCUSDT", "BTC-USD"),
+    "ETH": ("ETH", "ETHUSD", "ETHUSDT", "ETH-USD"),
+}
 CRYPTO_BENCHMARK_SYMBOLS = (
-    "BTC",
-    "BTCUSD",
-    "BTCUSDT",
-    "BTC-USD",
-    "ETH",
-    "ETHUSD",
-    "ETHUSDT",
-    "ETH-USD",
+    *CRYPTO_BENCHMARK_GROUPS["BTC"],
+    *CRYPTO_BENCHMARK_GROUPS["ETH"],
 )
 RELATIVE_STRENGTH_UNDERPERFORMANCE = Decimal("0.02")
 HIGH_CONFIDENCE_SCORE_CAP = 79
@@ -45,6 +43,23 @@ class BenchmarkContext:
     percent_change: Decimal | None
 
 
+@dataclass(frozen=True)
+class BenchmarkRequirementStatus:
+    key: str
+    accepted_symbols: list[str]
+    status: str
+    present_symbol: str | None = None
+    latest_daily_freshness: MarketDataFreshnessStatus | None = None
+    message: str = ""
+
+
+@dataclass(frozen=True)
+class BenchmarkContextStatus:
+    asset_class: AssetClass
+    requirements: list[BenchmarkRequirementStatus]
+    guidance: str
+
+
 def assess_market_context(
     db: Session,
     source_series: MarketDataSeries,
@@ -55,6 +70,40 @@ def assess_market_context(
     if source_series.watchlist_item.asset_class == AssetClass.CRYPTO:
         return assess_crypto_context(db, source_series, candidate_daily_candles)
     return MarketContextAssessment(risk_flags=[], no_trade_reasons=[])
+
+
+def benchmark_context_status(db: Session, user_id: int) -> list[BenchmarkContextStatus]:
+    items = list(
+        db.scalars(
+            select(WatchlistItem)
+            .where(WatchlistItem.user_id == user_id)
+            .where(WatchlistItem.is_active.is_(True))
+        )
+    )
+    return [
+        BenchmarkContextStatus(
+            asset_class=AssetClass.STOCK,
+            requirements=[
+                requirement_status(items, "SPY", ["SPY"]),
+                requirement_status(items, "QQQ", ["QQQ"]),
+            ],
+            guidance=(
+                "Stocks use stored daily SPY/QQQ context for market regime and relative "
+                "strength review. Add/import daily data manually; no live data is fetched."
+            ),
+        ),
+        BenchmarkContextStatus(
+            asset_class=AssetClass.CRYPTO,
+            requirements=[
+                requirement_status(items, key, list(symbols))
+                for key, symbols in CRYPTO_BENCHMARK_GROUPS.items()
+            ],
+            guidance=(
+                "Crypto uses stored daily BTC/ETH context for regime review. Accepted ticker "
+                "variants are listed below; data remains manual or provider-synced only."
+            ),
+        ),
+    ]
 
 
 def assess_stock_context(
@@ -92,6 +141,60 @@ def assess_stock_context(
         risk_flags=dedupe(risk_flags),
         no_trade_reasons=dedupe(no_trade_reasons),
         score_cap=HIGH_CONFIDENCE_SCORE_CAP if risk_flags else None,
+    )
+
+
+def requirement_status(
+    items: list[WatchlistItem], key: str, accepted_symbols: list[str]
+) -> BenchmarkRequirementStatus:
+    accepted = {symbol.upper() for symbol in accepted_symbols}
+    item = next((candidate for candidate in items if candidate.symbol.upper() in accepted), None)
+    if item is None:
+        return BenchmarkRequirementStatus(
+            key=key,
+            accepted_symbols=accepted_symbols,
+            status="missing_symbol",
+            message=f"Add one active watchlist symbol for {key} benchmark context.",
+        )
+
+    daily_series = latest_daily_series(item)
+    if daily_series is None:
+        return BenchmarkRequirementStatus(
+            key=key,
+            accepted_symbols=accepted_symbols,
+            status="missing_daily_data",
+            present_symbol=item.symbol,
+            message=f"Import or sync daily data for {item.symbol} before relying on context.",
+        )
+
+    if daily_series.freshness_status != MarketDataFreshnessStatus.FRESH:
+        return BenchmarkRequirementStatus(
+            key=key,
+            accepted_symbols=accepted_symbols,
+            status=daily_series.freshness_status.value,
+            present_symbol=item.symbol,
+            latest_daily_freshness=daily_series.freshness_status,
+            message=f"Daily context for {item.symbol} is {daily_series.freshness_status.value}.",
+        )
+
+    return BenchmarkRequirementStatus(
+        key=key,
+        accepted_symbols=accepted_symbols,
+        status="ready",
+        present_symbol=item.symbol,
+        latest_daily_freshness=daily_series.freshness_status,
+        message=f"Stored fresh daily context is available for {item.symbol}.",
+    )
+
+
+def latest_daily_series(item: WatchlistItem) -> MarketDataSeries | None:
+    daily_series = [
+        series for series in item.market_data_series if series.timeframe == Timeframe.ONE_DAY
+    ]
+    return max(
+        daily_series,
+        key=lambda series: (series.end_time or series.imported_at, series.id),
+        default=None,
     )
 
 

@@ -6,10 +6,12 @@ import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
 import {
   API_BASE_URL,
   assertAuthenticatedResponse,
+  fetchBenchmarkContextStatus,
   redirectToLoginOnAuthError,
 } from "@/lib/api";
 import type {
   AssetClass,
+  BenchmarkContextStatus,
   MarketDataFreshnessStatus,
   MarketDataSource,
   MarketDataSyncStatus,
@@ -37,6 +39,7 @@ const emptyForm: WatchlistForm = {
 export default function WatchlistPage() {
   const authStatus = useProtectedRoute();
   const [items, setItems] = useState<WatchlistItem[]>([]);
+  const [benchmarkContexts, setBenchmarkContexts] = useState<BenchmarkContextStatus[]>([]);
   const [form, setForm] = useState<WatchlistForm>(emptyForm);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -52,7 +55,12 @@ export default function WatchlistPage() {
       if (!response.ok) {
         throw new Error("Watchlist konnte nicht geladen werden.");
       }
-      setItems(await response.json());
+      const [loadedItems, loadedBenchmarkContexts] = await Promise.all([
+        response.json(),
+        fetchBenchmarkContextStatus(),
+      ]);
+      setItems(loadedItems);
+      setBenchmarkContexts(loadedBenchmarkContexts);
     } catch (loadError) {
       if (redirectToLoginOnAuthError(loadError)) {
         return;
@@ -328,8 +336,60 @@ export default function WatchlistPage() {
             </div>
           </section>
         </section>
+
+        <BenchmarkContextPanel contexts={benchmarkContexts} />
       </section>
     </main>
+  );
+}
+
+function BenchmarkContextPanel({ contexts }: { contexts: BenchmarkContextStatus[] }) {
+  return (
+    <section className="rounded-3xl border border-sky-300/20 bg-sky-300/5 p-6">
+      <p className="text-xs uppercase tracking-[0.3em] text-sky-200">Benchmark Context</p>
+      <h2 className="mt-2 text-xl font-semibold">Regime-Kontext fuer Strategie-Kalibrierung</h2>
+      <p className="mt-2 max-w-3xl text-sm text-slate-300">
+        Diese Checkliste zeigt, welche gespeicherten Daily-Benchmarkdaten fuer Aktien und Krypto
+        vorhanden sind. Sie startet keine Analyse, ruft keine Live-Daten ab und erstellt keine
+        Trades, Alerts oder Orders.
+      </p>
+      <div className="mt-5 grid gap-4 lg:grid-cols-2">
+        {contexts.map((context) => (
+          <article key={context.asset_class} className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="font-semibold uppercase text-slate-100">{context.asset_class}</h3>
+                <p className="mt-1 text-sm text-slate-400">{context.guidance}</p>
+              </div>
+              <span className={`rounded-full px-3 py-1 text-xs ${contextReadyClass(context)}`}>
+                {context.requirements.every((requirement) => requirement.status === "ready") ? "ready" : "review"}
+              </span>
+            </div>
+            <div className="mt-4 grid gap-3">
+              {context.requirements.map((requirement) => (
+                <div key={requirement.key} className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-medium text-slate-100">{requirement.key}</span>
+                    <span className={`rounded-full px-2 py-1 text-xs ${benchmarkRequirementClass(requirement.status)}`}>
+                      {formatLabel(requirement.status)}
+                    </span>
+                    {requirement.present_symbol ? (
+                      <span className="rounded-full bg-slate-800 px-2 py-1 text-xs text-slate-300">
+                        {requirement.present_symbol}
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="mt-2 text-sm text-slate-400">{requirement.message}</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Akzeptiert: {requirement.accepted_symbols.join(", ")}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </article>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -386,6 +446,22 @@ function freshnessBadgeClass(status: MarketDataFreshnessStatus) {
     return "border-yellow-300/30 bg-yellow-300/10 text-yellow-100";
   }
   return "border-red-300/30 bg-red-300/10 text-red-100";
+}
+
+function contextReadyClass(context: BenchmarkContextStatus) {
+  return context.requirements.every((requirement) => requirement.status === "ready")
+    ? "bg-emerald-300/10 text-emerald-100"
+    : "bg-orange-300/10 text-orange-100";
+}
+
+function benchmarkRequirementClass(status: string) {
+  if (status === "ready") {
+    return "bg-emerald-300/10 text-emerald-100";
+  }
+  if (status === "missing_symbol" || status === "missing_daily_data") {
+    return "bg-yellow-300/10 text-yellow-100";
+  }
+  return "bg-orange-300/10 text-orange-100";
 }
 
 function freshnessMessage(status: MarketDataFreshnessStatus, syncStatus: MarketDataSyncStatus) {

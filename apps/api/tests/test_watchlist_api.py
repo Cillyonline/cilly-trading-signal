@@ -108,6 +108,50 @@ def test_list_watchlist_items_includes_latest_market_data(client: TestClient) ->
     assert summary["provider_name"] is None
 
 
+def test_benchmark_context_reports_missing_required_symbols(client: TestClient) -> None:
+    response = client.get("/api/watchlist/benchmark-context")
+
+    assert response.status_code == 200
+    contexts = response.json()
+    stock_context = next(context for context in contexts if context["asset_class"] == "stock")
+    crypto_context = next(context for context in contexts if context["asset_class"] == "crypto")
+    assert [requirement["status"] for requirement in stock_context["requirements"]] == [
+        "missing_symbol",
+        "missing_symbol",
+    ]
+    assert {requirement["key"] for requirement in crypto_context["requirements"]} == {"BTC", "ETH"}
+    assert "no live data" in stock_context["guidance"].lower()
+
+
+def test_benchmark_context_reports_daily_data_readiness(client: TestClient) -> None:
+    spy = client.post("/api/watchlist", json={"symbol": "SPY", "asset_class": "stock"}).json()
+    client.post("/api/watchlist", json={"symbol": "QQQ", "asset_class": "stock"})
+    import_response = client.post(
+        "/api/imports/csv",
+        data={"watchlist_item_id": str(spy["id"]), "timeframe": "1D"},
+        files={"file": ("spy.csv", recent_daily_csv(), "text/csv")},
+    )
+    assert import_response.status_code == 200
+
+    response = client.get("/api/watchlist/benchmark-context")
+
+    assert response.status_code == 200
+    stock_context = next(
+        context for context in response.json() if context["asset_class"] == "stock"
+    )
+    spy_requirement = next(
+        requirement for requirement in stock_context["requirements"] if requirement["key"] == "SPY"
+    )
+    qqq_requirement = next(
+        requirement for requirement in stock_context["requirements"] if requirement["key"] == "QQQ"
+    )
+    assert spy_requirement["status"] == "ready"
+    assert spy_requirement["present_symbol"] == "SPY"
+    assert spy_requirement["latest_daily_freshness"] == "fresh"
+    assert qqq_requirement["status"] == "missing_daily_data"
+    assert qqq_requirement["present_symbol"] == "QQQ"
+
+
 def test_create_watchlist_item_rejects_duplicate_symbol(client: TestClient) -> None:
     payload = {"symbol": "BTCUSDT", "asset_class": "crypto"}
 

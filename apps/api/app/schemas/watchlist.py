@@ -25,6 +25,25 @@ class WatchlistMarketDataSummary(BaseModel):
     model_config = {"from_attributes": True, "populate_by_name": True}
 
 
+class BenchmarkRequirementStatusRead(BaseModel):
+    key: str
+    accepted_symbols: list[str]
+    status: str
+    present_symbol: str | None = None
+    latest_daily_freshness: MarketDataFreshnessStatus | None = None
+    message: str
+
+    model_config = {"from_attributes": True}
+
+
+class BenchmarkContextStatusRead(BaseModel):
+    asset_class: AssetClass
+    requirements: list[BenchmarkRequirementStatusRead]
+    guidance: str
+
+    model_config = {"from_attributes": True}
+
+
 class WatchlistItemBase(BaseModel):
     symbol: str = Field(min_length=1, max_length=32)
     name: str | None = Field(default=None, max_length=255)
