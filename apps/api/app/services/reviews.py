@@ -1,4 +1,8 @@
+import csv
+import io
+import json
 from collections import Counter
+from decimal import Decimal
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
@@ -12,6 +16,26 @@ EVIDENCE_ONLY_NOTICE = (
     "Review batches are process evidence only. They are not backtests, profitability "
     "validation, trading advice, live-readiness evidence, or broker/execution workflows."
 )
+REVIEW_BATCH_CSV_HEADERS = [
+    "batch_id",
+    "batch_name",
+    "evidence_only_notice",
+    "entry_id",
+    "symbol",
+    "asset_class",
+    "strategy_type",
+    "signal_status",
+    "score_class",
+    "manual_review_label",
+    "quality_blockers",
+    "benchmark_context",
+    "follow_up_needed",
+    "follow_up_issue_url",
+    "outcome_r",
+    "outcome_measurement_rule",
+    "notes",
+    "created_at",
+]
 ATTENTION_LABELS = {
     ManualReviewLabel.TOO_PERMISSIVE.value,
     ManualReviewLabel.TOO_STRICT.value,
@@ -62,6 +86,8 @@ def create_review_entry(
         raise ReviewEntryError("Review batch not found.")
 
     data = payload.model_dump()
+    if data.get("follow_up_issue_url") is not None:
+        data["follow_up_issue_url"] = str(data["follow_up_issue_url"])
     data["symbol"] = data["symbol"].strip().upper()
     signal_id = data.get("signal_id")
     if signal_id is not None:
@@ -100,6 +126,36 @@ def build_review_batch_summary(batch: ReviewBatch) -> ReviewBatchSummary:
     )
 
 
+def export_review_batch_csv(batch: ReviewBatch) -> str:
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=REVIEW_BATCH_CSV_HEADERS, lineterminator="\r\n")
+    writer.writeheader()
+    for entry in sorted(batch.entries, key=lambda item: (item.created_at, item.id)):
+        writer.writerow(
+            {
+                "batch_id": batch.id,
+                "batch_name": batch.name,
+                "evidence_only_notice": EVIDENCE_ONLY_NOTICE,
+                "entry_id": entry.id,
+                "symbol": entry.symbol,
+                "asset_class": entry.asset_class.value if entry.asset_class else "",
+                "strategy_type": entry.strategy_type.value if entry.strategy_type else "",
+                "signal_status": entry.signal_status.value if entry.signal_status else "",
+                "score_class": entry.score_class.value if entry.score_class else "",
+                "manual_review_label": entry.manual_review_label.value,
+                "quality_blockers": _json_for_csv(entry.quality_blockers),
+                "benchmark_context": entry.benchmark_context or "",
+                "follow_up_needed": "yes" if entry.follow_up_needed else "no",
+                "follow_up_issue_url": entry.follow_up_issue_url or "",
+                "outcome_r": _fmt_decimal(entry.outcome_r),
+                "outcome_measurement_rule": entry.outcome_measurement_rule or "",
+                "notes": entry.notes or "",
+                "created_at": str(entry.created_at),
+            }
+        )
+    return output.getvalue()
+
+
 def _extract_patterns(value: list | dict | None) -> list[str]:
     if value is None:
         return []
@@ -117,3 +173,13 @@ def _extract_patterns(value: list | dict | None) -> list[str]:
         pattern = value.get("key") or value.get("code") or value.get("label")
         return [pattern] if isinstance(pattern, str) else []
     return []
+
+
+def _json_for_csv(value: list | dict | None) -> str:
+    if value is None:
+        return ""
+    return json.dumps(value, ensure_ascii=True, sort_keys=True)
+
+
+def _fmt_decimal(value: Decimal | None) -> str:
+    return "" if value is None else str(value)

@@ -1,6 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -18,6 +19,7 @@ from app.services.reviews import (
     build_review_batch_summary,
     create_review_batch,
     create_review_entry,
+    export_review_batch_csv,
     get_review_batch,
     list_review_batches,
 )
@@ -43,6 +45,19 @@ def get_batch(batch_id: int, db: DbSession, user: CurrentUser) -> ReviewBatchRea
     if batch is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Review batch not found.")
     return to_batch_read(batch)
+
+
+@router.get("/batches/{batch_id}/export")
+def export_batch(batch_id: int, db: DbSession, user: CurrentUser) -> StreamingResponse:
+    batch = get_review_batch(db, user.id, batch_id)
+    if batch is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Review batch not found.")
+    csv_content = export_review_batch_csv(batch)
+    return StreamingResponse(
+        iter([csv_content]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename=review-batch-{batch.id}.csv"},
+    )
 
 
 @router.post(

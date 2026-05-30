@@ -152,6 +152,42 @@ def test_review_entries_surface_repeated_calibration_followups(
     assert body["summary"]["repeated_blocker_patterns"] == ["market_regime"]
 
 
+def test_review_batch_csv_export_contains_evidence_only_fields(client: TestClient) -> None:
+    login(client)
+    batch_id = client.post(
+        "/api/reviews/batches",
+        json={"name": "CSV sample", "review_type": "paper"},
+    ).json()["id"]
+    client.post(
+        f"/api/reviews/batches/{batch_id}/entries",
+        json={
+            "symbol": "BTCUSD",
+            "asset_class": "crypto",
+            "strategy_type": "base_breakout_long",
+            "signal_status": "watchlist",
+            "score_class": "watchlist",
+            "benchmark_context": "present",
+            "quality_blockers": [{"key": "market_regime"}],
+            "manual_review_label": "unclear",
+            "follow_up_issue_url": "https://github.com/Cillyonline/cilly-trading-signal/issues/1",
+            "notes": "Review note only.",
+        },
+    )
+
+    response = client.get(f"/api/reviews/batches/{batch_id}/export")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/csv")
+    assert "review-batch-" in response.headers["content-disposition"]
+    body = response.text
+    assert "evidence_only_notice" in body
+    assert "not backtests" in body
+    assert "BTCUSD" in body
+    assert "unclear" in body
+    assert "market_regime" in body
+    assert "admin@example.com" not in body
+
+
 def test_review_entry_requires_outcome_measurement_rule(client: TestClient) -> None:
     login(client)
     batch_id = client.post(

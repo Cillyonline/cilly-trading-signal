@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
-import { fetchReviewBatch, redirectToLoginOnAuthError } from "@/lib/api";
+import { exportReviewBatchCsv, fetchReviewBatch, redirectToLoginOnAuthError } from "@/lib/api";
 import type { ManualReviewLabel, ReviewBatch, ReviewEntry } from "@/types/reviews";
 import type { AssetClass, StrategyType } from "@/types/signals";
 
@@ -37,6 +37,7 @@ export default function ReviewBatchDetailPage({ params }: { params: { id: string
   const [batch, setBatch] = useState<ReviewBatch | null>(null);
   const [filters, setFilters] = useState<EntryFilterState>(emptyFilters);
   const [isLoading, setIsLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const batchId = Number(params.id);
 
@@ -74,6 +75,21 @@ export default function ReviewBatchDetailPage({ params }: { params: { id: string
     return <ProtectedRouteLoading />;
   }
 
+  async function handleExport() {
+    setIsExporting(true);
+    setError(null);
+    try {
+      await exportReviewBatchCsv(batchId);
+    } catch (exportError) {
+      if (redirectToLoginOnAuthError(exportError)) {
+        return;
+      }
+      setError(exportError instanceof Error ? exportError.message : "Review-Batch Export fehlgeschlagen.");
+    } finally {
+      setIsExporting(false);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#312e81,transparent_34%),#020617] px-6 py-8 text-slate-100">
       <section className="mx-auto flex max-w-6xl flex-col gap-8">
@@ -90,6 +106,14 @@ export default function ReviewBatchDetailPage({ params }: { params: { id: string
               </p>
             </div>
             <div className="flex flex-wrap gap-4 text-sm">
+              <button
+                className="rounded-xl bg-violet-300 px-4 py-2 font-semibold text-slate-950 hover:bg-violet-200 disabled:opacity-60"
+                disabled={!batch || isExporting}
+                onClick={() => void handleExport()}
+                type="button"
+              >
+                {isExporting ? "Export laeuft..." : "CSV exportieren"}
+              </button>
               <a className="text-violet-300 hover:text-violet-200" href="/reviews">
                 Review Batches
               </a>
