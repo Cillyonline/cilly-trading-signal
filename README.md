@@ -170,6 +170,7 @@ uv run --no-project --with pytest --with "fastapi[standard]" --with pydantic-set
 - `docs/PRODUCT_ROADMAP.md`
 - `docs/DELIVERY_ROADMAP.md`
 - `docs/MVP_SPEC.md`
+- `docs/COCKPIT_REVIEW_WORKFLOW.md`
 - `docs/STRATEGY_AND_ALERTS.md`
 - `docs/DECISIONS.md`
 - `docs/DATA_MODEL.md`
@@ -182,7 +183,7 @@ uv run --no-project --with pytest --with "fastapi[standard]" --with pydantic-set
 
 Operational deployment, PostgreSQL backup/restore, healthcheck, logging, and deployment smoke-test steps are documented in `docs/DEPLOYMENT_RUNBOOK.md`. Backup files and logs may contain sensitive app data and must not be committed or shared without review.
 
-The local MVP smoke-test history is documented in `docs/MVP_SMOKE_TEST.md`. Private VPS staging smoke evidence and the conditional staging-only decision gate are documented in `docs/VPS_STAGING_SMOKE_TEST.md` and `docs/VPS_STAGING_DECISION_GATE.md`; this is not a production-readiness claim.
+The intended manual cockpit review flow is documented in `docs/COCKPIT_REVIEW_WORKFLOW.md`. The local MVP smoke-test history is documented in `docs/MVP_SMOKE_TEST.md`. Private VPS staging smoke evidence and the conditional staging-only decision gate are documented in `docs/VPS_STAGING_SMOKE_TEST.md` and `docs/VPS_STAGING_DECISION_GATE.md`; this is not a production-readiness claim.
 
 The current MVP release posture is summarized in `docs/MVP_RELEASE_CHECKLIST.md`. The checklist separates Done, Partial, Missing, Blocked, and Not Included areas and must not be read as a production or profitability claim.
 

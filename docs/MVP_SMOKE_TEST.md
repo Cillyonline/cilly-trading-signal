@@ -6,6 +6,7 @@ This document records the MVP smoke-test workflow and the latest validation resu
 
 For the private VPS staging smoke-test procedure and evidence template, see `docs/VPS_STAGING_SMOKE_TEST.md`.
 For the guarded manual provider sync checklist, see `docs/PROVIDER_SYNC_SMOKE_TEST.md`.
+For the intended end-to-end manual cockpit review sequence, see `docs/COCKPIT_REVIEW_WORKFLOW.md`.
 
 ## Safety Scope
 
