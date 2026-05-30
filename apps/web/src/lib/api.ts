@@ -10,7 +10,14 @@ import type {
 } from "@/types/imports";
 import type { PerformanceSummary } from "@/types/performance";
 import type { ReviewBatch, ReviewBatchCreatePayload, ReviewEntry, ReviewEntryCreatePayload } from "@/types/reviews";
-import type { ScreenerImport, ScreenerResult, ScreenerResultFilters, ScreenerResultPage } from "@/types/screener";
+import type {
+  ScreenerImport,
+  ScreenerResult,
+  ScreenerResultBulkStatusPayload,
+  ScreenerResultBulkStatusResult,
+  ScreenerResultFilters,
+  ScreenerResultPage,
+} from "@/types/screener";
 import type { RiskSettings, RiskSettingsUpdatePayload } from "@/types/settings";
 import type {
   JournalEntry,
@@ -304,6 +311,24 @@ export async function fetchScreenerResultPage(filters: ScreenerResultFilters = {
   if (!response.ok) {
     throw new Error("Screener-Kandidaten konnten nicht geladen werden.");
   }
+  return response.json();
+}
+
+export async function updateScreenerResultStatuses(
+  payload: ScreenerResultBulkStatusPayload,
+): Promise<ScreenerResultBulkStatusResult> {
+  const response = await credentialedFetch(`${API_BASE_URL}/screener/results/status`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  assertAuthenticatedResponse(response);
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(formatApiError(body?.detail, "Screener-Status konnte nicht aktualisiert werden."));
+  }
+
   return response.json();
 }
 

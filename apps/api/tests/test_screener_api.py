@@ -353,6 +353,70 @@ def test_convert_screener_result_creates_watchlist_item_only(client: TestClient)
     assert converted["status"] == "watchlist_added"
 
 
+def test_bulk_update_screener_results_marks_review_statuses_only(client: TestClient) -> None:
+    post_screener_import(client, valid_screener_csv())
+    results = client.get(
+        "/api/screener/results", params={"sort_by": "symbol", "sort_direction": "asc"}
+    ).json()
+
+    response = client.patch(
+        "/api/screener/results/status",
+        json={"result_ids": [result["id"] for result in results], "status": "ignored"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["requested_count"] == 2
+    assert body["updated_count"] == 2
+    assert body["skipped_count"] == 0
+    assert {result["status"] for result in body["results"]} == {"ignored"}
+    ignored = client.get("/api/screener/results", params={"status": "ignored"}).json()
+    assert {result["symbol"] for result in ignored} == {"AAPL", "MSFT"}
+
+
+def test_bulk_update_screener_results_skips_watchlist_linked_results(client: TestClient) -> None:
+    post_screener_import(client, valid_screener_csv())
+    results = client.get(
+        "/api/screener/results", params={"sort_by": "symbol", "sort_direction": "asc"}
+    ).json()
+    aapl = next(result for result in results if result["symbol"] == "AAPL")
+    msft = next(result for result in results if result["symbol"] == "MSFT")
+    converted = client.post(f"/api/screener/results/{aapl['id']}/watchlist").json()
+
+    response = client.patch(
+        "/api/screener/results/status",
+        json={"result_ids": [converted["id"], msft["id"], 9999], "status": "rejected"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["requested_count"] == 3
+    assert body["updated_count"] == 1
+    assert body["skipped_count"] == 2
+    assert set(body["skipped_result_ids"]) == {converted["id"], 9999}
+    updated_results = client.get("/api/screener/results").json()
+    assert (
+        next(result for result in updated_results if result["symbol"] == "AAPL")["status"]
+        == "watchlist_added"
+    )
+    assert (
+        next(result for result in updated_results if result["symbol"] == "MSFT")["status"]
+        == "rejected"
+    )
+
+
+def test_bulk_update_screener_results_rejects_non_review_status(client: TestClient) -> None:
+    post_screener_import(client, valid_screener_csv())
+    result = client.get("/api/screener/results").json()[0]
+
+    response = client.patch(
+        "/api/screener/results/status",
+        json={"result_ids": [result["id"]], "status": "watchlist_added"},
+    )
+
+    assert response.status_code == 422
+
+
 def test_convert_screener_result_links_existing_watchlist_duplicate(client: TestClient) -> None:
     watchlist_response = client.post(
         "/api/watchlist",

@@ -303,6 +303,11 @@ SCREENER_RESULT_SORT_COLUMNS = {
     "price": ScreenerResult.price,
     "rank": ScreenerResult.rank,
 }
+SCREENER_BULK_REVIEW_STATUSES = {
+    ScreenerResultStatus.CANDIDATE,
+    ScreenerResultStatus.IGNORED,
+    ScreenerResultStatus.REJECTED,
+}
 
 
 def list_screener_results(
@@ -377,6 +382,40 @@ def get_screener_result(db: Session, user_id: int, result_id: int) -> ScreenerRe
         .where(ScreenerResult.id == result_id)
         .where(ScreenerResult.user_id == user_id)
     )
+
+
+def bulk_update_screener_result_status(
+    db: Session,
+    user_id: int,
+    result_ids: list[int],
+    target_status: ScreenerResultStatus,
+) -> tuple[list[ScreenerResult], list[int]]:
+    if target_status not in SCREENER_BULK_REVIEW_STATUSES:
+        return [], result_ids
+
+    unique_ids = list(dict.fromkeys(result_ids))
+    results = list(
+        db.scalars(
+            select(ScreenerResult)
+            .where(ScreenerResult.user_id == user_id)
+            .where(ScreenerResult.id.in_(unique_ids))
+        )
+    )
+    result_by_id = {result.id: result for result in results}
+    updated: list[ScreenerResult] = []
+    skipped_ids: list[int] = []
+    for result_id in unique_ids:
+        result = result_by_id.get(result_id)
+        if result is None or result.status not in SCREENER_BULK_REVIEW_STATUSES:
+            skipped_ids.append(result_id)
+            continue
+        result.status = target_status
+        updated.append(result)
+
+    db.commit()
+    for result in updated:
+        db.refresh(result)
+    return updated, skipped_ids
 
 
 def convert_screener_result_to_watchlist(

@@ -41,6 +41,19 @@ export type ScreenerResultPage = {
   total_pages: number;
 };
 
+export type ScreenerResultBulkStatusPayload = {
+  result_ids: number[];
+  status: "candidate" | "ignored" | "rejected";
+};
+
+export type ScreenerResultBulkStatusResult = {
+  requested_count: number;
+  updated_count: number;
+  skipped_count: number;
+  skipped_result_ids: number[];
+  results: ScreenerResult[];
+};
+
 export type ScreenerImportError = {
   row: number | null;
   field: string | null;
