@@ -164,8 +164,8 @@ def build_signal_engine_input(
         close_back_above_ema20=close_above_level(trigger_context.close, trigger_context.ema20),
         close_back_above_ema50=close_above_level(trigger_context.close, trigger_context.ema50),
         support_level=recent_swing_low,
-        previous_trend_clear=True,
-        pullback_controlled=True,
+        previous_trend_clear=previous_trend_clear(daily_context, previous_daily_snapshot),
+        pullback_controlled=pullback_is_controlled(daily_data, daily_context),
     )
     base_breakout_input = build_base_breakout_input(
         fallback_input,
@@ -342,6 +342,37 @@ def close_near_daily_high(candle: MarketDataCandle) -> bool:
     if candle_range <= 0:
         return True
     return (candle.high - candle.close) / candle_range <= Decimal("0.25")
+
+
+def previous_trend_clear(
+    daily_context: IndicatorContext, previous_daily_snapshot: object | None
+) -> bool:
+    previous_ema50 = getattr(previous_daily_snapshot, "ema50", None)
+    if daily_context.close is None or daily_context.ema50 is None or daily_context.ema200 is None:
+        return False
+    ema50_rising = previous_ema50 is not None and daily_context.ema50 > previous_ema50
+    return daily_context.close > daily_context.ema200 and (
+        ema50_rising
+        or (daily_context.ema20 is not None and daily_context.ema20 > daily_context.ema50)
+    )
+
+
+def pullback_is_controlled(
+    daily_data: TimeframeAnalysisData, daily_context: IndicatorContext
+) -> bool:
+    candles = daily_data.candles[-5:]
+    if len(candles) < 3:
+        return False
+    if daily_context.close is None or daily_context.ema50 is None:
+        return False
+    if daily_context.close < daily_context.ema50:
+        return False
+    bearish_candles = sum(1 for candle in candles if candle.close < candle.open)
+    if bearish_candles >= 4:
+        return False
+    if daily_context.relative_volume is not None and daily_context.relative_volume > Decimal("1.5"):
+        return False
+    return True
 
 
 def base_interaction_active(payload: BaseBreakoutInput) -> bool:
