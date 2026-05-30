@@ -242,3 +242,6 @@ Future strategy changes should not be made just to produce more signals. They
 should improve the match between the playbook, deterministic fixtures, and
 reviewable historical/paper outcomes. Fewer weak signals with clearer No Trade
 reasons is preferable to more low-quality candidates.
+
+The operational calibration workflow is documented in
+`docs/STRATEGY_CALIBRATION_WORKFLOW.md`.
