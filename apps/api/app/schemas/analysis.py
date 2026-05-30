@@ -33,6 +33,7 @@ class SignalAnalysisResult(BaseModel):
     risk_flags: list[str]
     next_action: str
     no_trade_reasons: list[str]
+    quality_report: list[dict[str, str]] = []
 
 
 class MarketDataAnalysisResult(BaseModel):

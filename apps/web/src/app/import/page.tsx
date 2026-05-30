@@ -741,9 +741,32 @@ function AnalysisResultCard({ result }: { result: MarketDataAnalysisResult }) {
       </div>
 
       <TextList title="Begruendung" empty="Keine Begruendung gespeichert." items={reasons} />
+      <QualityReport checks={signal.quality_report} />
       <BadgeList title="Risk Flags" empty="Keine Risk Flags" items={flags} tone="orange" />
       <BadgeList title="No-Trade Gruende" empty="Keine No-Trade Gruende" items={noTradeReasons} tone="slate" />
     </section>
+  );
+}
+
+function QualityReport({ checks }: { checks: MarketDataAnalysisResult["signal"]["quality_report"] }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+      <p className="text-sm font-medium text-slate-200">Analyse-Qualitaet</p>
+      {checks.length > 0 ? (
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          {checks.slice(0, 8).map((check) => (
+            <div key={check.key} className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+              <p className="text-xs uppercase tracking-wide text-slate-500">
+                {check.label} · {check.status}
+              </p>
+              <p className="mt-1 text-sm text-slate-300">{check.detail}</p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-3 text-sm text-slate-500">Kein Qualitaetsbericht gespeichert.</p>
+      )}
+    </div>
   );
 }
 

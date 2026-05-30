@@ -150,6 +150,7 @@ def test_output_has_signal_compatible_fields_and_no_trade_fields() -> None:
         "no_trade_reasons",
         "next_action",
     }
+    assert "quality_report" not in signal_kwargs
     assert "trade" not in signal_kwargs
     assert "alert" not in signal_kwargs
     assert result.reasoning

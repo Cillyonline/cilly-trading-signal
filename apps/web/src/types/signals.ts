@@ -36,6 +36,7 @@ export type Signal = {
   risk_flags: string[] | Record<string, unknown> | null;
   no_trade_reasons: string[] | Record<string, unknown> | null;
   next_action: string | null;
+  quality_report: AnalysisQualityCheck[];
   review_note: string | null;
   created_at: string;
   updated_at: string;
@@ -44,6 +45,13 @@ export type Signal = {
   stale_reason: string | null;
   stale_after_days: number;
   review_events: SignalReviewEvent[];
+};
+
+export type AnalysisQualityCheck = {
+  key: string;
+  label: string;
+  status: "passed" | "warning" | "blocked" | "missing" | string;
+  detail: string;
 };
 
 export type SignalReviewEvent = {

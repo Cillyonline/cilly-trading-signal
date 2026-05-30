@@ -285,6 +285,7 @@ def test_analyze_market_data_persists_base_breakout_signal() -> None:
         assert result.signal.strategy_type == StrategyType.BASE_BREAKOUT_LONG
         assert result.signal.status == SignalStatus.ARMED
         assert result.signal.trigger_level == Decimal("110")
+        assert any(check["key"] == "risk_plan" for check in result.signal.quality_report)
 
 
 def test_missing_weekly_context_returns_conservative_no_setup() -> None:
@@ -395,9 +396,9 @@ def test_single_daily_import_cannot_produce_armed_setup() -> None:
             )
         )
 
-        assert result.status == SignalStatus.NO_SETUP
-        assert "missing_1W_data" in result.risk_flags
-        assert "missing_4H_data" in result.risk_flags
+    assert result.status == SignalStatus.NO_SETUP
+    assert "missing_1W_data" in result.risk_flags
+    assert "missing_4H_data" in result.risk_flags
 
 
 def test_missing_source_history_returns_no_strategy_input() -> None:

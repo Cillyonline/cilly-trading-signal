@@ -16,6 +16,7 @@ from app.services.indicators import (
     calculate_indicator_snapshots,
     indicator_input_from_model,
 )
+from app.services.analysis_quality import build_analysis_quality_report
 from app.services.market_context import assess_market_context
 from app.services.signals import upsert_signal_from_analysis
 from app.services.swing_structure import (
@@ -107,7 +108,10 @@ def analyze_market_data_series(db: Session, series: MarketDataSeries) -> MarketD
         status=series.status,
         candle_count=len(candles),
         indicator_snapshot_count=len(snapshots),
-        signal=SignalAnalysisResult(**signal_result.__dict__),
+        signal=SignalAnalysisResult(
+            **signal_result.__dict__,
+            quality_report=build_analysis_quality_report(signal_result),
+        ),
     )
 
 

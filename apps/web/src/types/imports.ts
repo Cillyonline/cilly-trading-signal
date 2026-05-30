@@ -98,6 +98,14 @@ export type SignalAnalysisResult = {
   risk_flags: string[];
   next_action: string;
   no_trade_reasons: string[];
+  quality_report: AnalysisQualityCheck[];
+};
+
+export type AnalysisQualityCheck = {
+  key: string;
+  label: string;
+  status: "passed" | "warning" | "blocked" | "missing" | string;
+  detail: string;
 };
 
 export type MarketDataAnalysisResult = {

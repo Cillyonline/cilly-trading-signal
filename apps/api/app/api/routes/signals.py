@@ -7,6 +7,7 @@ from app.api.deps import get_current_user
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.signals import SignalRead, SignalReviewNoteUpdate, SignalStatusUpdate
+from app.services.analysis_quality import build_analysis_quality_report
 from app.services.signals import (
     InvalidSignalStatusTransitionError,
     get_signal,
@@ -82,6 +83,7 @@ def to_signal_read(signal) -> SignalRead:
             "is_stale": is_signal_stale(signal),
             "stale_reason": stale_signal_reason(signal),
             "stale_after_days": STALE_SIGNAL_AFTER_DAYS,
+            "quality_report": build_analysis_quality_report(signal),
             "review_events": sorted(
                 signal.review_events,
                 key=lambda event: event.id,

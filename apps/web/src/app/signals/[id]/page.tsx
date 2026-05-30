@@ -334,6 +334,7 @@ function SignalDetail({
       <section className="grid gap-6 lg:grid-cols-[1fr_0.8fr]">
         <TextList title="Vollstaendige Begruendung" empty="Keine Begruendung gespeichert." items={reasoning} />
         <div className="grid gap-6">
+          <QualityReportCard checks={signal.quality_report} />
           <BadgeList title="No-Trade Gruende" empty="Keine harten No-Trade Gruende" items={noTradeReasons} tone="red" />
           <BadgeList title="Risk Flags" empty="Keine Risk Flags" items={riskFlags} tone="orange" />
         </div>
@@ -350,6 +351,41 @@ function SignalDetail({
       </article>
     </section>
   );
+}
+
+function QualityReportCard({ checks }: { checks: Signal["quality_report"] }) {
+  return (
+    <article className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
+      <h3 className="text-xl font-semibold">Analyse-Qualitaet</h3>
+      {checks.length > 0 ? (
+        <div className="mt-5 grid gap-3">
+          {checks.map((check) => (
+            <div key={check.key} className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-sm font-semibold text-slate-100">{check.label}</p>
+                <span className={`rounded-full px-2 py-1 text-xs ${qualityTone(check.status)}`}>
+                  {check.status}
+                </span>
+              </div>
+              <p className="mt-2 text-sm text-slate-400">{check.detail}</p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-5 text-sm text-slate-500">Kein Qualitaetsbericht gespeichert.</p>
+      )}
+    </article>
+  );
+}
+
+function qualityTone(status: string) {
+  if (status === "passed") {
+    return "bg-emerald-300/10 text-emerald-100";
+  }
+  if (status === "warning" || status === "missing") {
+    return "bg-orange-300/10 text-orange-100";
+  }
+  return "bg-red-300/10 text-red-100";
 }
 
 function ReviewHistory({ events }: { events: SignalReviewEvent[] }) {
