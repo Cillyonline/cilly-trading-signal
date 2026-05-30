@@ -4,7 +4,25 @@ import { useEffect, useMemo, useState } from "react";
 
 import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
 import { fetchSignals, redirectToLoginOnAuthError } from "@/lib/api";
-import type { Signal, SignalStatus } from "@/types/signals";
+import type { ScoreClass, Signal, SignalStatus, StrategyType } from "@/types/signals";
+
+type SignalFilters = {
+  symbol: string;
+  status: "all" | SignalStatus;
+  strategy: "all" | StrategyType;
+  scoreClass: "all" | ScoreClass;
+  freshness: "all" | "fresh" | "stale";
+  context: "all" | "risk_flags" | "no_trade_reasons";
+};
+
+const emptyFilters: SignalFilters = {
+  symbol: "",
+  status: "all",
+  strategy: "all",
+  scoreClass: "all",
+  freshness: "all",
+  context: "all",
+};
 
 const statusTone: Record<SignalStatus, string> = {
   watchlist: "border-yellow-300/30 bg-yellow-300/10 text-yellow-100",
@@ -29,6 +47,7 @@ const statusLabel: Record<SignalStatus, string> = {
 export default function SignalsPage() {
   const authStatus = useProtectedRoute();
   const [signals, setSignals] = useState<Signal[]>([]);
+  const [filters, setFilters] = useState<SignalFilters>(emptyFilters);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -54,6 +73,7 @@ export default function SignalsPage() {
   }, [authStatus]);
 
   const summary = useMemo(() => buildSummary(signals), [signals]);
+  const filteredSignals = useMemo(() => filterSignals(signals, filters), [signals, filters]);
 
   if (authStatus !== "authenticated") {
     return <ProtectedRouteLoading />;
@@ -110,14 +130,24 @@ export default function SignalsPage() {
             </button>
           </div>
 
+          <SignalFiltersPanel
+            filters={filters}
+            resultCount={filteredSignals.length}
+            totalCount={signals.length}
+            onChange={setFilters}
+            onReset={() => setFilters(emptyFilters)}
+          />
+
           <div className="mt-6 overflow-hidden rounded-2xl border border-white/10">
             {isLoading ? (
               <p className="p-5 text-sm text-slate-400">Signale werden geladen...</p>
             ) : signals.length === 0 ? (
               <EmptyState />
+            ) : filteredSignals.length === 0 ? (
+              <FilteredEmptyState />
             ) : (
               <div className="divide-y divide-white/10">
-                {signals.map((signal) => (
+                {filteredSignals.map((signal) => (
                   <SignalCard key={signal.id} signal={signal} />
                 ))}
               </div>
@@ -126,6 +156,148 @@ export default function SignalsPage() {
         </section>
       </section>
     </main>
+  );
+}
+
+function SignalFiltersPanel({
+  filters,
+  resultCount,
+  totalCount,
+  onChange,
+  onReset,
+}: {
+  filters: SignalFilters;
+  resultCount: number;
+  totalCount: number;
+  onChange: (filters: SignalFilters) => void;
+  onReset: () => void;
+}) {
+  return (
+    <div className="mt-6 grid gap-4 rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-slate-200">Review-Filter</p>
+          <p className="mt-1 text-xs text-slate-400">
+            Filter veraendern keine Signale. No Setup und No Trade bleiben sichtbar und pruefbar.
+          </p>
+        </div>
+        <div className="flex items-center gap-3 text-sm text-slate-400">
+          <span>
+            {resultCount} / {totalCount} sichtbar
+          </span>
+          <button
+            className="rounded-xl border border-white/10 px-3 py-2 text-slate-200 hover:border-emerald-300/50"
+            onClick={onReset}
+            type="button"
+          >
+            Zuruecksetzen
+          </button>
+        </div>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <label className="grid gap-2 text-sm text-slate-300">
+          Symbol
+          <input
+            value={filters.symbol}
+            onChange={(event) => onChange({ ...filters, symbol: event.target.value })}
+            className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-emerald-300"
+            placeholder="AAPL, BTC..."
+          />
+        </label>
+
+        <FilterSelect
+          label="Status"
+          value={filters.status}
+          onChange={(value) => onChange({ ...filters, status: value as SignalFilters["status"] })}
+          options={[
+            ["all", "Alle Status"],
+            ["triggered", "Triggered"],
+            ["armed", "Armed"],
+            ["watchlist", "Watchlist"],
+            ["no_setup", "No Setup"],
+            ["invalidated", "Invalidated"],
+            ["missed", "Missed"],
+            ["expired", "Expired"],
+          ]}
+        />
+
+        <FilterSelect
+          label="Strategie"
+          value={filters.strategy}
+          onChange={(value) => onChange({ ...filters, strategy: value as SignalFilters["strategy"] })}
+          options={[
+            ["all", "Alle Strategien"],
+            ["trend_pullback_long", "Trend Pullback Long"],
+            ["base_breakout_long", "Base Breakout Long"],
+          ]}
+        />
+
+        <FilterSelect
+          label="Score Class"
+          value={filters.scoreClass}
+          onChange={(value) => onChange({ ...filters, scoreClass: value as SignalFilters["scoreClass"] })}
+          options={[
+            ["all", "Alle Score Classes"],
+            ["a_setup", "A Setup"],
+            ["b_setup", "B Setup"],
+            ["watchlist", "Watchlist"],
+            ["no_trade", "No Trade"],
+          ]}
+        />
+
+        <FilterSelect
+          label="Freshness"
+          value={filters.freshness}
+          onChange={(value) => onChange({ ...filters, freshness: value as SignalFilters["freshness"] })}
+          options={[
+            ["all", "Alle Datenstaende"],
+            ["fresh", "Nicht stale"],
+            ["stale", "Stale"],
+          ]}
+        />
+
+        <FilterSelect
+          label="Kontext"
+          value={filters.context}
+          onChange={(value) => onChange({ ...filters, context: value as SignalFilters["context"] })}
+          options={[
+            ["all", "Alle Kontexte"],
+            ["risk_flags", "Mit Risk Flags"],
+            ["no_trade_reasons", "Mit No-Trade Gruenden"],
+          ]}
+        />
+      </div>
+    </div>
+  );
+}
+
+function FilterSelect({
+  label,
+  value,
+  options,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: [string, string][];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <label className="grid gap-2 text-sm text-slate-300">
+      {label}
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-emerald-300"
+      >
+        {options.map(([optionValue, optionLabel]) => (
+          <option key={optionValue} value={optionValue}>
+            {optionLabel}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 
@@ -238,12 +410,55 @@ function EmptyState() {
   );
 }
 
+function FilteredEmptyState() {
+  return (
+    <div className="p-8 text-center">
+      <p className="text-lg font-semibold text-slate-200">Keine Signale fuer diese Filter.</p>
+      <p className="mx-auto mt-2 max-w-xl text-sm text-slate-400">
+        Setze Filter zurueck oder pruefe bewusst auch No Setup, No Trade und stale Kandidaten.
+      </p>
+    </div>
+  );
+}
+
 function buildSummary(signals: Signal[]) {
   return {
     armed: signals.filter((signal) => signal.status === "armed").length,
     watchlist: signals.filter((signal) => signal.status === "watchlist").length,
     stale: signals.filter((signal) => signal.is_stale).length,
   };
+}
+
+function filterSignals(signals: Signal[], filters: SignalFilters) {
+  const symbol = filters.symbol.trim().toLowerCase();
+
+  return signals.filter((signal) => {
+    if (symbol && !signal.symbol.toLowerCase().includes(symbol)) {
+      return false;
+    }
+    if (filters.status !== "all" && signal.status !== filters.status) {
+      return false;
+    }
+    if (filters.strategy !== "all" && signal.strategy_type !== filters.strategy) {
+      return false;
+    }
+    if (filters.scoreClass !== "all" && signal.score_class !== filters.scoreClass) {
+      return false;
+    }
+    if (filters.freshness === "stale" && !signal.is_stale) {
+      return false;
+    }
+    if (filters.freshness === "fresh" && signal.is_stale) {
+      return false;
+    }
+    if (filters.context === "risk_flags" && toTextList(signal.risk_flags).length === 0) {
+      return false;
+    }
+    if (filters.context === "no_trade_reasons" && toTextList(signal.no_trade_reasons).length === 0) {
+      return false;
+    }
+    return true;
+  });
 }
 
 function StaleNotice({ compact, signal }: { compact?: boolean; signal: Signal }) {
