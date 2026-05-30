@@ -29,6 +29,16 @@ export type ScreenerResultFilters = {
   max_rsi14?: string;
   sort_by?: ScreenerResultSortBy;
   sort_direction?: ScreenerResultSortDirection;
+  page?: number;
+  page_size?: number;
+};
+
+export type ScreenerResultPage = {
+  items: ScreenerResult[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
 };
 
 export type ScreenerImportError = {
