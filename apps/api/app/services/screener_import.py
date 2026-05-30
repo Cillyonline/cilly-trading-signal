@@ -15,6 +15,7 @@ from app.models.enums import (
     ScreenerResultStatus,
 )
 from app.models.screener import ScreenerImport, ScreenerResult
+from app.schemas.screener import ScreenerResultFilters
 from app.schemas.watchlist import WatchlistItemCreate
 from app.services.watchlist import (
     DuplicateWatchlistSymbolError,
@@ -290,12 +291,45 @@ def list_screener_imports(db: Session, user_id: int) -> list[ScreenerImport]:
     )
 
 
-def list_screener_results(db: Session, user_id: int) -> list[ScreenerResult]:
+SCREENER_RESULT_SORT_COLUMNS = {
+    "created_at": ScreenerResult.created_at,
+    "symbol": ScreenerResult.symbol,
+    "status": ScreenerResult.status,
+    "volume": ScreenerResult.volume,
+    "relative_volume": ScreenerResult.relative_volume,
+    "rsi14": ScreenerResult.rsi14,
+    "price": ScreenerResult.price,
+    "rank": ScreenerResult.rank,
+}
+
+
+def list_screener_results(
+    db: Session, user_id: int, filters: ScreenerResultFilters | None = None
+) -> list[ScreenerResult]:
+    filters = filters or ScreenerResultFilters()
+    query = select(ScreenerResult).where(ScreenerResult.user_id == user_id)
+    if filters.asset_class is not None:
+        query = query.where(ScreenerResult.asset_class == filters.asset_class)
+    if filters.status is not None:
+        query = query.where(ScreenerResult.status == filters.status)
+    if filters.exchange:
+        query = query.where(ScreenerResult.exchange == filters.exchange.strip().upper())
+    if filters.screener_import_id is not None:
+        query = query.where(ScreenerResult.screener_import_id == filters.screener_import_id)
+    if filters.min_volume is not None:
+        query = query.where(ScreenerResult.volume >= filters.min_volume)
+    if filters.min_relative_volume is not None:
+        query = query.where(ScreenerResult.relative_volume >= filters.min_relative_volume)
+    if filters.min_rsi14 is not None:
+        query = query.where(ScreenerResult.rsi14 >= filters.min_rsi14)
+    if filters.max_rsi14 is not None:
+        query = query.where(ScreenerResult.rsi14 <= filters.max_rsi14)
+
+    sort_column = SCREENER_RESULT_SORT_COLUMNS.get(filters.sort_by, ScreenerResult.created_at)
+    ordered_column = sort_column.asc() if filters.sort_direction == "asc" else sort_column.desc()
     return list(
         db.scalars(
-            select(ScreenerResult)
-            .where(ScreenerResult.user_id == user_id)
-            .order_by(ScreenerResult.created_at.desc(), ScreenerResult.id.desc())
+            query.order_by(ordered_column, ScreenerResult.id.desc())
         )
     )
 

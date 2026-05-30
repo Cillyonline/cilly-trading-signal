@@ -1,13 +1,18 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.db.session import get_db
 from app.models.enums import AssetClass
 from app.models.user import User
-from app.schemas.screener import ScreenerImportDetail, ScreenerImportRead, ScreenerResultRead
+from app.schemas.screener import (
+    ScreenerImportDetail,
+    ScreenerImportRead,
+    ScreenerResultFilters,
+    ScreenerResultRead,
+)
 from app.services.screener_import import (
     MAX_SCREENER_UPLOAD_BYTES,
     convert_screener_result_to_watchlist,
@@ -84,8 +89,12 @@ def get_import(import_id: int, db: DbSession, user: CurrentUser) -> ScreenerImpo
 
 
 @router.get("/results", response_model=list[ScreenerResultRead])
-def list_results(db: DbSession, user: CurrentUser) -> list[ScreenerResultRead]:
-    return list_screener_results(db, user.id)
+def list_results(
+    db: DbSession,
+    user: CurrentUser,
+    filters: Annotated[ScreenerResultFilters, Query()],
+) -> list[ScreenerResultRead]:
+    return list_screener_results(db, user.id, filters)
 
 
 @router.post("/results/{result_id}/watchlist", response_model=ScreenerResultRead)

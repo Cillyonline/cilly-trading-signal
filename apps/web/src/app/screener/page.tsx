@@ -12,11 +12,45 @@ import {
   redirectToLoginOnAuthError,
 } from "@/lib/api";
 import type { AssetClass } from "@/types/signals";
-import type { ScreenerImport, ScreenerImportError, ScreenerResult } from "@/types/screener";
+import type {
+  ScreenerImport,
+  ScreenerImportError,
+  ScreenerResult,
+  ScreenerResultFilters,
+  ScreenerResultSortBy,
+  ScreenerResultSortDirection,
+  ScreenerResultStatus,
+} from "@/types/screener";
 
 type ScreenerPageError = {
   summary: string;
   details: ScreenerImportError[];
+};
+
+type ScreenerFiltersState = {
+  asset_class: "" | AssetClass;
+  status: "" | ScreenerResultStatus;
+  exchange: string;
+  screener_import_id: "" | number;
+  min_volume: string;
+  min_relative_volume: string;
+  min_rsi14: string;
+  max_rsi14: string;
+  sort_by: ScreenerResultSortBy;
+  sort_direction: ScreenerResultSortDirection;
+};
+
+const emptyResultFilters: ScreenerFiltersState = {
+  asset_class: "",
+  status: "",
+  exchange: "",
+  screener_import_id: "",
+  min_volume: "",
+  min_relative_volume: "",
+  min_rsi14: "",
+  max_rsi14: "",
+  sort_by: "created_at",
+  sort_direction: "desc",
 };
 
 const statusTone: Record<string, string> = {
@@ -37,6 +71,7 @@ export default function ScreenerPage() {
   const [imports, setImports] = useState<ScreenerImport[]>([]);
   const [results, setResults] = useState<ScreenerResult[]>([]);
   const [assetClass, setAssetClass] = useState<AssetClass>("stock");
+  const [filters, setFilters] = useState<ScreenerFiltersState>(emptyResultFilters);
   const [preset, setPreset] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -46,13 +81,13 @@ export default function ScreenerPage() {
   const [createdImport, setCreatedImport] = useState<ScreenerImport | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  async function loadData() {
+  async function loadData(resultFilters: ScreenerFiltersState = filters) {
     setIsLoading(true);
     setError(null);
     try {
       const [loadedImports, loadedResults] = await Promise.all([
         fetchScreenerImports(),
-        fetchScreenerResults(),
+        fetchScreenerResults(toApiFilters(resultFilters)),
       ]);
       setImports(loadedImports);
       setResults(loadedResults);
@@ -101,7 +136,7 @@ export default function ScreenerPage() {
       setCreatedImport(imported);
       setNotice(null);
       setFile(null);
-      await loadData();
+      await loadData(filters);
     } catch (importError) {
       if (redirectToLoginOnAuthError(importError)) {
         return;
@@ -269,6 +304,18 @@ export default function ScreenerPage() {
             <span className="text-sm text-slate-400">{results.length} Rows</span>
           </div>
 
+          <ScreenerFiltersPanel
+            filters={filters}
+            imports={imports}
+            resultCount={results.length}
+            onChange={setFilters}
+            onApply={(nextFilters) => void loadData(nextFilters)}
+            onReset={() => {
+              setFilters(emptyResultFilters);
+              void loadData(emptyResultFilters);
+            }}
+          />
+
           <div className="mt-6 overflow-hidden rounded-2xl border border-white/10">
             {isLoading ? (
               <p className="p-5 text-sm text-slate-400">Screener-Kandidaten werden geladen...</p>
@@ -316,6 +363,109 @@ export default function ScreenerPage() {
         </section>
       </section>
     </main>
+  );
+}
+
+function ScreenerFiltersPanel({
+  filters,
+  imports,
+  resultCount,
+  onChange,
+  onApply,
+  onReset,
+}: {
+  filters: ScreenerFiltersState;
+  imports: ScreenerImport[];
+  resultCount: number;
+  onChange: (filters: ScreenerFiltersState) => void;
+  onApply: (filters: ScreenerFiltersState) => void;
+  onReset: () => void;
+}) {
+  return (
+    <div className="mt-6 rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold text-slate-200">Filter und Sortierung</p>
+          <p className="mt-1 text-xs text-slate-400">
+            Filter veraendern keine Kandidaten und erzeugen keine Analyse, Signale oder Trades.
+          </p>
+        </div>
+        <span className="text-sm text-slate-400">{resultCount} sichtbar</span>
+      </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <FilterSelect
+          label="Asset"
+          value={filters.asset_class}
+          onChange={(asset_class) => onChange({ ...filters, asset_class: asset_class as ScreenerFiltersState["asset_class"] })}
+          options={[["", "Alle"], ["stock", "Stock"], ["crypto", "Crypto"]]}
+        />
+        <FilterSelect
+          label="Status"
+          value={filters.status}
+          onChange={(status) => onChange({ ...filters, status: status as ScreenerFiltersState["status"] })}
+          options={[["", "Alle"], ["candidate", "Candidate"], ["watchlist_added", "Watchlist"], ["duplicate", "Duplicate"], ["rejected", "Rejected"], ["ignored", "Ignored"]]}
+        />
+        <FilterSelect
+          label="Import"
+          value={String(filters.screener_import_id)}
+          onChange={(screener_import_id) => onChange({ ...filters, screener_import_id: screener_import_id ? Number(screener_import_id) : "" })}
+          options={[["", "Alle Importe"], ...imports.map((item) => [String(item.id), item.screener_preset ?? item.file_name ?? `Import #${item.id}`] as [string, string])]}
+        />
+        <label className="grid gap-2 text-sm text-slate-300">
+          Exchange
+          <input
+            value={filters.exchange}
+            onChange={(event) => onChange({ ...filters, exchange: event.target.value })}
+            className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-emerald-300"
+            placeholder="NASDAQ, BINANCE"
+          />
+        </label>
+        <NumberFilter label="Min Volume" value={filters.min_volume} onChange={(min_volume) => onChange({ ...filters, min_volume })} />
+        <NumberFilter label="Min Rel Volume" value={filters.min_relative_volume} onChange={(min_relative_volume) => onChange({ ...filters, min_relative_volume })} />
+        <NumberFilter label="Min RSI14" value={filters.min_rsi14} onChange={(min_rsi14) => onChange({ ...filters, min_rsi14 })} />
+        <NumberFilter label="Max RSI14" value={filters.max_rsi14} onChange={(max_rsi14) => onChange({ ...filters, max_rsi14 })} />
+        <FilterSelect
+          label="Sortieren nach"
+          value={filters.sort_by}
+          onChange={(sort_by) => onChange({ ...filters, sort_by: sort_by as ScreenerResultSortBy })}
+          options={[["created_at", "Importiert"], ["symbol", "Symbol"], ["status", "Status"], ["volume", "Volume"], ["relative_volume", "Rel Volume"], ["rsi14", "RSI14"], ["price", "Price"], ["rank", "Rank"]]}
+        />
+        <FilterSelect
+          label="Richtung"
+          value={filters.sort_direction}
+          onChange={(sort_direction) => onChange({ ...filters, sort_direction: sort_direction as ScreenerResultSortDirection })}
+          options={[["desc", "Absteigend"], ["asc", "Aufsteigend"]]}
+        />
+      </div>
+      <div className="mt-4 flex flex-wrap gap-3">
+        <button type="button" onClick={() => onApply(filters)} className="rounded-xl bg-emerald-400 px-4 py-2 text-sm font-semibold text-slate-950">
+          Anwenden
+        </button>
+        <button type="button" onClick={onReset} className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:border-emerald-300/50">
+          Zuruecksetzen
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function FilterSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: [string, string][] }) {
+  return (
+    <label className="grid gap-2 text-sm text-slate-300">
+      {label}
+      <select value={value} onChange={(event) => onChange(event.target.value)} className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-emerald-300">
+        {options.map(([optionValue, labelText]) => <option key={optionValue} value={optionValue}>{labelText}</option>)}
+      </select>
+    </label>
+  );
+}
+
+function NumberFilter({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+  return (
+    <label className="grid gap-2 text-sm text-slate-300">
+      {label}
+      <input type="number" min="0" step="any" value={value} onChange={(event) => onChange(event.target.value)} className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-emerald-300" />
+    </label>
   );
 }
 
@@ -498,6 +648,21 @@ function buildSummary(results: ScreenerResult[]) {
     candidate: results.filter((result) => result.status === "candidate").length,
     duplicate: results.filter((result) => result.status === "duplicate").length,
     watchlist: results.filter((result) => result.status === "watchlist_added").length,
+  };
+}
+
+function toApiFilters(filters: ScreenerFiltersState): ScreenerResultFilters {
+  return {
+    asset_class: filters.asset_class,
+    status: filters.status,
+    exchange: filters.exchange.trim(),
+    screener_import_id: filters.screener_import_id,
+    min_volume: filters.min_volume,
+    min_relative_volume: filters.min_relative_volume,
+    min_rsi14: filters.min_rsi14,
+    max_rsi14: filters.max_rsi14,
+    sort_by: filters.sort_by,
+    sort_direction: filters.sort_direction,
   };
 }
 

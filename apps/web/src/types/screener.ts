@@ -6,6 +6,31 @@ export type ScreenerImportStatus = "pending" | "validated" | "failed" | "importe
 
 export type ScreenerResultStatus = "candidate" | "watchlist_added" | "duplicate" | "rejected" | "ignored";
 
+export type ScreenerResultSortBy =
+  | "created_at"
+  | "symbol"
+  | "status"
+  | "volume"
+  | "relative_volume"
+  | "rsi14"
+  | "price"
+  | "rank";
+
+export type ScreenerResultSortDirection = "asc" | "desc";
+
+export type ScreenerResultFilters = {
+  asset_class?: AssetClass | "";
+  status?: ScreenerResultStatus | "";
+  exchange?: string;
+  screener_import_id?: number | "";
+  min_volume?: string;
+  min_relative_volume?: string;
+  min_rsi14?: string;
+  max_rsi14?: string;
+  sort_by?: ScreenerResultSortBy;
+  sort_direction?: ScreenerResultSortDirection;
+};
+
 export type ScreenerImportError = {
   row: number | null;
   field: string | null;

@@ -70,3 +70,16 @@ class ScreenerImportResult(BaseModel):
 
 class ScreenerImportDetail(ScreenerImportRead):
     results: list[ScreenerResultRead]
+
+
+class ScreenerResultFilters(BaseModel):
+    asset_class: AssetClass | None = None
+    status: ScreenerResultStatus | None = None
+    exchange: str | None = None
+    screener_import_id: int | None = None
+    min_volume: Decimal | None = None
+    min_relative_volume: Decimal | None = None
+    min_rsi14: Decimal | None = None
+    max_rsi14: Decimal | None = None
+    sort_by: str = "created_at"
+    sort_direction: str = "desc"
