@@ -5,6 +5,79 @@ from app.models.enums import AssetClass, Bias, ScoreClass, SignalStatus, Strateg
 
 MIN_RISK_REWARD = Decimal("2.0")
 
+NO_TRADE_REASON_MESSAGES = {
+    "stock_market_regime_bearish": (
+        "No Trade: stored stock benchmark context is bearish for long-only review."
+    ),
+    "crypto_regime_bearish": (
+        "No Trade: stored BTC/ETH regime context is bearish for long-only review."
+    ),
+    "relative_strength_underperforming": (
+        "No Trade: candidate is materially underperforming available benchmark context."
+    ),
+    "weekly_context_bearish": (
+        "No Trade: weekly context is bearish, so long-only setup review is blocked."
+    ),
+    "daily_context_bearish": (
+        "No Trade: daily context is bearish, so long-only setup review is blocked."
+    ),
+    "risk_reward_below_minimum": "No Trade: planned reward is below the minimum 2R requirement.",
+    "missing_stop_loss": "No Trade: stop loss is missing, so risk cannot be defined.",
+    "missing_reward_target": "No Trade: reward target is missing, so R:R cannot be validated.",
+    "entry_not_above_stop": "No Trade: entry is not above stop, so the long risk plan is invalid.",
+    "poor_data_quality": (
+        "No Trade: required data is missing, stale, partial, or otherwise insufficient."
+    ),
+    "setup_already_invalidated": (
+        "No Trade: setup is already invalidated by the stored analysis state."
+    ),
+    "pullback_not_controlled": "No Trade: pullback is not controlled enough for this strategy.",
+    "base_too_wide": "No Trade: base range is too wide for clean risk planning.",
+    "breakout_too_extended": "No Trade: breakout is extended beyond the trigger zone.",
+    "base_high_not_clear": "No Trade: base high is not clear enough for breakout review.",
+}
+
+NO_TRADE_NEXT_ACTIONS = {
+    "stock_market_regime_bearish": (
+        "Wait for stored SPY/QQQ context to recover before reviewing new stock long setups."
+    ),
+    "crypto_regime_bearish": (
+        "Wait for stored BTC/ETH context to recover before reviewing new crypto long setups."
+    ),
+    "relative_strength_underperforming": (
+        "Keep it off the active list until relative strength improves versus stored benchmark "
+        "context."
+    ),
+    "weekly_context_bearish": (
+        "Wait for weekly context to turn neutral or bullish before manual long review."
+    ),
+    "daily_context_bearish": "Wait for daily trend context to repair before manual long review.",
+    "risk_reward_below_minimum": (
+        "Adjust the plan only if structure supports at least 2R; otherwise skip this setup."
+    ),
+    "missing_stop_loss": "Define a technical stop below structure before reviewing any trigger.",
+    "missing_reward_target": (
+        "Define a structure-based or minimum-R target before reviewing any trigger."
+    ),
+    "entry_not_above_stop": (
+        "Rebuild the entry and stop plan; the current long risk plan is invalid."
+    ),
+    "poor_data_quality": (
+        "Refresh or provide the missing/stale timeframe and benchmark data before review."
+    ),
+    "setup_already_invalidated": (
+        "Wait for a fresh setup instead of reusing the invalidated structure."
+    ),
+    "pullback_not_controlled": (
+        "Wait for price to stabilize and reclaim a valid trigger level with close confirmation."
+    ),
+    "base_too_wide": "Wait for a tighter base with a clearer stop and invalidation level.",
+    "breakout_too_extended": (
+        "Wait for a reset, retest, or new base instead of chasing the extended move."
+    ),
+    "base_high_not_clear": "Wait for a clearer base high before reviewing breakout confirmation.",
+}
+
 
 @dataclass(frozen=True)
 class IndicatorContext:
@@ -239,7 +312,8 @@ def build_signal_result(
     if signal_input.score_cap is not None and score == signal_input.score_cap:
         merged_reasoning.append("Market context cap applied; confidence remains below A-Setup.")
     if no_trade_reasons:
-        merged_reasoning.append("Hard No-Trade rule applied; setup remains No Setup.")
+        merged_reasoning.extend(explain_no_trade_reasons(no_trade_reasons))
+        next_action = next_action_for_no_trade(no_trade_reasons)
 
     return SignalEvaluationResult(
         strategy_type=signal_input.strategy_type,
@@ -263,3 +337,15 @@ def build_signal_result(
         next_action=next_action,
         no_trade_reasons=no_trade_reasons,
     )
+
+
+def explain_no_trade_reasons(reasons: list[str]) -> list[str]:
+    return [NO_TRADE_REASON_MESSAGES.get(reason, f"No Trade: {reason}.") for reason in reasons]
+
+
+def next_action_for_no_trade(reasons: list[str]) -> str:
+    for reason in reasons:
+        action = NO_TRADE_NEXT_ACTIONS.get(reason)
+        if action is not None:
+            return action
+    return "No setup; wait for clearer context, structure, trigger, and risk before manual review."
