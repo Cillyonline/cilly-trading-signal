@@ -574,6 +574,10 @@ def test_analyze_import_returns_no_setup_for_insufficient_history(client: TestCl
     assert "1D_insufficient_candle_history" in result["signal"]["risk_flags"]
     assert "poor_data_quality" in result["signal"]["no_trade_reasons"]
     assert result["signal"]["next_action"]
+    assert any(
+        check["key"] == "data_quality" and check["status"] == "blocked"
+        for check in result["signal"]["quality_report"]
+    )
 
     signals_response = client.get("/api/signals")
     detail_response = client.get(f"/api/signals/{signals_response.json()[0]['id']}")
@@ -584,6 +588,7 @@ def test_analyze_import_returns_no_setup_for_insufficient_history(client: TestCl
     assert detail_response.status_code == 200
     assert "poor_data_quality" in detail_response.json()["no_trade_reasons"]
     assert detail_response.json()["next_action"]
+    assert detail_response.json()["quality_report"]
 
 
 def test_get_unknown_signal_returns_404(client: TestClient) -> None:

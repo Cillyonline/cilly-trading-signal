@@ -45,6 +45,7 @@ class SignalRead(BaseModel):
     risk_flags: list | dict | None
     no_trade_reasons: list | dict | None
     next_action: str | None
+    quality_report: list[dict[str, str]] = Field(default_factory=list)
     review_note: str | None
     created_at: datetime
     updated_at: datetime
