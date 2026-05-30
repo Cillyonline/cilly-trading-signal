@@ -58,6 +58,16 @@ def get_watchlist_item(db: Session, user_id: int, item_id: int) -> WatchlistItem
     )
 
 
+def get_watchlist_item_by_symbol(
+    db: Session, user_id: int, symbol: str
+) -> WatchlistItem | None:
+    return db.scalar(
+        select(WatchlistItem)
+        .where(WatchlistItem.user_id == user_id)
+        .where(WatchlistItem.symbol == symbol.strip().upper())
+    )
+
+
 def create_watchlist_item(
     db: Session, user_id: int, payload: WatchlistItemCreate
 ) -> WatchlistItem:

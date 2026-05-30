@@ -270,6 +270,20 @@ export async function fetchScreenerResults(): Promise<ScreenerResult[]> {
   return response.json();
 }
 
+export async function addScreenerResultToWatchlist(resultId: number): Promise<ScreenerResult> {
+  const response = await credentialedFetch(`${API_BASE_URL}/screener/results/${resultId}/watchlist`, {
+    method: "POST",
+  });
+
+  assertAuthenticatedResponse(response);
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(formatApiError(body?.detail, "Kandidat konnte nicht zur Watchlist hinzugefuegt werden."));
+  }
+
+  return response.json();
+}
+
 export async function fetchTrades(filters: TradeFilters = {}): Promise<Trade[]> {
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(filters)) {

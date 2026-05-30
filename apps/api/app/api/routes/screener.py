@@ -10,6 +10,7 @@ from app.models.user import User
 from app.schemas.screener import ScreenerImportDetail, ScreenerImportRead, ScreenerResultRead
 from app.services.screener_import import (
     MAX_SCREENER_UPLOAD_BYTES,
+    convert_screener_result_to_watchlist,
     get_screener_import,
     import_screener_csv,
     list_screener_imports,
@@ -85,3 +86,16 @@ def get_import(import_id: int, db: DbSession, user: CurrentUser) -> ScreenerImpo
 @router.get("/results", response_model=list[ScreenerResultRead])
 def list_results(db: DbSession, user: CurrentUser) -> list[ScreenerResultRead]:
     return list_screener_results(db, user.id)
+
+
+@router.post("/results/{result_id}/watchlist", response_model=ScreenerResultRead)
+def add_result_to_watchlist(
+    result_id: int, db: DbSession, user: CurrentUser
+) -> ScreenerResultRead:
+    result = convert_screener_result_to_watchlist(db, user.id, result_id)
+    if result is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Screener result not found.",
+        )
+    return ScreenerResultRead.model_validate(result)
