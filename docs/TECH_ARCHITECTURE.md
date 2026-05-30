@@ -181,6 +181,14 @@ CSV Import:
 - `GET /api/imports/{id}`
 - `POST /api/imports/{id}/analyze`
 
+Screener CSV Import:
+
+- `POST /api/screener/imports`
+- `GET /api/screener/imports`
+- `GET /api/screener/imports/{id}`
+- `GET /api/screener/results`
+- `POST /api/screener/results/{id}/watchlist`
+
 Signals:
 
 - `GET /api/signals`
@@ -335,6 +343,27 @@ Explicit non-goals for provider sync:
 - No automatic signal generation from provider data.
 - No buy/sell instruction, trading advice, profitability, or production-readiness
   claim.
+
+## Screener CSV Flow
+
+TradingView screener CSV import is a review-candidate workflow, documented in
+`docs/SCREENER_CSV_MODEL.md`.
+
+Current design target:
+
+- Store one `ScreenerImport` per uploaded screener snapshot.
+- Store normalized `ScreenerResult` rows as manual review candidates.
+- Validate symbols, row limits, numeric fields, duplicate rows, and source metadata.
+- Require explicit user confirmation before creating or linking a Watchlist item.
+- Keep market-data import/provider sync and signal analysis separate after Watchlist conversion.
+
+Explicit non-goals for screener CSV:
+
+- No automatic Watchlist mutation without user confirmation.
+- No automatic signal generation or analysis run.
+- No automatic trade creation.
+- No broker integration or order execution.
+- No live or real-time data claim.
 
 ## Signal Engine Flow
 
