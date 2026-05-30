@@ -222,6 +222,18 @@ Funktionen:
 - Anzeige von Sync-Status, Freshness, Provider-Kontext und sanitisierten Fehlern
 - keine Scheduler, keine Live-/Realtime-Anzeige, keine automatische Analyse und keine Trade-Erstellung
 
+### Screener CSV
+
+Funktionen:
+
+- TradingView Screener CSV als gespeicherten Snapshot importieren
+- Symbole, optionale Kennzahlen, Duplikate und Validierungsfehler pruefen
+- Ergebnisse als manuelle Watchlist-Kandidaten anzeigen
+- ausgewaehlte Ergebnisse nur nach expliziter Nutzerbestaetigung in die Watchlist uebernehmen
+- keine automatische Analyse, keine Signal-Erstellung, keine Trade-Erstellung und keine Orderausfuehrung
+
+Das Zielmodell ist in `docs/SCREENER_CSV_MODEL.md` beschrieben.
+
 ### Signals
 
 Spalten:

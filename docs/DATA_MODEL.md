@@ -9,6 +9,7 @@ Das Datenmodell bildet ab:
 - Single-User Account
 - Watchlist
 - Market Data aus TradingView CSV und manueller Provider-Sync-Persistenz
+- TradingView Screener CSV Review-Kandidaten
 - technische Indikatoren
 - Signale / Setups
 - Alerts
@@ -47,11 +48,11 @@ MVP:
 MVP+:
 
 - TradingViewWebhookDelivery
+- ScreenerImport
+- ScreenerResult
 
 Spaeter:
 
-- ScreenerImport
-- ScreenerResult
 - Attachment
 - BrokerConnection
 - PerformanceSnapshot
@@ -425,6 +426,73 @@ Werte:
 
 NotificationLog dokumentiert Zustellversuche. Es ist kein Ausfuehrungs- oder Broker-Log.
 
+## ScreenerImport
+
+Zweck: ein hochgeladener TradingView Screener CSV Snapshot fuer manuelle Kandidaten-Review. Der Import erzeugt keine Signale, Trades, Orders oder automatische Watchlist-Aenderungen.
+
+Felder:
+
+- id
+- user_id
+- source
+- file_name
+- asset_class
+- screener_preset
+- snapshot_at
+- row_count
+- accepted_count
+- rejected_count
+- duplicate_count
+- status
+- validation_errors
+- created_at
+
+Werte:
+
+- source: tradingview_screener_csv
+- asset_class: stock, crypto
+- status: pending, validated, failed, imported, partial
+
+## ScreenerResult
+
+Zweck: normalisierte Zeile aus einem Screener-Import. Ein Ergebnis ist ein manueller Review-Kandidat und wird erst durch explizite Nutzeraktion mit WatchlistItem verknuepft.
+
+Felder:
+
+- id
+- screener_import_id
+- user_id
+- watchlist_item_id
+- symbol
+- name
+- asset_class
+- exchange
+- currency
+- sector
+- industry
+- price
+- change_percent
+- volume
+- relative_volume
+- market_cap
+- rsi14
+- ema20
+- ema50
+- ema200
+- rank
+- status
+- duplicate_of_result_id
+- validation_errors
+- raw_metadata
+- created_at
+- updated_at
+
+Werte:
+
+- status: candidate, watchlist_added, duplicate, rejected, ignored
+
+Siehe `docs/SCREENER_CSV_MODEL.md` fuer CSV-Felder, Validierung, Dedupe und Watchlist-Konvertierungsregeln.
+
 ## Beziehungen
 
 ```text
@@ -432,12 +500,15 @@ User 1 -> many WatchlistItems
 User 1 -> many Signals
 User 1 -> many Trades
 User 1 -> one Settings
+User 1 -> many ScreenerImports
+User 1 -> many ScreenerResults
 
 WatchlistItem 1 -> many MarketDataSeries
 MarketDataSeries 1 -> many MarketDataCandles
 MarketDataSeries 1 -> many IndicatorSnapshots
 
 WatchlistItem 1 -> many Signals
+WatchlistItem 1 -> many ScreenerResults
 Signal 1 -> many Alerts
 Signal 1 -> zero or one Trade
 
@@ -446,6 +517,8 @@ Trade 1 -> zero or one JournalEntry
 Trade 1 -> many Alerts
 
 Alert 1 -> many NotificationLogs
+
+ScreenerImport 1 -> many ScreenerResults
 ```
 
 ## Wichtige Berechnungen
