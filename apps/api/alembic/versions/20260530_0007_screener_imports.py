@@ -45,6 +45,30 @@ def upgrade() -> None:
         screener_import_status.create(bind, checkfirst=True)
         screener_result_status.create(bind, checkfirst=True)
 
+        screener_import_source = postgresql.ENUM(
+            "tradingview_screener_csv",
+            name="screenerimportsource",
+            create_type=False,
+        )
+        screener_import_status = postgresql.ENUM(
+            "pending",
+            "validated",
+            "failed",
+            "imported",
+            "partial",
+            name="screenerimportstatus",
+            create_type=False,
+        )
+        screener_result_status = postgresql.ENUM(
+            "candidate",
+            "watchlist_added",
+            "duplicate",
+            "rejected",
+            "ignored",
+            name="screenerresultstatus",
+            create_type=False,
+        )
+
     asset_class = postgresql.ENUM("stock", "crypto", name="assetclass", create_type=False)
 
     op.create_table(
