@@ -355,6 +355,12 @@ function BatchCard({ batch }: { batch: ReviewBatch }) {
         ))}
         {batch.entries.length === 0 ? <p className="p-3 text-sm text-slate-500">Noch keine Eintraege.</p> : null}
       </div>
+      <a
+        href={`/reviews/${batch.id}`}
+        className="mt-4 inline-flex rounded-xl border border-white/10 px-4 py-2 text-sm text-violet-100 hover:border-violet-300/60"
+      >
+        Batch Details oeffnen
+      </a>
     </article>
   );
 }

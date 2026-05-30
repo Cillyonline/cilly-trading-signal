@@ -382,6 +382,18 @@ export async function fetchReviewBatches(): Promise<ReviewBatch[]> {
   return response.json();
 }
 
+export async function fetchReviewBatch(batchId: number): Promise<ReviewBatch> {
+  const response = await credentialedFetch(`${API_BASE_URL}/reviews/batches/${batchId}`, { cache: "no-store" });
+  if (response.status === 404) {
+    throw new Error("Review-Batch wurde nicht gefunden.");
+  }
+  assertAuthenticatedResponse(response);
+  if (!response.ok) {
+    throw new Error("Review-Batch konnte nicht geladen werden.");
+  }
+  return response.json();
+}
+
 export async function createReviewBatch(payload: ReviewBatchCreatePayload): Promise<ReviewBatch> {
   const response = await credentialedFetch(`${API_BASE_URL}/reviews/batches`, {
     method: "POST",
