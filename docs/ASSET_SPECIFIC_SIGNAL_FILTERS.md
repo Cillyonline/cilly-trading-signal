@@ -22,7 +22,8 @@ Filters should be classified consistently:
   reduces confidence unless the playbook explicitly allows proceeding.
 
 Hard gates override score. Risk flags and missing context must be visible in
-reasoning, no-trade reasons, or the future analysis quality report.
+reasoning, no-trade reasons, benchmark-context status, or the analysis quality
+report.
 
 ## Stock-Specific Filters
 
@@ -223,7 +224,7 @@ Risk flags:
 - Stock and crypto filters should be represented as deterministic checks before
   final score classification.
 - Missing context should be explicitly represented, not hidden.
-- Asset overlays should feed the future analysis quality report as passed, warning,
+- Asset overlays should feed the analysis quality report as passed, warning,
   blocked, or missing checks.
 - In the first implementation, if benchmark/BTC/ETH data is not available, the
   system should prefer lower confidence and clear wording over false precision.
@@ -234,6 +235,10 @@ Risk flags:
 The backend uses stored daily watchlist market-data series as benchmark context;
 it does not claim live or realtime coverage and does not fetch benchmark data
 automatically during signal evaluation.
+
+The Watchlist page exposes a benchmark-context checklist for required stock and
+crypto stored daily context. The checklist is guidance only; it does not fetch
+data, run analysis, create alerts, create trades, or place orders.
 
 Stocks:
 

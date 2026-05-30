@@ -6,8 +6,8 @@ This checklist records the current MVP release-candidate posture for review and 
 
 ## Current Rebaseline Status
 
-- Version / candidate: v2.0 rebaseline after v1.9 screener workflow completion.
-- Evidence source: current automated API/Web verification from the merged v1.9 PRs and the latest documented smoke-test run in [MVP Smoke Test](MVP_SMOKE_TEST.md#latest-run). A current-main Docker Compose smoke rerun is tracked in `#268`.
+- Version / candidate: post-v2.1 strategy-calibration rebaseline.
+- Evidence source: automated API/Web verification from merged v2.1 and follow-up PRs plus the latest documented smoke-test run in [MVP Smoke Test](MVP_SMOKE_TEST.md#latest-run). A current-main Docker Compose smoke rerun remains dependent on local Docker Engine availability where applicable.
 - Status: The app remains suitable only for controlled internal/single-operator review workflows. This is not production-ready, broker-ready, profitability-validated, live/realtime, or real-money trading evidence.
 - Boundary: decision-support only, manual execution only, no broker integration, no automatic order execution, no profitability claims, no live/realtime claims, no trading advice, and no production-readiness claim.
 
@@ -52,6 +52,7 @@ This checklist records the current MVP release-candidate posture for review and 
 - v1.4-v1.6 added market-data source/freshness visibility and guarded manual provider sync. This is disabled-by-default provider support for stored Daily/EOD data, not live/realtime market data, broker readiness, automatic analysis, or production-readiness evidence.
 - v1.8 improved cockpit review usability across Dashboard, Signals, Alerts, Trades, and documentation while preserving manual review boundaries.
 - v1.9 added TradingView screener CSV snapshots, validation, candidate review UI, and explicit Watchlist conversion. Screener results remain review candidates only and do not create analysis, signals, trades, alerts, orders, or broker actions automatically.
+- v2.1 added professional strategy calibration, asset-specific overlays, benchmark-context visibility, analysis quality reports, calibration golden cases, and historical/paper review protocol while preserving manual-review-only boundaries.
 
 ### Not Included
 
@@ -98,6 +99,9 @@ This checklist records the current MVP release-candidate posture for review and 
 - PostgreSQL backup/restore mechanics passed on a disposable Compose project using sample-only marker data. The backup and restore scripts created a custom-format dump, restored it into a fresh disposable volume, restarted app services, returned API health, and preserved the sample rows.
 - TradingView screener CSV workflow is implemented for stored snapshots, validation results, candidate review, explicit Watchlist conversion, and safe duplicate linking.
 - Review cockpit usability has been improved for dashboard priorities, signal filters, alert review, and trade review completeness indicators.
+- Strategy signal quality has been calibrated with improved setup gates, risk-plan checks, market regime/relative strength context, no-trade explanations, and quality reports.
+- Stored benchmark-context requirements for stocks and crypto are visible in Watchlist.
+- A focused calibration golden-case suite and historical/paper review protocol are documented for future rule changes.
 
 ## Known Gaps
 
@@ -109,6 +113,8 @@ This checklist records the current MVP release-candidate posture for review and 
 - TradingView webhook support persists review events and may route policy-allowed Telegram review prompts, but does not trigger broker execution, auto-trade creation, buy/sell instructions, or trading advice.
 - Provider sync support is manual, guarded, and disabled by default. Current provider support starts with Daily/EOD data and does not cover promised `4H`/intraday sync, scheduler-driven imports, or automatic analysis refresh.
 - Screener CSV support does not yet include advanced filtering, bulk review actions, pagination beyond current row limits, candidate scoring, or automatic market-data refresh after Watchlist conversion.
+- Historical/paper review is documented but not yet implemented as an app-supported batch workflow.
+- Full end-to-end calibration fixtures using stored OHLCV plus benchmark context remain a follow-up.
 - Production monitoring and operational alerting are not documented as passed.
 - Full mobile app/PWA hardening beyond responsive MVP layouts is not documented as passed.
 
