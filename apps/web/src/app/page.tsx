@@ -25,6 +25,7 @@ const workflowAreas = [
   { label: "Alerts", href: "/alerts", description: "Webhook- und Notification-Events auditieren." },
   { label: "Trades", href: "/trades", description: "Extern ausgefuehrte Trades manuell dokumentieren." },
   { label: "Performance", href: "/performance", description: "Historisch dokumentierte R-Werte pruefen." },
+  { label: "Review Batches", href: "/reviews", description: "Historical/Paper Review-Evidence erfassen." },
 ];
 
 export default function Home() {
