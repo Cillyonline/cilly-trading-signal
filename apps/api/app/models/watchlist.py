@@ -11,6 +11,7 @@ from app.models.types import enum_values
 if TYPE_CHECKING:
     from app.models.alert import Alert
     from app.models.market_data import MarketDataSeries
+    from app.models.screener import ScreenerResult
     from app.models.signal import Signal
     from app.models.trade import Trade
     from app.models.user import User
@@ -46,6 +47,9 @@ class WatchlistItem(Base):
     signals: Mapped[list["Signal"]] = relationship(back_populates="watchlist_item")
     trades: Mapped[list["Trade"]] = relationship(back_populates="watchlist_item")
     alerts: Mapped[list["Alert"]] = relationship(back_populates="watchlist_item")
+    screener_results: Mapped[list["ScreenerResult"]] = relationship(
+        back_populates="watchlist_item"
+    )
 
     @property
     def latest_market_data(self) -> "MarketDataSeries | None":
