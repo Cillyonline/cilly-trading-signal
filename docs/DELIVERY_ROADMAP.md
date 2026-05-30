@@ -8,7 +8,7 @@ The goal is to keep the project focused: build a stable foundation first, then a
 
 ## Current Status
 
-The project is past the initial skeleton. The current MVP can run the core manual workflow from watchlist maintenance through CSV import or guarded manual Daily/EOD provider sync, deterministic analysis, signal review, alert review, manual trade logging, journal notes, basic performance review, and TradingView screener CSV prefiltering into explicit Watchlist candidates. It is still not production-ready and must remain decision-support only.
+The project is past the initial skeleton. The current MVP can run the core manual workflow from watchlist maintenance through CSV import or guarded manual Daily/EOD provider sync, deterministic analysis, benchmark-context review, explainable signal review, alert review, manual trade logging, journal notes, basic performance review, and TradingView screener CSV prefiltering into explicit Watchlist candidates. It is still not production-ready and must remain decision-support only.
 
 Done:
 
@@ -35,6 +35,9 @@ Done:
 - TradingView webhook ingestion, Telegram test delivery, policy-gated automatic Telegram routing with dedup/rate limiting, alert event review UI, manual signal review workflow, and stale signal visibility.
 - Review cockpit usability improvements across Dashboard, Signals, Alerts, Trades, and the documented manual review workflow.
 - TradingView screener CSV import snapshots, validation, candidate review UI, and explicit screener-result to Watchlist conversion with visible duplicate handling.
+- Strategy calibration v2.1: professional playbook, asset-specific stock/crypto overlays, improved swing/pullback/breakout/risk-plan logic, market regime and relative strength checks, improved No-Trade wording, analysis quality reports, and calibration workflow docs.
+- Benchmark-context status for stored daily `SPY`/`QQQ` and `BTC`/`ETH` context in the Watchlist workflow.
+- Focused calibration golden-case suite and historical/paper review protocol.
 - Private VPS staging smoke test, operations hardening, and staging-only decision gate for controlled owner/operator use.
 
 Partial:
@@ -45,6 +48,8 @@ Partial:
 - Dashboard, journal, and performance views are MVP-level summaries, not full analytics modules.
 - Risk enforcement covers manual trade creation basics, not complete portfolio-level exposure management.
 - Multi-timeframe analysis still requires current stored data for required `1W`, `1D`, and `4H` timeframes; provider sync does not automatically fill unsupported timeframes or rerun analysis.
+- Historical/paper review is documented as a protocol but is not yet an app-supported batch workflow.
+- End-to-end calibration fixtures for full stored OHLCV and benchmark paths are tracked separately.
 - Auth is intentionally single-user and admin-only for MVP use.
 
 Missing:
@@ -334,7 +339,7 @@ Done when:
 
 Goal: rebaseline the project after v1.8/v1.9, refresh release posture docs, rerun current smoke checks, and decide the next product milestone.
 
-Status: In progress.
+Status: Done.
 
 Primary work:
 
@@ -349,6 +354,39 @@ Done when:
 - The docs and issue tracker reflect the current implemented, partial, missing, and not-included scope.
 - Current smoke evidence is recorded without secrets or private trading data.
 - The next milestone recommendation is explicit and still preserves manual-review-only safety boundaries.
+
+## v2.1 - Strategy Calibration & Signal Quality
+
+Goal: calibrate the trading analysis system toward professional, explainable setup quality for stocks and crypto.
+
+Status: Done, including follow-ups `#292`, `#293`, and `#294`.
+
+Primary work:
+
+- Define the professional strategy playbook and stock/crypto overlays.
+- Improve swing structure, Trend Pullback Long, Base Breakout Long, stop/target, invalidation, market regime, and relative strength logic.
+- Improve no-trade reasons, next actions, and analysis quality reporting.
+- Expose benchmark-context status for required stored daily stock and crypto context.
+- Add a focused calibration golden-case suite.
+- Document strategy calibration and historical/paper review protocols.
+
+Done when:
+
+- Weak or incomplete setups are blocked or downgraded with explicit reasons.
+- Benchmark/regime and relative-strength context is visible and conservative when missing.
+- Rule changes have a documented calibration workflow and focused golden-case tests.
+- Historical/paper review remains process evidence only, not strategy validation.
+- No broker integration, automatic execution, live/realtime claim, profitability claim, or trading advice is introduced.
+
+## Next Candidate Increment
+
+Recommended next implementation candidate: expand calibration golden cases with full stored OHLCV and benchmark fixtures (`#300`).
+
+Alternative next increments:
+
+- Add app support for historical/paper review batches (`#299`).
+- Screener usability v2 after calibrated review paths are further protected.
+- Operational hardening before broader exposure.
 
 ## Not Now
 
