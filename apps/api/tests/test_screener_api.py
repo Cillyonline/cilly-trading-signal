@@ -11,6 +11,18 @@ from app.db.base import Base
 from app.db.session import get_db
 from app.main import create_app
 from app.models import *  # noqa: F403
+from app.models.alert import Alert
+from app.models.enums import (
+    AssetClass,
+    ScreenerImportSource,
+    ScreenerImportStatus,
+    ScreenerResultStatus,
+    UserRole,
+)
+from app.models.screener import ScreenerImport, ScreenerResult
+from app.models.signal import Signal
+from app.models.trade import Trade
+from app.models.user import User
 
 
 @pytest.fixture()
@@ -34,6 +46,7 @@ def client() -> Iterator[TestClient]:
     app.dependency_overrides[get_db] = override_get_db
 
     test_client = TestClient(app)
+    test_client.testing_session_factory = TestingSessionLocal  # type: ignore[attr-defined]
     login(test_client)
 
     yield test_client
@@ -211,3 +224,128 @@ def test_import_screener_csv_enforces_candidate_row_limit(client: TestClient) ->
             "message": "CSV can import at most 500 candidate rows.",
         }
     ]
+
+
+def test_convert_screener_result_creates_watchlist_item_only(client: TestClient) -> None:
+    imported = post_screener_import(client, valid_screener_csv()).json()
+    result = next(
+        result
+        for result in client.get("/api/screener/results").json()
+        if result["symbol"] == "AAPL"
+    )
+
+    response = client.post(f"/api/screener/results/{result['id']}/watchlist")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["id"] == result["id"]
+    assert body["symbol"] == "AAPL"
+    assert body["status"] == "watchlist_added"
+    assert body["watchlist_item_id"] is not None
+
+    watchlist = client.get("/api/watchlist").json()
+    assert len(watchlist) == 1
+    assert watchlist[0]["id"] == body["watchlist_item_id"]
+    assert watchlist[0]["symbol"] == "AAPL"
+    assert watchlist[0]["name"] == "Apple Inc."
+    assert watchlist[0]["asset_class"] == "stock"
+    assert watchlist[0]["exchange"] == "NASDAQ"
+
+    with client.testing_session_factory() as db:  # type: ignore[attr-defined]
+        assert db.query(Signal).count() == 0
+        assert db.query(Trade).count() == 0
+        assert db.query(Alert).count() == 0
+
+    import_detail = client.get(f"/api/screener/imports/{imported['id']}").json()
+    converted = next(result for result in import_detail["results"] if result["symbol"] == "AAPL")
+    assert converted["watchlist_item_id"] == body["watchlist_item_id"]
+    assert converted["status"] == "watchlist_added"
+
+
+def test_convert_screener_result_links_existing_watchlist_duplicate(client: TestClient) -> None:
+    watchlist_response = client.post(
+        "/api/watchlist",
+        json={"symbol": "AAPL", "asset_class": "stock", "name": "Existing Apple"},
+    )
+    assert watchlist_response.status_code == 201
+    existing_item = watchlist_response.json()
+    post_screener_import(client, valid_screener_csv())
+    result = next(
+        result
+        for result in client.get("/api/screener/results").json()
+        if result["symbol"] == "AAPL"
+    )
+
+    response = client.post(f"/api/screener/results/{result['id']}/watchlist")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "duplicate"
+    assert body["watchlist_item_id"] == existing_item["id"]
+    watchlist = client.get("/api/watchlist").json()
+    assert len(watchlist) == 1
+    assert watchlist[0]["name"] == "Existing Apple"
+
+
+def test_convert_screener_result_is_idempotent(client: TestClient) -> None:
+    post_screener_import(client, valid_screener_csv())
+    result = client.get("/api/screener/results").json()[0]
+
+    first_response = client.post(f"/api/screener/results/{result['id']}/watchlist")
+    second_response = client.post(f"/api/screener/results/{result['id']}/watchlist")
+
+    assert first_response.status_code == 200
+    assert second_response.status_code == 200
+    assert second_response.json()["watchlist_item_id"] == first_response.json()["watchlist_item_id"]
+    assert len(client.get("/api/watchlist").json()) == 1
+
+
+def test_convert_screener_result_requires_authentication(client: TestClient) -> None:
+    post_screener_import(client, valid_screener_csv())
+    result = client.get("/api/screener/results").json()[0]
+    client.post("/api/auth/logout")
+
+    response = client.post(f"/api/screener/results/{result['id']}/watchlist")
+
+    assert response.status_code == 401
+
+
+def test_convert_screener_result_hides_other_users_result(client: TestClient) -> None:
+    with client.testing_session_factory() as db:  # type: ignore[attr-defined]
+        other_user = User(
+            email="other@example.com",
+            password_hash="not-used",
+            display_name="Other User",
+            role=UserRole.ADMIN,
+            is_active=True,
+        )
+        db.add(other_user)
+        db.commit()
+        db.refresh(other_user)
+        other_import = ScreenerImport(
+            user_id=other_user.id,
+            source=ScreenerImportSource.TRADINGVIEW_SCREENER_CSV,
+            asset_class=AssetClass.STOCK,
+            row_count=1,
+            accepted_count=1,
+            rejected_count=0,
+            duplicate_count=0,
+            status=ScreenerImportStatus.IMPORTED,
+        )
+        db.add(other_import)
+        db.flush()
+        other_result = ScreenerResult(
+            screener_import_id=other_import.id,
+            user_id=other_user.id,
+            symbol="NVDA",
+            asset_class=AssetClass.STOCK,
+            status=ScreenerResultStatus.CANDIDATE,
+        )
+        db.add(other_result)
+        db.commit()
+        result_id = other_result.id
+
+    response = client.post(f"/api/screener/results/{result_id}/watchlist")
+
+    assert response.status_code == 404
+    assert client.get("/api/watchlist").json() == []

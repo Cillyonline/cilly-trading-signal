@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
 import {
   ApiError,
+  addScreenerResultToWatchlist,
   fetchScreenerImports,
   fetchScreenerResults,
   importScreenerCsv,
@@ -40,8 +41,10 @@ export default function ScreenerPage() {
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isImporting, setIsImporting] = useState(false);
+  const [convertingResultId, setConvertingResultId] = useState<number | null>(null);
   const [error, setError] = useState<ScreenerPageError | null>(null);
   const [createdImport, setCreatedImport] = useState<ScreenerImport | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   async function loadData() {
     setIsLoading(true);
@@ -96,6 +99,7 @@ export default function ScreenerPage() {
     try {
       const imported = await importScreenerCsv(formData);
       setCreatedImport(imported);
+      setNotice(null);
       setFile(null);
       await loadData();
     } catch (importError) {
@@ -105,6 +109,37 @@ export default function ScreenerPage() {
       setError(toImportError(importError));
     } finally {
       setIsImporting(false);
+    }
+  }
+
+  async function addToWatchlist(result: ScreenerResult) {
+    const message = result.watchlist_item_id
+      ? `${result.symbol} ist bereits mit einem Watchlist-Eintrag verknuepft. Status aktualisieren?`
+      : `${result.symbol} bewusst zur Watchlist hinzufuegen? Es werden keine Analyse, Signale, Trades oder Alerts erstellt.`;
+    if (!window.confirm(message)) {
+      return;
+    }
+
+    setError(null);
+    setNotice(null);
+    setConvertingResultId(result.id);
+    try {
+      const converted = await addScreenerResultToWatchlist(result.id);
+      setResults((currentResults) =>
+        currentResults.map((currentResult) => (currentResult.id === converted.id ? converted : currentResult)),
+      );
+      setNotice(
+        converted.status === "duplicate"
+          ? `${converted.symbol} ist bereits in der Watchlist und wurde als Duplikat verknuepft.`
+          : `${converted.symbol} wurde zur Watchlist hinzugefuegt.`,
+      );
+    } catch (conversionError) {
+      if (redirectToLoginOnAuthError(conversionError)) {
+        return;
+      }
+      setError(toSimpleError(conversionError, "Kandidat konnte nicht zur Watchlist hinzugefuegt werden."));
+    } finally {
+      setConvertingResultId(null);
     }
   }
 
@@ -133,6 +168,7 @@ export default function ScreenerPage() {
         </header>
 
         {error ? <ErrorMessage message={error} /> : null}
+        {notice ? <NoticeMessage message={notice} /> : null}
 
         <section className="grid gap-4 md:grid-cols-4">
           <SummaryCard label="Kandidaten" value={summary.candidate.toString()} tone="border-emerald-300/40" />
@@ -239,7 +275,12 @@ export default function ScreenerPage() {
             ) : results.length > 0 ? (
               <div className="divide-y divide-white/10">
                 {results.map((result) => (
-                  <ScreenerResultCard key={result.id} result={result} />
+                  <ScreenerResultCard
+                    key={result.id}
+                    result={result}
+                    isConverting={convertingResultId === result.id}
+                    onAddToWatchlist={addToWatchlist}
+                  />
                 ))}
               </div>
             ) : (
@@ -278,7 +319,16 @@ export default function ScreenerPage() {
   );
 }
 
-function ScreenerResultCard({ result }: { result: ScreenerResult }) {
+function ScreenerResultCard({
+  result,
+  isConverting,
+  onAddToWatchlist,
+}: {
+  result: ScreenerResult;
+  isConverting: boolean;
+  onAddToWatchlist: (result: ScreenerResult) => void;
+}) {
+  const canAddToWatchlist = result.status === "candidate" || result.status === "duplicate";
   return (
     <article className="grid gap-5 p-5 lg:grid-cols-[1fr_0.9fr]">
       <div>
@@ -301,6 +351,19 @@ function ScreenerResultCard({ result }: { result: ScreenerResult }) {
           <Metric label="Volume" value={formatCompact(result.volume)} />
           <Metric label="Rel Volume" value={formatNumber(result.relative_volume)} />
         </div>
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <button
+            type="button"
+            disabled={!canAddToWatchlist || isConverting}
+            onClick={() => onAddToWatchlist(result)}
+            className="rounded-xl bg-sky-300 px-4 py-2 text-sm font-semibold text-slate-950 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isConverting ? "Fuege hinzu..." : "Zur Watchlist hinzufuegen"}
+          </button>
+          <span className="text-xs text-slate-500">
+            Manuell: keine Analyse, kein Signal, kein Trade, kein Alert.
+          </span>
+        </div>
       </div>
       <aside className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
         <p className="text-sm font-medium text-slate-200">Review Kontext</p>
@@ -314,6 +377,11 @@ function ScreenerResultCard({ result }: { result: ScreenerResult }) {
         </div>
         {asErrors(result.validation_errors).length > 0 ? (
           <InlineErrors errors={asErrors(result.validation_errors)} />
+        ) : null}
+        {result.watchlist_item_id ? (
+          <p className="mt-4 rounded-xl border border-sky-300/20 bg-sky-300/10 p-3 text-sm text-sky-100">
+            Verknuepfter Watchlist-Eintrag #{result.watchlist_item_id}
+          </p>
         ) : null}
       </aside>
     </article>
@@ -352,6 +420,14 @@ function ErrorMessage({ message }: { message: ScreenerPageError }) {
     <div className="rounded-2xl border border-red-400/30 bg-red-950/40 p-4 text-sm text-red-100">
       <p className="font-semibold">{message.summary}</p>
       {message.details.length > 0 ? <InlineErrors errors={message.details} /> : null}
+    </div>
+  );
+}
+
+function NoticeMessage({ message }: { message: string }) {
+  return (
+    <div className="rounded-2xl border border-sky-300/30 bg-sky-950/40 p-4 text-sm text-sky-100">
+      {message}
     </div>
   );
 }

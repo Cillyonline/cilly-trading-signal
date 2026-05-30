@@ -15,6 +15,12 @@ from app.models.enums import (
     ScreenerResultStatus,
 )
 from app.models.screener import ScreenerImport, ScreenerResult
+from app.schemas.watchlist import WatchlistItemCreate
+from app.services.watchlist import (
+    DuplicateWatchlistSymbolError,
+    create_watchlist_item,
+    get_watchlist_item_by_symbol,
+)
 
 MAX_SCREENER_UPLOAD_BYTES = 1 * 1024 * 1024
 MAX_SCREENER_ROWS = 500
@@ -300,6 +306,55 @@ def get_screener_import(db: Session, user_id: int, import_id: int) -> ScreenerIm
         .where(ScreenerImport.id == import_id)
         .where(ScreenerImport.user_id == user_id)
     )
+
+
+def get_screener_result(db: Session, user_id: int, result_id: int) -> ScreenerResult | None:
+    return db.scalar(
+        select(ScreenerResult)
+        .where(ScreenerResult.id == result_id)
+        .where(ScreenerResult.user_id == user_id)
+    )
+
+
+def convert_screener_result_to_watchlist(
+    db: Session, user_id: int, result_id: int
+) -> ScreenerResult | None:
+    result = get_screener_result(db, user_id, result_id)
+    if result is None:
+        return None
+
+    if result.watchlist_item_id is not None:
+        return result
+
+    existing_item = get_watchlist_item_by_symbol(db, user_id, result.symbol)
+
+    if existing_item is not None:
+        result.watchlist_item_id = existing_item.id
+        result.status = ScreenerResultStatus.DUPLICATE
+        db.commit()
+        db.refresh(result)
+        return result
+
+    payload = WatchlistItemCreate(
+        symbol=result.symbol,
+        name=result.name,
+        asset_class=result.asset_class,
+        exchange=result.exchange,
+        currency=result.currency,
+    )
+    try:
+        item = create_watchlist_item(db, user_id, payload)
+    except DuplicateWatchlistSymbolError:
+        db.rollback()
+        item = get_watchlist_item_by_symbol(db, user_id, result.symbol)
+        if item is None:
+            raise
+
+    result.watchlist_item_id = item.id
+    result.status = ScreenerResultStatus.WATCHLIST_ADDED
+    db.commit()
+    db.refresh(result)
+    return result
 
 
 def normalize_header(value: str) -> str:
