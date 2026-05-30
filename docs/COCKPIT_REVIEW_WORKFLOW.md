@@ -140,6 +140,10 @@ Use Performance after trades are documented and reviewed:
 - Treat open trades, missing reviews, and incomplete notes as data-quality context.
 - Do not interpret the view as forecast, production validation, or profitability promise.
 
+For structured historical or paper signal-output review, use
+`docs/HISTORICAL_PAPER_REVIEW_PROTOCOL.md` and create follow-up issues for repeated
+`too_permissive`, `too_strict`, or unclear outcomes.
+
 Weekly review should identify process follow-ups: stale symbols, repeated no-trade reasons, missing journals, incomplete trade plans, and alert routing noise.
 
 ## Conservative Stop Points
@@ -169,5 +173,6 @@ When recording screenshots, smoke-test notes, issue comments, or PR evidence:
 - `docs/MVP_SMOKE_TEST.md`
 - `docs/PROVIDER_SYNC_SMOKE_TEST.md`
 - `docs/MARKET_DATA_FRESHNESS_MODEL.md`
+- `docs/HISTORICAL_PAPER_REVIEW_PROTOCOL.md`
 - `docs/STRATEGY_AND_ALERTS.md`
 - `docs/DATA_MODEL.md`
