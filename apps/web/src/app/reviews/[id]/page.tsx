@@ -5,6 +5,25 @@ import { useEffect, useMemo, useState } from "react";
 import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
 import { fetchReviewBatch, redirectToLoginOnAuthError } from "@/lib/api";
 import type { ManualReviewLabel, ReviewBatch, ReviewEntry } from "@/types/reviews";
+import type { AssetClass, StrategyType } from "@/types/signals";
+
+type EntryFilterState = {
+  label: "" | ManualReviewLabel;
+  assetClass: "" | AssetClass;
+  strategyType: "" | StrategyType;
+  symbol: string;
+  blocker: string;
+  followUp: "" | "yes" | "no";
+};
+
+const emptyFilters: EntryFilterState = {
+  label: "",
+  assetClass: "",
+  strategyType: "",
+  symbol: "",
+  blocker: "",
+  followUp: "",
+};
 
 const labelTone: Record<ManualReviewLabel, string> = {
   useful: "border-emerald-300/40 bg-emerald-300/10 text-emerald-100",
@@ -16,6 +35,7 @@ const labelTone: Record<ManualReviewLabel, string> = {
 export default function ReviewBatchDetailPage({ params }: { params: { id: string } }) {
   const authStatus = useProtectedRoute();
   const [batch, setBatch] = useState<ReviewBatch | null>(null);
+  const [filters, setFilters] = useState<EntryFilterState>(emptyFilters);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const batchId = Number(params.id);
@@ -46,7 +66,9 @@ export default function ReviewBatchDetailPage({ params }: { params: { id: string
     }
   }, [authStatus, batchId]);
 
-  const entriesByLabel = useMemo(() => groupEntriesByLabel(batch?.entries ?? []), [batch]);
+  const filteredEntries = useMemo(() => filterEntries(batch?.entries ?? [], filters), [batch, filters]);
+  const entriesByLabel = useMemo(() => groupEntriesByLabel(filteredEntries), [filteredEntries]);
+  const hasActiveFilters = Object.values(filters).some(Boolean);
 
   if (authStatus !== "authenticated") {
     return <ProtectedRouteLoading />;
@@ -121,14 +143,21 @@ export default function ReviewBatchDetailPage({ params }: { params: { id: string
                     Eine Zeile pro Signal oder Kandidat. Labels markieren Review-Qualitaet, nicht Profit.
                   </p>
                 </div>
-                <span className="text-sm text-slate-400">{batch.entries.length} Eintraege</span>
+                <span className="text-sm text-slate-400">
+                  {filteredEntries.length} sichtbar / {batch.entries.length} gesamt
+                </span>
               </div>
+              <EntryFilters filters={filters} onChange={setFilters} onReset={() => setFilters(emptyFilters)} />
               <div className="mt-5 overflow-hidden rounded-2xl border border-white/10">
                 {batch.entries.length === 0 ? (
                   <p className="p-5 text-sm text-slate-500">Noch keine Eintraege.</p>
+                ) : filteredEntries.length === 0 ? (
+                  <p className="p-5 text-sm text-slate-500">
+                    Keine Eintraege passen zu den aktiven Filtern. Repeated Blockers bleiben oben als Batch-Kontext sichtbar.
+                  </p>
                 ) : (
                   <div className="divide-y divide-white/10">
-                    {batch.entries.map((entry) => <EntryRow key={entry.id} entry={entry} />)}
+                    {filteredEntries.map((entry) => <EntryRow key={entry.id} entry={entry} />)}
                   </div>
                 )}
               </div>
@@ -136,7 +165,7 @@ export default function ReviewBatchDetailPage({ params }: { params: { id: string
 
             {Object.entries(entriesByLabel).length > 0 ? (
               <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
-                <h2 className="text-xl font-semibold">Entries nach Label</h2>
+                <h2 className="text-xl font-semibold">Entries nach Label{hasActiveFilters ? " (gefiltert)" : ""}</h2>
                 <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                   {Object.entries(entriesByLabel).map(([label, entries]) => (
                     <SummaryCard key={label} label={formatLabel(label)} value={String(entries.length)} tone={labelTone[label as ManualReviewLabel] ?? "border-white/10"} />
@@ -148,6 +177,38 @@ export default function ReviewBatchDetailPage({ params }: { params: { id: string
         ) : null}
       </section>
     </main>
+  );
+}
+
+function EntryFilters({
+  filters,
+  onChange,
+  onReset,
+}: {
+  filters: EntryFilterState;
+  onChange: (filters: EntryFilterState) => void;
+  onReset: () => void;
+}) {
+  return (
+    <div className="mt-5 rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="font-semibold">Entry Filter</h3>
+          <p className="mt-1 text-xs text-slate-500">Filter dienen nur der Review-Suche, nicht der Signalbewertung.</p>
+        </div>
+        <button className="w-fit rounded-xl border border-white/10 px-3 py-2 text-xs text-slate-300 hover:border-violet-300/60" type="button" onClick={onReset}>
+          Filter zuruecksetzen
+        </button>
+      </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+        <SelectInput label="Label" value={filters.label} onChange={(label) => onChange({ ...filters, label: label as EntryFilterState["label"] })} options={[["", "Alle"], ["useful", "Useful"], ["too_permissive", "Too permissive"], ["too_strict", "Too strict"], ["unclear", "Unclear"]]} />
+        <SelectInput label="Asset" value={filters.assetClass} onChange={(assetClass) => onChange({ ...filters, assetClass: assetClass as EntryFilterState["assetClass"] })} options={[["", "Alle"], ["stock", "Stock"], ["crypto", "Crypto"]]} />
+        <SelectInput label="Strategie" value={filters.strategyType} onChange={(strategyType) => onChange({ ...filters, strategyType: strategyType as EntryFilterState["strategyType"] })} options={[["", "Alle"], ["trend_pullback_long", "Trend Pullback"], ["base_breakout_long", "Base Breakout"]]} />
+        <TextInput label="Symbol" value={filters.symbol} onChange={(symbol) => onChange({ ...filters, symbol })} placeholder="AAPL" />
+        <TextInput label="Blocker" value={filters.blocker} onChange={(blocker) => onChange({ ...filters, blocker })} placeholder="market_regime" />
+        <SelectInput label="Follow-up" value={filters.followUp} onChange={(followUp) => onChange({ ...filters, followUp: followUp as EntryFilterState["followUp"] })} options={[["", "Alle"], ["yes", "Ja"], ["no", "Nein"]]} />
+      </div>
+    </div>
   );
 }
 
@@ -207,6 +268,46 @@ function PatternPanel({ title, items }: { title: string; items: string[] }) {
   );
 }
 
+function SelectInput({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: [string, string][];
+}) {
+  return (
+    <label className="grid gap-2 text-sm text-slate-300">
+      {label}
+      <select className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-slate-100" value={value} onChange={(event) => onChange(event.target.value)}>
+        {options.map(([optionValue, optionLabel]) => <option key={optionValue} value={optionValue}>{optionLabel}</option>)}
+      </select>
+    </label>
+  );
+}
+
+function TextInput({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <label className="grid gap-2 text-sm text-slate-300">
+      {label}
+      <input className="rounded-xl border border-white/10 bg-slate-950 px-3 py-2 text-slate-100" value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} />
+    </label>
+  );
+}
+
 function Notice({ text }: { text: string }) {
   return <div className="rounded-2xl border border-red-400/30 bg-red-950/40 p-4 text-sm text-red-100">{text}</div>;
 }
@@ -216,6 +317,48 @@ function groupEntriesByLabel(entries: ReviewEntry[]) {
     groups[entry.manual_review_label] = [...(groups[entry.manual_review_label] ?? []), entry];
     return groups;
   }, {});
+}
+
+function filterEntries(entries: ReviewEntry[], filters: EntryFilterState) {
+  const symbol = filters.symbol.trim().toUpperCase();
+  const blocker = filters.blocker.trim().toLowerCase();
+  return entries.filter((entry) => {
+    if (filters.label && entry.manual_review_label !== filters.label) {
+      return false;
+    }
+    if (filters.assetClass && entry.asset_class !== filters.assetClass) {
+      return false;
+    }
+    if (filters.strategyType && entry.strategy_type !== filters.strategyType) {
+      return false;
+    }
+    if (symbol && !entry.symbol.toUpperCase().includes(symbol)) {
+      return false;
+    }
+    if (filters.followUp === "yes" && !entry.follow_up_needed) {
+      return false;
+    }
+    if (filters.followUp === "no" && entry.follow_up_needed) {
+      return false;
+    }
+    if (blocker && !extractTextValues(entry.quality_blockers).some((value) => value.toLowerCase().includes(blocker))) {
+      return false;
+    }
+    return true;
+  });
+}
+
+function extractTextValues(value: unknown): string[] {
+  if (!value) {
+    return [];
+  }
+  if (Array.isArray(value)) {
+    return value.flatMap(extractTextValues);
+  }
+  if (typeof value === "object") {
+    return Object.values(value).flatMap((item) => (typeof item === "string" ? [item] : []));
+  }
+  return [];
 }
 
 function formatLabel(value: string) {
