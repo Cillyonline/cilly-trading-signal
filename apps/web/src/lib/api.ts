@@ -9,6 +9,7 @@ import type {
   MarketDataSyncResult,
 } from "@/types/imports";
 import type { PerformanceSummary } from "@/types/performance";
+import type { ScreenerImport, ScreenerResult } from "@/types/screener";
 import type { RiskSettings, RiskSettingsUpdatePayload } from "@/types/settings";
 import type {
   JournalEntry,
@@ -229,6 +230,43 @@ export async function syncMarketData(payload: MarketDataSyncRequest): Promise<Ma
     throw new Error(formatApiError(body?.detail, "Provider-Sync konnte nicht gestartet werden."));
   }
 
+  return response.json();
+}
+
+export async function importScreenerCsv(formData: FormData): Promise<ScreenerImport> {
+  const response = await credentialedFetch(`${API_BASE_URL}/screener/imports`, {
+    method: "POST",
+    body: formData,
+  });
+
+  assertAuthenticatedResponse(response);
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new ApiError(
+      formatApiError(body?.detail, "Screener CSV konnte nicht gespeichert werden."),
+      body?.detail,
+      response.status,
+    );
+  }
+
+  return response.json();
+}
+
+export async function fetchScreenerImports(): Promise<ScreenerImport[]> {
+  const response = await credentialedFetch(`${API_BASE_URL}/screener/imports`, { cache: "no-store" });
+  assertAuthenticatedResponse(response);
+  if (!response.ok) {
+    throw new Error("Screener-Importe konnten nicht geladen werden.");
+  }
+  return response.json();
+}
+
+export async function fetchScreenerResults(): Promise<ScreenerResult[]> {
+  const response = await credentialedFetch(`${API_BASE_URL}/screener/results`, { cache: "no-store" });
+  assertAuthenticatedResponse(response);
+  if (!response.ok) {
+    throw new Error("Screener-Kandidaten konnten nicht geladen werden.");
+  }
   return response.json();
 }
 
