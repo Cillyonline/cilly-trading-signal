@@ -124,3 +124,6 @@ Passing calibration tests does not prove positive expectancy, profitability, or
 production readiness. It only proves that deterministic rules match the documented
 playbook and fixtures. Separate historical or paper review with enough examples is
 required before making any stronger statement about strategy performance.
+
+The historical/paper review protocol is documented in
+`docs/HISTORICAL_PAPER_REVIEW_PROTOCOL.md`.
