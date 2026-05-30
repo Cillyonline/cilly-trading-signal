@@ -9,6 +9,7 @@ import type {
   MarketDataSyncResult,
 } from "@/types/imports";
 import type { PerformanceSummary } from "@/types/performance";
+import type { ReviewBatch, ReviewBatchCreatePayload, ReviewEntry, ReviewEntryCreatePayload } from "@/types/reviews";
 import type { ScreenerImport, ScreenerResult } from "@/types/screener";
 import type { RiskSettings, RiskSettingsUpdatePayload } from "@/types/settings";
 import type {
@@ -317,6 +318,47 @@ export async function fetchPerformanceSummary(): Promise<PerformanceSummary> {
   if (!response.ok) {
     throw new Error("Performance Summary konnte nicht geladen werden.");
   }
+  return response.json();
+}
+
+export async function fetchReviewBatches(): Promise<ReviewBatch[]> {
+  const response = await credentialedFetch(`${API_BASE_URL}/reviews/batches`, { cache: "no-store" });
+  assertAuthenticatedResponse(response);
+  if (!response.ok) {
+    throw new Error("Review-Batches konnten nicht geladen werden.");
+  }
+  return response.json();
+}
+
+export async function createReviewBatch(payload: ReviewBatchCreatePayload): Promise<ReviewBatch> {
+  const response = await credentialedFetch(`${API_BASE_URL}/reviews/batches`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  assertAuthenticatedResponse(response);
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(formatApiError(body?.detail, "Review-Batch konnte nicht gespeichert werden."));
+  }
+
+  return response.json();
+}
+
+export async function createReviewEntry(batchId: number, payload: ReviewEntryCreatePayload): Promise<ReviewEntry> {
+  const response = await credentialedFetch(`${API_BASE_URL}/reviews/batches/${batchId}/entries`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  assertAuthenticatedResponse(response);
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(formatApiError(body?.detail, "Review-Eintrag konnte nicht gespeichert werden."));
+  }
+
   return response.json();
 }
 

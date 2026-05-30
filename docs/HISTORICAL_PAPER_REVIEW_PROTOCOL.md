@@ -48,7 +48,15 @@ Do not cherry-pick only successful examples. Include:
 
 ## Review Template
 
-Create one row per reviewed signal or candidate:
+Use the app review workflow at `/reviews` when available, or create one row per
+reviewed signal or candidate manually when working outside the app:
+
+- Create a fixed historical or paper review batch before evaluating outcomes.
+- Add one structured entry per signal or candidate.
+- Use `too_permissive`, `too_strict`, and repeated `unclear` labels to identify
+  calibration follow-ups.
+- Treat the batch summary as process evidence only, not backtest or profitability
+  validation.
 
 | Field | Value |
 | --- | --- |

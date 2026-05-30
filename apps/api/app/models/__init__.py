@@ -11,6 +11,8 @@ from app.models.enums import (
     MarketDataStatus,
     MarketDataSyncStatus,
     NotificationChannel,
+    ManualReviewLabel,
+    ReviewBatchType,
     ScreenerImportSource,
     ScreenerImportStatus,
     ScreenerResultStatus,
@@ -26,6 +28,7 @@ from app.models.enums import (
 )
 from app.models.alert import Alert, NotificationLog
 from app.models.market_data import IndicatorSnapshot, MarketDataCandle, MarketDataSeries
+from app.models.review import ReviewBatch, ReviewEntry
 from app.models.screener import ScreenerImport, ScreenerResult
 from app.models.settings import Settings
 from app.models.signal import Signal, SignalReviewEvent
@@ -50,8 +53,12 @@ __all__ = [
     "MarketDataSource",
     "MarketDataStatus",
     "MarketDataSyncStatus",
+    "ManualReviewLabel",
     "NotificationChannel",
     "NotificationLog",
+    "ReviewBatch",
+    "ReviewBatchType",
+    "ReviewEntry",
     "ScreenerImport",
     "ScreenerImportSource",
     "ScreenerImportStatus",

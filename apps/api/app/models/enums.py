@@ -178,3 +178,15 @@ class ScreenerResultStatus(StrEnum):
     DUPLICATE = "duplicate"
     REJECTED = "rejected"
     IGNORED = "ignored"
+
+
+class ReviewBatchType(StrEnum):
+    HISTORICAL = "historical"
+    PAPER = "paper"
+
+
+class ManualReviewLabel(StrEnum):
+    USEFUL = "useful"
+    TOO_PERMISSIVE = "too_permissive"
+    TOO_STRICT = "too_strict"
+    UNCLEAR = "unclear"
