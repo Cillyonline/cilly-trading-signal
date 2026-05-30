@@ -10,7 +10,7 @@ import type {
 } from "@/types/imports";
 import type { PerformanceSummary } from "@/types/performance";
 import type { ReviewBatch, ReviewBatchCreatePayload, ReviewEntry, ReviewEntryCreatePayload } from "@/types/reviews";
-import type { ScreenerImport, ScreenerResult } from "@/types/screener";
+import type { ScreenerImport, ScreenerResult, ScreenerResultFilters } from "@/types/screener";
 import type { RiskSettings, RiskSettingsUpdatePayload } from "@/types/settings";
 import type {
   JournalEntry,
@@ -271,8 +271,17 @@ export async function fetchScreenerImports(): Promise<ScreenerImport[]> {
   return response.json();
 }
 
-export async function fetchScreenerResults(): Promise<ScreenerResult[]> {
-  const response = await credentialedFetch(`${API_BASE_URL}/screener/results`, { cache: "no-store" });
+export async function fetchScreenerResults(filters: ScreenerResultFilters = {}): Promise<ScreenerResult[]> {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(filters)) {
+    if (value !== undefined && value !== "") {
+      params.set(key, String(value));
+    }
+  }
+  const query = params.toString();
+  const response = await credentialedFetch(`${API_BASE_URL}/screener/results${query ? `?${query}` : ""}`, {
+    cache: "no-store",
+  });
   assertAuthenticatedResponse(response);
   if (!response.ok) {
     throw new Error("Screener-Kandidaten konnten nicht geladen werden.");

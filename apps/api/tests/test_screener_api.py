@@ -113,6 +113,64 @@ def test_import_screener_csv_persists_candidates(client: TestClient) -> None:
     assert all(result["watchlist_item_id"] is None for result in results)
 
 
+def test_list_screener_results_filters_and_sorts_candidates(client: TestClient) -> None:
+    stock_import = post_screener_import(client, valid_screener_csv()).json()
+    crypto_csv = "\n".join(
+        [
+            "Symbol,Exchange,Price,Volume,Relative Volume,RSI (14)",
+            "BTCUSDT,BINANCE,68000,2.5M,1.30,58.0",
+            "ETHUSDT,BINANCE,3600,900K,0.80,49.0",
+        ]
+    )
+    post_screener_import(client, crypto_csv, asset_class="crypto")
+
+    response = client.get(
+        "/api/screener/results",
+        params={
+            "asset_class": "crypto",
+            "exchange": "binance",
+            "min_relative_volume": "1.0",
+            "min_rsi14": "50",
+            "sort_by": "volume",
+            "sort_direction": "asc",
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert [result["symbol"] for result in body] == ["BTCUSDT"]
+    assert body[0]["asset_class"] == "crypto"
+
+    stock_response = client.get(
+        "/api/screener/results",
+        params={
+            "screener_import_id": stock_import["id"],
+            "sort_by": "relative_volume",
+            "sort_direction": "desc",
+        },
+    )
+
+    assert stock_response.status_code == 200
+    assert [result["symbol"] for result in stock_response.json()] == ["AAPL", "MSFT"]
+
+
+def test_list_screener_results_filters_by_status(client: TestClient) -> None:
+    post_screener_import(client, valid_screener_csv())
+    result = next(
+        result
+        for result in client.get("/api/screener/results").json()
+        if result["symbol"] == "AAPL"
+    )
+    client.post(f"/api/screener/results/{result['id']}/watchlist")
+
+    response = client.get("/api/screener/results", params={"status": "watchlist_added"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert [result["symbol"] for result in body] == ["AAPL"]
+    assert body[0]["status"] == "watchlist_added"
+
+
 def test_get_screener_import_returns_results(client: TestClient) -> None:
     created = post_screener_import(client, valid_screener_csv()).json()
 
