@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.enums import (
     AssetClass,
@@ -83,3 +83,13 @@ class ScreenerResultFilters(BaseModel):
     max_rsi14: Decimal | None = None
     sort_by: str = "created_at"
     sort_direction: str = "desc"
+    page: int = Field(default=1, ge=1)
+    page_size: int = Field(default=50, ge=1, le=100)
+
+
+class ScreenerResultPage(BaseModel):
+    items: list[ScreenerResultRead]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int

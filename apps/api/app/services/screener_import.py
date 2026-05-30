@@ -5,7 +5,9 @@ from decimal import Decimal, InvalidOperation
 from io import StringIO
 from typing import Any
 
-from sqlalchemy import select
+from math import ceil
+
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.enums import (
@@ -15,7 +17,7 @@ from app.models.enums import (
     ScreenerResultStatus,
 )
 from app.models.screener import ScreenerImport, ScreenerResult
-from app.schemas.screener import ScreenerResultFilters
+from app.schemas.screener import ScreenerResultFilters, ScreenerResultPage
 from app.schemas.watchlist import WatchlistItemCreate
 from app.services.watchlist import (
     DuplicateWatchlistSymbolError,
@@ -307,6 +309,40 @@ def list_screener_results(
     db: Session, user_id: int, filters: ScreenerResultFilters | None = None
 ) -> list[ScreenerResult]:
     filters = filters or ScreenerResultFilters()
+    query = build_screener_results_query(user_id, filters)
+    sort_column = SCREENER_RESULT_SORT_COLUMNS.get(filters.sort_by, ScreenerResult.created_at)
+    ordered_column = sort_column.asc() if filters.sort_direction == "asc" else sort_column.desc()
+    return list(
+        db.scalars(
+            query.order_by(ordered_column, ScreenerResult.id.desc())
+        )
+    )
+
+
+def list_screener_result_page(
+    db: Session, user_id: int, filters: ScreenerResultFilters
+) -> ScreenerResultPage:
+    query = build_screener_results_query(user_id, filters)
+    total = db.scalar(select(func.count()).select_from(query.subquery())) or 0
+    sort_column = SCREENER_RESULT_SORT_COLUMNS.get(filters.sort_by, ScreenerResult.created_at)
+    ordered_column = sort_column.asc() if filters.sort_direction == "asc" else sort_column.desc()
+    items = list(
+        db.scalars(
+            query.order_by(ordered_column, ScreenerResult.id.desc())
+            .offset((filters.page - 1) * filters.page_size)
+            .limit(filters.page_size)
+        )
+    )
+    return ScreenerResultPage(
+        items=items,
+        total=total,
+        page=filters.page,
+        page_size=filters.page_size,
+        total_pages=max(1, ceil(total / filters.page_size)) if total else 0,
+    )
+
+
+def build_screener_results_query(user_id: int, filters: ScreenerResultFilters):
     query = select(ScreenerResult).where(ScreenerResult.user_id == user_id)
     if filters.asset_class is not None:
         query = query.where(ScreenerResult.asset_class == filters.asset_class)
@@ -324,14 +360,7 @@ def list_screener_results(
         query = query.where(ScreenerResult.rsi14 >= filters.min_rsi14)
     if filters.max_rsi14 is not None:
         query = query.where(ScreenerResult.rsi14 <= filters.max_rsi14)
-
-    sort_column = SCREENER_RESULT_SORT_COLUMNS.get(filters.sort_by, ScreenerResult.created_at)
-    ordered_column = sort_column.asc() if filters.sort_direction == "asc" else sort_column.desc()
-    return list(
-        db.scalars(
-            query.order_by(ordered_column, ScreenerResult.id.desc())
-        )
-    )
+    return query
 
 
 def get_screener_import(db: Session, user_id: int, import_id: int) -> ScreenerImport | None:

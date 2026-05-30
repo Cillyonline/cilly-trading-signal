@@ -7,6 +7,7 @@ import {
   ApiError,
   addScreenerResultToWatchlist,
   fetchScreenerImports,
+  fetchScreenerResultPage,
   fetchScreenerResults,
   importScreenerCsv,
   redirectToLoginOnAuthError,
@@ -17,6 +18,7 @@ import type {
   ScreenerImportError,
   ScreenerResult,
   ScreenerResultFilters,
+  ScreenerResultPage,
   ScreenerResultSortBy,
   ScreenerResultSortDirection,
   ScreenerResultStatus,
@@ -38,6 +40,8 @@ type ScreenerFiltersState = {
   max_rsi14: string;
   sort_by: ScreenerResultSortBy;
   sort_direction: ScreenerResultSortDirection;
+  page: number;
+  page_size: number;
 };
 
 const emptyResultFilters: ScreenerFiltersState = {
@@ -51,6 +55,8 @@ const emptyResultFilters: ScreenerFiltersState = {
   max_rsi14: "",
   sort_by: "created_at",
   sort_direction: "desc",
+  page: 1,
+  page_size: 25,
 };
 
 const statusTone: Record<string, string> = {
@@ -70,6 +76,8 @@ export default function ScreenerPage() {
   const authStatus = useProtectedRoute();
   const [imports, setImports] = useState<ScreenerImport[]>([]);
   const [results, setResults] = useState<ScreenerResult[]>([]);
+  const [summaryResults, setSummaryResults] = useState<ScreenerResult[]>([]);
+  const [resultPage, setResultPage] = useState<ScreenerResultPage | null>(null);
   const [assetClass, setAssetClass] = useState<AssetClass>("stock");
   const [filters, setFilters] = useState<ScreenerFiltersState>(emptyResultFilters);
   const [preset, setPreset] = useState("");
@@ -85,12 +93,15 @@ export default function ScreenerPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const [loadedImports, loadedResults] = await Promise.all([
+      const [loadedImports, loadedResults, allResults] = await Promise.all([
         fetchScreenerImports(),
-        fetchScreenerResults(toApiFilters(resultFilters)),
+        fetchScreenerResultPage(toApiFilters(resultFilters)),
+        fetchScreenerResults(),
       ]);
       setImports(loadedImports);
-      setResults(loadedResults);
+      setResults(loadedResults.items);
+      setResultPage(loadedResults);
+      setSummaryResults(allResults);
     } catch (loadError) {
       if (redirectToLoginOnAuthError(loadError)) {
         return;
@@ -107,7 +118,7 @@ export default function ScreenerPage() {
     }
   }, [authStatus]);
 
-  const summary = useMemo(() => buildSummary(results), [results]);
+  const summary = useMemo(() => buildSummary(summaryResults), [summaryResults]);
 
   if (authStatus !== "authenticated") {
     return <ProtectedRouteLoading />;
@@ -308,11 +319,25 @@ export default function ScreenerPage() {
             filters={filters}
             imports={imports}
             resultCount={results.length}
+            resultPage={resultPage}
             onChange={setFilters}
-            onApply={(nextFilters) => void loadData(nextFilters)}
+            onApply={(nextFilters) => {
+              const applied = { ...nextFilters, page: 1 };
+              setFilters(applied);
+              void loadData(applied);
+            }}
             onReset={() => {
               setFilters(emptyResultFilters);
               void loadData(emptyResultFilters);
+            }}
+          />
+
+          <PaginationControls
+            filters={filters}
+            resultPage={resultPage}
+            onChange={(nextFilters) => {
+              setFilters(nextFilters);
+              void loadData(nextFilters);
             }}
           />
 
@@ -370,6 +395,7 @@ function ScreenerFiltersPanel({
   filters,
   imports,
   resultCount,
+  resultPage,
   onChange,
   onApply,
   onReset,
@@ -377,6 +403,7 @@ function ScreenerFiltersPanel({
   filters: ScreenerFiltersState;
   imports: ScreenerImport[];
   resultCount: number;
+  resultPage: ScreenerResultPage | null;
   onChange: (filters: ScreenerFiltersState) => void;
   onApply: (filters: ScreenerFiltersState) => void;
   onReset: () => void;
@@ -390,7 +417,9 @@ function ScreenerFiltersPanel({
             Filter veraendern keine Kandidaten und erzeugen keine Analyse, Signale oder Trades.
           </p>
         </div>
-        <span className="text-sm text-slate-400">{resultCount} sichtbar</span>
+        <span className="text-sm text-slate-400">
+          {resultCount} sichtbar{resultPage ? ` / ${resultPage.total} total` : ""}
+        </span>
       </div>
       <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <FilterSelect
@@ -436,6 +465,12 @@ function ScreenerFiltersPanel({
           onChange={(sort_direction) => onChange({ ...filters, sort_direction: sort_direction as ScreenerResultSortDirection })}
           options={[["desc", "Absteigend"], ["asc", "Aufsteigend"]]}
         />
+        <FilterSelect
+          label="Rows pro Seite"
+          value={String(filters.page_size)}
+          onChange={(page_size) => onChange({ ...filters, page: 1, page_size: Number(page_size) })}
+          options={[["10", "10"], ["25", "25"], ["50", "50"], ["100", "100"]]}
+        />
       </div>
       <div className="mt-4 flex flex-wrap gap-3">
         <button type="button" onClick={() => onApply(filters)} className="rounded-xl bg-emerald-400 px-4 py-2 text-sm font-semibold text-slate-950">
@@ -443,6 +478,29 @@ function ScreenerFiltersPanel({
         </button>
         <button type="button" onClick={onReset} className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:border-emerald-300/50">
           Zuruecksetzen
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function PaginationControls({ filters, resultPage, onChange }: { filters: ScreenerFiltersState; resultPage: ScreenerResultPage | null; onChange: (filters: ScreenerFiltersState) => void }) {
+  if (!resultPage || resultPage.total_pages <= 1) {
+    return null;
+  }
+  const canGoBack = resultPage.page > 1;
+  const canGoForward = resultPage.page < resultPage.total_pages;
+  return (
+    <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-sm text-slate-300 sm:flex-row sm:items-center sm:justify-between">
+      <span>
+        Seite {resultPage.page} von {resultPage.total_pages} / {resultPage.total} Kandidaten
+      </span>
+      <div className="flex gap-2">
+        <button type="button" disabled={!canGoBack} onClick={() => onChange({ ...filters, page: resultPage.page - 1 })} className="rounded-xl border border-white/10 px-4 py-2 disabled:cursor-not-allowed disabled:opacity-50">
+          Zurueck
+        </button>
+        <button type="button" disabled={!canGoForward} onClick={() => onChange({ ...filters, page: resultPage.page + 1 })} className="rounded-xl border border-white/10 px-4 py-2 disabled:cursor-not-allowed disabled:opacity-50">
+          Weiter
         </button>
       </div>
     </div>
@@ -663,6 +721,8 @@ function toApiFilters(filters: ScreenerFiltersState): ScreenerResultFilters {
     max_rsi14: filters.max_rsi14,
     sort_by: filters.sort_by,
     sort_direction: filters.sort_direction,
+    page: filters.page,
+    page_size: filters.page_size,
   };
 }
 

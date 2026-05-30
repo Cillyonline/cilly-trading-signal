@@ -171,6 +171,39 @@ def test_list_screener_results_filters_by_status(client: TestClient) -> None:
     assert body[0]["status"] == "watchlist_added"
 
 
+def test_list_screener_results_page_returns_counts_and_page_items(client: TestClient) -> None:
+    rows = ["Symbol,Volume,Relative Volume,RSI (14)"]
+    rows.extend(f"AAPL{index},{1000 + index},1.{index},5{index}.0" for index in range(5))
+    post_screener_import(client, "\n".join(rows))
+
+    response = client.get(
+        "/api/screener/results/page",
+        params={"page": 2, "page_size": 2, "sort_by": "rank", "sort_direction": "asc"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["total"] == 5
+    assert body["page"] == 2
+    assert body["page_size"] == 2
+    assert body["total_pages"] == 3
+    assert [result["symbol"] for result in body["items"]] == ["AAPL2", "AAPL3"]
+
+
+def test_list_screener_results_page_applies_filters(client: TestClient) -> None:
+    post_screener_import(client, valid_screener_csv())
+
+    response = client.get(
+        "/api/screener/results/page",
+        params={"min_relative_volume": "1.0", "sort_by": "relative_volume"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["total"] == 1
+    assert [result["symbol"] for result in body["items"]] == ["AAPL"]
+
+
 def test_get_screener_import_returns_results(client: TestClient) -> None:
     created = post_screener_import(client, valid_screener_csv()).json()
 

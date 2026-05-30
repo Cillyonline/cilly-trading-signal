@@ -11,6 +11,7 @@ from app.schemas.screener import (
     ScreenerImportDetail,
     ScreenerImportRead,
     ScreenerResultFilters,
+    ScreenerResultPage,
     ScreenerResultRead,
 )
 from app.services.screener_import import (
@@ -19,6 +20,7 @@ from app.services.screener_import import (
     get_screener_import,
     import_screener_csv,
     list_screener_imports,
+    list_screener_result_page,
     list_screener_results,
 )
 
@@ -95,6 +97,15 @@ def list_results(
     filters: Annotated[ScreenerResultFilters, Query()],
 ) -> list[ScreenerResultRead]:
     return list_screener_results(db, user.id, filters)
+
+
+@router.get("/results/page", response_model=ScreenerResultPage)
+def list_results_page(
+    db: DbSession,
+    user: CurrentUser,
+    filters: Annotated[ScreenerResultFilters, Query()],
+) -> ScreenerResultPage:
+    return list_screener_result_page(db, user.id, filters)
 
 
 @router.post("/results/{result_id}/watchlist", response_model=ScreenerResultRead)
