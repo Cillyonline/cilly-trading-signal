@@ -59,6 +59,8 @@ class ScreenerResultRead(BaseModel):
     duplicate_of_result_id: int | None
     validation_errors: dict[str, Any] | list[Any] | None
     raw_metadata: dict[str, Any] | list[Any] | None
+    review_priority: str = "normal"
+    review_priority_reasons: list[str] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime
 

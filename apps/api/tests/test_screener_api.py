@@ -171,6 +171,30 @@ def test_list_screener_results_filters_by_status(client: TestClient) -> None:
     assert body[0]["status"] == "watchlist_added"
 
 
+def test_list_screener_results_adds_review_only_priority(client: TestClient) -> None:
+    csv_content = "\n".join(
+        [
+            "Symbol,Price,Volume,Relative Volume,RSI (14),EMA50",
+            "NVDA,900,2500000,1.50,62,850",
+            "THIN,10,,,88,12",
+            "MID,50,500000,0.90,55,52",
+        ]
+    )
+    post_screener_import(client, csv_content)
+
+    response = client.get(
+        "/api/screener/results", params={"sort_by": "symbol", "sort_direction": "asc"}
+    )
+
+    assert response.status_code == 200
+    by_symbol = {result["symbol"]: result for result in response.json()}
+    assert by_symbol["NVDA"]["review_priority"] == "high_review_priority"
+    assert "liquidity_visible" in by_symbol["NVDA"]["review_priority_reasons"]
+    assert by_symbol["THIN"]["review_priority"] == "low_review_priority"
+    assert "volume_missing" in by_symbol["THIN"]["review_priority_reasons"]
+    assert by_symbol["MID"]["review_priority"] == "normal"
+
+
 def test_list_screener_results_page_returns_counts_and_page_items(client: TestClient) -> None:
     rows = ["Symbol,Volume,Relative Volume,RSI (14)"]
     rows.extend(f"AAPL{index},{1000 + index},1.{index},5{index}.0" for index in range(5))

@@ -73,6 +73,12 @@ const statusTone: Record<string, string> = {
   validated: "border-sky-300/30 bg-sky-300/10 text-sky-100",
 };
 
+const priorityTone: Record<string, string> = {
+  high_review_priority: "border-violet-300/40 bg-violet-300/10 text-violet-100",
+  normal: "border-slate-400/30 bg-slate-400/10 text-slate-200",
+  low_review_priority: "border-orange-300/40 bg-orange-300/10 text-orange-100",
+};
+
 export default function ScreenerPage() {
   const authStatus = useProtectedRoute();
   const [imports, setImports] = useState<ScreenerImport[]>([]);
@@ -660,6 +666,9 @@ function ScreenerResultCard({
           <span className={`rounded-full border px-3 py-1 text-xs ${statusTone[result.status]}`}>
             {formatLabel(result.status)}
           </span>
+          <span className={`rounded-full border px-3 py-1 text-xs ${priorityTone[result.review_priority]}`}>
+            {formatLabel(result.review_priority)}
+          </span>
           <h3 className="text-lg font-semibold">{result.symbol}</h3>
           {result.exchange ? (
             <span className="rounded-full bg-slate-800 px-3 py-1 text-xs uppercase text-slate-300">
@@ -669,6 +678,9 @@ function ScreenerResultCard({
           <span className="text-sm text-slate-400">{result.asset_class}</span>
         </div>
         <p className="mt-3 text-sm text-slate-300">{result.name ?? "Kein Name im Screener-Export."}</p>
+        <p className="mt-2 text-xs text-slate-500">
+          Review Priority ist nur Triage-Kontext, kein Setup-Score und keine Empfehlung.
+        </p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Metric label="Price" value={formatNumber(result.price)} />
           <Metric label="Change %" value={formatPercent(result.change_percent)} />
@@ -706,6 +718,15 @@ function ScreenerResultCard({
           <Metric label="EMA20" value={formatNumber(result.ema20)} />
           <Metric label="EMA50" value={formatNumber(result.ema50)} />
         </div>
+        {result.review_priority_reasons.length > 0 ? (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {result.review_priority_reasons.map((reason) => (
+              <span key={reason} className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-300">
+                {formatLabel(reason)}
+              </span>
+            ))}
+          </div>
+        ) : null}
         {asErrors(result.validation_errors).length > 0 ? (
           <InlineErrors errors={asErrors(result.validation_errors)} />
         ) : null}
@@ -742,6 +763,9 @@ function ScreenerResultDetailPanel({
               <span className={`rounded-full border px-3 py-1 text-xs ${statusTone[result.status]}`}>
                 {formatLabel(result.status)}
               </span>
+              <span className={`rounded-full border px-3 py-1 text-xs ${priorityTone[result.review_priority]}`}>
+                {formatLabel(result.review_priority)}
+              </span>
               <span className="rounded-full bg-slate-800 px-3 py-1 text-xs uppercase text-slate-300">
                 {result.asset_class}
               </span>
@@ -757,6 +781,21 @@ function ScreenerResultDetailPanel({
           Detaildaten sind nur Review-Kontext aus dem gespeicherten Screener-Snapshot. Keine Live-Daten,
           keine Analyse, kein Signal, kein Trade und keine Empfehlung.
         </p>
+
+        <section className="mt-6 rounded-2xl border border-violet-300/20 bg-violet-300/10 p-4">
+          <h3 className="text-sm font-semibold text-violet-100">Review Priority</h3>
+          <p className="mt-2 text-sm text-violet-50/80">
+            {formatLabel(result.review_priority)} ist nur ein Triage-Hinweis aus Screener-Feldern,
+            kein Setup-Score, kein Signal und keine Handlungsanweisung.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {result.review_priority_reasons.map((reason) => (
+              <span key={reason} className="rounded-full border border-violet-200/20 px-3 py-1 text-xs text-violet-50">
+                {formatLabel(reason)}
+              </span>
+            ))}
+          </div>
+        </section>
 
         <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <Metric label="Exchange" value={result.exchange ?? "-"} />
