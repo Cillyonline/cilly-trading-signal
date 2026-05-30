@@ -188,8 +188,8 @@ Stocks should account for broad index context, relative strength, liquidity, gap
 risk, and earnings risk. Crypto should account for BTC/ETH regime, higher ATR,
 wick/fakeout risk, 24/7 trading behavior, weekend/event risk, and altcoin liquidity.
 
-Detailed stock and crypto rules are defined in the follow-up filter issues for
-this milestone.
+Detailed stock and crypto rules are defined in
+`docs/ASSET_SPECIFIC_SIGNAL_FILTERS.md`.
 
 ## Scoring Target
 
