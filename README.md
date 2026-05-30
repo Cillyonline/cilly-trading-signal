@@ -173,6 +173,7 @@ uv run --no-project --with pytest --with "fastapi[standard]" --with pydantic-set
 - `docs/COCKPIT_REVIEW_WORKFLOW.md`
 - `docs/SCREENER_CSV_MODEL.md`
 - `docs/PROFESSIONAL_STRATEGY_PLAYBOOK.md`
+- `docs/ASSET_SPECIFIC_SIGNAL_FILTERS.md`
 - `docs/STRATEGY_AND_ALERTS.md`
 - `docs/DECISIONS.md`
 - `docs/DATA_MODEL.md`
