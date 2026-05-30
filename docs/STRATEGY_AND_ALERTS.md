@@ -3,6 +3,8 @@
 ## Ziel
 
 Dieses Dokument definiert Trading-Strategien, Trigger, Alarme, Scoring-Regeln, No-Trade-Regeln und den Trade-Lifecycle des Tools.
+Das professionelle Zielmodell fuer die v2.1 Strategie-Kalibrierung ist in
+`docs/PROFESSIONAL_STRATEGY_PLAYBOOK.md` beschrieben.
 
 Das Tool erzeugt keine Kauf- oder Verkaufsempfehlungen. Es bewertet Setups strukturiert,
 ueberwacht Trigger und liefert erklaerbare Pruefpunkte fuer manuelle Entscheidungen.
