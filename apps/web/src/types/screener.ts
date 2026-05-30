@@ -6,6 +6,8 @@ export type ScreenerImportStatus = "pending" | "validated" | "failed" | "importe
 
 export type ScreenerResultStatus = "candidate" | "watchlist_added" | "duplicate" | "rejected" | "ignored";
 
+export type ScreenerReviewPriority = "high_review_priority" | "normal" | "low_review_priority";
+
 export type ScreenerResultSortBy =
   | "created_at"
   | "symbol"
@@ -103,6 +105,8 @@ export type ScreenerResult = {
   duplicate_of_result_id: number | null;
   validation_errors: ScreenerImportError[] | Record<string, unknown> | null;
   raw_metadata: Record<string, unknown> | unknown[] | null;
+  review_priority: ScreenerReviewPriority;
+  review_priority_reasons: string[];
   created_at: string;
   updated_at: string;
 };

@@ -17,7 +17,7 @@ from app.models.enums import (
     ScreenerResultStatus,
 )
 from app.models.screener import ScreenerImport, ScreenerResult
-from app.schemas.screener import ScreenerResultFilters, ScreenerResultPage
+from app.schemas.screener import ScreenerResultFilters, ScreenerResultPage, ScreenerResultRead
 from app.schemas.watchlist import WatchlistItemCreate
 from app.services.watchlist import (
     DuplicateWatchlistSymbolError,
@@ -339,12 +339,63 @@ def list_screener_result_page(
         )
     )
     return ScreenerResultPage(
-        items=items,
+        items=[to_screener_result_read(item) for item in items],
         total=total,
         page=filters.page,
         page_size=filters.page_size,
         total_pages=max(1, ceil(total / filters.page_size)) if total else 0,
     )
+
+
+def to_screener_result_read(result: ScreenerResult) -> ScreenerResultRead:
+    priority, reasons = calculate_screener_review_priority(result)
+    return ScreenerResultRead.model_validate(
+        {
+            **result.__dict__,
+            "review_priority": priority,
+            "review_priority_reasons": reasons,
+        }
+    )
+
+
+def calculate_screener_review_priority(result: ScreenerResult) -> tuple[str, list[str]]:
+    reasons: list[str] = []
+    caution_count = 0
+    supportive_count = 0
+
+    if result.volume is None:
+        caution_count += 1
+        reasons.append("volume_missing")
+    elif result.volume >= Decimal("1000000"):
+        supportive_count += 1
+        reasons.append("liquidity_visible")
+
+    if result.relative_volume is None:
+        caution_count += 1
+        reasons.append("relative_volume_missing")
+    elif result.relative_volume >= Decimal("1.2"):
+        supportive_count += 1
+        reasons.append("relative_volume_elevated")
+
+    if result.rsi14 is None:
+        caution_count += 1
+        reasons.append("rsi_missing")
+    elif Decimal("45") <= result.rsi14 <= Decimal("70"):
+        supportive_count += 1
+        reasons.append("rsi_reviewable")
+    elif result.rsi14 > Decimal("80"):
+        caution_count += 1
+        reasons.append("rsi_extended")
+
+    if result.price is not None and result.ema50 is not None and result.price >= result.ema50:
+        supportive_count += 1
+        reasons.append("price_above_ema50")
+
+    if caution_count >= 2:
+        return "low_review_priority", reasons
+    if supportive_count >= 3:
+        return "high_review_priority", reasons
+    return "normal", reasons or ["insufficient_priority_context"]
 
 
 def build_screener_results_query(user_id: int, filters: ScreenerResultFilters):

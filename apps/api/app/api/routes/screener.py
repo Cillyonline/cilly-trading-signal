@@ -25,6 +25,7 @@ from app.services.screener_import import (
     list_screener_imports,
     list_screener_result_page,
     list_screener_results,
+    to_screener_result_read,
 )
 
 router = APIRouter(prefix="/screener", tags=["screener"])
@@ -99,7 +100,10 @@ def list_results(
     user: CurrentUser,
     filters: Annotated[ScreenerResultFilters, Query()],
 ) -> list[ScreenerResultRead]:
-    return list_screener_results(db, user.id, filters)
+    return [
+        to_screener_result_read(result)
+        for result in list_screener_results(db, user.id, filters)
+    ]
 
 
 @router.get("/results/page", response_model=ScreenerResultPage)
@@ -125,7 +129,7 @@ def bulk_update_result_status(
         updated_count=len(results),
         skipped_count=len(skipped_ids),
         skipped_result_ids=skipped_ids,
-        results=results,
+        results=[to_screener_result_read(result) for result in results],
     )
 
 
@@ -139,4 +143,4 @@ def add_result_to_watchlist(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Screener result not found.",
         )
-    return ScreenerResultRead.model_validate(result)
+    return to_screener_result_read(result)
