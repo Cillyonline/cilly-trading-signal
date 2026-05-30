@@ -24,9 +24,10 @@ v2.1 and its follow-ups improved strategy quality and reviewability:
 - Stored benchmark context requirements for `SPY`/`QQQ` and `BTC`/`ETH` are visible
   in the Watchlist workflow.
 - Analysis quality reports expose passed, warning, missing, and blocked checks.
-- Calibration golden cases provide a focused regression suite for strategy labels.
-- Historical/paper review has a documented protocol, but no app-supported batch
-  workflow yet.
+- Calibration golden cases provide focused strategy-label regression coverage and
+  end-to-end stored OHLCV plus benchmark-context fixtures.
+- Historical/paper review has both a documented protocol and an app-supported batch
+  workflow for process evidence.
 
 ## Options Considered
 
@@ -41,23 +42,29 @@ v2.1 and its follow-ups improved strategy quality and reviewability:
 
 ## Decision Point
 
-Recommended next planning discussion: choose between a strategy-quality increment
-and a workflow-usability increment.
+Recommended next planning discussion: choose between a workflow-usability increment
+and an operational-readiness increment.
 
-Recommended near-term technical next step: `#300 - Expand calibration golden cases
-with full OHLCV and benchmark fixtures`.
+Recently completed near-term technical steps:
+
+- `#300 - Expand calibration golden cases with full OHLCV and benchmark fixtures`.
+- `#299 - Add app support for historical and paper review batches`.
+
+Recommended next candidates:
+
+- Screener usability v2 for filtering, bulk review, pagination, and candidate
+  prioritization without bypassing calibrated review gates.
+- Operational hardening for monitoring, backup operations, and broader deployment
+  readiness decisions.
+- Review-batch usability refinements after enough sanitized examples exist.
 
 Reasoning:
 
-- It is the smallest high-leverage continuation of v2.1.
-- It tests the full stored-data path behind the new benchmark-context and quality
-  report work.
-- It supports safer future rule changes before adding larger app workflows.
-- It keeps the safety boundary clear: deterministic review fixtures are not
-  strategy validation or profitability evidence.
-
-Next candidate after `#300`: `#299 - Add app support for historical and paper
-review batches`, if the user wants to start recording structured review evidence.
+- The calibration and review-evidence foundations are now implemented.
+- Remaining high-value work is either daily workflow usability or deployment
+  confidence.
+- Any next step must keep deterministic fixtures and review batches clearly
+  separated from strategy validation, profitability evidence, and execution.
 
 ## Safety Boundaries
 

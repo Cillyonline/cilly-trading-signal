@@ -37,7 +37,8 @@ Done:
 - TradingView screener CSV import snapshots, validation, candidate review UI, and explicit screener-result to Watchlist conversion with visible duplicate handling.
 - Strategy calibration v2.1: professional playbook, asset-specific stock/crypto overlays, improved swing/pullback/breakout/risk-plan logic, market regime and relative strength checks, improved No-Trade wording, analysis quality reports, and calibration workflow docs.
 - Benchmark-context status for stored daily `SPY`/`QQQ` and `BTC`/`ETH` context in the Watchlist workflow.
-- Focused calibration golden-case suite and historical/paper review protocol.
+- Focused calibration golden-case suite, end-to-end stored OHLCV/benchmark fixtures,
+  historical/paper review protocol, and app-supported review batch workflow.
 - Private VPS staging smoke test, operations hardening, and staging-only decision gate for controlled owner/operator use.
 
 Partial:
@@ -48,8 +49,8 @@ Partial:
 - Dashboard, journal, and performance views are MVP-level summaries, not full analytics modules.
 - Risk enforcement covers manual trade creation basics, not complete portfolio-level exposure management.
 - Multi-timeframe analysis still requires current stored data for required `1W`, `1D`, and `4H` timeframes; provider sync does not automatically fill unsupported timeframes or rerun analysis.
-- Historical/paper review is documented as a protocol but is not yet an app-supported batch workflow.
-- End-to-end calibration fixtures for full stored OHLCV and benchmark paths are tracked separately.
+- Historical/paper review batches are implemented at an MVP level; richer review
+  analytics and exports remain future usability work.
 - Auth is intentionally single-user and admin-only for MVP use.
 
 Missing:
@@ -359,7 +360,7 @@ Done when:
 
 Goal: calibrate the trading analysis system toward professional, explainable setup quality for stocks and crypto.
 
-Status: Done, including follow-ups `#292`, `#293`, and `#294`.
+Status: Done, including follow-ups `#292`, `#293`, `#294`, `#299`, and `#300`.
 
 Primary work:
 
@@ -368,7 +369,9 @@ Primary work:
 - Improve no-trade reasons, next actions, and analysis quality reporting.
 - Expose benchmark-context status for required stored daily stock and crypto context.
 - Add a focused calibration golden-case suite.
+- Add end-to-end stored OHLCV and benchmark-context calibration fixtures.
 - Document strategy calibration and historical/paper review protocols.
+- Add app-supported historical/paper review batches for structured evidence.
 
 Done when:
 
@@ -380,13 +383,14 @@ Done when:
 
 ## Next Candidate Increment
 
-Recommended next implementation candidate: expand calibration golden cases with full stored OHLCV and benchmark fixtures (`#300`).
+Recommended next planning candidates: screener usability v2, operational hardening,
+or review-batch usability refinements after enough sanitized review examples exist.
 
 Alternative next increments:
 
-- Add app support for historical/paper review batches (`#299`).
 - Screener usability v2 after calibrated review paths are further protected.
 - Operational hardening before broader exposure.
+- Review-batch export/filtering and follow-up issue workflow polish.
 
 ## Not Now
 
