@@ -62,6 +62,16 @@ Each golden case should state:
 - Expected next manual review action.
 - Risk-plan expectation: entry, stop, target, and minimum R:R where applicable.
 
+The current backend golden-case suite can be run with:
+
+```powershell
+cd apps/api
+uv run --no-project --with pytest --with "fastapi[standard]" --with pydantic-settings --with sqlalchemy --with "psycopg[binary]" pytest tests/test_calibration_golden_cases.py
+```
+
+When `uv` is unavailable locally, run the same test file with the active API test
+environment's Python interpreter.
+
 ## Interpreting Outputs
 
 `A-Setup` should be rare. It means the stored context, setup, trigger plan, and
