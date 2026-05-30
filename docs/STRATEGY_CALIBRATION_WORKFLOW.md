@@ -72,6 +72,17 @@ uv run --no-project --with pytest --with "fastapi[standard]" --with pydantic-set
 When `uv` is unavailable locally, run the same test file with the active API test
 environment's Python interpreter.
 
+End-to-end stored OHLCV and benchmark-context calibration fixtures can be run with:
+
+```powershell
+cd apps/api
+uv run --no-project --with pytest --with "fastapi[standard]" --with pydantic-settings --with sqlalchemy --with "psycopg[binary]" pytest tests/test_calibration_e2e_fixtures.py
+```
+
+These fixtures exercise stored watchlist items, `1W`/`1D`/`4H` series, benchmark
+context, signal orchestration, and analysis quality report states. They are still
+deterministic review fixtures, not backtests or profitability evidence.
+
 ## Interpreting Outputs
 
 `A-Setup` should be rare. It means the stored context, setup, trigger plan, and

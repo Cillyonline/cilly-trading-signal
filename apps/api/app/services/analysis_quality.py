@@ -34,8 +34,16 @@ TRIGGER_BLOCKERS = {
 }
 REGIME_FLAGS = {
     "stock_benchmark_context_missing",
+    "stock_benchmark_context_stale",
+    "stock_benchmark_context_unknown",
+    "stock_benchmark_context_failed",
+    "stock_benchmark_context_partial",
     "stock_market_regime_mixed",
     "crypto_regime_context_missing",
+    "crypto_regime_context_stale",
+    "crypto_regime_context_unknown",
+    "crypto_regime_context_failed",
+    "crypto_regime_context_partial",
     "crypto_regime_mixed",
 }
 ASSET_FLAGS = {
