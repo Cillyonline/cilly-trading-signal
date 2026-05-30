@@ -138,6 +138,7 @@ export default function TradesPage() {
     () => watchlist.find((item) => item.id.toString() === form.watchlist_item_id) ?? null,
     [form.watchlist_item_id, watchlist],
   );
+  const reviewSummary = useMemo(() => buildReviewSummary(trades), [trades]);
 
   if (authStatus !== "authenticated") {
     return <ProtectedRouteLoading />;
@@ -217,6 +218,8 @@ export default function TradesPage() {
 
         {exportError ? <ErrorMessage message={exportError} /> : null}
         {error ? <ErrorMessage message={error} /> : null}
+
+        <TradeReviewSummary summary={reviewSummary} />
 
         <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
           <form onSubmit={submitTrade} className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
@@ -527,6 +530,26 @@ function TradeFilterForm({
   );
 }
 
+function TradeReviewSummary({ summary }: { summary: ReturnType<typeof buildReviewSummary> }) {
+  return (
+    <section className="grid gap-4 md:grid-cols-4">
+      <SummaryCard label="Review offen" value={summary.needsReview.toString()} tone="border-yellow-300/40" />
+      <SummaryCard label="Review komplett" value={summary.reviewed.toString()} tone="border-emerald-300/40" />
+      <SummaryCard label="Close fehlt" value={summary.open.toString()} tone="border-blue-300/30" />
+      <SummaryCard label="Plan-Hinweise" value={summary.planFollowUps.toString()} tone="border-slate-300/30" />
+    </section>
+  );
+}
+
+function SummaryCard({ label, value, tone = "border-white/10" }: { label: string; value: string; tone?: string }) {
+  return (
+    <article className={`rounded-2xl border ${tone} bg-slate-950/70 p-5`}>
+      <p className="text-sm text-slate-400">{label}</p>
+      <p className="mt-3 text-3xl font-semibold">{value}</p>
+    </article>
+  );
+}
+
 function ContextCard({
   mode,
   signal,
@@ -576,6 +599,8 @@ function CreatedTradeCard({ trade }: { trade: Trade }) {
 }
 
 function TradeCard({ trade }: { trade: Trade }) {
+  const completenessItems = getTradeCompletenessItems(trade);
+
   return (
     <article className="grid gap-5 p-5 lg:grid-cols-[1fr_0.9fr]">
       <div>
@@ -592,6 +617,7 @@ function TradeCard({ trade }: { trade: Trade }) {
           <Metric label="Risk" value={formatMoney(trade.initial_risk_amount)} />
           <Metric label="R:R" value={formatR(trade.initial_risk_reward)} />
         </div>
+        <TradeCompletenessList items={completenessItems} />
         <a
           className="mt-4 inline-flex rounded-xl border border-white/10 px-4 py-2 text-sm text-emerald-300 hover:border-emerald-300/50 hover:text-emerald-200"
           href={`/trades/${trade.id}`}
@@ -612,6 +638,26 @@ function TradeCard({ trade }: { trade: Trade }) {
   );
 }
 
+function TradeCompletenessList({ items }: { items: TradeCompletenessItem[] }) {
+  return (
+    <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+      <p className="text-sm font-semibold text-slate-200">Review Follow-up</p>
+      <p className="mt-1 text-xs text-slate-500">Faktische Dokumentationshinweise, keine Trade- oder Order-Aktion.</p>
+      <div className="mt-3 grid gap-2">
+        {items.map((item) => (
+          <div key={item.label} className="flex items-start gap-3 text-sm">
+            <span className={`mt-1 size-2 rounded-full ${item.done ? "bg-emerald-300" : "bg-yellow-300"}`} />
+            <div>
+              <p className={item.done ? "text-slate-200" : "text-yellow-100"}>{item.label}</p>
+              <p className="mt-0.5 text-xs text-slate-500">{item.detail}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ReviewStatusBadge({ trade }: { trade: Trade }) {
   if (trade.review_status === "reviewed") {
     return <span className="rounded-full bg-emerald-300/10 px-3 py-1 text-xs text-emerald-100">Review komplett</span>;
@@ -620,6 +666,57 @@ function ReviewStatusBadge({ trade }: { trade: Trade }) {
     return <span className="rounded-full bg-yellow-300/10 px-3 py-1 text-xs text-yellow-100">Review offen</span>;
   }
   return <span className="rounded-full bg-slate-800 px-3 py-1 text-xs text-slate-400">Review nach Close</span>;
+}
+
+type TradeCompletenessItem = {
+  label: string;
+  detail: string;
+  done: boolean;
+};
+
+function buildReviewSummary(trades: Trade[]) {
+  return {
+    needsReview: trades.filter((trade) => trade.review_status === "needs_review").length,
+    reviewed: trades.filter((trade) => trade.is_review_complete).length,
+    open: trades.filter((trade) => trade.status !== "closed" && trade.status !== "reviewed").length,
+    planFollowUps: trades.filter(hasPlanFollowUp).length,
+  };
+}
+
+function hasPlanFollowUp(trade: Trade) {
+  return !trade.target_1 || !trade.initial_risk_amount || !trade.initial_risk_reward || !trade.notes;
+}
+
+function getTradeCompletenessItems(trade: Trade): TradeCompletenessItem[] {
+  const isClosed = trade.status === "closed" || trade.status === "reviewed";
+  return [
+    {
+      label: trade.target_1 ? "Plan mit erstem Ziel" : "Erstes Ziel optional ergaenzen",
+      detail: trade.target_1 ? "Target 1 ist dokumentiert." : "Target 1 fehlt; falls bewusst offen, im Detail notieren.",
+      done: Boolean(trade.target_1),
+    },
+    {
+      label: trade.notes ? "Entry-Notiz vorhanden" : "Entry-Notiz fehlt",
+      detail: trade.notes ? "Manueller Entry-Kontext ist dokumentiert." : "Warum der Trade manuell ausgefuehrt wurde, ist noch leer.",
+      done: Boolean(trade.notes),
+    },
+    {
+      label: isClosed ? "Close dokumentiert" : "Close noch offen",
+      detail: isClosed
+        ? `Exit: ${formatMoney(trade.exit_price)} / ${formatDateTime(trade.closed_at)}`
+        : "Offene Trades koennen spaeter manuell geschlossen und reviewed werden.",
+      done: isClosed && Boolean(trade.exit_price && trade.closed_at && trade.exit_reason),
+    },
+    {
+      label: trade.is_review_complete ? "Journal Review komplett" : "Journal Review offen",
+      detail: trade.is_review_complete
+        ? "Review-Datensatz ist vorhanden."
+        : trade.review_status === "needs_review"
+          ? "Geschlossener Trade wartet auf manuelle Journal-Review."
+          : "Review ist nach dem manuellen Close moeglich.",
+      done: trade.is_review_complete,
+    },
+  ];
 }
 
 function Metric({ label, value }: { label: string; value: string }) {
