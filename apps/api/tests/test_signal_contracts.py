@@ -189,7 +189,10 @@ def test_hard_no_trade_overrides_high_score() -> None:
     assert result.score_class == ScoreClass.NO_TRADE
     assert result.no_trade_reasons == ["weekly_context_bearish"]
     assert "weekly_context_bearish" in result.risk_flags
-    assert "Hard No-Trade rule applied" in result.reasoning[-1]
+    assert "weekly context is bearish" in result.reasoning[-1]
+    assert result.next_action == (
+        "Wait for weekly context to turn neutral or bullish before manual long review."
+    )
 
 
 def test_build_signal_result_can_emit_armed_but_not_triggered() -> None:
@@ -273,6 +276,47 @@ def test_context_no_trade_reasons_override_score() -> None:
     assert result.status == SignalStatus.NO_SETUP
     assert result.score_class == ScoreClass.NO_TRADE
     assert "stock_market_regime_bearish" in result.no_trade_reasons
+    assert result.next_action == (
+        "Wait for stored SPY/QQQ context to recover before reviewing new stock long setups."
+    )
+
+
+@pytest.mark.parametrize(
+    ("reason", "expected_action_fragment"),
+    [
+        ("poor_data_quality", "Refresh or provide the missing/stale timeframe"),
+        ("missing_stop_loss", "Define a technical stop below structure"),
+        ("risk_reward_below_minimum", "supports at least 2R"),
+        ("base_too_wide", "Wait for a tighter base"),
+        ("pullback_not_controlled", "Wait for price to stabilize"),
+    ],
+)
+def test_no_trade_next_action_is_specific(reason: str, expected_action_fragment: str) -> None:
+    result = build_signal_result(
+        SignalEvaluationInput(
+            symbol="AAPL",
+            asset_class=AssetClass.STOCK,
+            strategy_type=StrategyType.TREND_PULLBACK_LONG,
+            weekly_bias=Bias.BULLISH,
+            daily_bias=Bias.BULLISH,
+            context_no_trade_reasons=[reason],
+        ),
+        ScoreBreakdown(trend=25, structure=25, momentum=15, volume=15, risk_reward=15),
+        bias=Bias.BULLISH,
+        reasoning=["Setup has technical strength."],
+        risk_flags=[],
+        next_action="Generic placeholder should be replaced.",
+        entry_low=Decimal("100"),
+        stop_loss=Decimal("95"),
+        target_1=Decimal("112"),
+        risk_reward=Decimal("2.4"),
+        has_valid_trigger_plan=True,
+    )
+
+    assert result.status == SignalStatus.NO_SETUP
+    assert expected_action_fragment in result.next_action
+    assert result.next_action != "Generic placeholder should be replaced."
+    assert any(reasoning.startswith("No Trade:") for reasoning in result.reasoning)
 
 
 def test_signal_result_rejects_triggered_status() -> None:
