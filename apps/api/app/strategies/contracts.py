@@ -183,6 +183,8 @@ def collect_common_no_trade_reasons(
         reasons.append("poor_data_quality")
     if signal_input.setup_invalidated:
         reasons.append("setup_already_invalidated")
+    if "missing_reward_target" in signal_input.data_quality_flags:
+        reasons.append("missing_reward_target")
     if "uncontrolled_pullback" in signal_input.data_quality_flags:
         reasons.append("pullback_not_controlled")
     if "base_range_too_wide" in signal_input.data_quality_flags:
