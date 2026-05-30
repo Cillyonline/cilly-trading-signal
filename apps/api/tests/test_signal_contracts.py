@@ -216,6 +216,65 @@ def test_build_signal_result_can_emit_armed_but_not_triggered() -> None:
     assert result.to_signal_kwargs()["status"] == SignalStatus.ARMED
 
 
+def test_context_risk_flags_cap_a_setup_confidence() -> None:
+    result = build_signal_result(
+        SignalEvaluationInput(
+            symbol="AAPL",
+            asset_class=AssetClass.STOCK,
+            strategy_type=StrategyType.TREND_PULLBACK_LONG,
+            weekly_bias=Bias.BULLISH,
+            daily_bias=Bias.BULLISH,
+            context_risk_flags=["stock_benchmark_context_missing"],
+            score_cap=79,
+        ),
+        ScoreBreakdown(trend=25, structure=25, momentum=15, volume=15, risk_reward=15),
+        bias=Bias.BULLISH,
+        reasoning=["Context, setup, trigger plan, and risk are aligned."],
+        risk_flags=[],
+        next_action="Review manually; no automatic trade is created.",
+        entry_low=Decimal("100"),
+        entry_high=Decimal("101"),
+        trigger_level=Decimal("101"),
+        stop_loss=Decimal("95"),
+        target_1=Decimal("112"),
+        risk_reward=Decimal("2.2"),
+        has_valid_trigger_plan=True,
+    )
+
+    assert result.score == 79
+    assert result.score_class == ScoreClass.B_SETUP
+    assert result.status == SignalStatus.ARMED
+    assert "stock_benchmark_context_missing" in result.risk_flags
+    assert "Market context cap applied" in result.reasoning[-1]
+
+
+def test_context_no_trade_reasons_override_score() -> None:
+    result = build_signal_result(
+        SignalEvaluationInput(
+            symbol="AAPL",
+            asset_class=AssetClass.STOCK,
+            strategy_type=StrategyType.TREND_PULLBACK_LONG,
+            weekly_bias=Bias.BULLISH,
+            daily_bias=Bias.BULLISH,
+            context_no_trade_reasons=["stock_market_regime_bearish"],
+        ),
+        ScoreBreakdown(trend=25, structure=25, momentum=15, volume=15, risk_reward=15),
+        bias=Bias.BULLISH,
+        reasoning=["Setup has technical strength."],
+        risk_flags=[],
+        next_action="No setup; wait for context to improve.",
+        entry_low=Decimal("100"),
+        stop_loss=Decimal("95"),
+        target_1=Decimal("112"),
+        risk_reward=Decimal("2.4"),
+        has_valid_trigger_plan=True,
+    )
+
+    assert result.status == SignalStatus.NO_SETUP
+    assert result.score_class == ScoreClass.NO_TRADE
+    assert "stock_market_regime_bearish" in result.no_trade_reasons
+
+
 def test_signal_result_rejects_triggered_status() -> None:
     with pytest.raises(ValueError, match="must not emit triggered"):
         SignalEvaluationResult(

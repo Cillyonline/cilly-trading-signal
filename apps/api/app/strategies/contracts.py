@@ -32,6 +32,9 @@ class SignalEvaluationInput:
     daily_indicators: IndicatorContext = field(default_factory=IndicatorContext)
     trigger_indicators: IndicatorContext = field(default_factory=IndicatorContext)
     data_quality_flags: list[str] = field(default_factory=list)
+    context_risk_flags: list[str] = field(default_factory=list)
+    context_no_trade_reasons: list[str] = field(default_factory=list)
+    score_cap: int | None = None
     setup_invalidated: bool = False
 
 
@@ -193,6 +196,7 @@ def collect_common_no_trade_reasons(
         reasons.append("breakout_too_extended")
     if "base_high_not_clear" in signal_input.data_quality_flags:
         reasons.append("base_high_not_clear")
+    reasons.extend(signal_input.context_no_trade_reasons)
 
     return reasons
 
@@ -221,6 +225,8 @@ def build_signal_result(
         risk_reward=risk_reward,
     )
     score = score_breakdown.total
+    if signal_input.score_cap is not None:
+        score = min(score, signal_input.score_cap)
     score_class = classify_score(score)
     status = map_status(score_class, has_valid_trigger_plan)
 
@@ -228,8 +234,10 @@ def build_signal_result(
         score_class = ScoreClass.NO_TRADE
         status = SignalStatus.NO_SETUP
 
-    merged_risk_flags = [*risk_flags, *no_trade_reasons]
+    merged_risk_flags = [*risk_flags, *signal_input.context_risk_flags, *no_trade_reasons]
     merged_reasoning = [*reasoning]
+    if signal_input.score_cap is not None and score == signal_input.score_cap:
+        merged_reasoning.append("Market context cap applied; confidence remains below A-Setup.")
     if no_trade_reasons:
         merged_reasoning.append("Hard No-Trade rule applied; setup remains No Setup.")
 

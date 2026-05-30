@@ -229,6 +229,41 @@ Risk flags:
   system should prefer lower confidence and clear wording over false precision.
 - No filter should imply a forecast or a recommendation.
 
+## Current MVP Implementation
+
+The backend uses stored daily watchlist market-data series as benchmark context;
+it does not claim live or realtime coverage and does not fetch benchmark data
+automatically during signal evaluation.
+
+Stocks:
+
+- `SPY` and `QQQ` daily watchlist series are treated as broad-market context when
+  available for the same user.
+- If no stored benchmark context is available, signals include
+  `stock_benchmark_context_missing` and are capped below A-Setup confidence.
+- If all available stock benchmarks are bearish, long-only signals include
+  `stock_market_regime_bearish` as a hard No-Trade reason.
+
+Crypto:
+
+- Stored daily `BTC`/`ETH` variants such as `BTCUSDT`, `BTC-USD`, `ETHUSDT`, and
+  `ETH-USD` are treated as crypto regime context when available for the same user.
+- If no stored crypto regime context is available, signals include
+  `crypto_regime_context_missing` and are capped below A-Setup confidence.
+- If all available BTC/ETH context is bearish, long-only signals include
+  `crypto_regime_bearish` as a hard No-Trade reason.
+
+Relative strength:
+
+- The first implementation compares the candidate's stored daily percentage
+  change with the average available benchmark percentage change over the same
+  simple lookback window.
+- If relative strength cannot be calculated, signals include
+  `relative_strength_unavailable`.
+- If the candidate materially underperforms while the broader regime is mixed or
+  weak, signals include `relative_strength_underperforming` as a hard No-Trade
+  reason.
+
 ## Relationship To Follow-Up Issues
 
 - Swing structure detection should provide cleaner stop and trigger inputs.

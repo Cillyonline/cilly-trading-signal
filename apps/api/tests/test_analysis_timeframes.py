@@ -106,6 +106,130 @@ def test_base_breakout_can_be_selected_by_orchestrator() -> None:
         assert result.status == SignalStatus.ARMED
 
 
+def test_missing_stock_benchmark_context_caps_confidence() -> None:
+    with make_session() as db:
+        watchlist_item = create_watchlist_item(db)
+        create_series_with_data(db, watchlist_item, Timeframe.ONE_WEEK, Decimal("120"))
+        daily = create_series_with_base_breakout(
+            db,
+            watchlist_item,
+            Timeframe.ONE_DAY,
+            breakout_close=Decimal("111"),
+        )
+        create_series_with_base_breakout(
+            db,
+            watchlist_item,
+            Timeframe.FOUR_HOURS,
+            breakout_close=Decimal("111"),
+        )
+
+        result = evaluate_mvp_signal_engine(
+            build_signal_engine_input(
+                db,
+                daily,
+                load_series_candles(db, daily),
+                load_series_snapshots(db, daily),
+            )
+        )
+
+        assert result.status == SignalStatus.ARMED
+        assert result.score <= 79
+        assert "stock_benchmark_context_missing" in result.risk_flags
+
+
+def test_bearish_stock_benchmark_context_blocks_long_setup() -> None:
+    with make_session() as db:
+        watchlist_item = create_watchlist_item(db)
+        create_series_with_data(db, watchlist_item, Timeframe.ONE_WEEK, Decimal("120"))
+        daily = create_series_with_base_breakout(
+            db,
+            watchlist_item,
+            Timeframe.ONE_DAY,
+            breakout_close=Decimal("111"),
+        )
+        create_series_with_base_breakout(
+            db,
+            watchlist_item,
+            Timeframe.FOUR_HOURS,
+            breakout_close=Decimal("111"),
+        )
+        spy = create_watchlist_item(db, symbol="SPY")
+        create_series_with_data(
+            db,
+            spy,
+            Timeframe.ONE_DAY,
+            Decimal("350"),
+            trend="bearish",
+        )
+        qqq = create_watchlist_item(db, symbol="QQQ")
+        create_series_with_data(
+            db,
+            qqq,
+            Timeframe.ONE_DAY,
+            Decimal("300"),
+            trend="bearish",
+        )
+
+        result = evaluate_mvp_signal_engine(
+            build_signal_engine_input(
+                db,
+                daily,
+                load_series_candles(db, daily),
+                load_series_snapshots(db, daily),
+            )
+        )
+
+        assert result.status == SignalStatus.NO_SETUP
+        assert "stock_market_regime_bearish" in result.no_trade_reasons
+
+
+def test_relative_strength_underperformance_blocks_mixed_regime_setup() -> None:
+    with make_session() as db:
+        watchlist_item = create_watchlist_item(db)
+        create_series_with_data(db, watchlist_item, Timeframe.ONE_WEEK, Decimal("120"))
+        daily = create_series_with_base_breakout(
+            db,
+            watchlist_item,
+            Timeframe.ONE_DAY,
+            breakout_close=Decimal("111"),
+        )
+        create_series_with_base_breakout(
+            db,
+            watchlist_item,
+            Timeframe.FOUR_HOURS,
+            breakout_close=Decimal("111"),
+        )
+        spy = create_watchlist_item(db, symbol="SPY")
+        create_series_with_data(
+            db,
+            spy,
+            Timeframe.ONE_DAY,
+            Decimal("350"),
+            first_close=Decimal("1"),
+        )
+        qqq = create_watchlist_item(db, symbol="QQQ")
+        create_series_with_data(
+            db,
+            qqq,
+            Timeframe.ONE_DAY,
+            Decimal("300"),
+            trend="neutral",
+            first_close=Decimal("1"),
+        )
+
+        result = evaluate_mvp_signal_engine(
+            build_signal_engine_input(
+                db,
+                daily,
+                load_series_candles(db, daily),
+                load_series_snapshots(db, daily),
+            )
+        )
+
+        assert result.status == SignalStatus.NO_SETUP
+        assert "relative_strength_underperforming" in result.no_trade_reasons
+
+
 def test_wick_only_base_breakout_does_not_arm() -> None:
     with make_session() as db:
         watchlist_item = create_watchlist_item(db)
@@ -311,18 +435,20 @@ def make_session() -> Session:
     return TestingSessionLocal()
 
 
-def create_watchlist_item(db: Session) -> WatchlistItem:
-    user = User(
-        email="admin@example.com",
-        password_hash="hash",
-        display_name=None,
-        role=UserRole.ADMIN,
-        is_active=True,
-    )
-    db.add(user)
-    db.flush()
+def create_watchlist_item(db: Session, symbol: str = "AAPL") -> WatchlistItem:
+    user = db.query(User).filter(User.email == "admin@example.com").one_or_none()
+    if user is None:
+        user = User(
+            email="admin@example.com",
+            password_hash="hash",
+            display_name=None,
+            role=UserRole.ADMIN,
+            is_active=True,
+        )
+        db.add(user)
+        db.flush()
     item = WatchlistItem(
-        symbol="AAPL",
+        symbol=symbol,
         asset_class=AssetClass.STOCK,
         user_id=user.id,
         name=None,
@@ -344,6 +470,8 @@ def create_series_with_data(
     latest_close: Decimal,
     candle_count: int = 201,
     freshness_status: MarketDataFreshnessStatus = MarketDataFreshnessStatus.FRESH,
+    trend: str = "bullish",
+    first_close: Decimal | None = None,
 ) -> MarketDataSeries:
     series = MarketDataSeries(
         watchlist_item_id=watchlist_item.id,
@@ -359,9 +487,27 @@ def create_series_with_data(
     db.flush()
 
     start = datetime(2024, 1, 1, tzinfo=UTC)
-    first_close = latest_close - Decimal(candle_count - 1)
+    if first_close is None:
+        first_close = (
+            latest_close + Decimal(candle_count - 1)
+            if trend == "bearish"
+            else latest_close - Decimal(candle_count - 1)
+        )
     for index in range(candle_count):
-        close = first_close + Decimal(index)
+        close = first_close + (
+            (latest_close - first_close) * Decimal(index) / Decimal(candle_count - 1)
+        )
+        if trend == "bearish":
+            ema50 = close + Decimal("5")
+            ema200 = close + Decimal("20")
+        elif trend == "neutral":
+            ema50 = latest_close - Decimal("5") + (
+                Decimal(candle_count - 1 - index) / Decimal("10")
+            )
+            ema200 = close - Decimal("20")
+        else:
+            ema50 = close - Decimal("5")
+            ema200 = close - Decimal("20")
         timestamp = start + timedelta(days=index)
         db.add(
             MarketDataCandle(
@@ -379,8 +525,8 @@ def create_series_with_data(
                 series_id=series.id,
                 timestamp=timestamp,
                 ema20=close - Decimal("2"),
-                ema50=close - Decimal("5"),
-                ema200=close - Decimal("20"),
+                ema50=ema50,
+                ema200=ema200,
                 rsi14=Decimal("52"),
                 atr14=Decimal("2"),
                 volume_avg20=Decimal("1000"),
