@@ -152,6 +152,35 @@ def test_review_entries_surface_repeated_calibration_followups(
     assert body["summary"]["repeated_blocker_patterns"] == ["market_regime"]
 
 
+def test_review_repeated_findings_require_two_matching_entries(client: TestClient) -> None:
+    login(client)
+    batch_id = client.post(
+        "/api/reviews/batches",
+        json={"name": "Threshold sample", "review_type": "historical"},
+    ).json()["id"]
+    base_payload = {
+        "symbol": "AAPL",
+        "asset_class": "stock",
+        "strategy_type": "trend_pullback_long",
+        "signal_status": "watchlist",
+        "quality_blockers": [{"key": "market_regime"}],
+        "manual_review_label": "unclear",
+    }
+
+    client.post(f"/api/reviews/batches/{batch_id}/entries", json=base_payload)
+    first_summary = client.get(f"/api/reviews/batches/{batch_id}").json()["summary"]
+    client.post(
+        f"/api/reviews/batches/{batch_id}/entries",
+        json={**base_payload, "symbol": "MSFT"},
+    )
+    second_summary = client.get(f"/api/reviews/batches/{batch_id}").json()["summary"]
+
+    assert first_summary["repeated_attention_labels"] == []
+    assert first_summary["repeated_blocker_patterns"] == []
+    assert second_summary["repeated_attention_labels"] == ["unclear"]
+    assert second_summary["repeated_blocker_patterns"] == ["market_regime"]
+
+
 def test_review_batch_csv_export_contains_evidence_only_fields(client: TestClient) -> None:
     login(client)
     batch_id = client.post(
