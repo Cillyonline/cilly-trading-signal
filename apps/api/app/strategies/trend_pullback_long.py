@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from decimal import Decimal
 
 from app.models.enums import Bias, StrategyType
@@ -86,6 +86,11 @@ def evaluate_trend_pullback_long(payload: TrendPullbackInput) -> SignalEvaluatio
     risk_reward = None
     if entry_low is not None and stop_loss is not None and target_1 is not None:
         risk_reward = calculate_risk_reward(entry_low, stop_loss, target_1)
+    if target_1 is None:
+        signal_input = replace(
+            signal_input,
+            data_quality_flags=[*signal_input.data_quality_flags, "missing_reward_target"],
+        )
 
     risk_reward_score = 15 if risk_reward is not None and risk_reward >= Decimal("2.0") else 0
     if risk_reward is not None:

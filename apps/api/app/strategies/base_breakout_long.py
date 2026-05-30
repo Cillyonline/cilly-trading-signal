@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from decimal import Decimal
 
 from app.models.enums import Bias, StrategyType
@@ -78,15 +78,18 @@ def evaluate_base_breakout_long(payload: BaseBreakoutInput) -> SignalEvaluationR
     entry_low = payload.base_high
     entry_high = payload.daily.close or payload.trigger.close
     stop_loss = calculate_stop_loss(payload)
-    target_1 = payload.target_1_override or calculate_target(
-        entry_low, stop_loss, TARGET_1_R_MULTIPLE
-    )
+    target_1 = payload.target_1_override or calculate_target_1(payload, entry_low, stop_loss)
     target_2 = payload.target_2_override or calculate_target(
         entry_low, stop_loss, TARGET_2_R_MULTIPLE
     )
     risk_reward = None
     if entry_low is not None and stop_loss is not None and target_1 is not None:
         risk_reward = calculate_risk_reward(entry_low, stop_loss, target_1)
+    if target_1 is None:
+        signal_input = replace(
+            signal_input,
+            data_quality_flags=[*signal_input.data_quality_flags, "missing_reward_target"],
+        )
 
     risk_reward_score = 15 if risk_reward is not None and risk_reward >= Decimal("2.0") else 0
     if risk_reward is not None:
@@ -246,6 +249,27 @@ def calculate_target(
     if entry is None or stop is None or entry <= stop:
         return None
     return entry + ((entry - stop) * multiple)
+
+
+def calculate_target_1(
+    payload: BaseBreakoutInput, entry: Decimal | None, stop: Decimal | None
+) -> Decimal | None:
+    measured_target = calculate_base_measured_target(payload)
+    if entry is not None and stop is not None and measured_target is not None:
+        measured_risk_reward = calculate_risk_reward(entry, stop, measured_target)
+        if measured_risk_reward is not None and measured_risk_reward >= Decimal("2"):
+            return measured_target
+    return calculate_target(entry, stop, TARGET_1_R_MULTIPLE)
+
+
+def calculate_base_measured_target(payload: BaseBreakoutInput) -> Decimal | None:
+    if (
+        payload.base_high is None
+        or payload.base_low is None
+        or payload.base_high <= payload.base_low
+    ):
+        return None
+    return payload.base_high + (payload.base_high - payload.base_low)
 
 
 def has_valid_breakout_trigger(payload: BaseBreakoutInput) -> bool:

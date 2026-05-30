@@ -68,6 +68,18 @@ def test_valid_base_breakout_long_produces_armed() -> None:
     assert result.no_trade_reasons == []
 
 
+def test_base_breakout_uses_r_multiple_target_when_measured_move_is_too_small() -> None:
+    result = evaluate_base_breakout_long(
+        breakout_payload(base_high=Decimal("100"), base_low=Decimal("99.5"))
+    )
+
+    assert result.status == SignalStatus.ARMED
+    assert result.target_1 == Decimal("103.0")
+    assert result.risk_reward >= Decimal("2")
+    assert result.invalidation_reason is not None
+    assert result.no_trade_reasons == []
+
+
 def test_base_forming_without_breakout_confirmation_produces_watchlist() -> None:
     result = evaluate_base_breakout_long(
         breakout_payload(close_above_base_high_4h=False, close_above_base_high_daily=False)
@@ -117,6 +129,7 @@ def test_invalid_stop_or_target_forces_no_setup() -> None:
     assert result.status == SignalStatus.NO_SETUP
     assert result.score_class == ScoreClass.NO_TRADE
     assert "missing_stop_loss" in result.no_trade_reasons
+    assert "missing_reward_target" in result.no_trade_reasons
 
 
 def test_base_too_wide_is_deterministic_risk_flag() -> None:
