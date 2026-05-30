@@ -8,7 +8,7 @@ The goal is to keep the project focused: build a stable foundation first, then a
 
 ## Current Status
 
-The project is past the initial skeleton. The current MVP can run the core manual workflow from watchlist maintenance through CSV import or guarded manual Daily/EOD provider sync, deterministic analysis, signal review, manual trade logging, journal notes, and basic performance review. It is still not production-ready and must remain decision-support only.
+The project is past the initial skeleton. The current MVP can run the core manual workflow from watchlist maintenance through CSV import or guarded manual Daily/EOD provider sync, deterministic analysis, signal review, alert review, manual trade logging, journal notes, basic performance review, and TradingView screener CSV prefiltering into explicit Watchlist candidates. It is still not production-ready and must remain decision-support only.
 
 Done:
 
@@ -33,11 +33,14 @@ Done:
 - Risk Settings API/UI with account size, max risk percent, minimum R:R, and max open trades.
 - Dashboard and safety wording for manual execution only.
 - TradingView webhook ingestion, Telegram test delivery, policy-gated automatic Telegram routing with dedup/rate limiting, alert event review UI, manual signal review workflow, and stale signal visibility.
+- Review cockpit usability improvements across Dashboard, Signals, Alerts, Trades, and the documented manual review workflow.
+- TradingView screener CSV import snapshots, validation, candidate review UI, and explicit screener-result to Watchlist conversion with visible duplicate handling.
 - Private VPS staging smoke test, operations hardening, and staging-only decision gate for controlled owner/operator use.
 
 Partial:
 
 - CSV import is hardened for upload size, candle count, and timeframe consistency, and remains the supported manual baseline/fallback.
+- Screener CSV import is implemented as a candidate prefiltering workflow, but filtering, bulk review actions, pagination beyond the current row limits, and candidate prioritization remain future usability work.
 - Manual provider sync currently targets Daily/EOD data first; `4H`/intraday provider support remains unresolved and not promised.
 - Dashboard, journal, and performance views are MVP-level summaries, not full analytics modules.
 - Risk enforcement covers manual trade creation basics, not complete portfolio-level exposure management.
@@ -271,6 +274,81 @@ Done when:
 - Provider data is persisted with source/freshness/sync metadata.
 - No scheduler, automatic analysis, broker action, live/realtime claim, or trading
   instruction is introduced.
+
+## v1.7 - Documentation & Provider Sync Hardening
+
+Goal: align documentation and harden the manual provider sync path after v1.4-v1.6.
+
+Status: Done.
+
+Primary work:
+
+- Align product, delivery, deployment, provider, and freshness docs with the implemented provider-sync path.
+- Add an operator runbook and safe smoke checklist for manual provider sync.
+- Add provider sync API edge-case coverage and polish UI result states.
+
+Done when:
+
+- Provider sync remains manual, disabled by default, and conservative.
+- Docs avoid scheduler, broker, automatic-execution, live/realtime, production-readiness, profitability, and trading-advice claims.
+
+## v1.8 - Review Cockpit Usability
+
+Goal: improve the day-to-day review cockpit across Dashboard, Signals, Alerts, Trades, and documentation.
+
+Status: Done.
+
+Primary work:
+
+- Improve dashboard review priorities and stale-data visibility.
+- Add actionable filters to Signals and alert event review workflows.
+- Add trade review completeness indicators.
+- Document the cockpit review workflow across data context, setup review, alerts, trades, journal, and performance.
+
+Done when:
+
+- Review surfaces show what needs attention without implying buy/sell instructions.
+- Stale data, missing review context, and incomplete documentation remain visible conservative stop points.
+
+## v1.9 - Screener CSV Preparation
+
+Goal: prepare a safe TradingView screener CSV workflow for Watchlist candidate review.
+
+Status: Done.
+
+Primary work:
+
+- Design the TradingView screener CSV import model.
+- Add `ScreenerImport` and `ScreenerResult` models, schemas, migrations, validation service, and authenticated API routes.
+- Add the `/screener` UI for upload, results, validation errors, and manual candidate review.
+- Add explicit conversion from selected screener result to Watchlist item, linking duplicates visibly instead of creating another Watchlist symbol.
+
+Done when:
+
+- Screener rows are imported as stored snapshots and review candidates only.
+- Adding a candidate to Watchlist requires an explicit user action.
+- Duplicates are handled safely and visibly.
+- No screener import or conversion creates analysis, signals, trades, alerts, broker actions, orders, live/realtime claims, profitability claims, or trading advice.
+
+## v2.0 - Release Rebaseline & Operational Readiness
+
+Goal: rebaseline the project after v1.8/v1.9, refresh release posture docs, rerun current smoke checks, and decide the next product milestone.
+
+Status: In progress.
+
+Primary work:
+
+- Close the completed v1.9 milestone and record completion.
+- Update roadmap and release posture docs after provider sync, cockpit usability, and screener workflow work.
+- Add a smoke checklist for the screener-to-Watchlist flow.
+- Run a current-main Docker Compose smoke test and record sanitized evidence.
+- Decide the next product milestone direction.
+
+Done when:
+
+- The docs and issue tracker reflect the current implemented, partial, missing, and not-included scope.
+- Current smoke evidence is recorded without secrets or private trading data.
+- The next milestone recommendation is explicit and still preserves manual-review-only safety boundaries.
 
 ## Not Now
 

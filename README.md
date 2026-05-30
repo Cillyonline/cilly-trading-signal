@@ -199,6 +199,7 @@ Implementiert:
 - Single-User Auth mit HttpOnly Session-Cookie, ohne oeffentliche Registrierung und ohne clientseitige Token-Speicherung.
 - Watchlist-Verwaltung fuer Aktien und Krypto.
 - TradingView CSV Import fuer `1W`, `1D` und `4H` mit Pflichtfeld-, Plausibilitaets- und Kerzenanzahl-Pruefung.
+- TradingView Screener CSV Import als gespeicherte Review-Snapshots mit expliziter manueller Watchlist-Uebernahme und sichtbarer Duplikatbehandlung.
 - Marktdaten-Source/Freshness/Sync-Metadaten fuer CSV- und Provider-Serien, inklusive konservativer Stale-/Failed-/Partial-Anzeige.
 - Manueller, serverseitig geschuetzter Provider-Sync fuer Daily/EOD-Daten ueber den ersten Alpha-Vantage-Adapter, disabled-by-default und ohne Scheduler.
 - Persistierte Multi-Timeframe-Analyse mit echten `1W`, `1D` und `4H` Daten als Grundlage fuer konservative Signale.
@@ -214,6 +215,7 @@ Implementiert:
 Teilweise umgesetzt oder noch MVP-limitiert:
 
 - TradingView CSV bleibt die manuelle Baseline und der Fallback; Provider-Sync ist optional, manuell ausgeloest und nicht als Live- oder Realtime-Datenquelle zu verstehen.
+- Screener CSV bleibt ein Kandidaten-Review-Workflow; daraus entstehen nicht automatisch Analysen, Signale, Trades, Alerts oder Orders.
 - Der aktuelle Provider-Pfad deckt Daily/EOD zuerst ab; `4H`/Intraday-Providerdaten bleiben nicht zugesagt.
 - Analyse und Signale sind deterministisch und konservativ, aber keine validierte Strategie und keine Gewinnprognose.
 - Auth ist bewusst Single-User; Multi-User, Rollenmodell und Self-Service-Registrierung sind nicht Teil des MVP.

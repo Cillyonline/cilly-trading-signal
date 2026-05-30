@@ -16,6 +16,9 @@ For the intended end-to-end manual cockpit review sequence, see `docs/COCKPIT_RE
 - Performance views show documented historical/paper results, not forecasts.
 - Provider sync smoke evidence, if run separately, validates only guarded stored-data
   sync behavior and is not live/realtime or production-readiness evidence.
+- Screener CSV smoke evidence validates stored candidate review and explicit Watchlist
+  conversion only. It must not imply automatic analysis, signal creation, trade
+  creation, alert creation, broker action, or order execution.
 
 ## Runner
 
@@ -53,6 +56,88 @@ This script is release-validation tooling, not a production deployment claim.
 8. Create a manual trade log from paper/sample values only.
 9. Add trade events, close the trade, and add a journal review.
 10. Verify dashboard, performance, settings, alerts, and safety wording remain decision-support only.
+
+## Screener-To-Watchlist Smoke Checklist
+
+Use sample-only screener rows. Do not use private watchlists, personal trading notes,
+provider credentials, cookies, screenshots with secrets, or production data.
+
+Suggested sample CSV:
+
+```csv
+Symbol,Name,Exchange,Sector,Price,Change %,Volume,Relative Volume,Market Cap,RSI (14)
+SMOKE-SCR-001,Smoke Screener One,SAMPLE,Technology,100.00,1.25%,100K,1.10,1M,55.2
+SMOKE-SCR-002,Smoke Screener Two,SAMPLE,Healthcare,50.00,-0.50%,80K,0.95,500K,60.1
+```
+
+Checklist:
+
+1. Start the local stack and log in with local admin credentials.
+2. Open `/screener`.
+3. Upload the sample CSV with asset class `stock` and a clearly fake preset label.
+4. Confirm the import summary shows accepted candidate rows and no private data.
+5. Confirm the results appear as review candidates, not recommendations.
+6. Select one candidate and use the explicit `Zur Watchlist hinzufuegen` action.
+7. Confirm the browser confirmation copy states that no analysis, signal, trade, or alert is created.
+8. Confirm the result changes to `watchlist_added` and shows a linked Watchlist item id.
+9. Confirm the Watchlist page contains the added fake symbol.
+10. Upload or convert a duplicate symbol path and confirm the result is visibly linked as a duplicate instead of creating another Watchlist symbol.
+11. Confirm no automatic analysis, signal, trade, alert, broker action, order, live/realtime claim, profitability claim, or trading advice appears in the workflow.
+
+API-level optional checks after the UI path:
+
+```powershell
+Invoke-RestMethod http://localhost:8000/api/health
+```
+
+If deeper API inspection is needed, use authenticated browser/API tooling only with
+local sample data. Do not paste cookies or session tokens into issues, docs, or PRs.
+
+## Current Main Smoke Attempt
+
+Date: 2026-05-30
+
+Environment:
+
+- Windows workspace: `C:\repos\cilly-trading-signal`
+- Branch used for attempt: `issue-264-269-v2-rebaseline`
+- Scope: current-main Docker Compose smoke runner after v1.9 screener workflow completion.
+- Data scope: no app data was loaded because the stack did not start.
+
+Command:
+
+```powershell
+.\scripts\smoke_test.ps1 -TimeoutSeconds 180
+```
+
+Results:
+
+- Docker CLI: PASS, `Docker version 29.1.3, build f52814d`.
+- Docker Compose CLI: PASS, `Docker Compose version v2.40.3-desktop.1`.
+- Docker engine reachability: BLOCKED. The runner could not connect to `npipe:////./pipe/dockerDesktopLinuxEngine` because the pipe was not found.
+- Docker Compose stack startup: NOT RUN because Docker engine reachability failed.
+- API health: NOT RUN because the stack did not start.
+- Browser workflow: NOT RUN because the stack did not start.
+- Screener-to-Watchlist browser smoke: NOT RUN because the stack did not start.
+
+Observed blocker:
+
+```text
+failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine;
+check if the path is correct and if the daemon is running:
+open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.
+```
+
+Interpretation:
+
+The current-main smoke attempt did not validate the running application because Docker
+Desktop's Linux engine was not reachable in the local environment. This is an
+environment blocker, not a product pass. Rerun the same command after starting Docker
+Desktop and confirming the Linux engine is available.
+
+This blocked attempt does not claim production readiness, broker readiness,
+profitability, strategy validation, live/realtime data, trading advice, or automatic
+execution capability.
 
 ## Latest Run
 
