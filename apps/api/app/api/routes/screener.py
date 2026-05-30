@@ -10,12 +10,15 @@ from app.models.user import User
 from app.schemas.screener import (
     ScreenerImportDetail,
     ScreenerImportRead,
+    ScreenerResultBulkStatusResult,
+    ScreenerResultBulkStatusUpdate,
     ScreenerResultFilters,
     ScreenerResultPage,
     ScreenerResultRead,
 )
 from app.services.screener_import import (
     MAX_SCREENER_UPLOAD_BYTES,
+    bulk_update_screener_result_status,
     convert_screener_result_to_watchlist,
     get_screener_import,
     import_screener_csv,
@@ -106,6 +109,24 @@ def list_results_page(
     filters: Annotated[ScreenerResultFilters, Query()],
 ) -> ScreenerResultPage:
     return list_screener_result_page(db, user.id, filters)
+
+
+@router.patch("/results/status", response_model=ScreenerResultBulkStatusResult)
+def bulk_update_result_status(
+    payload: ScreenerResultBulkStatusUpdate,
+    db: DbSession,
+    user: CurrentUser,
+) -> ScreenerResultBulkStatusResult:
+    results, skipped_ids = bulk_update_screener_result_status(
+        db, user.id, payload.result_ids, payload.status
+    )
+    return ScreenerResultBulkStatusResult(
+        requested_count=len(payload.result_ids),
+        updated_count=len(results),
+        skipped_count=len(skipped_ids),
+        skipped_result_ids=skipped_ids,
+        results=results,
+    )
 
 
 @router.post("/results/{result_id}/watchlist", response_model=ScreenerResultRead)

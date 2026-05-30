@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.models.enums import (
     AssetClass,
@@ -93,3 +93,27 @@ class ScreenerResultPage(BaseModel):
     page: int
     page_size: int
     total_pages: int
+
+
+class ScreenerResultBulkStatusUpdate(BaseModel):
+    result_ids: list[int] = Field(min_length=1, max_length=200)
+    status: ScreenerResultStatus
+
+    @field_validator("status")
+    @classmethod
+    def validate_review_status(cls, value: ScreenerResultStatus) -> ScreenerResultStatus:
+        if value not in {
+            ScreenerResultStatus.CANDIDATE,
+            ScreenerResultStatus.IGNORED,
+            ScreenerResultStatus.REJECTED,
+        }:
+            raise ValueError("Bulk status must be candidate, ignored, or rejected.")
+        return value
+
+
+class ScreenerResultBulkStatusResult(BaseModel):
+    requested_count: int
+    updated_count: int
+    skipped_count: int
+    skipped_result_ids: list[int]
+    results: list[ScreenerResultRead]
