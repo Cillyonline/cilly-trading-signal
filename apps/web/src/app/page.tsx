@@ -6,6 +6,7 @@ import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
 import {
   fetchAlerts,
   fetchPerformanceSummary,
+  fetchScreenerResults,
   fetchSignals,
   fetchTrades,
   fetchWatchlist,
@@ -14,6 +15,7 @@ import {
 } from "@/lib/api";
 import type { AlertEvent } from "@/types/alerts";
 import type { PerformanceSummary } from "@/types/performance";
+import type { ScreenerResult } from "@/types/screener";
 import type { Signal } from "@/types/signals";
 import type { Trade } from "@/types/trades";
 import type { MarketDataFreshnessStatus, WatchlistItem } from "@/types/watchlist";
@@ -76,17 +78,18 @@ type DashboardResult = { ok: true; data: DashboardData } | { ok: false; error: s
 
 async function loadDashboardData(): Promise<DashboardResult> {
   try {
-    const [watchlist, signals, trades, performance, alerts] = await Promise.all([
+    const [watchlist, signals, trades, performance, alerts, screenerResults] = await Promise.all([
       fetchWatchlist(),
       fetchSignals(),
       fetchTrades(),
       fetchPerformanceSummary(),
       fetchAlerts(),
+      fetchScreenerResults(),
     ]);
 
     return {
       ok: true,
-      data: buildDashboardData(watchlist, signals, trades, performance, alerts),
+      data: buildDashboardData(watchlist, signals, trades, performance, alerts, screenerResults),
     };
   } catch (error) {
     if (redirectToLoginOnAuthError(error)) {
@@ -108,6 +111,15 @@ type DashboardData = {
   reviewNeededTrades: Trade[];
   marketDataQuality: MarketDataQualitySummary;
   reviewPriorities: ReviewPriority[];
+};
+
+type ScreenerReviewSummary = {
+  total: number;
+  candidate: number;
+  duplicate: number;
+  rejected: number;
+  ignored: number;
+  watchlistAdded: number;
 };
 
 type ReviewPriority = {
@@ -148,6 +160,7 @@ function buildDashboardData(
   trades: Trade[],
   performance: PerformanceSummary,
   alerts: AlertEvent[],
+  screenerResults: ScreenerResult[],
 ): DashboardData {
   const openTrades = trades.filter((trade) => trade.status !== "closed" && trade.status !== "reviewed");
   const reviewNeededTrades = trades.filter((trade) => trade.review_status === "needs_review");
@@ -157,6 +170,7 @@ function buildDashboardData(
     (alert) => alert.delivery_status === "failed" || alert.delivery_status === "pending",
   );
   const marketDataQuality = buildMarketDataQuality(watchlist);
+  const screenerSummary = buildScreenerReviewSummary(screenerResults);
   const reviewPriorities = buildReviewPriorities({
     marketDataQuality,
     triggeredSignals,
@@ -193,6 +207,16 @@ function buildDashboardData(
         tone: "border-yellow-400/40",
       },
       {
+        label: "Screener Candidates",
+        value: String(screenerSummary.candidate),
+        detail:
+          screenerSummary.total === 0
+            ? "Keine Screener-Snapshots"
+            : `${screenerSummary.duplicate} duplicate / ${screenerSummary.rejected} rejected / ${screenerSummary.ignored} ignored`,
+        href: "/screener",
+        tone: screenerSummary.candidate > 0 ? "border-violet-300/40" : "border-slate-400/40",
+      },
+      {
         label: "Open Trades",
         value: String(openTrades.length),
         detail: "Manuell dokumentierte Trades",
@@ -227,6 +251,17 @@ function buildDashboardData(
     reviewNeededTrades: reviewNeededTrades.slice(0, 3),
     marketDataQuality,
     reviewPriorities,
+  };
+}
+
+function buildScreenerReviewSummary(results: ScreenerResult[]): ScreenerReviewSummary {
+  return {
+    total: results.length,
+    candidate: results.filter((result) => result.status === "candidate").length,
+    duplicate: results.filter((result) => result.status === "duplicate").length,
+    rejected: results.filter((result) => result.status === "rejected").length,
+    ignored: results.filter((result) => result.status === "ignored").length,
+    watchlistAdded: results.filter((result) => result.status === "watchlist_added").length,
   };
 }
 
