@@ -34,3 +34,18 @@ export type WatchlistItem = {
   last_analyzed_at: string | null;
   latest_market_data: WatchlistMarketDataSummary | null;
 };
+
+export type BenchmarkRequirementStatus = {
+  key: string;
+  accepted_symbols: string[];
+  status: string;
+  present_symbol: string | null;
+  latest_daily_freshness: MarketDataFreshnessStatus | null;
+  message: string;
+};
+
+export type BenchmarkContextStatus = {
+  asset_class: AssetClass;
+  requirements: BenchmarkRequirementStatus[];
+  guidance: string;
+};

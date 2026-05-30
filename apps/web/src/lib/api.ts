@@ -22,7 +22,7 @@ import type {
   TradeEventCreatePayload,
   TradeFilters,
 } from "@/types/trades";
-import type { WatchlistItem } from "@/types/watchlist";
+import type { BenchmarkContextStatus, WatchlistItem } from "@/types/watchlist";
 
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
 
@@ -103,6 +103,15 @@ export async function fetchWatchlist(): Promise<WatchlistItem[]> {
   assertAuthenticatedResponse(response);
   if (!response.ok) {
     throw new Error("Watchlist konnte nicht geladen werden.");
+  }
+  return response.json();
+}
+
+export async function fetchBenchmarkContextStatus(): Promise<BenchmarkContextStatus[]> {
+  const response = await credentialedFetch(`${API_BASE_URL}/watchlist/benchmark-context`, { cache: "no-store" });
+  assertAuthenticatedResponse(response);
+  if (!response.ok) {
+    throw new Error("Benchmark-Kontext konnte nicht geladen werden.");
   }
   return response.json();
 }
