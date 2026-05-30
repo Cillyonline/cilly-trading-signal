@@ -394,6 +394,19 @@ export async function fetchReviewBatch(batchId: number): Promise<ReviewBatch> {
   return response.json();
 }
 
+export async function exportReviewBatchCsv(batchId: number): Promise<void> {
+  const response = await credentialedFetch(`${API_BASE_URL}/reviews/batches/${batchId}/export`, { cache: "no-store" });
+  if (response.status === 404) {
+    throw new Error("Review-Batch wurde nicht gefunden.");
+  }
+  assertAuthenticatedResponse(response);
+  if (!response.ok) {
+    throw new Error("Review-Batch Export konnte nicht geladen werden.");
+  }
+  const blob = await response.blob();
+  _triggerDownload(blob, `review-batch-${batchId}.csv`);
+}
+
 export async function createReviewBatch(payload: ReviewBatchCreatePayload): Promise<ReviewBatch> {
   const response = await credentialedFetch(`${API_BASE_URL}/reviews/batches`, {
     method: "POST",
