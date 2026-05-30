@@ -224,3 +224,13 @@ Entscheidung: Provider-gestuetzte Marktdaten werden zuerst als manueller, disabl
 Begruendung: Manuelle Syncs sind pruefbar, testbar und sicherer als Scheduler. Daily/EOD ist der kleinste sinnvolle Provider-Scope; `4H`/Intraday bleibt von Kosten, Lizenz, Coverage und Rate Limits abhaengig.
 
 Konsequenz: TradingView CSV bleibt Baseline und Fallback. Provider-Daten werden mit Source/Freshness/Sync-Metadaten gespeichert und konservativ bewertet. Es gibt keinen Live-/Realtime-Claim, keine automatische Analyse nach Sync, keine Broker-Anbindung und keine automatische Orderausfuehrung.
+
+## 22. Strategie-Kalibrierung Optimiert Signalqualitaet, Nicht Signalmenge
+
+Status: entschieden
+
+Entscheidung: Strategie-Regeln werden ueber einen dokumentierten Kalibrierungsworkflow geaendert: Playbook-Regel definieren, deterministische Golden Cases anlegen, erwartete Labels festlegen, Tests ausfuehren, Regeln konservativ anpassen und Restgaps als Folgeissues dokumentieren.
+
+Begruendung: Ein professionelles Signal-Cockpit soll schwache Setups blockieren, No Trade als Risk-Control akzeptieren und Risiko-/Kontextgruende erklaeren. Mehr Signale sind nur dann wuenschenswert, wenn sie besser zur dokumentierten Strategiequalitaet passen.
+
+Konsequenz: Rule-Loosening ohne Tests/Fixtures ist nicht akzeptiert. Bestandene Kalibrierungstests sind keine Profitabilitaets-, Produktions-, Broker- oder Live-Daten-Aussage und ersetzen keine separate historische oder Paper-Review.
