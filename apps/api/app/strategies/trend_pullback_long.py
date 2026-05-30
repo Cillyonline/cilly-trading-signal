@@ -58,6 +58,7 @@ def evaluate_trend_pullback_long(payload: TrendPullbackInput) -> SignalEvaluatio
         data_quality_flags=[
             *payload.signal_input.data_quality_flags,
             *data_quality_flags(payload),
+            *( ["uncontrolled_pullback"] if not payload.pullback_controlled else [] ),
         ],
         setup_invalidated=payload.signal_input.setup_invalidated or payload.setup_invalidated,
     )
@@ -160,6 +161,8 @@ def score_trend(payload: TrendPullbackInput) -> tuple[int, list[str]]:
     if payload.previous_trend_clear:
         score += 5
         reasons.append("Trend check: previous uptrend is clear enough for MVP evaluation.")
+    else:
+        reasons.append("Trend check: previous uptrend is not clear enough for high confidence.")
     if not is_overextended(payload):
         score += 2
         reasons.append("Trend check: price is not extremely extended versus EMA20/ATR.")
@@ -309,6 +312,7 @@ def initial_risk_flags(payload: TrendPullbackInput) -> list[str]:
         flags.append("price_extended_vs_ema20_atr")
     if not payload.pullback_controlled:
         flags.append("pullback_control_unclear")
+        flags.append("uncontrolled_pullback")
     if (
         payload.daily.relative_volume is not None
         and payload.daily.relative_volume > AGGRESSIVE_RELATIVE_VOLUME

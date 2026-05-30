@@ -130,6 +130,21 @@ def test_price_touch_only_does_not_arm_setup() -> None:
     assert any("price touch alone" in reason for reason in result.reasoning)
 
 
+def test_uncontrolled_pullback_forces_no_setup() -> None:
+    result = evaluate_trend_pullback_long(trend_payload(pullback_controlled=False))
+
+    assert result.status == SignalStatus.NO_SETUP
+    assert "uncontrolled_pullback" in result.risk_flags
+    assert "pullback_not_controlled" in result.no_trade_reasons
+
+
+def test_unclear_previous_trend_reduces_score_without_hard_blocking() -> None:
+    result = evaluate_trend_pullback_long(trend_payload(previous_trend_clear=False))
+
+    assert result.score < evaluate_trend_pullback_long(trend_payload()).score
+    assert any("previous uptrend is not clear" in reason for reason in result.reasoning)
+
+
 def test_reasoning_mentions_trend_pullback_trigger_risk_and_no_trade_checks() -> None:
     result = evaluate_trend_pullback_long(trend_payload())
     reasoning = " ".join(result.reasoning).lower()
