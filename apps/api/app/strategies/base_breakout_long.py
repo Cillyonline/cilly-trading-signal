@@ -59,6 +59,7 @@ def evaluate_base_breakout_long(payload: BaseBreakoutInput) -> SignalEvaluationR
         data_quality_flags=[
             *payload.signal_input.data_quality_flags,
             *data_quality_flags(payload),
+            *base_quality_gate_flags(payload),
         ],
         setup_invalidated=payload.signal_input.setup_invalidated or payload.setup_invalidated,
     )
@@ -309,6 +310,17 @@ def data_quality_flags(payload: BaseBreakoutInput) -> list[str]:
     for flag, value in required_fields.items():
         if value is None:
             flags.append(flag)
+    return flags
+
+
+def base_quality_gate_flags(payload: BaseBreakoutInput) -> list[str]:
+    flags: list[str] = []
+    if base_is_too_wide(payload):
+        flags.append("base_range_too_wide")
+    if breakout_is_extended(payload):
+        flags.append("breakout_extended_after_trigger")
+    if not payload.base_high_is_clear:
+        flags.append("base_high_not_clear")
     return flags
 
 

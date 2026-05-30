@@ -122,8 +122,36 @@ def test_invalid_stop_or_target_forces_no_setup() -> None:
 def test_base_too_wide_is_deterministic_risk_flag() -> None:
     result = evaluate_base_breakout_long(breakout_payload(base_low=Decimal("80")))
 
+    assert result.status == SignalStatus.NO_SETUP
     assert "base_range_too_wide" in result.risk_flags
+    assert "base_too_wide" in result.no_trade_reasons
     assert any("base range is too wide" in reason.lower() for reason in result.reasoning)
+
+
+def test_extended_breakout_forces_no_setup() -> None:
+    daily = base_daily_context()
+    extended_daily = IndicatorContext(
+        close=Decimal("108.5"),
+        ema20=daily.ema20,
+        ema50=daily.ema50,
+        ema200=daily.ema200,
+        atr14=daily.atr14,
+        relative_volume=daily.relative_volume,
+    )
+
+    result = evaluate_base_breakout_long(breakout_payload(daily=extended_daily))
+
+    assert result.status == SignalStatus.NO_SETUP
+    assert "breakout_extended_after_trigger" in result.risk_flags
+    assert "breakout_too_extended" in result.no_trade_reasons
+
+
+def test_unclear_base_high_forces_no_setup() -> None:
+    result = evaluate_base_breakout_long(breakout_payload(base_high_is_clear=False))
+
+    assert result.status == SignalStatus.NO_SETUP
+    assert "base_high_not_clear" in result.risk_flags
+    assert "base_high_not_clear" in result.no_trade_reasons
 
 
 def test_major_resistance_nearby_is_risk_flagged() -> None:

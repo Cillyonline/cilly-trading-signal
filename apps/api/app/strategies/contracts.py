@@ -185,6 +185,12 @@ def collect_common_no_trade_reasons(
         reasons.append("setup_already_invalidated")
     if "uncontrolled_pullback" in signal_input.data_quality_flags:
         reasons.append("pullback_not_controlled")
+    if "base_range_too_wide" in signal_input.data_quality_flags:
+        reasons.append("base_too_wide")
+    if "breakout_extended_after_trigger" in signal_input.data_quality_flags:
+        reasons.append("breakout_too_extended")
+    if "base_high_not_clear" in signal_input.data_quality_flags:
+        reasons.append("base_high_not_clear")
 
     return reasons
 
