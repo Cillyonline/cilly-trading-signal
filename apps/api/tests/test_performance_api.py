@@ -85,6 +85,15 @@ def test_performance_summary_returns_empty_state(client: TestClient) -> None:
                     "trade recommendation."
                 ),
             },
+            "correlation_proxies": {
+                "warning_status": "ok",
+                "warnings": [],
+                "review_only_notice": (
+                    "Correlation proxy warnings use simple documented exposure buckets only. "
+                    "They are not a statistical correlation matrix, live market data, or trade "
+                    "instruction."
+                ),
+            },
             "by_strategy": [],
             "by_asset_class": [],
             "review_only_notice": (
@@ -255,6 +264,7 @@ def test_performance_summary_includes_open_portfolio_risk(client: TestClient) ->
         "Some open trades are missing complete documented risk data.",
     ]
     assert risk["asset_concentration"]["warning_status"] == "warning"
+    assert risk["correlation_proxies"]["warning_status"] == "unknown"
     assert "trading advice" in risk["review_only_notice"]
     assert risk["by_strategy"] == [
         {
@@ -359,6 +369,40 @@ def test_performance_summary_includes_asset_concentration_warnings(client: TestC
             "open_trade_percent": "100.00",
             "warning": True,
         }
+    ]
+
+
+def test_performance_summary_includes_correlation_proxy_warnings(client: TestClient) -> None:
+    update_account_size(client, "10000.00")
+    create_open_trade(client, "BTCUSD", strategy_type="trend_pullback_long", asset_class="crypto")
+    create_open_trade(client, "ETHUSD", strategy_type="base_breakout_long", asset_class="crypto")
+    create_open_trade(client, "AAPL", strategy_type="trend_pullback_long", asset_class="stock")
+
+    response = client.get("/api/performance/summary")
+
+    assert response.status_code == 200
+    proxies = response.json()["open_portfolio_risk"]["correlation_proxies"]
+    assert proxies["warning_status"] == "warning"
+    assert "statistical correlation matrix" in proxies["review_only_notice"]
+    assert proxies["warnings"] == [
+        {
+            "key": "crypto_btc_beta_heavy",
+            "label": "Crypto BTC-beta-heavy proxy",
+            "status": "warning",
+            "open_trade_count": 2,
+            "symbols": ["BTCUSD", "ETHUSD"],
+            "message": "Multiple open crypto exposures match a BTC-beta-heavy symbol proxy.",
+        },
+        {
+            "key": "stock_sector_heavy",
+            "label": "Stock sector-heavy proxy",
+            "status": "unknown",
+            "open_trade_count": 1,
+            "symbols": ["AAPL"],
+            "message": (
+                "Stock sector proxy is unknown because open trades do not store sector metadata."
+            ),
+        },
     ]
 
 

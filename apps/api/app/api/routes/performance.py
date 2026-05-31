@@ -42,6 +42,21 @@ class AssetConcentrationRead(BaseModel):
     review_only_notice: str
 
 
+class CorrelationProxyRead(BaseModel):
+    key: str
+    label: str
+    status: str
+    open_trade_count: int
+    symbols: list[str]
+    message: str
+
+
+class CorrelationProxySummaryRead(BaseModel):
+    warning_status: str
+    warnings: list[CorrelationProxyRead]
+    review_only_notice: str
+
+
 class OpenPortfolioRiskRead(BaseModel):
     open_trade_count: int
     complete_risk_count: int
@@ -52,6 +67,7 @@ class OpenPortfolioRiskRead(BaseModel):
     warning_status: str
     warnings: list[str]
     asset_concentration: AssetConcentrationRead
+    correlation_proxies: CorrelationProxySummaryRead
     by_strategy: list[OpenRiskGroupRead]
     by_asset_class: list[OpenRiskGroupRead]
     review_only_notice: str
