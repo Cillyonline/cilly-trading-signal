@@ -79,7 +79,7 @@ Checklist:
 - Database: DB health and app DB-dependent paths are checked after deploys, restores, and migrations.
 - Backups: backup freshness, non-zero dump size, external storage location, and restore-drill evidence are tracked.
 - Failed jobs: deployment, backup, restore, import, provider sync, and health-check failures produce operator-visible follow-up records.
-- Incident handling: failures that affect login, data integrity, backups, restores, or public routing are handled through the operational incident runbook once available.
+- Incident handling: failures that affect login, data integrity, backups, restores, or public routing are handled through the [Operational Incident Runbook](OPERATIONAL_INCIDENT_RUNBOOK.md).
 
 ## Minimum Evidence Record
 
@@ -102,3 +102,5 @@ Create a follow-up issue or incident record when any of these occur:
 - Containers repeatedly restart.
 - Logs show repeated config guard, auth, Caddy certificate, provider-sync, import, or database errors.
 - Monitoring evidence cannot be shared safely without exposing secrets or private trading data.
+
+Use the [Operational Incident Runbook](OPERATIONAL_INCIDENT_RUNBOOK.md) for severity, first response, sanitized evidence, rollback, restore, and escalation handling. Passing this checklist or following the runbook does not create a production-readiness, broker-readiness, real-money-readiness, profitability, trading-advice, or automatic-execution claim.
