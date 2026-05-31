@@ -219,6 +219,90 @@ def test_review_summary_classifies_repeated_finding_categories(client: TestClien
     assert summary["repeated_finding_categories"] == ["market_regime_too_loose"]
 
 
+def test_review_entry_finding_category_source_is_auditable(client: TestClient) -> None:
+    login(client)
+    batch_id = client.post(
+        "/api/reviews/batches",
+        json={"name": "Auditable category sample", "review_type": "historical"},
+    ).json()["id"]
+
+    derived = client.post(
+        f"/api/reviews/batches/{batch_id}/entries",
+        json={
+            "symbol": "AAPL",
+            "asset_class": "stock",
+            "strategy_type": "trend_pullback_long",
+            "signal_status": "watchlist",
+            "quality_blockers": [{"key": "market_regime"}],
+            "manual_review_label": "too_permissive",
+        },
+    )
+    manual = client.post(
+        f"/api/reviews/batches/{batch_id}/entries",
+        json={
+            "symbol": "MSFT",
+            "asset_class": "stock",
+            "strategy_type": "trend_pullback_long",
+            "signal_status": "watchlist",
+            "manual_review_label": "unclear",
+            "finding_category": "Risk Plan Unclear",
+            "finding_category_source": "manual",
+        },
+    )
+
+    assert derived.status_code == 201
+    assert derived.json()["finding_category"] == "market_regime_too_loose"
+    assert derived.json()["finding_category_source"] == "derived"
+    assert manual.status_code == 201
+    assert manual.json()["finding_category"] == "risk_plan_unclear"
+    assert manual.json()["finding_category_source"] == "manual"
+
+    summary = client.get(f"/api/reviews/batches/{batch_id}").json()["summary"]
+    assert summary["finding_category_counts"] == {
+        "market_regime_too_loose": 1,
+        "risk_plan_unclear": 1,
+    }
+
+
+def test_review_entry_edit_audits_category_correction(client: TestClient) -> None:
+    login(client)
+    batch_id = client.post(
+        "/api/reviews/batches",
+        json={"name": "Category correction sample", "review_type": "paper"},
+    ).json()["id"]
+    entry = client.post(
+        f"/api/reviews/batches/{batch_id}/entries",
+        json={
+            "symbol": "AAPL",
+            "asset_class": "stock",
+            "strategy_type": "trend_pullback_long",
+            "signal_status": "watchlist",
+            "quality_blockers": [{"key": "market_regime"}],
+            "manual_review_label": "too_permissive",
+        },
+    ).json()
+
+    response = client.patch(
+        f"/api/reviews/batches/{batch_id}/entries/{entry['id']}",
+        json={
+            "symbol": "AAPL",
+            "asset_class": "stock",
+            "strategy_type": "trend_pullback_long",
+            "signal_status": "watchlist",
+            "manual_review_label": "too_permissive",
+            "finding_category": "risk_plan_unclear",
+            "finding_category_source": "manual",
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["finding_category"] == "risk_plan_unclear"
+    assert body["finding_category_source"] == "manual"
+    assert body["revisions"][0]["previous_values"]["finding_category"] == "market_regime_too_loose"
+    assert body["revisions"][0]["previous_values"]["finding_category_source"] == "derived"
+
+
 def test_review_batch_csv_export_contains_evidence_only_fields(client: TestClient) -> None:
     login(client)
     batch_id = client.post(
@@ -252,6 +336,8 @@ def test_review_batch_csv_export_contains_evidence_only_fields(client: TestClien
     assert "BTCUSD" in body
     assert "unclear" in body
     assert "market_regime" in body
+    assert "finding_category" in body
+    assert "finding_category_source" in body
     assert "admin@example.com" not in body
 
 

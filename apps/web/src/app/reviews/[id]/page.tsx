@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
 import { exportReviewBatchCsv, fetchReviewBatch, redirectToLoginOnAuthError, updateReviewEntry } from "@/lib/api";
-import type { ManualReviewLabel, ReviewBatch, ReviewEntry } from "@/types/reviews";
+import type { ManualReviewLabel, ReviewBatch, ReviewEntry, ReviewFindingCategorySource } from "@/types/reviews";
 import type { AssetClass, ScoreClass, SignalStatus, StrategyType } from "@/types/signals";
 
 type EntryFilterState = {
@@ -24,6 +24,8 @@ type EntryEditFormState = {
   score_class: "" | ScoreClass;
   benchmark_context: string;
   manual_review_label: ManualReviewLabel;
+  finding_category: string;
+  finding_category_source: ReviewFindingCategorySource;
   quality_blockers: string;
   outcome_r: string;
   outcome_measurement_rule: string;
@@ -138,6 +140,8 @@ export default function ReviewBatchDetailPage({ params }: { params: { id: string
         score_class: editForm.score_class || null,
         benchmark_context: editForm.benchmark_context.trim() || null,
         manual_review_label: editForm.manual_review_label,
+        finding_category: editForm.finding_category.trim() || null,
+        finding_category_source: editForm.finding_category_source,
         quality_blockers: splitList(editForm.quality_blockers),
         outcome_r: editForm.outcome_r || null,
         outcome_measurement_rule: editForm.outcome_measurement_rule.trim() || null,
@@ -390,6 +394,10 @@ function EntryRow({
             <TextInput label="Benchmark Context" value={editForm.benchmark_context} onChange={(benchmark_context) => onEditFormChange({ ...editForm, benchmark_context })} />
             <TextInput label="Quality Blockers" value={editForm.quality_blockers} onChange={(quality_blockers) => onEditFormChange({ ...editForm, quality_blockers })} placeholder="market_regime, liquidity" />
           </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            <TextInput label="Finding Category" value={editForm.finding_category} onChange={(finding_category) => onEditFormChange({ ...editForm, finding_category })} placeholder="unknown" />
+            <SelectInput label="Category Source" value={editForm.finding_category_source} onChange={(finding_category_source) => onEditFormChange({ ...editForm, finding_category_source: finding_category_source as ReviewFindingCategorySource })} options={[["derived", "Derived"], ["manual", "Manual confirmed"]]} />
+          </div>
         </EditSection>
         <EditSection title="Evidence" description="Optional und sanitisiert. Keine privaten Notizen oder Profitabilitaetsclaims erfassen.">
           <div className="grid gap-3 md:grid-cols-2">
@@ -422,6 +430,9 @@ function EntryRow({
           <span className="text-slate-400">{formatLabel(entry.strategy_type)}</span>
         </div>
         <p className="mt-2 text-slate-500">{entry.notes ?? "Keine Notes."}</p>
+        <p className="mt-2 text-xs text-slate-400">
+          Kategorie: {formatLabel(entry.finding_category)} ({entry.finding_category_source === "manual" ? "manual confirmed" : "derived"})
+        </p>
         <RevisionHistory entry={entry} />
       </div>
       <span className="text-slate-400">{formatLabel(entry.signal_status)} / {formatLabel(entry.score_class ?? "no score")}</span>
@@ -696,6 +707,8 @@ function entryToEditForm(entry: ReviewEntry): EntryEditFormState {
     score_class: entry.score_class ?? "",
     benchmark_context: entry.benchmark_context ?? "",
     manual_review_label: entry.manual_review_label,
+    finding_category: entry.finding_category,
+    finding_category_source: entry.finding_category_source,
     quality_blockers: extractTextValues(entry.quality_blockers).join(", "),
     outcome_r: entry.outcome_r ?? "",
     outcome_measurement_rule: entry.outcome_measurement_rule ?? "",

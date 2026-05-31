@@ -142,6 +142,8 @@ reviewed signal or candidate manually when working outside the app:
 | Entry / stop / target | Stored plan values if available |
 | Planned R:R | Stored R:R if available |
 | Manual review label | useful / too_permissive / too_strict / unclear |
+| Finding category | Persisted category code; keep `unknown` when unclear |
+| Finding category source | `derived` when system-assigned, `manual` when reviewer-confirmed |
 | Paper or historical outcome R | Optional, if measured consistently |
 | Outcome measurement rule | How R was measured, if used |
 | Follow-up needed | yes / no |
@@ -162,6 +164,11 @@ Use these labels consistently:
 
 `too_strict` does not automatically justify loosening a rule. It must become a
 calibration follow-up with a golden case before implementation changes.
+
+Finding categories are calibration evidence only. `derived` categories are
+system-assigned from existing review evidence and may be corrected during manual
+review. `manual` means a reviewer explicitly confirmed or corrected the category;
+it does not request or authorize an automatic rule change.
 
 ## R-Multiple Handling
 
