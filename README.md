@@ -89,7 +89,8 @@ Aussage:
 .\scripts\smoke_test.ps1 -Cleanup -PurgeVolumes # herunterfahren + Volumes loeschen
 ```
 
-Details und Browser-Workflow stehen in `docs/MVP_SMOKE_TEST.md`.
+Details und Browser-Workflow stehen in `docs/MVP_SMOKE_TEST.md`; die wiederholbare
+Browser-Clickthrough-Checkliste steht in `docs/FINAL_BROWSER_CLICKTHROUGH_CHECKLIST.md`.
 
 ### Docker Compose
 
