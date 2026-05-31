@@ -55,7 +55,7 @@ Rationale:
 | Monitoring expectations | Pass for private staging baseline; production monitoring evidence not complete | `docs/APPLICATION_MONITORING_CHECKLIST.md`, `#410` |
 | Dependency/container scan workflow | Partial; visibility workflow exists and runs on PRs/pushes/schedule/manual dispatch, but non-blocking output review and acceptance are still required before production-like exposure | `.github/workflows/security-scans.yml`, `docs/ENGINEERING_WORKFLOW.md#security-scan-workflow` |
 | Incident response runbook | Partial; runbook exists for conservative local/private-staging incident handling, but production-like rehearsal, ownership, and acceptance evidence are not complete | `docs/OPERATIONAL_INCIDENT_RUNBOOK.md` |
-| Offsite encrypted backups | Fail for production-like exposure; follow-up required before private-data reliance | This gate, `#420` |
+| Offsite encrypted backups | Procedure documented; implementation and restore evidence still required before private-data or production-like reliance | `docs/DEPLOYMENT_RUNBOOK.md#offsite-encrypted-backups`, `#420` |
 | Production-like/public exposure decision | Fail; explicitly No Go | This gate |
 
 ## Required Evidence
