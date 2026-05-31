@@ -6,10 +6,10 @@ This checklist records the current MVP release-candidate posture for review and 
 
 ## Current Rebaseline Status
 
-- Version / candidate: final internal owner/operator review candidate after v2.7.
-- Evidence source: automated API/Web/Security Scan verification from merged v2.2-v2.7 PRs plus the v2.8 final internal workflow smoke recorded in [MVP Smoke Test](MVP_SMOKE_TEST.md#v28-final-internal-workflow-smoke). The final go/no-go decision gate remains pending under v2.8.
-- Status: The app remains suitable only for controlled internal/single-operator review workflows with sample or paper data unless separately approved. This is not production-ready, broker-ready, profitability-validated, live/realtime, or real-money trading evidence.
-- Current decision gate: [Deployment Readiness Decision Gate v2](DEPLOYMENT_READINESS_DECISION_GATE_V2.md) records a conditional go for local review and private owner/operator staging only; production-like exposure remains No Go.
+- Version / candidate: final internal owner/operator review candidate after v2.8.
+- Evidence source: automated API/Web/Security Scan verification from merged v2.2-v2.8 PRs plus the v2.8 final internal workflow smoke recorded in [MVP Smoke Test](MVP_SMOKE_TEST.md#v28-final-internal-workflow-smoke).
+- Status: Conditional Go for controlled internal single-owner/operator review workflows with sample, synthetic, or paper data. This is not production-ready, broker-ready, profitability-validated, live/realtime, or real-money trading evidence.
+- Current decision gate: [Final Internal Review Decision Gate](FINAL_INTERNAL_REVIEW_DECISION_GATE.md) records Conditional Go for controlled internal review only. [Deployment Readiness Decision Gate v2](DEPLOYMENT_READINESS_DECISION_GATE_V2.md) still governs local/private staging boundaries; production-like exposure remains No Go.
 - Boundary: decision-support only, manual execution only, no broker integration, no automatic order execution, no profitability claims, no live/realtime claims, no trading advice, and no production-readiness claim.
 
 ## Final Internal Review Candidate Summary
@@ -20,11 +20,12 @@ This checklist records the current MVP release-candidate posture for review and 
 - v2.5 added open portfolio risk review, max open risk warnings, asset concentration warnings, simple correlation proxy warnings, and process-oriented trade journal analytics.
 - v2.6 added application monitoring checklist, structured health details, backup restore drill documentation, deployment readiness decision gate v2, dependency/container scan workflow, and operational incident runbook.
 - v2.7 added mobile layout audit, improved mobile signal cards, improved mobile review batch entry/correction grouping, and a basic PWA manifest/icons baseline.
+- v2.8 rebaselined product docs, recorded final internal workflow smoke evidence, and added the final internal owner/operator review decision gate.
 
 ### Current Known Gaps
 
 - Final current-main internal workflow smoke evidence has passed for the local Docker Compose stack, current migrations, web HTTP load, and API-assisted sample-only workflow coverage; visual browser clickthrough remains a documented test gap.
-- Final internal go/no-go decision gate is still pending under v2.8.
+- Final internal go/no-go decision gate is recorded as Conditional Go for controlled internal owner/operator review only.
 - Deployment readiness gate evidence needs a doc refresh after the scan workflow and incident runbook completion (`#375`).
 - Monitoring checklist should link directly to the operational incident runbook (`#376`).
 - Review correction audit history remains a gap (`#355`).
