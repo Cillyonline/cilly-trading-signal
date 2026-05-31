@@ -234,3 +234,22 @@ Entscheidung: Strategie-Regeln werden ueber einen dokumentierten Kalibrierungswo
 Begruendung: Ein professionelles Signal-Cockpit soll schwache Setups blockieren, No Trade als Risk-Control akzeptieren und Risiko-/Kontextgruende erklaeren. Mehr Signale sind nur dann wuenschenswert, wenn sie besser zur dokumentierten Strategiequalitaet passen.
 
 Konsequenz: Rule-Loosening ohne Tests/Fixtures ist nicht akzeptiert. Bestandene Kalibrierungstests sind keine Profitabilitaets-, Produktions-, Broker- oder Live-Daten-Aussage und ersetzen keine separate historische oder Paper-Review.
+
+## 23. Too-Strict Findings Rechtfertigen Keine Automatische Lockerung
+
+Status: entschieden
+
+Entscheidung: Wiederholte `too_strict` Findings werden zuerst gegen Golden Cases
+und Playbook-Regeln geprueft. In v2.4 bleibt fehlende Trigger-Bestaetigung ein
+`Watchlist`-Zustand, waehrend harte Blocker wie schlechte Datenqualitaet,
+bearisher Kontext, fehlender Risikoplan, starke Widerstandsnaehe, unkontrollierter
+Pullback, zu breite Base, unklarer Base High oder extended Breakout konservativ
+blockiert bleiben.
+
+Begruendung: Das System soll lieber weniger, bessere und erklaerbare Review-
+Kandidaten liefern. Eine Lockerung nur fuer mehr Signale wuerde No Trade als
+Risk-Control schwaechen.
+
+Konsequenz: Loosening braucht einen konkreten Golden Case, coherent Stop/Target/
+Invalidation/minimum R:R und darf keine Trading Advice, Profitabilitaets- oder
+Ausfuehrungsimplikation erzeugen.
