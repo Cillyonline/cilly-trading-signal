@@ -27,8 +27,8 @@ This checklist is not a production-readiness statement, broker-readiness stateme
 ```
 
 - The runner has applied migrations and returned a passing API health check.
-- Sample OHLCV fixtures are available under `test-data/csv/`.
-- If using Screener upload, use a temporary sample-only CSV such as:
+- Sample fixtures are available under `test-data/csv/`.
+- For Screener upload, use the sample-only fixture `test-data/csv/screener_smoke.csv`:
 
 ```csv
 Symbol,Name,Exchange,Sector,Price,Change %,Volume,Relative Volume,Market Cap,RSI (14)
@@ -45,10 +45,10 @@ Record each step as `pass`, `fail`, `blocked`, or `not run`.
 | 1 | `/login` | Login page loads. Local placeholder credentials work only in the local environment. |
 | 2 | Authenticated landing/dashboard | Dashboard or cockpit home loads without exposing secrets or private data. Safety wording remains decision-support oriented. |
 | 3 | `/watchlist` | Watchlist loads. Create or verify a clearly fake sample symbol such as `SMOKE-PAPER-001` with `SAMPLE` exchange metadata. |
-| 4 | `/screener` upload | Upload sample-only screener CSV. Accepted/rejected counts are visible and no private data appears. |
+| 4 | `/screener` upload | Upload `test-data/csv/screener_smoke.csv`. Accepted/rejected counts are visible and no private data appears. |
 | 5 | `/screener` review results | Candidate cards/table are review candidates only, not recommendations. Filters, selected count, and bulk actions remain usable. |
 | 6 | Screener-to-Watchlist conversion | Explicit conversion confirms no analysis, signal, trade, alert, broker action, or order is created automatically. Converted result shows `watchlist_added` or safe duplicate state. |
-| 7 | `/import` | Import `sample_paper_1w.csv`, `sample_paper_1d.csv`, and `sample_paper_4h.csv` for the fake Watchlist symbol with matching timeframes. |
+| 7 | `/import` | Import OHLCV fixtures `sample_paper_1w.csv`, `sample_paper_1d.csv`, and `sample_paper_4h.csv` for the fake Watchlist symbol with matching timeframes. |
 | 8 | Import history analysis action | Run analysis from imported sample data. Conservative `No Setup` / `No Trade` remains a valid pass. |
 | 9 | `/signals` | Signals list loads. Signal cards show status, score class, reasoning, risk flags, No-Trade reasons where applicable, and stale/freshness context. |
 | 10 | `/signals/[id]` | Signal detail loads. Add or review a sample-only review note without turning the signal into an instruction. |
