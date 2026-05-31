@@ -140,10 +140,14 @@ def build_review_batch_summary(batch: ReviewBatch) -> ReviewBatchSummary:
     label_counts = Counter(entry.manual_review_label.value for entry in entries)
     blocker_counts: Counter[str] = Counter()
     category_counts: Counter[str] = Counter()
+    false_positive_counts: Counter[str] = Counter()
     for entry in entries:
         for pattern in _extract_patterns(entry.quality_blockers):
             blocker_counts[pattern] += 1
         category_counts[entry.finding_category] += 1
+        if entry.manual_review_label == ManualReviewLabel.TOO_PERMISSIVE:
+            for pattern in _false_positive_patterns(entry):
+                false_positive_counts[pattern] += 1
 
     return ReviewBatchSummary(
         reviewed_count=len(entries),
@@ -164,6 +168,11 @@ def build_review_batch_summary(batch: ReviewBatch) -> ReviewBatchSummary:
             category
             for category, count in category_counts.items()
             if category != UNKNOWN_FINDING_CATEGORY and count >= REPEATED_FINDING_THRESHOLD
+        ),
+        repeated_false_positive_patterns=sorted(
+            pattern
+            for pattern, count in false_positive_counts.items()
+            if count >= REPEATED_FINDING_THRESHOLD
         ),
         evidence_only_notice=EVIDENCE_ONLY_NOTICE,
     )
@@ -280,6 +289,17 @@ def _extract_patterns(value: list | dict | None) -> list[str]:
         pattern = value.get("key") or value.get("code") or value.get("label")
         return [pattern] if isinstance(pattern, str) else []
     return []
+
+
+def _false_positive_patterns(entry: ReviewEntry) -> list[str]:
+    patterns = [
+        *_extract_patterns(entry.quality_blockers),
+        *_extract_patterns(entry.no_trade_reasons),
+        *_extract_patterns(entry.risk_flags),
+    ]
+    if entry.finding_category != UNKNOWN_FINDING_CATEGORY:
+        patterns.append(entry.finding_category)
+    return list(dict.fromkeys(patterns))
 
 
 def _entry_payload_data(payload: ReviewEntryCreate | ReviewEntryUpdate) -> dict:

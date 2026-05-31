@@ -138,6 +138,7 @@ class ReviewBatchSummary(BaseModel):
     repeated_blocker_patterns: list[str]
     finding_category_counts: dict[str, int]
     repeated_finding_categories: list[str]
+    repeated_false_positive_patterns: list[str]
     evidence_only_notice: str
 
 

@@ -372,12 +372,17 @@ function BatchCard({ batch }: { batch: ReviewBatch }) {
             repeated blocker &gt;=2: {pattern}
           </span>
         ))}
+        {batch.summary.repeated_false_positive_patterns.map((pattern) => (
+          <span key={pattern} className="rounded-full border border-red-300/40 bg-red-300/10 px-3 py-1 text-xs text-red-100">
+            repeated false-positive &gt;=2: {pattern}
+          </span>
+        ))}
       </div>
-      {(batch.summary.repeated_attention_labels.length > 0 || batch.summary.repeated_blocker_patterns.length > 0) ? (
+      {(batch.summary.repeated_attention_labels.length > 0 || batch.summary.repeated_blocker_patterns.length > 0 || batch.summary.repeated_false_positive_patterns.length > 0) ? (
         <div className="mt-4 rounded-2xl border border-yellow-300/30 bg-yellow-300/10 p-4 text-sm text-yellow-50">
           <p className="font-semibold">Repeated Finding Summary</p>
           <p className="mt-1 text-yellow-100/80">
-            Schwelle: mindestens 2 gleiche Attention-Labels oder Blocker. Follow-up Evidence only; keine automatische Regelanpassung.
+            Schwelle: mindestens 2 gleiche Attention-Labels, Blocker oder False-Positive-Muster. Follow-up Evidence only; keine automatische Regelanpassung.
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {batch.summary.repeated_attention_labels.map((label) => (
@@ -388,6 +393,11 @@ function BatchCard({ batch }: { batch: ReviewBatch }) {
             {batch.summary.repeated_blocker_patterns.map((pattern) => (
               <span key={pattern} className="rounded-full border border-yellow-200/30 px-3 py-1 text-xs">
                 repeated blocker &gt;=2: {pattern}
+              </span>
+            ))}
+            {batch.summary.repeated_false_positive_patterns.map((pattern) => (
+              <span key={pattern} className="rounded-full border border-red-200/40 px-3 py-1 text-xs text-red-50">
+                false-positive &gt;=2: {pattern}
               </span>
             ))}
           </div>
@@ -498,7 +508,7 @@ function buildPageSummary(batches: ReviewBatch[]) {
     (summary, batch) => ({
       reviewedCount: summary.reviewedCount + batch.summary.reviewed_count,
       followUps: summary.followUps + batch.summary.follow_up_needed_count,
-      repeatedPatterns: summary.repeatedPatterns + batch.summary.repeated_attention_labels.length + batch.summary.repeated_blocker_patterns.length,
+      repeatedPatterns: summary.repeatedPatterns + batch.summary.repeated_attention_labels.length + batch.summary.repeated_blocker_patterns.length + batch.summary.repeated_false_positive_patterns.length,
     }),
     { reviewedCount: 0, followUps: 0, repeatedPatterns: 0 },
   );
