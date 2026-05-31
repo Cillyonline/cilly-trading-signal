@@ -221,11 +221,11 @@ function buildDashboardData(
         tone: screenerSummary.candidate > 0 ? "border-violet-300/40" : "border-slate-400/40",
       },
       {
-        label: "Open Risk",
+        label: "Active Risk",
         value: formatPercent(openRisk.documented_initial_risk_percent),
         detail:
           openRisk.warning_status === "ok"
-            ? `${openRisk.open_trade_count} offene Trades / max ${formatPercent(openRisk.max_risk_percent)}`
+            ? `${openRisk.open_trade_count} aktive Trades / max ${formatPercent(openRisk.max_risk_percent)}`
             : `${formatOpenRiskStatus(openRisk.warning_status)} / ${openRisk.incomplete_risk_count} incomplete`,
         href: "/performance",
         tone:
@@ -240,7 +240,7 @@ function buildDashboardData(
         value: concentration.warning_status === "warning" ? String(concentration.warnings.length) : "0",
         detail:
           concentration.warning_status === "warning"
-            ? `Review ${formatPercent(concentration.warning_threshold_percent)}+ open-trade clusters`
+            ? `Review ${formatPercent(concentration.warning_threshold_percent)}+ active-trade clusters`
             : "No concentration warning",
         href: "/performance",
         tone: concentration.warning_status === "warning" ? "border-red-300/60" : "border-emerald-400/40",
@@ -377,12 +377,12 @@ function buildReviewPriorities({
     priorities.push({
       title:
         performance.open_portfolio_risk.warning_status === "warning"
-          ? "Open Risk Schwelle pruefen"
-          : "Open Risk Daten vervollstaendigen",
+          ? "Active Risk Schwelle pruefen"
+          : "Active Risk Daten vervollstaendigen",
       detail:
         performance.open_portfolio_risk.warning_status === "warning"
           ? `${formatPercent(performance.open_portfolio_risk.documented_initial_risk_percent)} dokumentiert / max ${formatPercent(performance.open_portfolio_risk.max_risk_percent)}`
-          : `${performance.open_portfolio_risk.incomplete_risk_count} offene Trades mit unvollstaendigem Risiko`,
+          : `${performance.open_portfolio_risk.incomplete_risk_count} aktive Trades mit unvollstaendigem Risiko`,
       href: "/performance",
       tone: performance.open_portfolio_risk.warning_status === "warning" ? "red" : "yellow",
     });
@@ -391,7 +391,7 @@ function buildReviewPriorities({
   if (performance.open_portfolio_risk.asset_concentration.warning_status === "warning") {
     priorities.push({
       title: "Asset Concentration pruefen",
-      detail: `${performance.open_portfolio_risk.asset_concentration.warnings.length} Open-Trade-Cluster ueber ${formatPercent(performance.open_portfolio_risk.asset_concentration.warning_threshold_percent)}`,
+      detail: `${performance.open_portfolio_risk.asset_concentration.warnings.length} Active-Trade-Cluster ueber ${formatPercent(performance.open_portfolio_risk.asset_concentration.warning_threshold_percent)}`,
       href: "/performance",
       tone: "yellow",
     });
@@ -703,8 +703,8 @@ function CockpitSnapshot({ data }: { data: DashboardData }) {
         items={data.recentSignals.map(formatSignal)}
       />
       <SnapshotList
-        title="Open Trades"
-        emptyText="Keine offenen Trades."
+        title="Active Trades"
+        emptyText="Keine aktiven Trades."
         items={data.openTrades.map(formatTrade)}
       />
       <SnapshotList

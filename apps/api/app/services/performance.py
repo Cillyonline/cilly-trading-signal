@@ -17,12 +17,12 @@ TWO_PLACES = Decimal("0.01")
 CONCENTRATION_WARNING_THRESHOLD_PERCENT = Decimal("50.00")
 MIN_JOURNAL_STRATEGY_SAMPLE_SIZE = 3
 RISK_REVIEW_ONLY_NOTICE = (
-    "Open portfolio risk is based only on manually documented trades. It is review-only, "
-    "not broker/account sync, automatic position sizing, an order recommendation, or "
-    "trading advice."
+    "Active portfolio risk is based only on manually documented non-closed trades. "
+    "It is review-only, not broker/account sync, automatic position sizing, an "
+    "order recommendation, or trading advice."
 )
 CONCENTRATION_REVIEW_ONLY_NOTICE = (
-    "Concentration warnings use only documented open trades and available local metadata. "
+    "Concentration warnings use only documented active trades and available local metadata. "
     "They are process review prompts, not a true correlation engine or trade recommendation."
 )
 CORRELATION_PROXY_REVIEW_ONLY_NOTICE = (
@@ -34,6 +34,13 @@ JOURNAL_SMALL_SAMPLE_NOTICE = (
     "Journal analytics are process quality summaries from manually reviewed closed trades. "
     "Small samples are directional review prompts only, not prediction, edge validation, or "
     "profit validation."
+)
+ACTIVE_TRADE_STATUSES = (
+    TradeStatus.OPEN,
+    TradeStatus.PARTIAL_PROFIT,
+    TradeStatus.BREAK_EVEN,
+    TradeStatus.EXIT_WARNING,
+    TradeStatus.EXIT_SIGNAL,
 )
 
 
@@ -79,16 +86,16 @@ def get_performance_summary(db: Session, user_id: int) -> PerformanceSummaryRead
 
 def get_open_portfolio_risk(db: Session, user_id: int) -> dict:
     settings = get_or_create_settings(db, user_id)
-    open_trades = list(
+    active_trades = list(
         db.scalars(
             select(Trade).where(
                 Trade.user_id == user_id,
-                Trade.status == TradeStatus.OPEN,
+                Trade.status.in_(ACTIVE_TRADE_STATUSES),
             )
         )
     )
-    complete_trades = [trade for trade in open_trades if _has_complete_risk(trade)]
-    incomplete_count = len(open_trades) - len(complete_trades)
+    complete_trades = [trade for trade in active_trades if _has_complete_risk(trade)]
+    incomplete_count = len(active_trades) - len(complete_trades)
     documented_risk_amount = _quantize(
         sum((trade.initial_risk_amount for trade in complete_trades), Decimal("0")),
         TWO_PLACES,
@@ -103,7 +110,7 @@ def get_open_portfolio_risk(db: Session, user_id: int) -> dict:
         incomplete_count,
     )
     return {
-        "open_trade_count": len(open_trades),
+        "open_trade_count": len(active_trades),
         "complete_risk_count": len(complete_trades),
         "incomplete_risk_count": incomplete_count,
         "documented_initial_risk_amount": documented_risk_amount,
@@ -111,10 +118,10 @@ def get_open_portfolio_risk(db: Session, user_id: int) -> dict:
         "max_risk_percent": settings.max_risk_percent,
         "warning_status": warning_status,
         "warnings": warnings,
-        "asset_concentration": _build_asset_concentration(open_trades),
-        "correlation_proxies": _build_correlation_proxies(open_trades),
-        "by_strategy": _build_open_risk_groups(open_trades, "strategy_type"),
-        "by_asset_class": _build_open_risk_groups(open_trades, "asset_class"),
+        "asset_concentration": _build_asset_concentration(active_trades),
+        "correlation_proxies": _build_correlation_proxies(active_trades),
+        "by_strategy": _build_open_risk_groups(active_trades, "strategy_type"),
+        "by_asset_class": _build_open_risk_groups(active_trades, "asset_class"),
         "review_only_notice": RISK_REVIEW_ONLY_NOTICE,
     }
 
@@ -289,9 +296,9 @@ def _build_open_risk_warnings(
 ) -> tuple[str, list[str]]:
     warnings: list[str] = []
     if documented_risk_percent > max_risk_percent:
-        warnings.append("Documented open risk percent exceeds the configured max risk percent.")
+        warnings.append("Documented active risk percent exceeds the configured max risk percent.")
     if incomplete_count > 0:
-        warnings.append("Some open trades are missing complete documented risk data.")
+        warnings.append("Some active trades are missing complete documented risk data.")
 
     if documented_risk_percent > max_risk_percent:
         return "warning", warnings
@@ -357,7 +364,7 @@ def _build_concentration_warnings(*group_sets: list[dict]) -> list[str]:
         for group in group_set:
             if group["warning"]:
                 warnings.append(
-                    f"{group['group']} represents {group['open_trade_percent']}% of open trades."
+                    f"{group['group']} represents {group['open_trade_percent']}% of active trades."
                 )
     return warnings
 
@@ -391,7 +398,7 @@ def _build_crypto_btc_beta_proxy(open_trades: list[Trade]) -> dict:
     )
     status = "warning" if len(crypto_symbols) >= 2 else "ok"
     message = (
-        "Multiple open crypto exposures match a BTC-beta-heavy symbol proxy."
+        "Multiple active crypto exposures match a BTC-beta-heavy symbol proxy."
         if status == "warning"
         else "No BTC-beta-heavy crypto proxy warning."
     )
@@ -411,9 +418,9 @@ def _build_stock_sector_proxy(open_trades: list[Trade]) -> dict:
     )
     status = "unknown" if stock_symbols else "ok"
     message = (
-        "Stock sector proxy is unknown because open trades do not store sector metadata."
+        "Stock sector proxy is unknown because active trades do not store sector metadata."
         if status == "unknown"
-        else "No open stock trades for sector proxy review."
+        else "No active stock trades for sector proxy review."
     )
     return {
         "key": "stock_sector_heavy",
