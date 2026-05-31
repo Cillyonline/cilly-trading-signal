@@ -118,6 +118,8 @@ class ReviewBatchSummary(BaseModel):
     follow_up_needed_count: int
     repeated_attention_labels: list[str]
     repeated_blocker_patterns: list[str]
+    finding_category_counts: dict[str, int]
+    repeated_finding_categories: list[str]
     evidence_only_notice: str
 
 

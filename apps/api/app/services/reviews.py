@@ -48,6 +48,14 @@ ATTENTION_LABELS = {
     ManualReviewLabel.UNCLEAR.value,
 }
 REPEATED_FINDING_THRESHOLD = 2
+UNKNOWN_FINDING_CATEGORY = "unknown"
+FINDING_CATEGORY_KEYWORDS = [
+    ("market_regime_too_loose", ("market_regime", "benchmark", "regime", "relative_strength")),
+    ("risk_plan_unclear", ("risk", "rr", "r:r", "stop", "target", "position_size")),
+    ("trigger_too_strict", ("trigger", "breakout", "close_confirmation")),
+    ("data_context_missing", ("stale", "missing", "partial", "failed", "unknown", "data")),
+    ("liquidity_or_volatility", ("liquidity", "volume", "atr", "volatility", "wick")),
+]
 
 
 class ReviewEntryError(Exception):
@@ -126,9 +134,11 @@ def build_review_batch_summary(batch: ReviewBatch) -> ReviewBatchSummary:
     entries = batch.entries
     label_counts = Counter(entry.manual_review_label.value for entry in entries)
     blocker_counts: Counter[str] = Counter()
+    category_counts: Counter[str] = Counter()
     for entry in entries:
         for pattern in _extract_patterns(entry.quality_blockers):
             blocker_counts[pattern] += 1
+        category_counts[classify_review_finding(entry)] += 1
 
     return ReviewBatchSummary(
         reviewed_count=len(entries),
@@ -144,8 +154,37 @@ def build_review_batch_summary(batch: ReviewBatch) -> ReviewBatchSummary:
             for pattern, count in blocker_counts.items()
             if count >= REPEATED_FINDING_THRESHOLD
         ),
+        finding_category_counts=dict(sorted(category_counts.items())),
+        repeated_finding_categories=sorted(
+            category
+            for category, count in category_counts.items()
+            if category != UNKNOWN_FINDING_CATEGORY and count >= REPEATED_FINDING_THRESHOLD
+        ),
         evidence_only_notice=EVIDENCE_ONLY_NOTICE,
     )
+
+
+def classify_review_finding(entry: ReviewEntry) -> str:
+    if entry.manual_review_label == ManualReviewLabel.USEFUL and not entry.follow_up_needed:
+        return UNKNOWN_FINDING_CATEGORY
+    values = [
+        entry.manual_review_label.value,
+        entry.benchmark_context or "",
+        entry.outcome_measurement_rule or "",
+        entry.notes or "",
+        *_extract_patterns(entry.quality_blockers),
+        *_extract_patterns(entry.no_trade_reasons),
+        *_extract_patterns(entry.risk_flags),
+    ]
+    text = " ".join(values).lower()
+    for category, keywords in FINDING_CATEGORY_KEYWORDS:
+        if any(keyword in text for keyword in keywords):
+            return category
+    if entry.manual_review_label == ManualReviewLabel.TOO_STRICT:
+        return "trigger_too_strict"
+    if entry.manual_review_label == ManualReviewLabel.TOO_PERMISSIVE:
+        return "risk_plan_unclear"
+    return UNKNOWN_FINDING_CATEGORY
 
 
 def export_review_batch_csv(batch: ReviewBatch) -> str:

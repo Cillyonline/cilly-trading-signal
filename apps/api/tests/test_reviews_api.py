@@ -181,6 +181,44 @@ def test_review_repeated_findings_require_two_matching_entries(client: TestClien
     assert second_summary["repeated_blocker_patterns"] == ["market_regime"]
 
 
+def test_review_summary_classifies_repeated_finding_categories(client: TestClient) -> None:
+    login(client)
+    batch_id = client.post(
+        "/api/reviews/batches",
+        json={"name": "Category sample", "review_type": "historical"},
+    ).json()["id"]
+    for symbol in ["AAPL", "MSFT"]:
+        client.post(
+            f"/api/reviews/batches/{batch_id}/entries",
+            json={
+                "symbol": symbol,
+                "asset_class": "stock",
+                "strategy_type": "trend_pullback_long",
+                "signal_status": "watchlist",
+                "quality_blockers": [{"key": "market_regime"}],
+                "manual_review_label": "too_permissive",
+            },
+        )
+    client.post(
+        f"/api/reviews/batches/{batch_id}/entries",
+        json={
+            "symbol": "BTCUSD",
+            "asset_class": "crypto",
+            "strategy_type": "base_breakout_long",
+            "signal_status": "watchlist",
+            "manual_review_label": "unclear",
+        },
+    )
+
+    summary = client.get(f"/api/reviews/batches/{batch_id}").json()["summary"]
+
+    assert summary["finding_category_counts"] == {
+        "market_regime_too_loose": 2,
+        "unknown": 1,
+    }
+    assert summary["repeated_finding_categories"] == ["market_regime_too_loose"]
+
+
 def test_review_batch_csv_export_contains_evidence_only_fields(client: TestClient) -> None:
     login(client)
     batch_id = client.post(
