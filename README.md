@@ -79,8 +79,9 @@ winget install astral-sh.uv
 ### MVP Smoke Runner
 
 Fuer den dokumentierten MVP Smoke Test gibt es einen Runner, der Preflight-Checks,
-Stack-Start und API-Health automatisiert. Der Runner ersetzt nicht den Browser-Teil
-des Smoke Tests und macht keine Produktionsfreigabe-Aussage:
+Stack-Start, lokale Datenbankmigrationen und API-Health automatisiert. Der Runner
+ersetzt nicht den Browser-Teil des Smoke Tests und macht keine Produktionsfreigabe-
+Aussage:
 
 ```powershell
 .\scripts\smoke_test.ps1                       # hochfahren + Health-Check

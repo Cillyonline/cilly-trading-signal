@@ -2,17 +2,20 @@
 
 <#
 .SYNOPSIS
-    MVP smoke test runner. Brings up the local Docker stack and verifies API health.
+    MVP smoke test runner. Brings up the local Docker stack, applies migrations,
+    and verifies API health.
 
 .DESCRIPTION
     This script performs preflight checks (Docker CLI, Docker Compose CLI, Docker
     Engine reachability), starts the local stack defined in infra/docker-compose.yml,
-    and polls /api/health until the API responds or a timeout expires.
+    applies Alembic migrations inside the local API container, and polls
+    /api/health until the API responds or a timeout expires.
 
     It is release-validation tooling for the manual trading cockpit. It does not
     make any production-readiness, profitability, or execution claim. The smoke
     workflow continues in the browser using the sample CSV fixtures under
-    test-data/csv/. See docs/MVP_SMOKE_TEST.md.
+    test-data/csv/. See docs/MVP_SMOKE_TEST.md. The migration step is for
+    local smoke validation and does not define production migration policy.
 
 .PARAMETER Cleanup
     Tear down the local stack (docker compose down). Does not remove volumes.
@@ -148,6 +151,16 @@ function Invoke-StackUp {
     Write-Pass 'Stack started.'
 }
 
+function Invoke-DatabaseMigrations {
+    Write-Step 'Applying database migrations (alembic upgrade head)'
+    & docker compose -f $ComposeFile exec -T api alembic upgrade head
+    if ($LASTEXITCODE -ne 0) {
+        Write-Fail 'Database migrations failed. Check API logs and migration output before continuing the smoke test.'
+        exit 1
+    }
+    Write-Pass 'Database migrations applied.'
+}
+
 function Wait-ForApiHealth {
     Write-Step "Waiting for $HealthUrl (timeout ${TimeoutSeconds}s)"
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
@@ -195,6 +208,7 @@ if ($Cleanup) {
 
 Invoke-Preflight
 Invoke-StackUp
+Invoke-DatabaseMigrations
 Wait-ForApiHealth
 
 Write-Host ''
