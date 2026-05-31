@@ -1090,6 +1090,30 @@ restic forget --tag cilly-postgres --keep-daily 14 --keep-weekly 8 --prune
 restic snapshots --tag cilly-postgres
 ```
 
+Routine repeat procedure for the current operator-controlled encrypted target:
+
+1. Run the normal PostgreSQL dump first and confirm the latest dump is non-zero
+   without printing its contents.
+2. Load the restic environment from the private env file or operator password
+   manager. Do not paste `RESTIC_PASSWORD`, repository credentials, or access
+   keys into terminal evidence, issues, PRs, docs, screenshots, or chat.
+3. Run `restic backup` against the PostgreSQL backup directory with the
+   `cilly-postgres` and environment tags.
+4. Run `restic snapshots --tag cilly-postgres` and record only sanitized
+   evidence: timestamp, target category, snapshot count, and latest snapshot ID
+   prefix if needed.
+5. Run `restic check` and record pass/fail only.
+6. Periodically restore the latest snapshot into a disposable directory and
+   disposable database project, then verify only non-sensitive evidence such as
+   non-zero dump size, Alembic version, row counts for sample data, and cleanup
+   completion.
+
+For the local Windows encrypted restic repository accepted during private
+staging validation, the same evidence rules apply. The local target is useful as
+operator-controlled encrypted redundancy, but it is not geographic or
+ransomware-resistant backup coverage by itself. Treat stronger private-data or
+production-like reliance as gated by a later decision issue.
+
 Suggested systemd service after the local backup timer succeeds:
 
 ```ini
