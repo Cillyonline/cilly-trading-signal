@@ -68,6 +68,9 @@ def test_performance_summary_returns_empty_state(client: TestClient) -> None:
             "incomplete_risk_count": 0,
             "documented_initial_risk_amount": "0.00",
             "documented_initial_risk_percent": "0.0000",
+            "max_risk_percent": "1.00",
+            "warning_status": "ok",
+            "warnings": [],
             "by_strategy": [],
             "by_asset_class": [],
             "review_only_notice": (
@@ -231,6 +234,12 @@ def test_performance_summary_includes_open_portfolio_risk(client: TestClient) ->
     assert risk["incomplete_risk_count"] == 1
     assert risk["documented_initial_risk_amount"] == "100.00"
     assert risk["documented_initial_risk_percent"] == "2.0000"
+    assert risk["max_risk_percent"] == "1.00"
+    assert risk["warning_status"] == "warning"
+    assert risk["warnings"] == [
+        "Documented open risk percent exceeds the configured max risk percent.",
+        "Some open trades are missing complete documented risk data.",
+    ]
     assert "trading advice" in risk["review_only_notice"]
     assert risk["by_strategy"] == [
         {
@@ -265,6 +274,35 @@ def test_performance_summary_includes_open_portfolio_risk(client: TestClient) ->
         },
     ]
     assert incomplete["status"] == "open"
+
+
+def test_performance_summary_marks_missing_open_risk_as_unknown(client: TestClient) -> None:
+    create_open_trade(client, "MSFT", strategy_type="trend_pullback_long")
+
+    response = client.get("/api/performance/summary")
+
+    assert response.status_code == 200
+    risk = response.json()["open_portfolio_risk"]
+    assert risk["open_trade_count"] == 1
+    assert risk["complete_risk_count"] == 0
+    assert risk["incomplete_risk_count"] == 1
+    assert risk["documented_initial_risk_percent"] == "0.0000"
+    assert risk["warning_status"] == "unknown"
+    assert risk["warnings"] == ["Some open trades are missing complete documented risk data."]
+
+
+def test_performance_summary_keeps_open_risk_ok_below_threshold(client: TestClient) -> None:
+    update_account_size(client, "10000.00")
+    create_open_trade(client, "AAPL", strategy_type="trend_pullback_long", asset_class="stock")
+
+    response = client.get("/api/performance/summary")
+
+    assert response.status_code == 200
+    risk = response.json()["open_portfolio_risk"]
+    assert risk["documented_initial_risk_percent"] == "0.5000"
+    assert risk["max_risk_percent"] == "1.00"
+    assert risk["warning_status"] == "ok"
+    assert risk["warnings"] == []
 
 
 def create_watchlist_item(client: TestClient, symbol: str, asset_class: str = "stock") -> int:

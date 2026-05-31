@@ -28,6 +28,9 @@ export type OpenPortfolioRisk = {
   incomplete_risk_count: number;
   documented_initial_risk_amount: string;
   documented_initial_risk_percent: string;
+  max_risk_percent: string;
+  warning_status: "ok" | "unknown" | "warning";
+  warnings: string[];
   by_strategy: OpenRiskGroup[];
   by_asset_class: OpenRiskGroup[];
   review_only_notice: string;

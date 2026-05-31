@@ -30,6 +30,9 @@ class OpenPortfolioRiskRead(BaseModel):
     incomplete_risk_count: int
     documented_initial_risk_amount: Decimal
     documented_initial_risk_percent: Decimal
+    max_risk_percent: Decimal
+    warning_status: str
+    warnings: list[str]
     by_strategy: list[OpenRiskGroupRead]
     by_asset_class: list[OpenRiskGroupRead]
     review_only_notice: str
