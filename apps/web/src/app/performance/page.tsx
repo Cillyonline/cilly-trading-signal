@@ -139,28 +139,43 @@ function SummaryGrid({ summary }: { summary: PerformanceSummary }) {
 }
 
 function OpenPortfolioRiskOverview({ risk }: { risk: OpenPortfolioRisk }) {
+  const warningTone = getOpenRiskWarningTone(risk.warning_status);
   return (
-    <section className="rounded-3xl border border-amber-300/20 bg-amber-300/[0.06] p-6">
+    <section className={`rounded-3xl border p-6 ${warningTone.container}`}>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm uppercase tracking-[0.3em] text-amber-200">Open Risk Review</p>
+          <p className={`text-sm uppercase tracking-[0.3em] ${warningTone.eyebrow}`}>Open Risk Review</p>
           <h2 className="mt-2 text-2xl font-semibold">Dokumentiertes Risiko offener Trades</h2>
-          <p className="mt-2 max-w-3xl text-sm text-amber-50/75">
+          <p className="mt-2 max-w-3xl text-sm text-slate-300">
             {risk.review_only_notice} Fehlende Risikoangaben werden separat gezaehlt und nicht
             stillschweigend in Summen eingerechnet.
           </p>
         </div>
-        <span className="rounded-full border border-amber-200/30 px-4 py-2 text-sm text-amber-100">
-          {risk.open_trade_count} offene Trades
+        <span className={`rounded-full border px-4 py-2 text-sm ${warningTone.badge}`}>
+          {formatOpenRiskStatus(risk.warning_status)}
         </span>
       </div>
+
+      {risk.warnings.length > 0 ? (
+        <div className={`mt-5 rounded-2xl border p-4 text-sm ${warningTone.notice}`}>
+          <p className="font-semibold">Risk Review Warning</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            {risk.warnings.map((warning) => (
+              <li key={warning}>{warning}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
 
       <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Metric label="Open Trades" value={String(risk.open_trade_count)} />
         <Metric label="Complete Risk Records" value={String(risk.complete_risk_count)} />
         <Metric label="Incomplete Risk Records" value={String(risk.incomplete_risk_count)} />
         <Metric label="Documented Initial Risk" value={formatMoney(risk.documented_initial_risk_amount)} />
-        <Metric label="Documented Risk %" value={formatPercent(risk.documented_initial_risk_percent)} />
+        <Metric
+          label="Documented Risk %"
+          value={`${formatPercent(risk.documented_initial_risk_percent)} / max ${formatPercent(risk.max_risk_percent)}`}
+        />
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
@@ -169,6 +184,41 @@ function OpenPortfolioRiskOverview({ risk }: { risk: OpenPortfolioRisk }) {
       </div>
     </section>
   );
+}
+
+function getOpenRiskWarningTone(status: OpenPortfolioRisk["warning_status"]) {
+  if (status === "warning") {
+    return {
+      container: "border-red-300/30 bg-red-950/25",
+      eyebrow: "text-red-200",
+      badge: "border-red-200/30 text-red-100",
+      notice: "border-red-300/30 bg-red-950/40 text-red-100",
+    };
+  }
+  if (status === "unknown") {
+    return {
+      container: "border-amber-300/20 bg-amber-300/[0.06]",
+      eyebrow: "text-amber-200",
+      badge: "border-amber-200/30 text-amber-100",
+      notice: "border-amber-200/30 bg-amber-950/30 text-amber-100",
+    };
+  }
+  return {
+    container: "border-emerald-300/20 bg-emerald-300/[0.05]",
+    eyebrow: "text-emerald-200",
+    badge: "border-emerald-200/30 text-emerald-100",
+    notice: "border-emerald-200/30 bg-emerald-950/30 text-emerald-100",
+  };
+}
+
+function formatOpenRiskStatus(status: OpenPortfolioRisk["warning_status"]) {
+  if (status === "warning") {
+    return "Risk warning";
+  }
+  if (status === "unknown") {
+    return "Risk unknown";
+  }
+  return "Risk ok";
 }
 
 function OpenRiskGroupList({

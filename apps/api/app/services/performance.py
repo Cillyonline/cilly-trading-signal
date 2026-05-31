@@ -10,6 +10,7 @@ from app.schemas.performance import (
     PerformanceByStrategyRead,
     PerformanceSummaryRead,
 )
+from app.services.settings import get_or_create_settings
 
 FOUR_PLACES = Decimal("0.0001")
 TWO_PLACES = Decimal("0.01")
@@ -61,6 +62,7 @@ def get_performance_summary(db: Session, user_id: int) -> PerformanceSummaryRead
 
 
 def get_open_portfolio_risk(db: Session, user_id: int) -> dict:
+    settings = get_or_create_settings(db, user_id)
     open_trades = list(
         db.scalars(
             select(Trade).where(
@@ -71,18 +73,28 @@ def get_open_portfolio_risk(db: Session, user_id: int) -> dict:
     )
     complete_trades = [trade for trade in open_trades if _has_complete_risk(trade)]
     incomplete_count = len(open_trades) - len(complete_trades)
+    documented_risk_amount = _quantize(
+        sum((trade.initial_risk_amount for trade in complete_trades), Decimal("0")),
+        TWO_PLACES,
+    )
+    documented_risk_percent = _quantize(
+        sum((trade.initial_risk_percent for trade in complete_trades), Decimal("0")),
+        FOUR_PLACES,
+    )
+    warning_status, warnings = _build_open_risk_warnings(
+        documented_risk_percent,
+        settings.max_risk_percent,
+        incomplete_count,
+    )
     return {
         "open_trade_count": len(open_trades),
         "complete_risk_count": len(complete_trades),
         "incomplete_risk_count": incomplete_count,
-        "documented_initial_risk_amount": _quantize(
-            sum((trade.initial_risk_amount for trade in complete_trades), Decimal("0")),
-            TWO_PLACES,
-        ),
-        "documented_initial_risk_percent": _quantize(
-            sum((trade.initial_risk_percent for trade in complete_trades), Decimal("0")),
-            FOUR_PLACES,
-        ),
+        "documented_initial_risk_amount": documented_risk_amount,
+        "documented_initial_risk_percent": documented_risk_percent,
+        "max_risk_percent": settings.max_risk_percent,
+        "warning_status": warning_status,
+        "warnings": warnings,
         "by_strategy": _build_open_risk_groups(open_trades, "strategy_type"),
         "by_asset_class": _build_open_risk_groups(open_trades, "asset_class"),
         "review_only_notice": RISK_REVIEW_ONLY_NOTICE,
@@ -168,6 +180,24 @@ def _build_open_risk_groups(open_trades: list[Trade], field_name: str) -> list[d
             }
         )
     return results
+
+
+def _build_open_risk_warnings(
+    documented_risk_percent: Decimal,
+    max_risk_percent: Decimal,
+    incomplete_count: int,
+) -> tuple[str, list[str]]:
+    warnings: list[str] = []
+    if documented_risk_percent > max_risk_percent:
+        warnings.append("Documented open risk percent exceeds the configured max risk percent.")
+    if incomplete_count > 0:
+        warnings.append("Some open trades are missing complete documented risk data.")
+
+    if documented_risk_percent > max_risk_percent:
+        return "warning", warnings
+    if incomplete_count > 0:
+        return "unknown", warnings
+    return "ok", warnings
 
 
 def _has_complete_risk(trade: Trade) -> bool:

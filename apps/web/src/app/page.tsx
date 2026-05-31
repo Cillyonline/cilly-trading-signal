@@ -169,10 +169,12 @@ function buildDashboardData(
   const alertIssues = alerts.filter(
     (alert) => alert.delivery_status === "failed" || alert.delivery_status === "pending",
   );
+  const openRisk = performance.open_portfolio_risk;
   const marketDataQuality = buildMarketDataQuality(watchlist);
   const screenerSummary = buildScreenerReviewSummary(screenerResults);
   const reviewPriorities = buildReviewPriorities({
     marketDataQuality,
+    performance,
     triggeredSignals,
     reviewSignals,
     openTrades,
@@ -217,11 +219,19 @@ function buildDashboardData(
         tone: screenerSummary.candidate > 0 ? "border-violet-300/40" : "border-slate-400/40",
       },
       {
-        label: "Open Trades",
-        value: String(openTrades.length),
-        detail: "Manuell dokumentierte Trades",
-        href: "/trades",
-        tone: "border-green-400/40",
+        label: "Open Risk",
+        value: formatPercent(openRisk.documented_initial_risk_percent),
+        detail:
+          openRisk.warning_status === "ok"
+            ? `${openRisk.open_trade_count} offene Trades / max ${formatPercent(openRisk.max_risk_percent)}`
+            : `${formatOpenRiskStatus(openRisk.warning_status)} / ${openRisk.incomplete_risk_count} incomplete`,
+        href: "/performance",
+        tone:
+          openRisk.warning_status === "warning"
+            ? "border-red-300/60"
+            : openRisk.warning_status === "unknown"
+              ? "border-amber-300/60"
+              : "border-green-400/40",
       },
       {
         label: "Alert Issues",
@@ -267,6 +277,7 @@ function buildScreenerReviewSummary(results: ScreenerResult[]): ScreenerReviewSu
 
 function buildReviewPriorities({
   marketDataQuality,
+  performance,
   triggeredSignals,
   reviewSignals,
   openTrades,
@@ -274,6 +285,7 @@ function buildReviewPriorities({
   alertIssues,
 }: {
   marketDataQuality: MarketDataQualitySummary;
+  performance: PerformanceSummary;
   triggeredSignals: Signal[];
   reviewSignals: Signal[];
   openTrades: Trade[];
@@ -329,6 +341,21 @@ function buildReviewPriorities({
       detail: `${openTrades.length} manuelle Trade-Datensaetze offen`,
       href: "/trades",
       tone: "emerald",
+    });
+  }
+
+  if (performance.open_portfolio_risk.warning_status !== "ok") {
+    priorities.push({
+      title:
+        performance.open_portfolio_risk.warning_status === "warning"
+          ? "Open Risk Schwelle pruefen"
+          : "Open Risk Daten vervollstaendigen",
+      detail:
+        performance.open_portfolio_risk.warning_status === "warning"
+          ? `${formatPercent(performance.open_portfolio_risk.documented_initial_risk_percent)} dokumentiert / max ${formatPercent(performance.open_portfolio_risk.max_risk_percent)}`
+          : `${performance.open_portfolio_risk.incomplete_risk_count} offene Trades mit unvollstaendigem Risiko`,
+      href: "/performance",
+      tone: performance.open_portfolio_risk.warning_status === "warning" ? "red" : "yellow",
     });
   }
 
@@ -696,4 +723,22 @@ function formatR(value: string | null) {
   }
   const parsed = Number(value);
   return Number.isFinite(parsed) ? `${parsed.toFixed(2)}R` : `${value}R`;
+}
+
+function formatPercent(value: string | null) {
+  if (!value) {
+    return "-";
+  }
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? `${parsed.toFixed(2)}%` : `${value}%`;
+}
+
+function formatOpenRiskStatus(status: PerformanceSummary["open_portfolio_risk"]["warning_status"]) {
+  if (status === "warning") {
+    return "Risk warning";
+  }
+  if (status === "unknown") {
+    return "Risk unknown";
+  }
+  return "Risk ok";
 }
