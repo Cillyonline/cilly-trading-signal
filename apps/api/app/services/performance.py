@@ -14,10 +14,15 @@ from app.services.settings import get_or_create_settings
 
 FOUR_PLACES = Decimal("0.0001")
 TWO_PLACES = Decimal("0.01")
+CONCENTRATION_WARNING_THRESHOLD_PERCENT = Decimal("50.00")
 RISK_REVIEW_ONLY_NOTICE = (
     "Open portfolio risk is based only on manually documented trades. It is review-only, "
     "not broker/account sync, automatic position sizing, an order recommendation, or "
     "trading advice."
+)
+CONCENTRATION_REVIEW_ONLY_NOTICE = (
+    "Concentration warnings use only documented open trades and available local metadata. "
+    "They are process review prompts, not a true correlation engine or trade recommendation."
 )
 
 
@@ -95,6 +100,7 @@ def get_open_portfolio_risk(db: Session, user_id: int) -> dict:
         "max_risk_percent": settings.max_risk_percent,
         "warning_status": warning_status,
         "warnings": warnings,
+        "asset_concentration": _build_asset_concentration(open_trades),
         "by_strategy": _build_open_risk_groups(open_trades, "strategy_type"),
         "by_asset_class": _build_open_risk_groups(open_trades, "asset_class"),
         "review_only_notice": RISK_REVIEW_ONLY_NOTICE,
@@ -198,6 +204,68 @@ def _build_open_risk_warnings(
     if incomplete_count > 0:
         return "unknown", warnings
     return "ok", warnings
+
+
+def _build_asset_concentration(open_trades: list[Trade]) -> dict:
+    by_asset_class = _build_concentration_groups(open_trades, "asset_class")
+    by_symbol = _build_concentration_groups(open_trades, "symbol")
+    by_sector = _build_unknown_concentration_groups(open_trades, "unknown_sector")
+    by_industry = _build_unknown_concentration_groups(open_trades, "unknown_industry")
+    warnings = _build_concentration_warnings(by_asset_class, by_symbol, by_sector, by_industry)
+    return {
+        "warning_status": "warning" if warnings else "ok",
+        "warning_threshold_percent": CONCENTRATION_WARNING_THRESHOLD_PERCENT,
+        "warnings": warnings,
+        "by_asset_class": by_asset_class,
+        "by_symbol": by_symbol,
+        "by_sector": by_sector,
+        "by_industry": by_industry,
+        "review_only_notice": CONCENTRATION_REVIEW_ONLY_NOTICE,
+    }
+
+
+def _build_concentration_groups(open_trades: list[Trade], field_name: str) -> list[dict]:
+    groups: dict[str, int] = {}
+    for trade in open_trades:
+        value = getattr(trade, field_name)
+        group = value.value if hasattr(value, "value") else str(value)
+        groups[group] = groups.get(group, 0) + 1
+    return _format_concentration_groups(groups, len(open_trades))
+
+
+def _build_unknown_concentration_groups(open_trades: list[Trade], group: str) -> list[dict]:
+    if not open_trades:
+        return []
+    return _format_concentration_groups({group: len(open_trades)}, len(open_trades))
+
+
+def _format_concentration_groups(groups: dict[str, int], total_count: int) -> list[dict]:
+    results: list[dict] = []
+    for group, count in sorted(groups.items()):
+        percent = _quantize(
+            Decimal(count) / total_count * 100 if total_count > 0 else Decimal("0"),
+            TWO_PLACES,
+        )
+        results.append(
+            {
+                "group": group,
+                "open_trade_count": count,
+                "open_trade_percent": percent,
+                "warning": percent >= CONCENTRATION_WARNING_THRESHOLD_PERCENT and total_count > 1,
+            }
+        )
+    return results
+
+
+def _build_concentration_warnings(*group_sets: list[dict]) -> list[str]:
+    warnings: list[str] = []
+    for group_set in group_sets:
+        for group in group_set:
+            if group["warning"]:
+                warnings.append(
+                    f"{group['group']} represents {group['open_trade_percent']}% of open trades."
+                )
+    return warnings
 
 
 def _has_complete_risk(trade: Trade) -> bool:

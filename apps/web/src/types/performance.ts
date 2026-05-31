@@ -22,6 +22,24 @@ export type OpenRiskGroup = {
   incomplete_risk_count: number;
 };
 
+export type ConcentrationGroup = {
+  group: string;
+  open_trade_count: number;
+  open_trade_percent: string;
+  warning: boolean;
+};
+
+export type AssetConcentration = {
+  warning_status: "ok" | "warning";
+  warning_threshold_percent: string;
+  warnings: string[];
+  by_asset_class: ConcentrationGroup[];
+  by_symbol: ConcentrationGroup[];
+  by_sector: ConcentrationGroup[];
+  by_industry: ConcentrationGroup[];
+  review_only_notice: string;
+};
+
 export type OpenPortfolioRisk = {
   open_trade_count: number;
   complete_risk_count: number;
@@ -31,6 +49,7 @@ export type OpenPortfolioRisk = {
   max_risk_percent: string;
   warning_status: "ok" | "unknown" | "warning";
   warnings: string[];
+  asset_concentration: AssetConcentration;
   by_strategy: OpenRiskGroup[];
   by_asset_class: OpenRiskGroup[];
   review_only_notice: string;
