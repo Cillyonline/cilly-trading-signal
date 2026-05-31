@@ -16,23 +16,19 @@ This checklist records the current MVP release-candidate posture for review and 
 
 ### Implemented Since v2.1
 
-- v2.2-v2.4 improved historical/paper review evidence workflows with correction support, calibration finding categories, repeated finding visibility, and documented auditability gaps.
+- v2.2-v2.4 improved historical/paper review evidence workflows with correction support, correction audit history, auditable calibration finding categories, and repeated finding visibility.
 - v2.5 added open portfolio risk review, max open risk warnings, asset concentration warnings, simple correlation proxy warnings, and process-oriented trade journal analytics.
 - v2.6 added application monitoring checklist, structured health details, backup restore drill documentation, deployment readiness decision gate v2, dependency/container scan workflow, and operational incident runbook.
-- v2.7 added mobile layout audit, improved mobile signal cards, improved mobile review batch entry/correction grouping, and a basic PWA manifest/icons baseline.
-- v2.8 rebaselined product docs, recorded final internal workflow smoke evidence, and added the final internal owner/operator review decision gate.
+- v2.7 added mobile layout audit, improved mobile signal cards, improved mobile review batch entry/correction grouping, mobile Screener density improvements, mobile trade workflow grouping, responsive core-page header density reductions, and a basic PWA manifest/icons baseline.
+- v2.8 rebaselined product docs, recorded final internal workflow smoke evidence, added smoke-runner migration handling, repeatable browser clickthrough guidance, and the final internal owner/operator review decision gate.
 
 ### Current Known Gaps
 
-- Final current-main internal workflow smoke evidence has passed for the local Docker Compose stack, current migrations, web HTTP load, and API-assisted sample-only workflow coverage; visual browser clickthrough remains a documented test gap.
+- Final current-main internal workflow smoke evidence has passed for the local Docker Compose stack, current migrations, web HTTP load, and API-assisted sample-only workflow coverage; repeatable browser clickthrough guidance exists but remains operator-run rather than automated evidence.
 - Final internal go/no-go decision gate is recorded as Conditional Go for controlled internal owner/operator review only.
-- Deployment readiness gate evidence needs a doc refresh after the scan workflow and incident runbook completion (`#375`).
-- Monitoring checklist should link directly to the operational incident runbook (`#376`).
-- Review correction audit history remains a gap (`#355`).
-- Calibration finding categories still need stronger auditability (`#362`).
-- Portfolio risk review should include all active trade statuses (`#368`).
-- Mobile Screener density, mobile Trade workflow grouping, and global mobile header density remain follow-up gaps (`#381`, `#382`, `#383`).
-- A preserved local Docker volume required explicit `alembic upgrade head` before current screener/review tables existed during the v2.8 smoke rerun; migrated persistent stacks or fresh disposable stacks should verify migrations before workflow testing.
+- Deployment readiness evidence, monitoring runbook links, review correction audit history, auditable finding categories, active-status portfolio risk treatment, and mobile Screener/trade/header follow-ups have been addressed for controlled internal review.
+- Persistent local/private-staging volumes must still verify current migrations before workflow testing; the local smoke runner applies migrations and fails clearly on migration errors.
+- Production-grade monitoring, offsite encrypted backup operations, recurring restore evidence, rollback evidence, stricter security-scan policy, privacy handling, and explicit production-like owner acceptance remain incomplete for broader exposure.
 
 ### Final Internal Review Boundary
 
@@ -149,7 +145,7 @@ This checklist records the current MVP release-candidate posture for review and 
 - Historical/paper review batches are MVP-level and do not yet include advanced filtering, CSV export, or automated follow-up issue creation.
 - Production monitoring and operational alerting are not documented as passed; the application monitoring checklist is documentation for operator review, not completed production monitoring evidence.
 - Dependency/container scan workflow exists for visibility, but passing or non-blocking scan output is not production-readiness, security certification, or real-money-readiness evidence.
-- Mobile signal cards, review batch entry, and PWA manifest baseline are implemented; mobile Screener density, trade workflow grouping, header density, native app behavior, push notifications, offline trading mode, and background sync are not documented as passed.
+- Mobile signal cards, review batch entry, Screener density, trade workflow grouping, responsive header density, and PWA manifest baseline are implemented; native app behavior, push notifications, offline trading mode, and background sync are not documented as passed.
 
 ## Blocked
 

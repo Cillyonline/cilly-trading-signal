@@ -173,9 +173,9 @@ Planned milestone issues already map to the highest-priority areas:
 
 Recommended additional follow-ups after v2.7 if needed:
 
-- Improve mobile screener review density and import error layout.
-- Improve mobile trade creation/detail task grouping.
-- Apply a global mobile header density pass across core pages.
+- Mobile screener review density and import error layout have been improved for controlled internal review.
+- Mobile trade creation/detail task grouping has been improved for controlled internal review.
+- A global mobile header density pass has been applied across core pages.
 
 ## Verification Notes
 
