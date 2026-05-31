@@ -140,6 +140,28 @@ GOLDEN_CASES = [
         expected_no_trade_reasons={"missing_stop_loss", "missing_reward_target"},
         expected_quality={"risk_plan": "blocked", "data_quality": "blocked"},
     ),
+    GoldenCase(
+        name="review_finding_too_permissive_trend_pullback_resistance_blocks",
+        evaluate=lambda: evaluate_trend_pullback_long(
+            trend_payload(strong_resistance_nearby=True)
+        ),
+        expected_status=SignalStatus.NO_SETUP,
+        expected_score_class=ScoreClass.NO_TRADE,
+        expected_no_trade_reasons={"strong_resistance_nearby"},
+        expected_risk_flags={"strong_resistance_nearby"},
+        expected_quality={"structure": "blocked"},
+    ),
+    GoldenCase(
+        name="review_finding_too_permissive_base_breakout_resistance_blocks",
+        evaluate=lambda: evaluate_base_breakout_long(
+            base_breakout_payload(major_resistance_level=Decimal("102"))
+        ),
+        expected_status=SignalStatus.NO_SETUP,
+        expected_score_class=ScoreClass.NO_TRADE,
+        expected_no_trade_reasons={"strong_resistance_nearby"},
+        expected_risk_flags={"major_resistance_nearby", "strong_resistance_nearby"},
+        expected_quality={"structure": "blocked"},
+    ),
 ]
 
 

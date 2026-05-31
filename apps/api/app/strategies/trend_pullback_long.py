@@ -59,6 +59,7 @@ def evaluate_trend_pullback_long(payload: TrendPullbackInput) -> SignalEvaluatio
             *payload.signal_input.data_quality_flags,
             *data_quality_flags(payload),
             *( ["uncontrolled_pullback"] if not payload.pullback_controlled else [] ),
+            *( ["strong_resistance_nearby"] if payload.strong_resistance_nearby else [] ),
         ],
         context_risk_flags=payload.signal_input.context_risk_flags,
         context_no_trade_reasons=payload.signal_input.context_no_trade_reasons,

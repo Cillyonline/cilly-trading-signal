@@ -27,6 +27,7 @@ STRUCTURE_BLOCKERS = {
     "pullback_not_controlled",
     "base_too_wide",
     "base_high_not_clear",
+    "strong_resistance_nearby",
     "setup_already_invalidated",
 }
 TRIGGER_BLOCKERS = {
