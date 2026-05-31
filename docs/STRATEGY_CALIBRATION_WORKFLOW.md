@@ -232,6 +232,33 @@ loosening:
 
 If the tests need to be weakened to pass, the rule change is probably not ready.
 
+## Too-Strict Review Decision Gate
+
+Repeated `too_strict` findings should be reviewed conservatively. They do not
+automatically justify lower thresholds or more A/B setups.
+
+Current v2.4 decision:
+
+- Missing trigger confirmation remains `Watchlist`, not `No Trade`, when the setup
+  has a coherent risk plan and no hard blocker.
+- The golden case
+  `review_finding_too_strict_watchlist_missing_trigger_not_blocked` protects this
+  behavior.
+- No loosening is currently justified for missing/stale context, incoherent risk
+  plans, bearish regime, nearby strong resistance, uncontrolled pullbacks, wide
+  bases, unclear base highs, or extended breakouts.
+- A future loosening must cite a specific golden case and must not turn weak or
+  incomplete setups into `A-Setup` or `B-Setup` without coherent stop, target,
+  invalidation, and minimum R:R.
+
+Preferred outcomes for repeated `too_strict` findings:
+
+- Improve wording or `next_action` when the blocker is correct but confusing.
+- Add a golden case when the playbook clearly says the case should remain
+  reviewable.
+- Keep conservative No Trade behavior when data quality, market regime, trigger,
+  structure, or risk plan is incomplete.
+
 ## Review Checklist
 
 For each calibration PR, reviewers should check:
