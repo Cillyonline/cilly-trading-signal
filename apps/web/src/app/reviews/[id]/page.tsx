@@ -39,6 +39,8 @@ export default function ReviewBatchDetailPage({ params }: { params: { id: string
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [draftText, setDraftText] = useState<string | null>(null);
+  const [copyMessage, setCopyMessage] = useState<string | null>(null);
   const batchId = Number(params.id);
 
   async function loadBatch() {
@@ -87,6 +89,18 @@ export default function ReviewBatchDetailPage({ params }: { params: { id: string
       setError(exportError instanceof Error ? exportError.message : "Review-Batch Export fehlgeschlagen.");
     } finally {
       setIsExporting(false);
+    }
+  }
+
+  async function handleCopyDraft() {
+    if (!draftText) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(draftText);
+      setCopyMessage("Draft wurde in die Zwischenablage kopiert.");
+    } catch {
+      setCopyMessage("Kopieren nicht moeglich. Draft kann manuell markiert werden.");
     }
   }
 
@@ -181,11 +195,40 @@ export default function ReviewBatchDetailPage({ params }: { params: { id: string
                   </p>
                 ) : (
                   <div className="divide-y divide-white/10">
-                    {filteredEntries.map((entry) => <EntryRow key={entry.id} entry={entry} />)}
+                    {filteredEntries.map((entry) => (
+                      <EntryRow
+                        key={entry.id}
+                        batch={batch}
+                        entry={entry}
+                        onDraft={() => {
+                          setDraftText(buildFollowUpDraft(batch, entry));
+                          setCopyMessage(null);
+                        }}
+                      />
+                    ))}
                   </div>
                 )}
               </div>
             </section>
+
+            {draftText ? (
+              <section className="rounded-3xl border border-violet-300/30 bg-violet-300/10 p-6">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h2 className="text-xl font-semibold text-violet-50">Calibration Follow-up Draft</h2>
+                    <p className="mt-2 text-sm text-violet-100/80">
+                      Lokaler Markdown-Draft fuer ein manuelles Issue. Pruefe private Notizen vor dem Einfuegen;
+                      es wird nichts automatisch hochgeladen oder an Regeln geaendert.
+                    </p>
+                  </div>
+                  <button className="w-fit rounded-xl bg-violet-200 px-4 py-2 text-sm font-semibold text-slate-950" type="button" onClick={() => void handleCopyDraft()}>
+                    Draft kopieren
+                  </button>
+                </div>
+                {copyMessage ? <p className="mt-3 text-sm text-violet-100">{copyMessage}</p> : null}
+                <textarea className="mt-4 h-96 w-full rounded-2xl border border-white/10 bg-slate-950 p-4 font-mono text-xs text-slate-100" readOnly value={draftText} />
+              </section>
+            ) : null}
 
             {Object.entries(entriesByLabel).length > 0 ? (
               <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
@@ -236,7 +279,8 @@ function EntryFilters({
   );
 }
 
-function EntryRow({ entry }: { entry: ReviewEntry }) {
+function EntryRow({ batch, entry, onDraft }: { batch: ReviewBatch; entry: ReviewEntry; onDraft: () => void }) {
+  const isAttentionFinding = entry.manual_review_label !== "useful" || entry.follow_up_needed;
   return (
     <article className="grid gap-3 p-4 text-sm lg:grid-cols-[1fr_auto_auto] lg:items-center">
       <div>
@@ -248,9 +292,20 @@ function EntryRow({ entry }: { entry: ReviewEntry }) {
         <p className="mt-2 text-slate-500">{entry.notes ?? "Keine Notes."}</p>
       </div>
       <span className="text-slate-400">{formatLabel(entry.signal_status)} / {formatLabel(entry.score_class ?? "no score")}</span>
-      <span className={`w-fit rounded-full border px-3 py-1 text-xs ${labelTone[entry.manual_review_label]}`}>
-        {formatLabel(entry.manual_review_label)}
-      </span>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className={`w-fit rounded-full border px-3 py-1 text-xs ${labelTone[entry.manual_review_label]}`}>
+          {formatLabel(entry.manual_review_label)}
+        </span>
+        <button
+          className="rounded-full border border-violet-300/30 px-3 py-1 text-xs text-violet-100 hover:border-violet-200 disabled:cursor-not-allowed disabled:opacity-40"
+          disabled={!isAttentionFinding}
+          onClick={onDraft}
+          title={isAttentionFinding ? "Markdown-Draft fuer Follow-up erzeugen" : "Nur fuer Attention-Findings noetig"}
+          type="button"
+        >
+          Draft
+        </button>
+      </div>
     </article>
   );
 }
@@ -410,6 +465,44 @@ function extractTextValues(value: unknown): string[] {
     return Object.values(value).flatMap((item) => (typeof item === "string" ? [item] : []));
   }
   return [];
+}
+
+function buildFollowUpDraft(batch: ReviewBatch, entry: ReviewEntry) {
+  const blockers = extractTextValues(entry.quality_blockers);
+  return [
+    `## Calibration Follow-up: ${entry.symbol} ${formatLabel(entry.manual_review_label)}`,
+    "",
+    "## Source Evidence",
+    `- Review batch: ${batch.name} (#${batch.id}, ${batch.review_type})`,
+    `- Entry: #${entry.id}`,
+    `- Symbol: ${entry.symbol}`,
+    `- Asset class: ${entry.asset_class}`,
+    `- Strategy: ${formatLabel(entry.strategy_type)}`,
+    `- Signal status: ${formatLabel(entry.signal_status)}`,
+    `- Score class: ${formatLabel(entry.score_class ?? "no score")}`,
+    `- Manual review label: ${formatLabel(entry.manual_review_label)}`,
+    `- Follow-up needed: ${entry.follow_up_needed ? "yes" : "no"}`,
+    `- Quality blockers: ${blockers.length > 0 ? blockers.join(", ") : "none recorded"}`,
+    "",
+    "## Expected Behavior",
+    "Describe the conservative, explainable behavior expected from the strategy or review workflow.",
+    "",
+    "## Actual Output / Observed Issue",
+    entry.notes ? sanitizeDraftText(entry.notes) : "Describe the observed output using sanitized notes only.",
+    "",
+    "## Evidence Boundary Check",
+    "- This draft is process evidence only, not a backtest or profitability validation.",
+    "- No automatic strategy or rule change is requested by this draft alone.",
+    "- No trading advice, broker action, or order execution is implied.",
+    "- Notes have been reviewed for private account data before filing.",
+    "",
+    "## Suggested Follow-up",
+    "Manual review required: decide whether documentation, fixture coverage, or calibration discussion is needed.",
+  ].join("\n");
+}
+
+function sanitizeDraftText(value: string) {
+  return value.replace(/[\r\n]+/g, " ").trim();
 }
 
 function formatLabel(value: string) {
