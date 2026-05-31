@@ -56,6 +56,8 @@ export type ReviewBatchSummary = {
   follow_up_needed_count: number;
   repeated_attention_labels: string[];
   repeated_blocker_patterns: string[];
+  finding_category_counts: Record<string, number>;
+  repeated_finding_categories: string[];
   evidence_only_notice: string;
 };
 
