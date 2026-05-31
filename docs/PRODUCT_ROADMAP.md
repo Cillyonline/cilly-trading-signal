@@ -32,7 +32,7 @@ Spaeter moeglich:
 - Multi-User
 - Team-/Community-Modus
 - weitere Broker-/Exchange-Integrationen
-- Mobile/PWA-Nutzung
+- erweiterte Mobile/PWA-Nutzung ueber die aktuelle installierbare Baseline hinaus
 
 ## Asset-Klassen
 
@@ -129,6 +129,33 @@ Prioritaeten:
 - P2: zeitnah pruefen
 - P3: Information
 
+## Current Internal Review Candidate Scope
+
+Der aktuelle Stand ist ein kontrolliertes Owner/Operator-Review-Cockpit, kein produktionsreifes Trading-System. Implementiert sind:
+
+- Watchlist fuer Aktien und Krypto.
+- TradingView OHLCV CSV Import als manuelle Baseline.
+- Guarded manual Daily/EOD provider sync mit Source/Freshness-Kontext, disabled-by-default.
+- Deterministische Multi-Timeframe-Analyse mit erklaerbaren Long-only Setups.
+- Benchmark-Kontext fuer gespeicherte Daily-Kontexte (`SPY`/`QQQ`, `BTC`/`ETH`).
+- Explainable Signal Review mit Reasoning, Risk Flags, No-Trade-Gruenden, Next Action und stale Signal Visibility.
+- Alert Event Review mit policy-gated Telegram Routing, Dedup und Rate Limit, ohne Buy/Sell-Anweisung.
+- Manuelles Trade Logging, Management Events, Close Flow, Journal und Performance in R-Multiples.
+- Open Portfolio Risk, Risk-Warnungen, Asset-Konzentration, einfache Correlation-Proxies und Trade Journal Analytics.
+- TradingView Screener CSV Snapshots, Review-Kandidaten, Bulk Review und explizite Watchlist-Konvertierung.
+- Historical/Paper Review Batches fuer Prozess-Evidence, nicht fuer Profitabilitaetsvalidierung.
+- Mobile Review Verbesserungen fuer Signals und Review Batches plus installierbare PWA-Manifest-Baseline.
+- Operational Readiness Docs: Monitoring Checklist, Health Details, Backup Restore Drill, Security Scan Workflow und Incident Runbook.
+
+Weiterhin nicht enthalten:
+
+- Produktionseinsatz oder Public SaaS.
+- Broker-/Exchange-Integration, Account Sync oder automatische Orders.
+- Live-/Realtime-Marktdatenversprechen.
+- Automatische Marktaktualisierung oder scheduler-driven Analyse.
+- Backtesting-/Profitabilitaetsvalidierung.
+- Multi-User, Rollenmodell, Registrierung, Billing oder Support-Prozesse.
+
 ## Datenquellen
 
 Version 1:
@@ -145,14 +172,13 @@ MVP+:
 
 Spaeter:
 
-- TradingView Screener CSV
 - weitere Kursdaten-APIs und Provider-Timeframes nach Kosten-, Lizenz- und Rate-Limit-Pruefung
 - automatische Marktaktualisierung
 - Broker-/Exchange-Import optional
 
 ## Technische Zielarchitektur
 
-- Frontend: responsive Web-App, spaeter PWA-faehig
+- Frontend: responsive Web-App mit installierbarer PWA-Manifest-Baseline
 - Backend: API, Signal Engine, Alert Engine, Trade Manager, Exit Engine
 - Datenbank: PostgreSQL
 - Deployment: VPS, Docker Compose, Domain, HTTPS, Caddy
@@ -259,6 +285,8 @@ Spaeter:
 - schnelle Alert-Ansichten
 - Trade Management mobil nutzbar
 
+Status: Phase 9 ist als Screener-CSV-Reviewworkflow umgesetzt, aber ohne automatische Analyse- oder Trade-Erstellung. Phase 10 hat eine mobile Audit-Baseline, verbesserte mobile Signal- und Review-Batch-Workflows sowie ein PWA Manifest; weitere mobile Screener-/Trade-/Header-Politur bleibt Follow-up.
+
 ## Nicht-Ziele Fuer Den Start
 
 - automatische Orderausfuehrung
@@ -274,4 +302,4 @@ Spaeter:
 
 ## Erfolgsdefinition
 
-Das Projekt ist erfolgreich, wenn das Tool gute Long-Setups strukturiert erkennt, schlechte Trades herausfiltert, Trigger nicht verpasst, klare Signal-Karten erzeugt, manuelles Trade Logging erlaubt, offene Trades ueberwacht, Exit-/Management-Hinweise gibt und Performance in R messbar macht.
+Das Projekt ist fuer den finalen internen Review Candidate erfolgreich, wenn das Tool Long-only Swingtrading-Setups strukturiert und erklaerbar zur manuellen Pruefung aufbereitet, schlechte oder unvollstaendige Setups konservativ als No Trade sichtbar macht, manuelles Trade Logging und Review-Batches erlaubt, offene Risiken und Performance in R nachvollziehbar dokumentiert und dabei keine Broker-Aktionen, automatische Orders, Profitabilitaetsversprechen oder Trading Advice erzeugt.
