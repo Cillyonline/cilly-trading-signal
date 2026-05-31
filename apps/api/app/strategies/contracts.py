@@ -28,6 +28,18 @@ NO_TRADE_REASON_MESSAGES = {
     "poor_data_quality": (
         "No Trade: required data is missing, stale, partial, or otherwise insufficient."
     ),
+    "required_timeframe_data_missing": (
+        "No Trade: one or more required timeframes are missing for setup review."
+    ),
+    "required_market_data_not_fresh": (
+        "No Trade: required market data is stale, partial, failed, missing, or unknown."
+    ),
+    "insufficient_candle_history": (
+        "No Trade: candle history is too short for reliable indicator and setup review."
+    ),
+    "required_indicator_missing": (
+        "No Trade: required indicator context is missing after analysis."
+    ),
     "setup_already_invalidated": (
         "No Trade: setup is already invalidated by the stored analysis state."
     ),
@@ -65,6 +77,18 @@ NO_TRADE_NEXT_ACTIONS = {
     ),
     "poor_data_quality": (
         "Refresh or provide the missing/stale timeframe and benchmark data before review."
+    ),
+    "required_timeframe_data_missing": (
+        "Import all required timeframes before reviewing this long setup."
+    ),
+    "required_market_data_not_fresh": (
+        "Refresh stale, partial, failed, missing, or unknown market data before review."
+    ),
+    "insufficient_candle_history": (
+        "Provide enough candle history for the required indicators before review."
+    ),
+    "required_indicator_missing": (
+        "Re-run analysis after indicator context is available; otherwise keep No Trade."
     ),
     "setup_already_invalidated": (
         "Wait for a fresh setup instead of reusing the invalidated structure."
@@ -259,8 +283,7 @@ def collect_common_no_trade_reasons(
         reasons.append("missing_stop_loss")
     if entry is not None and stop is not None and entry <= stop:
         reasons.append("entry_not_above_stop")
-    if signal_input.data_quality_flags:
-        reasons.append("poor_data_quality")
+    reasons.extend(data_quality_no_trade_reasons(signal_input.data_quality_flags))
     if signal_input.setup_invalidated:
         reasons.append("setup_already_invalidated")
     if "missing_reward_target" in signal_input.data_quality_flags:
@@ -277,7 +300,41 @@ def collect_common_no_trade_reasons(
         reasons.append("strong_resistance_nearby")
     reasons.extend(signal_input.context_no_trade_reasons)
 
-    return reasons
+    return dedupe(reasons)
+
+
+def data_quality_no_trade_reasons(flags: list[str]) -> list[str]:
+    reasons: list[str] = []
+    for flag in flags:
+        if flag.startswith("missing_") and flag.endswith("_data"):
+            reasons.append("required_timeframe_data_missing")
+        elif flag.startswith("market_data_"):
+            reasons.append("required_market_data_not_fresh")
+        elif flag.endswith("_insufficient_candle_history"):
+            reasons.append("insufficient_candle_history")
+        elif flag.endswith("_ema200_missing"):
+            reasons.append("required_indicator_missing")
+
+    known_gate_flags = {
+        "missing_reward_target",
+        "uncontrolled_pullback",
+        "base_range_too_wide",
+        "breakout_extended_after_trigger",
+        "base_high_not_clear",
+        "strong_resistance_nearby",
+    }
+    has_unmapped_quality_flags = any(
+        flag not in known_gate_flags
+        and not (flag.startswith("missing_") and flag.endswith("_data"))
+        and not flag.startswith("market_data_")
+        and not flag.endswith("_insufficient_candle_history")
+        and not flag.endswith("_ema200_missing")
+        for flag in flags
+    )
+    if flags and not reasons and has_unmapped_quality_flags:
+        reasons.append("poor_data_quality")
+
+    return dedupe(reasons)
 
 
 def build_signal_result(
@@ -355,3 +412,7 @@ def next_action_for_no_trade(reasons: list[str]) -> str:
         if action is not None:
             return action
     return "No setup; wait for clearer context, structure, trigger, and risk before manual review."
+
+
+def dedupe(values: list[str]) -> list[str]:
+    return list(dict.fromkeys(values))

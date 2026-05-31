@@ -11,6 +11,7 @@ from app.strategies.contracts import (
     calculate_risk_reward,
     classify_score,
     collect_common_no_trade_reasons,
+    data_quality_no_trade_reasons,
     map_status,
 )
 
@@ -140,6 +141,48 @@ def test_common_no_trade_reasons(
     )
 
     assert expected_reason in reasons
+
+
+@pytest.mark.parametrize(
+    ("flags", "expected_reasons"),
+    [
+        (["missing_1W_data"], ["required_timeframe_data_missing"]),
+        (["market_data_stale_1D"], ["required_market_data_not_fresh"]),
+        (["1D_insufficient_candle_history"], ["insufficient_candle_history"]),
+        (["4H_ema200_missing"], ["required_indicator_missing"]),
+        (["provider_payload_invalid"], ["poor_data_quality"]),
+        (["missing_1D_data", "missing_4H_data"], ["required_timeframe_data_missing"]),
+    ],
+)
+def test_data_quality_no_trade_reasons_are_specific(
+    flags: list[str], expected_reasons: list[str]
+) -> None:
+    assert data_quality_no_trade_reasons(flags) == expected_reasons
+
+
+def test_specific_data_quality_reasons_override_high_score() -> None:
+    result = build_signal_result(
+        signal_input(data_quality_flags=["market_data_stale_1D", "1D_ema200_missing"]),
+        ScoreBreakdown(trend=25, structure=25, momentum=15, volume=15, risk_reward=15),
+        bias=Bias.BULLISH,
+        reasoning=["Setup has technical strength."],
+        risk_flags=[],
+        next_action="Generic placeholder should be replaced.",
+        entry_low=Decimal("100"),
+        stop_loss=Decimal("95"),
+        target_1=Decimal("112"),
+        risk_reward=Decimal("2.4"),
+        has_valid_trigger_plan=True,
+    )
+
+    assert result.status == SignalStatus.NO_SETUP
+    assert result.score_class == ScoreClass.NO_TRADE
+    assert result.no_trade_reasons == [
+        "required_market_data_not_fresh",
+        "required_indicator_missing",
+    ]
+    assert "required_market_data_not_fresh" in result.risk_flags
+    assert "Refresh stale, partial, failed, missing, or unknown market data" in result.next_action
 
 
 def test_build_signal_result_maps_watchlist_and_explainability_fields() -> None:

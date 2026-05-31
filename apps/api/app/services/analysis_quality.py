@@ -20,12 +20,17 @@ BLOCKED_REASONS = {
 }
 MISSING_DATA_REASONS = {
     "poor_data_quality",
+    "required_timeframe_data_missing",
+    "required_market_data_not_fresh",
+    "insufficient_candle_history",
+    "required_indicator_missing",
     "missing_stop_loss",
     "missing_reward_target",
 }
 STRUCTURE_BLOCKERS = {
     "pullback_not_controlled",
     "base_too_wide",
+    "breakout_too_extended",
     "base_high_not_clear",
     "strong_resistance_nearby",
     "setup_already_invalidated",
@@ -147,7 +152,7 @@ def risk_plan_check(signal: object, no_trade_reasons: list[str]) -> AnalysisQual
 
 
 def data_quality_check(risk_flags: list[str], no_trade_reasons: list[str]) -> AnalysisQualityCheck:
-    if "poor_data_quality" in no_trade_reasons:
+    if any(reason in MISSING_DATA_REASONS for reason in no_trade_reasons):
         return check(
             "data_quality", "Data quality", "blocked", "Required data is missing or stale."
         )
