@@ -68,7 +68,7 @@ This checklist records the current MVP release-candidate posture for review and 
 ### Operational Notes
 
 - Use [MVP Smoke Test](MVP_SMOKE_TEST.md) for RC validation evidence and future reruns.
-- Use [Deployment Runbook](DEPLOYMENT_RUNBOOK.md) for local/Caddy/startup procedures, health checks, backups, restore, and operational handling.
+- Use [Deployment Runbook](DEPLOYMENT_RUNBOOK.md) for local/Caddy/startup procedures, health checks, backups, restore, the repeatable [Backup Restore Drill](DEPLOYMENT_RUNBOOK.md#backup-restore-drill), and operational handling.
 - Use [Application Monitoring Checklist](APPLICATION_MONITORING_CHECKLIST.md) for local, private staging, and production-like monitoring expectations before broader reliance.
 - Use the [disposable demo data reset procedure](DEPLOYMENT_RUNBOOK.md#disposable-demo-data-reset) only for local/disposable data.
 - Do not delete staging, production-like, or real-data volumes unless separately approved.

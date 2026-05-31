@@ -1064,6 +1064,132 @@ Safe local verification path:
 4. Log in and confirm sample data exists.
 5. Stop the local stack and remove disposable volumes only after confirming the test is complete.
 
+## Backup Restore Drill
+
+Use this drill to verify that backup files can be restored without touching private staging, production-like, real-user, or real-trading data. This is an operator practice procedure, not a real production restore and not a production-readiness claim.
+
+### Drill Safety Rules
+
+- Restore only into an explicitly disposable Compose project, never into the private staging project, production-like project, or a real-data database.
+- Use a dedicated Compose project name such as `cilly_restore_drill`; do not use `cilly-trading-signal`, `staging`, or any existing project name.
+- Store source dumps outside the repository checkout.
+- Do not commit, upload, screenshot, or paste dump contents, `.env` values, database URLs, credentials, cookies, logs with private data, trade notes, journal notes, or restored row contents.
+- Use sample-only marker data for the drill when possible. If a real backup must be tested later, get separate approval and record only sanitized metadata.
+- If the target environment is unclear, stop before running the restore command.
+
+### Preconditions
+
+- Docker and Docker Compose are available on the operator machine or VPS.
+- The repository checkout is clean except for known local line-ending artifacts.
+- A backup dump exists outside the repository checkout.
+- The disposable project name, backup path, database name, and database user are written down before starting.
+- The operator has confirmed the restore target can be destroyed after the drill.
+
+### Step-by-Step Drill
+
+1. Choose a disposable project name.
+
+```bash
+export COMPOSE_PROJECT_NAME=cilly_restore_drill
+```
+
+2. Choose a source dump outside the repository checkout.
+
+```bash
+export RESTORE_DUMP=/srv/backups/cilly-trading-signal/postgres/cilly_trading_signal_YYYYMMDDTHHMMSSZ.dump
+test -f "$RESTORE_DUMP"
+```
+
+3. Start a disposable stack only for the drill. The restore helper stops and starts `api` and `web`, so create those disposable containers before running the restore.
+
+```bash
+docker compose -p "$COMPOSE_PROJECT_NAME" -f infra/docker-compose.yml up -d postgres api web
+docker compose -p "$COMPOSE_PROJECT_NAME" -f infra/docker-compose.yml ps
+```
+
+4. Restore the selected dump into the disposable project.
+
+```bash
+COMPOSE_PROJECT_NAME="$COMPOSE_PROJECT_NAME" \
+COMPOSE_FILE=infra/docker-compose.yml \
+POSTGRES_USER=postgres \
+POSTGRES_DB=cilly_trading_signal \
+./scripts/restore_postgres.sh "$RESTORE_DUMP"
+```
+
+5. Confirm app services restarted for smoke verification.
+
+```bash
+docker compose -p "$COMPOSE_PROJECT_NAME" -f infra/docker-compose.yml ps
+```
+
+6. Verify sanitized health only.
+
+```bash
+curl -fsS http://localhost:8000/api/health
+```
+
+7. Optionally verify sample marker data without exposing sensitive contents.
+
+```bash
+docker compose -p "$COMPOSE_PROJECT_NAME" -f infra/docker-compose.yml exec postgres \
+  psql -U postgres -d cilly_trading_signal -c "select count(*) from watchlist_items;"
+```
+
+8. Record sanitized evidence using the template below.
+
+9. Clean up only the disposable project.
+
+```bash
+docker compose -p "$COMPOSE_PROJECT_NAME" -f infra/docker-compose.yml down --volumes
+```
+
+10. Confirm no dump files were created inside the repository checkout.
+
+```bash
+find . -name '*.dump' -o -name '*.sql' -o -name '*.backup' -o -name '*.bak'
+```
+
+### Sanitized Evidence Template
+
+```markdown
+## Backup Restore Drill Evidence
+
+- Date/time:
+- Operator:
+- Environment level: local disposable / VPS disposable
+- Disposable Compose project:
+- Source backup path category: outside repository / external backup directory
+- Source backup filename timestamp only:
+- Restore target confirmed disposable: yes/no
+- Restore command completed: pass/fail
+- Container health after restore: pass/fail
+- API health after restore: pass/fail
+- Optional sample-count check: pass/fail/not run
+- Cleanup completed with `down --volumes` on disposable project only: yes/no
+- Repository contains no dump/env artifacts after drill: yes/no
+- Secrets/private data/raw logs included in this evidence: no
+- Follow-up issue if failed:
+```
+
+### Cleanup Rules
+
+- Remove only the disposable project created for the drill.
+- Do not run broad Docker cleanup commands such as `docker system prune` or `docker volume prune` as part of this drill.
+- Keep the source backup unless retention policy separately says it can be removed.
+- If cleanup fails, record the disposable project name and inspect it before trying destructive commands.
+
+### Stop Conditions
+
+Stop the drill and create a follow-up issue if:
+
+- The selected Compose project is not clearly disposable.
+- The selected dump path is inside the repository checkout.
+- The restore command would target private staging, production-like, or real data.
+- The backup file is missing, zero bytes, or unexpectedly small.
+- API health fails after restore.
+- Evidence cannot be recorded without exposing secrets or private trading data.
+
 ## Basic Rollback
 
 Rollback assumes the previous commit is still available and the database schema is compatible with the previous app version.
