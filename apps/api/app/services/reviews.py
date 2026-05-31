@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.enums import ManualReviewLabel
-from app.models.review import ReviewBatch, ReviewEntry
+from app.models.review import ReviewBatch, ReviewEntry, ReviewEntryRevision
 from app.models.signal import Signal
 from app.schemas.reviews import (
     ReviewBatchCreate,
@@ -67,7 +67,7 @@ def list_review_batches(db: Session, user_id: int) -> list[ReviewBatch]:
     return list(
         db.scalars(
             select(ReviewBatch)
-            .options(selectinload(ReviewBatch.entries))
+            .options(selectinload(ReviewBatch.entries).selectinload(ReviewEntry.revisions))
             .where(ReviewBatch.user_id == user_id)
             .order_by(ReviewBatch.updated_at.desc(), ReviewBatch.id.desc())
         )
@@ -77,7 +77,7 @@ def list_review_batches(db: Session, user_id: int) -> list[ReviewBatch]:
 def get_review_batch(db: Session, user_id: int, batch_id: int) -> ReviewBatch | None:
     batch = db.scalar(
         select(ReviewBatch)
-        .options(selectinload(ReviewBatch.entries))
+        .options(selectinload(ReviewBatch.entries).selectinload(ReviewEntry.revisions))
         .where(ReviewBatch.id == batch_id)
     )
     if batch is None or batch.user_id != user_id:
@@ -122,6 +122,7 @@ def update_review_entry(
 
     data = _entry_payload_data(payload)
     _validate_signal_ownership(db, user_id, data.get("signal_id"))
+    _record_entry_revision(db, entry)
     for key, value in data.items():
         setattr(entry, key, value)
     batch.updated_at = datetime.now(UTC)
@@ -242,6 +243,53 @@ def _entry_payload_data(payload: ReviewEntryCreate | ReviewEntryUpdate) -> dict:
         data["follow_up_issue_url"] = str(data["follow_up_issue_url"])
     data["symbol"] = data["symbol"].strip().upper()
     return data
+
+
+def _record_entry_revision(db: Session, entry: ReviewEntry) -> None:
+    revision = ReviewEntryRevision(
+        entry_id=entry.id,
+        batch_id=entry.batch_id,
+        user_id=entry.user_id,
+        revision_number=len(entry.revisions) + 1,
+        changed_at=datetime.now(UTC),
+        previous_values=_entry_revision_snapshot(entry),
+    )
+    db.add(revision)
+
+
+def _entry_revision_snapshot(entry: ReviewEntry) -> dict:
+    return {
+        "signal_id": entry.signal_id,
+        "symbol": entry.symbol,
+        "asset_class": entry.asset_class.value,
+        "strategy_type": entry.strategy_type.value,
+        "stored_data_start": _fmt_optional_date(entry.stored_data_start),
+        "stored_data_end": _fmt_optional_date(entry.stored_data_end),
+        "benchmark_context": entry.benchmark_context,
+        "signal_status": entry.signal_status.value,
+        "score_class": entry.score_class.value if entry.score_class else None,
+        "no_trade_reasons": entry.no_trade_reasons,
+        "risk_flags": entry.risk_flags,
+        "quality_blockers": entry.quality_blockers,
+        "entry_price": _fmt_optional_decimal(entry.entry_price),
+        "stop_loss": _fmt_optional_decimal(entry.stop_loss),
+        "target_price": _fmt_optional_decimal(entry.target_price),
+        "planned_risk_reward": _fmt_optional_decimal(entry.planned_risk_reward),
+        "manual_review_label": entry.manual_review_label.value,
+        "outcome_r": _fmt_optional_decimal(entry.outcome_r),
+        "outcome_measurement_rule": entry.outcome_measurement_rule,
+        "follow_up_needed": entry.follow_up_needed,
+        "follow_up_issue_url": entry.follow_up_issue_url,
+        "notes": entry.notes,
+    }
+
+
+def _fmt_optional_date(value) -> str | None:
+    return None if value is None else value.isoformat()
+
+
+def _fmt_optional_decimal(value: Decimal | None) -> str | None:
+    return None if value is None else str(value)
 
 
 def _validate_signal_ownership(db: Session, user_id: int, signal_id: int | None) -> None:

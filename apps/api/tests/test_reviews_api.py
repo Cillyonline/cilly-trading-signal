@@ -11,7 +11,7 @@ from app.db.session import get_db
 from app.main import create_app
 from app.models import *  # noqa: F403
 from app.models.enums import AssetClass, SignalStatus, StrategyType, UserRole
-from app.models.review import ReviewEntry
+from app.models.review import ReviewBatch, ReviewEntry, ReviewEntryRevision
 from app.models.signal import Signal
 from app.models.user import User
 from app.models.watchlist import WatchlistItem
@@ -322,6 +322,71 @@ def test_review_entry_edit_updates_summary_and_preserves_created_at(client: Test
     assert batch["summary"]["follow_up_needed_count"] == 1
 
 
+def test_review_entry_edit_records_append_only_revision_history(client: TestClient) -> None:
+    login(client)
+    batch_id = client.post(
+        "/api/reviews/batches",
+        json={"name": "Revision sample", "review_type": "paper"},
+    ).json()["id"]
+    first = client.post(
+        f"/api/reviews/batches/{batch_id}/entries",
+        json={
+            "symbol": "aapl",
+            "asset_class": "stock",
+            "strategy_type": "trend_pullback_long",
+            "signal_status": "watchlist",
+            "score_class": "watchlist",
+            "quality_blockers": ["market_regime"],
+            "manual_review_label": "unclear",
+            "notes": "Original sanitized note.",
+        },
+    ).json()
+
+    first_update = client.patch(
+        f"/api/reviews/batches/{batch_id}/entries/{first['id']}",
+        json={
+            "symbol": "msft",
+            "asset_class": "stock",
+            "strategy_type": "trend_pullback_long",
+            "signal_status": "armed",
+            "score_class": "b_setup",
+            "quality_blockers": ["liquidity"],
+            "manual_review_label": "too_strict",
+            "notes": "First correction.",
+        },
+    )
+    second_update = client.patch(
+        f"/api/reviews/batches/{batch_id}/entries/{first['id']}",
+        json={
+            "symbol": "nvda",
+            "asset_class": "stock",
+            "strategy_type": "base_breakout_long",
+            "signal_status": "triggered",
+            "score_class": "a_setup",
+            "quality_blockers": ["trigger"],
+            "manual_review_label": "useful",
+            "notes": "Second correction.",
+        },
+    )
+
+    assert first_update.status_code == 200
+    assert second_update.status_code == 200
+    body = second_update.json()
+    assert body["symbol"] == "NVDA"
+    assert [revision["revision_number"] for revision in body["revisions"]] == [1, 2]
+    assert body["revisions"][0]["previous_values"]["symbol"] == "AAPL"
+    assert body["revisions"][0]["previous_values"]["manual_review_label"] == "unclear"
+    assert body["revisions"][0]["previous_values"]["notes"] == "Original sanitized note."
+    assert body["revisions"][1]["previous_values"]["symbol"] == "MSFT"
+    assert body["revisions"][1]["previous_values"]["manual_review_label"] == "too_strict"
+
+    batch = client.get(f"/api/reviews/batches/{batch_id}").json()
+    entry = batch["entries"][0]
+    assert entry["symbol"] == "NVDA"
+    assert len(entry["revisions"]) == 2
+    assert entry["revisions"][0]["previous_values"]["symbol"] == "AAPL"
+
+
 def test_review_entry_edit_enforces_validation(client: TestClient) -> None:
     login(client)
     batch_id = client.post(
@@ -366,8 +431,15 @@ def test_review_entry_edit_rejects_other_user_entry(
     )
     db_session.add(other_user)
     db_session.flush()
+    other_batch = ReviewBatch(
+        user_id=other_user.id,
+        name="Other batch",
+        review_type="paper",
+    )
+    db_session.add(other_batch)
+    db_session.flush()
     entry = ReviewEntry(
-        batch_id=999,
+        batch_id=other_batch.id,
         user_id=other_user.id,
         symbol="MSFT",
         asset_class=AssetClass.STOCK,
@@ -395,6 +467,7 @@ def test_review_entry_edit_rejects_other_user_entry(
     )
 
     assert response.status_code == 404
+    assert db_session.scalars(select(ReviewEntryRevision)).all() == []
 
 
 def test_review_entry_rejects_other_user_signal(client: TestClient, db_session: Session) -> None:

@@ -48,6 +48,17 @@ export type ReviewEntry = {
   notes: string | null;
   created_at: string;
   updated_at: string;
+  revisions: ReviewEntryRevision[];
+};
+
+export type ReviewEntryRevision = {
+  id: number;
+  entry_id: number;
+  batch_id: number;
+  revision_number: number;
+  changed_at: string;
+  previous_values: Record<string, unknown>;
+  created_at: string;
 };
 
 export type ReviewBatchSummary = {

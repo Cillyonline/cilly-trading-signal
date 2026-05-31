@@ -81,6 +81,18 @@ class ReviewEntryUpdate(ReviewEntryCreate):
     pass
 
 
+class ReviewEntryRevisionRead(BaseModel):
+    id: int
+    entry_id: int
+    batch_id: int
+    revision_number: int
+    changed_at: datetime
+    previous_values: dict
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 class ReviewEntryRead(BaseModel):
     id: int
     batch_id: int
@@ -108,6 +120,7 @@ class ReviewEntryRead(BaseModel):
     notes: str | None
     created_at: datetime
     updated_at: datetime
+    revisions: list[ReviewEntryRevisionRead] = Field(default_factory=list)
 
     model_config = {"from_attributes": True}
 

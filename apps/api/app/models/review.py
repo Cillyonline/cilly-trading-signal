@@ -92,3 +92,23 @@ class ReviewEntry(Base):
     batch: Mapped["ReviewBatch"] = relationship(back_populates="entries")
     user: Mapped["User"] = relationship(back_populates="review_entries")
     signal: Mapped["Signal | None"] = relationship()
+    revisions: Mapped[list["ReviewEntryRevision"]] = relationship(
+        back_populates="entry",
+        cascade="all, delete-orphan",
+        order_by="ReviewEntryRevision.created_at",
+    )
+
+
+class ReviewEntryRevision(Base):
+    __tablename__ = "review_entry_revisions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    entry_id: Mapped[int] = mapped_column(ForeignKey("review_entries.id"), index=True)
+    batch_id: Mapped[int] = mapped_column(ForeignKey("review_batches.id"), index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    revision_number: Mapped[int]
+    changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    previous_values: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    entry: Mapped["ReviewEntry"] = relationship(back_populates="revisions")
