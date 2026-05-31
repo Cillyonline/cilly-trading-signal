@@ -169,6 +169,9 @@ uv run --no-project --with pytest --with "fastapi[standard]" --with pydantic-set
 
 ## Dokumente
 
+- `docs/OWNER_OPERATOR_WIKI.md`
+- `docs/OWNER_OPERATOR_COCKPIT_MANUAL.md`
+- `docs/DASHBOARD_USER_GUIDE.md`
 - `docs/PRODUCT_ROADMAP.md`
 - `docs/DELIVERY_ROADMAP.md`
 - `docs/MVP_SPEC.md`
@@ -184,13 +187,17 @@ uv run --no-project --with pytest --with "fastapi[standard]" --with pydantic-set
 - `docs/TECH_ARCHITECTURE.md`
 - `docs/DEPLOYMENT_RUNBOOK.md`
 - `docs/MVP_SMOKE_TEST.md`
+- `docs/FINAL_BROWSER_CLICKTHROUGH_CHECKLIST.md`
 - `docs/MVP_RELEASE_CHECKLIST.md`
+- `docs/VPS_STAGING_PLAN.md`
+- `docs/VPS_ENVIRONMENT_CHECKLIST.md`
+- `docs/VPS_STAGING_SMOKE_TEST.md`
 - `docs/VPS_STAGING_DECISION_GATE.md`
 - `docs/V1_3_ALERT_ROUTING_SMOKE_TEST.md`
 
 Operational deployment, PostgreSQL backup/restore, healthcheck, logging, and deployment smoke-test steps are documented in `docs/DEPLOYMENT_RUNBOOK.md`. Backup files and logs may contain sensitive app data and must not be committed or shared without review.
 
-The intended manual cockpit review flow is documented in `docs/COCKPIT_REVIEW_WORKFLOW.md`. The local MVP smoke-test history is documented in `docs/MVP_SMOKE_TEST.md`. Private VPS staging smoke evidence and the conditional staging-only decision gate are documented in `docs/VPS_STAGING_SMOKE_TEST.md` and `docs/VPS_STAGING_DECISION_GATE.md`; this is not a production-readiness claim.
+The owner/operator documentation starts at `docs/OWNER_OPERATOR_WIKI.md`. The practical cockpit manual is in `docs/OWNER_OPERATOR_COCKPIT_MANUAL.md`, and dashboard interpretation is documented in `docs/DASHBOARD_USER_GUIDE.md`. The intended manual cockpit review flow is documented in `docs/COCKPIT_REVIEW_WORKFLOW.md`. The local MVP smoke-test history is documented in `docs/MVP_SMOKE_TEST.md`. Private VPS staging planning, smoke evidence, and the conditional staging-only decision gate are documented in `docs/VPS_STAGING_PLAN.md`, `docs/VPS_STAGING_SMOKE_TEST.md`, and `docs/VPS_STAGING_DECISION_GATE.md`; this is not a production-readiness claim.
 
 The current MVP release posture is summarized in `docs/MVP_RELEASE_CHECKLIST.md`. The checklist separates Done, Partial, Missing, Blocked, and Not Included areas and must not be read as a production or profitability claim.
 
@@ -226,7 +233,7 @@ Teilweise umgesetzt oder noch MVP-limitiert:
 - Analyse und Signale sind deterministisch und konservativ, aber keine validierte Strategie und keine Gewinnprognose.
 - Auth ist bewusst Single-User; Multi-User, Rollenmodell und Self-Service-Registrierung sind nicht Teil des MVP.
 - Risk Settings erzwingen Basisregeln beim manuellen Trade Logging, ersetzen aber kein vollstaendiges Portfolio-Risikomanagement.
-- Dashboard, Journal und Performance sind funktional, aber noch Basisansichten.
+- Dashboard, Journal und Performance sind funktional; Dashboard-Bedienung und Operator-Workflow sind in `docs/DASHBOARD_USER_GUIDE.md` und `docs/OWNER_OPERATOR_COCKPIT_MANUAL.md` dokumentiert.
 - Alerting ist fuer v1.3 als Review-Routing implementiert; echter Telegram-Provider-Smoke auf dem VPS bleibt ein operator-run Schritt mit redigierter Evidenz.
 
 Nicht enthalten:
@@ -238,5 +245,5 @@ Nicht enthalten:
 Aktuelle Blocker und offene Punkte:
 
 - Keine Produktionsfreigabe: Deployment, Monitoring, Backups, Secrets-Betrieb und Security Review sind noch offen.
-- Private VPS Staging ist nur conditional-go fuer kontrollierte Owner/Operator-Nutzung; breitere oder produktionsnahe Nutzung braucht weiterhin separate Operational-Readiness-Entscheidungen.
+- Private VPS Staging ist nur conditional-go fuer kontrollierte Owner/Operator-Nutzung; breitere oder produktionsnahe Nutzung braucht weiterhin separate Operational-Readiness-Entscheidungen. Vor der naechsten VPS-Runde zuerst `docs/OWNER_OPERATOR_COCKPIT_MANUAL.md`, `docs/FINAL_BROWSER_CLICKTHROUGH_CHECKLIST.md` und `docs/VPS_ENVIRONMENT_CHECKLIST.md` verwenden.
 - Dokumentation und Roadmap muessen nach jedem groesseren Slice weiter synchron gehalten werden.

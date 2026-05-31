@@ -6,6 +6,8 @@ This document defines the non-disruptive private VPS staging deployment plan for
 
 It is based on the sanitized read-only inventory in `docs/VPS_INVENTORY.md`. It is a planning artifact only and does not approve production readiness, real-money trading, broker integration, automatic execution, or public SaaS operation.
 
+Before running VPS actions, review [Owner/Operator Wiki](OWNER_OPERATOR_WIKI.md), [Owner/Operator Cockpit Manual](OWNER_OPERATOR_COCKPIT_MANUAL.md), [Dashboard User Guide](DASHBOARD_USER_GUIDE.md), and [Final Browser Clickthrough Checklist](FINAL_BROWSER_CLICKTHROUGH_CHECKLIST.md). These docs define the sample-only workflow and evidence boundaries that the VPS staging validation should follow.
+
 ## Safety Boundaries
 
 - The app remains decision-support only.
@@ -151,32 +153,33 @@ Do not change firewall rules as part of this planning issue.
 This is a planned sequence, not an instruction to run now.
 
 1. Confirm PRs for #158 and #159 are merged.
-2. Confirm domain/subdomain and DNS.
-3. Confirm firewall decision.
-4. SSH to the VPS.
-5. Create or confirm repository parent path `/root/repos`.
-6. Clone repository to `/root/repos/cilly-trading-signal`.
-7. Create `.env` on the VPS from `.env.example` and replace all unsafe placeholders.
-8. Confirm `.env` is not tracked and not copied into logs or issues.
-9. Start stack with the Caddy proxy profile:
+2. Review the owner/operator wiki, cockpit manual, dashboard guide, and browser clickthrough checklist.
+3. Confirm domain/subdomain and DNS.
+4. Confirm firewall decision.
+5. SSH to the VPS.
+6. Create or confirm repository parent path `/root/repos`.
+7. Clone repository to `/root/repos/cilly-trading-signal`.
+8. Create `.env` on the VPS from `.env.example` and replace all unsafe placeholders.
+9. Confirm `.env` is not tracked and not copied into logs or issues.
+10. Start stack with the Caddy proxy profile:
 
 ```bash
 docker compose --env-file .env -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy up --build -d
 ```
 
-10. Check services:
+11. Check services:
 
 ```bash
 docker compose -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy ps
 ```
 
-11. Check public API health through HTTPS:
+12. Check public API health through HTTPS:
 
 ```bash
 curl -fsS https://<app-domain>/api/health
 ```
 
-12. Continue with the VPS smoke test from #163.
+13. Continue with the VPS smoke test from #163.
 
 ## Rollback / Stop Procedure Draft
 
