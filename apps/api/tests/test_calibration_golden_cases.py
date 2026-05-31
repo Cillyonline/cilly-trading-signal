@@ -105,6 +105,41 @@ GOLDEN_CASES = [
         expected_no_trade_reasons={"missing_stop_loss", "missing_reward_target"},
         expected_quality={"risk_plan": "blocked", "data_quality": "blocked"},
     ),
+    GoldenCase(
+        name="review_finding_too_permissive_breakout_extended_blocks_chase",
+        evaluate=lambda: evaluate_base_breakout_long(
+            base_breakout_payload(
+                base_high=Decimal("100"),
+                base_low=Decimal("94"),
+                daily=base_daily(close=Decimal("107")),
+                trigger=IndicatorContext(close=Decimal("107")),
+            )
+        ),
+        expected_status=SignalStatus.NO_SETUP,
+        expected_score_class=ScoreClass.NO_TRADE,
+        expected_no_trade_reasons={"breakout_too_extended"},
+        expected_risk_flags={"breakout_extended_after_trigger"},
+        expected_quality={"data_quality": "blocked"},
+    ),
+    GoldenCase(
+        name="review_finding_too_strict_watchlist_missing_trigger_not_blocked",
+        evaluate=lambda: evaluate_base_breakout_long(
+            base_breakout_payload(close_above_base_high_4h=False, close_above_base_high_daily=False)
+        ),
+        expected_status=SignalStatus.WATCHLIST,
+        expected_score_class=ScoreClass.A_SETUP,
+        expected_quality={"trigger": "missing", "risk_plan": "passed"},
+    ),
+    GoldenCase(
+        name="review_finding_unclear_risk_plan_missing_target_blocks",
+        evaluate=lambda: evaluate_trend_pullback_long(
+            trend_payload(target_1_override=None, target_2_override=None, recent_swing_low=None)
+        ),
+        expected_status=SignalStatus.NO_SETUP,
+        expected_score_class=ScoreClass.NO_TRADE,
+        expected_no_trade_reasons={"missing_stop_loss", "missing_reward_target"},
+        expected_quality={"risk_plan": "blocked", "data_quality": "blocked"},
+    ),
 ]
 
 
@@ -197,3 +232,14 @@ def base_breakout_payload(**overrides: object) -> BaseBreakoutInput:
     }
     payload.update(overrides)
     return BaseBreakoutInput(**payload)
+
+
+def base_daily(close: Decimal = Decimal("103")) -> IndicatorContext:
+    return IndicatorContext(
+        close=close,
+        ema20=Decimal("99"),
+        ema50=Decimal("97"),
+        ema200=Decimal("80"),
+        atr14=Decimal("2"),
+        relative_volume=Decimal("0.8"),
+    )
