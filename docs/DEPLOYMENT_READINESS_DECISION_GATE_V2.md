@@ -19,7 +19,7 @@ Rationale:
 - The app has documented local setup, deployment runbooks, health checks, monitoring checklists, backup guidance, restore guidance, and a repeatable backup restore drill.
 - Private VPS staging previously passed documented smoke and hardening checks for controlled owner/operator use.
 - Structured API health details are available for operator diagnostics without exposing secrets.
-- Current broader monitoring, incident response, dependency/container scanning, offsite encrypted backup storage, and production-like evidence are not yet complete.
+- Current broader monitoring evidence, scan-result review policy, offsite encrypted backup storage, rollback evidence, privacy handling, and production-like acceptance are not yet complete.
 - The product remains decision-support only with manual execution only.
 
 ## Safety Boundaries
@@ -39,7 +39,7 @@ Rationale:
 | --- | --- | --- | --- | --- |
 | Local review | Go | Development, docs review, automated checks, disposable smoke tests, sample/paper data review | Local setup docs followed; relevant API/Web checks pass or skipped with reason; secrets stay local/untracked; no dump files in repo | Missing required config, failed auth or safety checks, committed secrets, backup dumps in repo, broker/auto-execution scope introduced |
 | Private owner/operator staging | Conditional Go | Controlled single-owner review, sample/paper workflows, sanitized operational checks | Private VPS staging gate remains valid; health checks pass; backups are external to repo; backup restore drill is documented or recently run when needed; staging secrets are server-local; monitoring checklist reviewed | Public launch, real-money claim, real private-data reliance without separate approval, failed health/smoke/backup checks, unclear restore target, unrelated VPS projects affected |
-| Production-like exposure | No Go | None under this gate | Separate production-like gate with completed evidence for security review, dependency/container scans, incident runbook, operational monitoring, backup restore drill, rollback, privacy handling, and explicit owner acceptance | Any missing required evidence, unresolved critical/high security issue, no current smoke evidence, no tested restore path, no incident process, public SaaS or broker/execution scope requested |
+| Production-like exposure | No Go | None under this gate | Separate production-like gate with completed evidence for security review, reviewed dependency/container scan output, incident runbook rehearsal, operational monitoring, backup restore drill, rollback, privacy handling, and explicit owner acceptance | Any missing required evidence, unresolved critical/high security issue, no current smoke evidence, no tested restore path, no incident process rehearsal, public SaaS or broker/execution scope requested |
 
 ## Current Pass/Fail Evidence
 
@@ -53,8 +53,8 @@ Rationale:
 | Backup creation guidance | Pass as documented operator guidance | `docs/DEPLOYMENT_RUNBOOK.md#postgresql-backups` |
 | Backup restore drill procedure | Pass as documented procedure; run evidence required before operational reliance | `docs/DEPLOYMENT_RUNBOOK.md#backup-restore-drill` |
 | Monitoring expectations | Partial; checklist exists, production monitoring evidence not complete | `docs/APPLICATION_MONITORING_CHECKLIST.md` |
-| Dependency/container scan evidence | Fail for production-like exposure; not yet completed under this gate | Follow-up issue `#333` |
-| Incident response runbook | Fail for production-like exposure; not yet completed under this gate | Follow-up issue `#334` |
+| Dependency/container scan workflow | Partial; visibility workflow exists and runs on PRs/pushes/schedule/manual dispatch, but non-blocking output review and acceptance are still required before production-like exposure | `.github/workflows/security-scans.yml`, `docs/ENGINEERING_WORKFLOW.md#security-scan-workflow` |
+| Incident response runbook | Partial; runbook exists for conservative local/private-staging incident handling, but production-like rehearsal, ownership, and acceptance evidence are not complete | `docs/OPERATIONAL_INCIDENT_RUNBOOK.md` |
 | Offsite encrypted backups | Fail for production-like exposure; not documented as implemented | This gate |
 | Production-like/public exposure decision | Fail; explicitly No Go | This gate |
 
@@ -84,8 +84,8 @@ Production-like exposure requires a new explicit decision. Minimum evidence must
 
 - Current Docker Compose or equivalent deployment smoke evidence on the intended target.
 - Current API/Web CI results from `main`.
-- Dependency and container scan results reviewed and accepted.
-- Incident runbook with severity, triage, rollback, communication, and evidence-handling steps.
+- Dependency and container scan results reviewed and accepted, including explicit treatment of high/critical findings.
+- Incident runbook with severity, triage, rollback, communication, and evidence-handling steps, plus target-environment rehearsal or owner/operator acceptance.
 - Monitoring and alerting evidence for health, logs, disk, memory, database, backup freshness, and certificate expiry.
 - Backup restore drill evidence on a disposable target using sanitized proof only.
 - Rollback evidence for app deployment and database compatibility assumptions.
@@ -111,7 +111,7 @@ The gate is No Go if any of these are true:
 - Production-like exposure, public SaaS use, multi-user behavior, billing, onboarding, broker integration, account sync, or automatic execution is proposed.
 - Real private trading data or real-money workflows become part of routine use.
 - Authentication, session handling, CORS, cookies, secret management, Caddy, Docker networking, firewall, backup, restore, or monitoring changes materially.
-- Dependency/container scanning or incident-runbook work identifies a blocker.
+- Dependency/container scan review, incident-runbook rehearsal, or incident handling identifies a blocker.
 - A smoke test, health check, backup, restore drill, or deployment rollback fails.
 
 ## Final Gate Statement
