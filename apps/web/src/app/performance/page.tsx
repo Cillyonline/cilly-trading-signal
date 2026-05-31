@@ -4,7 +4,13 @@ import { useEffect, useState } from "react";
 
 import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
 import { exportPerformanceCsv, fetchPerformanceSummary, redirectToLoginOnAuthError } from "@/lib/api";
-import type { PerformanceByAssetClass, PerformanceByStrategy, PerformanceSummary } from "@/types/performance";
+import type {
+  OpenPortfolioRisk,
+  OpenRiskGroup,
+  PerformanceByAssetClass,
+  PerformanceByStrategy,
+  PerformanceSummary,
+} from "@/types/performance";
 
 export default function PerformancePage() {
   const authStatus = useProtectedRoute();
@@ -79,6 +85,7 @@ export default function PerformancePage() {
         {exportError ? <ErrorState message={exportError} /> : null}
         {error ? <ErrorState message={error} /> : null}
         {!summary && !error ? <LoadingState /> : null}
+        {summary ? <OpenPortfolioRiskOverview risk={summary.open_portfolio_risk} /> : null}
         {summary?.closed_trade_count === 0 ? <EmptyState /> : null}
         {summary && summary.closed_trade_count > 0 ? (
           <>
@@ -128,6 +135,79 @@ function SummaryGrid({ summary }: { summary: PerformanceSummary }) {
       <Metric label="Best R" value={formatR(summary.best_r)} />
       <Metric label="Worst R" value={formatR(summary.worst_r)} />
     </section>
+  );
+}
+
+function OpenPortfolioRiskOverview({ risk }: { risk: OpenPortfolioRisk }) {
+  return (
+    <section className="rounded-3xl border border-amber-300/20 bg-amber-300/[0.06] p-6">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-sm uppercase tracking-[0.3em] text-amber-200">Open Risk Review</p>
+          <h2 className="mt-2 text-2xl font-semibold">Dokumentiertes Risiko offener Trades</h2>
+          <p className="mt-2 max-w-3xl text-sm text-amber-50/75">
+            {risk.review_only_notice} Fehlende Risikoangaben werden separat gezaehlt und nicht
+            stillschweigend in Summen eingerechnet.
+          </p>
+        </div>
+        <span className="rounded-full border border-amber-200/30 px-4 py-2 text-sm text-amber-100">
+          {risk.open_trade_count} offene Trades
+        </span>
+      </div>
+
+      <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        <Metric label="Open Trades" value={String(risk.open_trade_count)} />
+        <Metric label="Complete Risk Records" value={String(risk.complete_risk_count)} />
+        <Metric label="Incomplete Risk Records" value={String(risk.incomplete_risk_count)} />
+        <Metric label="Documented Initial Risk" value={formatMoney(risk.documented_initial_risk_amount)} />
+        <Metric label="Documented Risk %" value={formatPercent(risk.documented_initial_risk_percent)} />
+      </div>
+
+      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+        <OpenRiskGroupList title="Nach Strategie" items={risk.by_strategy} formatter={formatStrategy} />
+        <OpenRiskGroupList title="Nach Asset Class" items={risk.by_asset_class} formatter={formatAssetClass} />
+      </div>
+    </section>
+  );
+}
+
+function OpenRiskGroupList({
+  title,
+  items,
+  formatter,
+}: {
+  title: string;
+  items: OpenRiskGroup[];
+  formatter: (value: string) => string;
+}) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-5">
+      <div className="flex items-center justify-between gap-3">
+        <h3 className="font-semibold text-slate-100">{title}</h3>
+        <span className="text-xs text-slate-400">{items.length} Gruppen</span>
+      </div>
+      {items.length > 0 ? (
+        <div className="mt-4 flex flex-col gap-3">
+          {items.map((item) => (
+            <article key={item.group} className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="font-medium text-slate-100">{formatter(item.group)}</p>
+                <p className="text-sm text-slate-400">{item.open_trade_count} offen</p>
+              </div>
+              <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                <CompactMetric label="Risk" value={formatMoney(item.documented_initial_risk_amount)} />
+                <CompactMetric label="Risk %" value={formatPercent(item.documented_initial_risk_percent)} />
+                <CompactMetric label="Incomplete" value={String(item.incomplete_risk_count)} />
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-400">
+          Keine offenen Trades vorhanden.
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -220,6 +300,23 @@ function Metric({ label, value }: { label: string; value: string }) {
       <p className="mt-3 text-3xl font-semibold tracking-tight">{value}</p>
     </article>
   );
+}
+
+function CompactMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-xs uppercase tracking-[0.18em] text-slate-500">{label}</p>
+      <p className="mt-1 text-lg font-semibold text-slate-100">{value}</p>
+    </div>
+  );
+}
+
+function formatMoney(value: string | null) {
+  if (!value) {
+    return "-";
+  }
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed.toFixed(2) : value;
 }
 
 function formatR(value: string | null) {
