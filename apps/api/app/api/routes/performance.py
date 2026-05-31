@@ -24,6 +24,24 @@ class OpenRiskGroupRead(BaseModel):
     incomplete_risk_count: int
 
 
+class ConcentrationGroupRead(BaseModel):
+    group: str
+    open_trade_count: int
+    open_trade_percent: Decimal
+    warning: bool
+
+
+class AssetConcentrationRead(BaseModel):
+    warning_status: str
+    warning_threshold_percent: Decimal
+    warnings: list[str]
+    by_asset_class: list[ConcentrationGroupRead]
+    by_symbol: list[ConcentrationGroupRead]
+    by_sector: list[ConcentrationGroupRead]
+    by_industry: list[ConcentrationGroupRead]
+    review_only_notice: str
+
+
 class OpenPortfolioRiskRead(BaseModel):
     open_trade_count: int
     complete_risk_count: int
@@ -33,6 +51,7 @@ class OpenPortfolioRiskRead(BaseModel):
     max_risk_percent: Decimal
     warning_status: str
     warnings: list[str]
+    asset_concentration: AssetConcentrationRead
     by_strategy: list[OpenRiskGroupRead]
     by_asset_class: list[OpenRiskGroupRead]
     review_only_notice: str

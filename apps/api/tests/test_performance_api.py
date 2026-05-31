@@ -71,6 +71,20 @@ def test_performance_summary_returns_empty_state(client: TestClient) -> None:
             "max_risk_percent": "1.00",
             "warning_status": "ok",
             "warnings": [],
+            "asset_concentration": {
+                "warning_status": "ok",
+                "warning_threshold_percent": "50.00",
+                "warnings": [],
+                "by_asset_class": [],
+                "by_symbol": [],
+                "by_sector": [],
+                "by_industry": [],
+                "review_only_notice": (
+                    "Concentration warnings use only documented open trades and available local "
+                    "metadata. They are process review prompts, not a true correlation engine or "
+                    "trade recommendation."
+                ),
+            },
             "by_strategy": [],
             "by_asset_class": [],
             "review_only_notice": (
@@ -240,6 +254,7 @@ def test_performance_summary_includes_open_portfolio_risk(client: TestClient) ->
         "Documented open risk percent exceeds the configured max risk percent.",
         "Some open trades are missing complete documented risk data.",
     ]
+    assert risk["asset_concentration"]["warning_status"] == "warning"
     assert "trading advice" in risk["review_only_notice"]
     assert risk["by_strategy"] == [
         {
@@ -303,6 +318,48 @@ def test_performance_summary_keeps_open_risk_ok_below_threshold(client: TestClie
     assert risk["max_risk_percent"] == "1.00"
     assert risk["warning_status"] == "ok"
     assert risk["warnings"] == []
+
+
+def test_performance_summary_includes_asset_concentration_warnings(client: TestClient) -> None:
+    update_account_size(client, "10000.00")
+    create_open_trade(client, "AAPL", strategy_type="trend_pullback_long", asset_class="stock")
+    create_open_trade(client, "MSFT", strategy_type="base_breakout_long", asset_class="stock")
+    create_open_trade(client, "BTCUSD", strategy_type="trend_pullback_long", asset_class="crypto")
+
+    response = client.get("/api/performance/summary")
+
+    assert response.status_code == 200
+    concentration = response.json()["open_portfolio_risk"]["asset_concentration"]
+    assert concentration["warning_status"] == "warning"
+    assert concentration["warning_threshold_percent"] == "50.00"
+    assert "stock represents 66.67% of open trades." in concentration["warnings"]
+    assert "unknown_sector represents 100.00% of open trades." in concentration["warnings"]
+    assert "true correlation engine" in concentration["review_only_notice"]
+    assert concentration["by_asset_class"] == [
+        {"group": "crypto", "open_trade_count": 1, "open_trade_percent": "33.33", "warning": False},
+        {"group": "stock", "open_trade_count": 2, "open_trade_percent": "66.67", "warning": True},
+    ]
+    assert concentration["by_symbol"] == [
+        {"group": "AAPL", "open_trade_count": 1, "open_trade_percent": "33.33", "warning": False},
+        {"group": "BTCUSD", "open_trade_count": 1, "open_trade_percent": "33.33", "warning": False},
+        {"group": "MSFT", "open_trade_count": 1, "open_trade_percent": "33.33", "warning": False},
+    ]
+    assert concentration["by_sector"] == [
+        {
+            "group": "unknown_sector",
+            "open_trade_count": 3,
+            "open_trade_percent": "100.00",
+            "warning": True,
+        }
+    ]
+    assert concentration["by_industry"] == [
+        {
+            "group": "unknown_industry",
+            "open_trade_count": 3,
+            "open_trade_percent": "100.00",
+            "warning": True,
+        }
+    ]
 
 
 def create_watchlist_item(client: TestClient, symbol: str, asset_class: str = "stock") -> int:

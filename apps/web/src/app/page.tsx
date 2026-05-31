@@ -170,6 +170,7 @@ function buildDashboardData(
     (alert) => alert.delivery_status === "failed" || alert.delivery_status === "pending",
   );
   const openRisk = performance.open_portfolio_risk;
+  const concentration = openRisk.asset_concentration;
   const marketDataQuality = buildMarketDataQuality(watchlist);
   const screenerSummary = buildScreenerReviewSummary(screenerResults);
   const reviewPriorities = buildReviewPriorities({
@@ -232,6 +233,16 @@ function buildDashboardData(
             : openRisk.warning_status === "unknown"
               ? "border-amber-300/60"
               : "border-green-400/40",
+      },
+      {
+        label: "Concentration",
+        value: concentration.warning_status === "warning" ? String(concentration.warnings.length) : "0",
+        detail:
+          concentration.warning_status === "warning"
+            ? `Review ${formatPercent(concentration.warning_threshold_percent)}+ open-trade clusters`
+            : "No concentration warning",
+        href: "/performance",
+        tone: concentration.warning_status === "warning" ? "border-red-300/60" : "border-emerald-400/40",
       },
       {
         label: "Alert Issues",
@@ -356,6 +367,15 @@ function buildReviewPriorities({
           : `${performance.open_portfolio_risk.incomplete_risk_count} offene Trades mit unvollstaendigem Risiko`,
       href: "/performance",
       tone: performance.open_portfolio_risk.warning_status === "warning" ? "red" : "yellow",
+    });
+  }
+
+  if (performance.open_portfolio_risk.asset_concentration.warning_status === "warning") {
+    priorities.push({
+      title: "Asset Concentration pruefen",
+      detail: `${performance.open_portfolio_risk.asset_concentration.warnings.length} Open-Trade-Cluster ueber ${formatPercent(performance.open_portfolio_risk.asset_concentration.warning_threshold_percent)}`,
+      href: "/performance",
+      tone: "yellow",
     });
   }
 

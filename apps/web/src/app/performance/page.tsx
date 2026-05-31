@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
 import { exportPerformanceCsv, fetchPerformanceSummary, redirectToLoginOnAuthError } from "@/lib/api";
 import type {
+  AssetConcentration,
+  ConcentrationGroup,
   OpenPortfolioRisk,
   OpenRiskGroup,
   PerformanceByAssetClass,
@@ -182,6 +184,8 @@ function OpenPortfolioRiskOverview({ risk }: { risk: OpenPortfolioRisk }) {
         <OpenRiskGroupList title="Nach Strategie" items={risk.by_strategy} formatter={formatStrategy} />
         <OpenRiskGroupList title="Nach Asset Class" items={risk.by_asset_class} formatter={formatAssetClass} />
       </div>
+
+      <AssetConcentrationPanel concentration={risk.asset_concentration} />
     </section>
   );
 }
@@ -256,6 +260,75 @@ function OpenRiskGroupList({
         <p className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-400">
           Keine offenen Trades vorhanden.
         </p>
+      )}
+    </div>
+  );
+}
+
+function AssetConcentrationPanel({ concentration }: { concentration: AssetConcentration }) {
+  const isWarning = concentration.warning_status === "warning";
+  return (
+    <div className="mt-6 rounded-2xl border border-white/10 bg-slate-950/50 p-5">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h3 className="font-semibold text-slate-100">Asset Concentration Review</h3>
+          <p className="mt-2 max-w-3xl text-sm text-slate-400">
+            {concentration.review_only_notice} Threshold: {formatPercent(concentration.warning_threshold_percent)}.
+          </p>
+        </div>
+        <span
+          className={`rounded-full border px-3 py-1 text-xs ${
+            isWarning ? "border-red-200/30 text-red-100" : "border-emerald-200/30 text-emerald-100"
+          }`}
+        >
+          {isWarning ? "Concentration warning" : "Concentration ok"}
+        </span>
+      </div>
+      {concentration.warnings.length > 0 ? (
+        <div className="mt-4 rounded-xl border border-red-300/30 bg-red-950/30 p-4 text-sm text-red-100">
+          <p className="font-semibold">Review prompts</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            {concentration.warnings.map((warning) => (
+              <li key={warning}>{warning}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        <ConcentrationGroupList title="Asset Class" items={concentration.by_asset_class} formatter={formatAssetClass} />
+        <ConcentrationGroupList title="Symbol" items={concentration.by_symbol} />
+        <ConcentrationGroupList title="Sector" items={concentration.by_sector} formatter={formatUnknownBucket} />
+        <ConcentrationGroupList title="Industry" items={concentration.by_industry} formatter={formatUnknownBucket} />
+      </div>
+    </div>
+  );
+}
+
+function ConcentrationGroupList({
+  title,
+  items,
+  formatter = (value) => value,
+}: {
+  title: string;
+  items: ConcentrationGroup[];
+  formatter?: (value: string) => string;
+}) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+      <h4 className="text-sm font-semibold uppercase tracking-wide text-slate-300">{title}</h4>
+      {items.length > 0 ? (
+        <div className="mt-3 flex flex-col gap-2">
+          {items.map((item) => (
+            <div key={item.group} className="flex items-center justify-between gap-3 text-sm">
+              <span className={item.warning ? "text-red-100" : "text-slate-300"}>{formatter(item.group)}</span>
+              <span className={item.warning ? "font-semibold text-red-100" : "text-slate-400"}>
+                {item.open_trade_count} / {formatPercent(item.open_trade_percent)}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-3 text-sm text-slate-500">Keine offenen Trades.</p>
       )}
     </div>
   );
@@ -401,6 +474,16 @@ function formatAssetClass(value: string) {
   }
   if (value === "crypto") {
     return "Crypto";
+  }
+  return value.replaceAll("_", " ");
+}
+
+function formatUnknownBucket(value: string) {
+  if (value === "unknown_sector") {
+    return "Unknown sector";
+  }
+  if (value === "unknown_industry") {
+    return "Unknown industry";
   }
   return value.replaceAll("_", " ");
 }
