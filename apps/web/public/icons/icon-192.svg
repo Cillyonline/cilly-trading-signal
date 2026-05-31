@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-labelledby="title desc">
+  <title id="title">Cilly Trading Signal icon</title>
+  <desc id="desc">Dark square app icon with a green manual review signal mark.</desc>
+  <rect width="192" height="192" rx="42" fill="#020617"/>
+  <path d="M42 126h108" stroke="#334155" stroke-width="12" stroke-linecap="round"/>
+  <path d="M48 118l29-34 24 22 43-54" fill="none" stroke="#34d399" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="144" cy="52" r="12" fill="#a7f3d0"/>
+  <path d="M51 147h90" stroke="#64748b" stroke-width="8" stroke-linecap="round"/>
+</svg>
