@@ -40,6 +40,21 @@ export type AssetConcentration = {
   review_only_notice: string;
 };
 
+export type CorrelationProxy = {
+  key: string;
+  label: string;
+  status: "ok" | "unknown" | "warning";
+  open_trade_count: number;
+  symbols: string[];
+  message: string;
+};
+
+export type CorrelationProxySummary = {
+  warning_status: "ok" | "unknown" | "warning";
+  warnings: CorrelationProxy[];
+  review_only_notice: string;
+};
+
 export type OpenPortfolioRisk = {
   open_trade_count: number;
   complete_risk_count: number;
@@ -50,6 +65,7 @@ export type OpenPortfolioRisk = {
   warning_status: "ok" | "unknown" | "warning";
   warnings: string[];
   asset_concentration: AssetConcentration;
+  correlation_proxies: CorrelationProxySummary;
   by_strategy: OpenRiskGroup[];
   by_asset_class: OpenRiskGroup[];
   review_only_notice: string;

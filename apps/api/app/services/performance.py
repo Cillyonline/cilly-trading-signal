@@ -24,6 +24,11 @@ CONCENTRATION_REVIEW_ONLY_NOTICE = (
     "Concentration warnings use only documented open trades and available local metadata. "
     "They are process review prompts, not a true correlation engine or trade recommendation."
 )
+CORRELATION_PROXY_REVIEW_ONLY_NOTICE = (
+    "Correlation proxy warnings use simple documented exposure buckets only. They are not a "
+    "statistical correlation matrix, live market data, or trade instruction."
+)
+BTC_BETA_SYMBOL_HINTS = ("BTC", "ETH", "SOL", "ADA", "AVAX", "DOT", "MATIC", "LINK")
 
 
 def get_performance_summary(db: Session, user_id: int) -> PerformanceSummaryRead:
@@ -101,6 +106,7 @@ def get_open_portfolio_risk(db: Session, user_id: int) -> dict:
         "warning_status": warning_status,
         "warnings": warnings,
         "asset_concentration": _build_asset_concentration(open_trades),
+        "correlation_proxies": _build_correlation_proxies(open_trades),
         "by_strategy": _build_open_risk_groups(open_trades, "strategy_type"),
         "by_asset_class": _build_open_risk_groups(open_trades, "asset_class"),
         "review_only_notice": RISK_REVIEW_ONLY_NOTICE,
@@ -266,6 +272,69 @@ def _build_concentration_warnings(*group_sets: list[dict]) -> list[str]:
                     f"{group['group']} represents {group['open_trade_percent']}% of open trades."
                 )
     return warnings
+
+
+def _build_correlation_proxies(open_trades: list[Trade]) -> dict:
+    proxies = [
+        _build_crypto_btc_beta_proxy(open_trades),
+        _build_stock_sector_proxy(open_trades),
+    ]
+    warnings = [proxy for proxy in proxies if proxy["status"] in {"warning", "unknown"}]
+    warning_status = "ok"
+    if any(proxy["status"] == "warning" for proxy in warnings):
+        warning_status = "warning"
+    elif warnings:
+        warning_status = "unknown"
+    return {
+        "warning_status": warning_status,
+        "warnings": warnings,
+        "review_only_notice": CORRELATION_PROXY_REVIEW_ONLY_NOTICE,
+    }
+
+
+def _build_crypto_btc_beta_proxy(open_trades: list[Trade]) -> dict:
+    crypto_symbols = sorted(
+        {
+            trade.symbol
+            for trade in open_trades
+            if trade.asset_class == AssetClass.CRYPTO
+            and any(hint in trade.symbol.upper() for hint in BTC_BETA_SYMBOL_HINTS)
+        }
+    )
+    status = "warning" if len(crypto_symbols) >= 2 else "ok"
+    message = (
+        "Multiple open crypto exposures match a BTC-beta-heavy symbol proxy."
+        if status == "warning"
+        else "No BTC-beta-heavy crypto proxy warning."
+    )
+    return {
+        "key": "crypto_btc_beta_heavy",
+        "label": "Crypto BTC-beta-heavy proxy",
+        "status": status,
+        "open_trade_count": len(crypto_symbols),
+        "symbols": crypto_symbols,
+        "message": message,
+    }
+
+
+def _build_stock_sector_proxy(open_trades: list[Trade]) -> dict:
+    stock_symbols = sorted(
+        {trade.symbol for trade in open_trades if trade.asset_class == AssetClass.STOCK}
+    )
+    status = "unknown" if stock_symbols else "ok"
+    message = (
+        "Stock sector proxy is unknown because open trades do not store sector metadata."
+        if status == "unknown"
+        else "No open stock trades for sector proxy review."
+    )
+    return {
+        "key": "stock_sector_heavy",
+        "label": "Stock sector-heavy proxy",
+        "status": status,
+        "open_trade_count": len(stock_symbols),
+        "symbols": stock_symbols,
+        "message": message,
+    }
 
 
 def _has_complete_risk(trade: Trade) -> bool:

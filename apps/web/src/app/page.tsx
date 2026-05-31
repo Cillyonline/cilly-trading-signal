@@ -171,6 +171,7 @@ function buildDashboardData(
   );
   const openRisk = performance.open_portfolio_risk;
   const concentration = openRisk.asset_concentration;
+  const correlationProxies = openRisk.correlation_proxies;
   const marketDataQuality = buildMarketDataQuality(watchlist);
   const screenerSummary = buildScreenerReviewSummary(screenerResults);
   const reviewPriorities = buildReviewPriorities({
@@ -243,6 +244,23 @@ function buildDashboardData(
             : "No concentration warning",
         href: "/performance",
         tone: concentration.warning_status === "warning" ? "border-red-300/60" : "border-emerald-400/40",
+      },
+      {
+        label: "Correlation Proxies",
+        value: correlationProxies.warning_status === "warning" ? String(correlationProxies.warnings.length) : "0",
+        detail:
+          correlationProxies.warning_status === "warning"
+            ? "Simple proxy warnings only"
+            : correlationProxies.warning_status === "unknown"
+              ? "Proxy data incomplete"
+              : "No proxy warnings",
+        href: "/performance",
+        tone:
+          correlationProxies.warning_status === "warning"
+            ? "border-red-300/60"
+            : correlationProxies.warning_status === "unknown"
+              ? "border-amber-300/60"
+              : "border-emerald-400/40",
       },
       {
         label: "Alert Issues",
@@ -374,6 +392,15 @@ function buildReviewPriorities({
     priorities.push({
       title: "Asset Concentration pruefen",
       detail: `${performance.open_portfolio_risk.asset_concentration.warnings.length} Open-Trade-Cluster ueber ${formatPercent(performance.open_portfolio_risk.asset_concentration.warning_threshold_percent)}`,
+      href: "/performance",
+      tone: "yellow",
+    });
+  }
+
+  if (performance.open_portfolio_risk.correlation_proxies.warning_status === "warning") {
+    priorities.push({
+      title: "Correlation Proxies pruefen",
+      detail: `${performance.open_portfolio_risk.correlation_proxies.warnings.length} einfache Exposure-Proxies mit Warnstatus`,
       href: "/performance",
       tone: "yellow",
     });

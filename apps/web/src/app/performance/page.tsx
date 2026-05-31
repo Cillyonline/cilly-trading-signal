@@ -7,6 +7,8 @@ import { exportPerformanceCsv, fetchPerformanceSummary, redirectToLoginOnAuthErr
 import type {
   AssetConcentration,
   ConcentrationGroup,
+  CorrelationProxy,
+  CorrelationProxySummary,
   OpenPortfolioRisk,
   OpenRiskGroup,
   PerformanceByAssetClass,
@@ -186,6 +188,7 @@ function OpenPortfolioRiskOverview({ risk }: { risk: OpenPortfolioRisk }) {
       </div>
 
       <AssetConcentrationPanel concentration={risk.asset_concentration} />
+      <CorrelationProxyPanel proxies={risk.correlation_proxies} />
     </section>
   );
 }
@@ -331,6 +334,59 @@ function ConcentrationGroupList({
         <p className="mt-3 text-sm text-slate-500">Keine offenen Trades.</p>
       )}
     </div>
+  );
+}
+
+function CorrelationProxyPanel({ proxies }: { proxies: CorrelationProxySummary }) {
+  const isWarning = proxies.warning_status === "warning";
+  const isUnknown = proxies.warning_status === "unknown";
+  return (
+    <div className="mt-6 rounded-2xl border border-white/10 bg-slate-950/50 p-5">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h3 className="font-semibold text-slate-100">Correlation Proxy Review</h3>
+          <p className="mt-2 max-w-3xl text-sm text-slate-400">{proxies.review_only_notice}</p>
+        </div>
+        <span
+          className={`rounded-full border px-3 py-1 text-xs ${
+            isWarning
+              ? "border-red-200/30 text-red-100"
+              : isUnknown
+                ? "border-amber-200/30 text-amber-100"
+                : "border-emerald-200/30 text-emerald-100"
+          }`}
+        >
+          {isWarning ? "Proxy warning" : isUnknown ? "Proxy unknown" : "Proxy ok"}
+        </span>
+      </div>
+      {proxies.warnings.length > 0 ? (
+        <div className="mt-4 grid gap-3 lg:grid-cols-2">
+          {proxies.warnings.map((proxy) => (
+            <CorrelationProxyCard key={proxy.key} proxy={proxy} />
+          ))}
+        </div>
+      ) : (
+        <p className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-400">
+          Keine Proxy-Warnungen fuer offene Exposures.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function CorrelationProxyCard({ proxy }: { proxy: CorrelationProxy }) {
+  const isWarning = proxy.status === "warning";
+  return (
+    <article className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+      <div className="flex items-center justify-between gap-3">
+        <h4 className="font-semibold text-slate-100">{proxy.label}</h4>
+        <span className={isWarning ? "text-xs text-red-100" : "text-xs text-amber-100"}>{proxy.status}</span>
+      </div>
+      <p className="mt-2 text-sm text-slate-400">{proxy.message}</p>
+      <p className="mt-3 text-sm text-slate-300">
+        {proxy.open_trade_count} offene Trades: {proxy.symbols.length > 0 ? proxy.symbols.join(", ") : "-"}
+      </p>
+    </article>
   );
 }
 
