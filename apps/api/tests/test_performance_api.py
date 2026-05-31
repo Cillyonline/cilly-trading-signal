@@ -62,6 +62,20 @@ def test_performance_summary_returns_empty_state(client: TestClient) -> None:
         "worst_r": None,
         "by_strategy": [],
         "by_asset_class": [],
+        "open_portfolio_risk": {
+            "open_trade_count": 0,
+            "complete_risk_count": 0,
+            "incomplete_risk_count": 0,
+            "documented_initial_risk_amount": "0.00",
+            "documented_initial_risk_percent": "0.0000",
+            "by_strategy": [],
+            "by_asset_class": [],
+            "review_only_notice": (
+                "Open portfolio risk is based only on manually documented trades. It is "
+                "review-only, not broker/account sync, automatic position sizing, an order "
+                "recommendation, or trading advice."
+            ),
+        },
     }
 
 
@@ -201,6 +215,58 @@ def test_performance_summary_groups_closed_trades_by_asset_class(client: TestCli
     ]
 
 
+def test_performance_summary_includes_open_portfolio_risk(client: TestClient) -> None:
+    incomplete = create_open_trade(client, "MSFT", strategy_type="trend_pullback_long")
+    update_account_size(client, "5000.00")
+    create_open_trade(client, "AAPL", strategy_type="trend_pullback_long", asset_class="stock")
+    create_open_trade(client, "BTCUSD", strategy_type="base_breakout_long", asset_class="crypto")
+    close_trade(client, create_open_trade(client, "NVDA"), "110.00")
+
+    response = client.get("/api/performance/summary")
+
+    assert response.status_code == 200
+    risk = response.json()["open_portfolio_risk"]
+    assert risk["open_trade_count"] == 3
+    assert risk["complete_risk_count"] == 2
+    assert risk["incomplete_risk_count"] == 1
+    assert risk["documented_initial_risk_amount"] == "100.00"
+    assert risk["documented_initial_risk_percent"] == "2.0000"
+    assert "trading advice" in risk["review_only_notice"]
+    assert risk["by_strategy"] == [
+        {
+            "group": "base_breakout_long",
+            "open_trade_count": 1,
+            "documented_initial_risk_amount": "50.00",
+            "documented_initial_risk_percent": "1.0000",
+            "incomplete_risk_count": 0,
+        },
+        {
+            "group": "trend_pullback_long",
+            "open_trade_count": 2,
+            "documented_initial_risk_amount": "50.00",
+            "documented_initial_risk_percent": "1.0000",
+            "incomplete_risk_count": 1,
+        },
+    ]
+    assert risk["by_asset_class"] == [
+        {
+            "group": "crypto",
+            "open_trade_count": 1,
+            "documented_initial_risk_amount": "50.00",
+            "documented_initial_risk_percent": "1.0000",
+            "incomplete_risk_count": 0,
+        },
+        {
+            "group": "stock",
+            "open_trade_count": 2,
+            "documented_initial_risk_amount": "50.00",
+            "documented_initial_risk_percent": "1.0000",
+            "incomplete_risk_count": 1,
+        },
+    ]
+    assert incomplete["status"] == "open"
+
+
 def create_watchlist_item(client: TestClient, symbol: str, asset_class: str = "stock") -> int:
     response = client.post(
         "/api/watchlist",
@@ -215,6 +281,7 @@ def create_open_trade(
     symbol: str,
     strategy_type: str = "trend_pullback_long",
     asset_class: str = "stock",
+    position_size: str = "10",
 ) -> dict:
     watchlist_item_id = create_watchlist_item(client, symbol, asset_class)
     response = client.post(
@@ -226,11 +293,17 @@ def create_open_trade(
             "stop_loss": "95.00",
             "target_1": "112.50",
             "target_2": "120.00",
-            "position_size": "10",
+            "position_size": position_size,
             "opened_at": "2024-01-05T10:00:00Z",
         },
     )
     assert response.status_code == 201
+    return response.json()
+
+
+def update_account_size(client: TestClient, account_size: str) -> dict:
+    response = client.patch("/api/settings", json={"account_size": account_size})
+    assert response.status_code == 200
     return response.json()
 
 

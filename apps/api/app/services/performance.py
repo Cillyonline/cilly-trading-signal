@@ -13,6 +13,11 @@ from app.schemas.performance import (
 
 FOUR_PLACES = Decimal("0.0001")
 TWO_PLACES = Decimal("0.01")
+RISK_REVIEW_ONLY_NOTICE = (
+    "Open portfolio risk is based only on manually documented trades. It is review-only, "
+    "not broker/account sync, automatic position sizing, an order recommendation, or "
+    "trading advice."
+)
 
 
 def get_performance_summary(db: Session, user_id: int) -> PerformanceSummaryRead:
@@ -53,6 +58,35 @@ def get_performance_summary(db: Session, user_id: int) -> PerformanceSummaryRead
         by_strategy=_build_strategy_breakdown(trade_results),
         by_asset_class=_build_asset_class_breakdown(trade_results),
     )
+
+
+def get_open_portfolio_risk(db: Session, user_id: int) -> dict:
+    open_trades = list(
+        db.scalars(
+            select(Trade).where(
+                Trade.user_id == user_id,
+                Trade.status == TradeStatus.OPEN,
+            )
+        )
+    )
+    complete_trades = [trade for trade in open_trades if _has_complete_risk(trade)]
+    incomplete_count = len(open_trades) - len(complete_trades)
+    return {
+        "open_trade_count": len(open_trades),
+        "complete_risk_count": len(complete_trades),
+        "incomplete_risk_count": incomplete_count,
+        "documented_initial_risk_amount": _quantize(
+            sum((trade.initial_risk_amount for trade in complete_trades), Decimal("0")),
+            TWO_PLACES,
+        ),
+        "documented_initial_risk_percent": _quantize(
+            sum((trade.initial_risk_percent for trade in complete_trades), Decimal("0")),
+            FOUR_PLACES,
+        ),
+        "by_strategy": _build_open_risk_groups(open_trades, "strategy_type"),
+        "by_asset_class": _build_open_risk_groups(open_trades, "asset_class"),
+        "review_only_notice": RISK_REVIEW_ONLY_NOTICE,
+    }
 
 
 def _build_strategy_breakdown(
@@ -106,6 +140,38 @@ def _build_group_metrics(
         )
 
     return breakdown
+
+
+def _build_open_risk_groups(open_trades: list[Trade], field_name: str) -> list[dict]:
+    groups: dict[str, list[Trade]] = {}
+    for trade in open_trades:
+        value = getattr(trade, field_name)
+        group = value.value if hasattr(value, "value") else str(value)
+        groups.setdefault(group, []).append(trade)
+
+    results: list[dict] = []
+    for group, trades in sorted(groups.items()):
+        complete_trades = [trade for trade in trades if _has_complete_risk(trade)]
+        results.append(
+            {
+                "group": group,
+                "open_trade_count": len(trades),
+                "documented_initial_risk_amount": _quantize(
+                    sum((trade.initial_risk_amount for trade in complete_trades), Decimal("0")),
+                    TWO_PLACES,
+                ),
+                "documented_initial_risk_percent": _quantize(
+                    sum((trade.initial_risk_percent for trade in complete_trades), Decimal("0")),
+                    FOUR_PLACES,
+                ),
+                "incomplete_risk_count": len(trades) - len(complete_trades),
+            }
+        )
+    return results
+
+
+def _has_complete_risk(trade: Trade) -> bool:
+    return trade.initial_risk_amount is not None and trade.initial_risk_percent is not None
 
 
 def _quantize(value: Decimal, exponent: Decimal) -> Decimal:

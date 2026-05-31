@@ -1,19 +1,46 @@
+from decimal import Decimal
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.performance import PerformanceSummaryRead
-from app.services.performance import get_performance_summary
+from app.services.performance import get_open_portfolio_risk, get_performance_summary
 
 router = APIRouter(prefix="/performance", tags=["performance"])
 DbSession = Annotated[Session, Depends(get_db)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
-@router.get("/summary", response_model=PerformanceSummaryRead)
-def get_summary(db: DbSession, user: CurrentUser) -> PerformanceSummaryRead:
-    return get_performance_summary(db, user.id)
+class OpenRiskGroupRead(BaseModel):
+    group: str
+    open_trade_count: int
+    documented_initial_risk_amount: Decimal
+    documented_initial_risk_percent: Decimal
+    incomplete_risk_count: int
+
+
+class OpenPortfolioRiskRead(BaseModel):
+    open_trade_count: int
+    complete_risk_count: int
+    incomplete_risk_count: int
+    documented_initial_risk_amount: Decimal
+    documented_initial_risk_percent: Decimal
+    by_strategy: list[OpenRiskGroupRead]
+    by_asset_class: list[OpenRiskGroupRead]
+    review_only_notice: str
+
+
+class PerformanceSummaryWithOpenRiskRead(PerformanceSummaryRead):
+    open_portfolio_risk: OpenPortfolioRiskRead
+
+
+@router.get("/summary", response_model=PerformanceSummaryWithOpenRiskRead)
+def get_summary(db: DbSession, user: CurrentUser) -> PerformanceSummaryWithOpenRiskRead:
+    summary = get_performance_summary(db, user.id).model_dump()
+    summary["open_portfolio_risk"] = get_open_portfolio_risk(db, user.id)
+    return PerformanceSummaryWithOpenRiskRead.model_validate(summary)
