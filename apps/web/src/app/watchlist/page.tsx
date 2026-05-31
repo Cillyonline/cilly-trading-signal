@@ -163,10 +163,10 @@ export default function WatchlistPage() {
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-8 text-slate-100">
       <section className="mx-auto flex max-w-6xl flex-col gap-8">
-        <header className="flex flex-col gap-4 rounded-3xl border border-white/10 bg-white/5 p-8 md:flex-row md:items-end md:justify-between">
+        <header className="flex flex-col gap-4 rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-8 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="text-sm uppercase tracking-[0.35em] text-emerald-300">Watchlist</p>
-            <h1 className="mt-3 text-4xl font-semibold tracking-tight">Symbole verwalten</h1>
+            <p className="text-sm uppercase tracking-[0.24em] text-emerald-300 sm:tracking-[0.35em]">Watchlist</p>
+            <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Symbole verwalten</h1>
             <p className="mt-3 max-w-2xl text-slate-300">
               Pflege Aktien und Krypto-Symbole als Grundlage fuer CSV-Import, Setup-Bewertungen
               und manuelles Trade Logging. Source/Freshness zeigt Datenkontext, keine Live-Preise

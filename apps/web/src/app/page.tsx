@@ -47,11 +47,11 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#172554,transparent_32%),#050816] px-6 py-8 text-slate-100">
       <section className="mx-auto flex max-w-6xl flex-col gap-8">
-        <header className="rounded-3xl border border-white/10 bg-white/5 p-8 shadow-2xl shadow-black/30 backdrop-blur">
+        <header className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-2xl shadow-black/30 backdrop-blur sm:p-8">
           <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
             <div>
-              <p className="text-sm uppercase tracking-[0.35em] text-emerald-300">Cilly Trading Signal</p>
-              <h1 className="mt-4 max-w-3xl text-4xl font-semibold tracking-tight md:text-6xl">
+              <p className="text-sm uppercase tracking-[0.24em] text-emerald-300 sm:tracking-[0.35em]">Cilly Trading Signal</p>
+              <h1 className="mt-4 max-w-3xl text-3xl font-semibold tracking-tight sm:text-4xl md:text-6xl">
                 Trading-Cockpit fuer Long-only Swingtrading.
               </h1>
               <p className="mt-5 max-w-2xl text-lg text-slate-300">
