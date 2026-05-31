@@ -103,7 +103,7 @@ PostgreSQL should remain internal to Docker networking and must not publish a ho
 
 ## Domain And DNS
 
-Choose a dedicated subdomain for this app in #158 before deployment commands are run.
+Choose a dedicated subdomain for this app during the #406 preflight before deployment commands are run.
 
 Recommended shape:
 
@@ -152,7 +152,7 @@ Do not change firewall rules as part of this planning issue.
 
 This is a planned sequence, not an instruction to run now.
 
-1. Confirm PRs for #158 and #159 are merged.
+1. Confirm the current docs/wiki milestone is complete and VPS validation issues #406 through #410 are ready for joint operator work.
 2. Review the owner/operator wiki, cockpit manual, dashboard guide, and browser clickthrough checklist.
 3. Confirm domain/subdomain and DNS.
 4. Confirm firewall decision.
@@ -179,7 +179,7 @@ docker compose -p cilly-trading-signal -f infra/docker-compose.yml --profile pro
 curl -fsS https://<app-domain>/api/health
 ```
 
-13. Continue with the VPS smoke test from #163.
+13. Continue with the sample-only browser clickthrough and VPS smoke evidence from #408.
 
 ## Rollback / Stop Procedure Draft
 
@@ -208,7 +208,7 @@ Go for first private VPS staging deployment only when:
 - Existing `staging` project remains untouched.
 - Domain/subdomain is chosen and DNS points to the VPS.
 - Firewall posture is explicitly accepted or improved.
-- `.env` checklist from #159 is complete.
+- Environment and secrets preflight from #406 is complete.
 - Strong non-default secrets are prepared outside the repo.
 - Runtime data and backup paths are separated from the repository checkout.
 - Rollback command is known and scoped to `cilly-trading-signal` only.
@@ -230,10 +230,10 @@ No-go if:
 - Whether to change Docker volumes to app-specific bind mounts under `/srv/cilly-trading-signal` in a later implementation issue.
 - Whether to configure swap before adding the app stack.
 
-## Follow-Ups
+## Current VPS Validation Issues
 
-- #159: prepare VPS staging environment checklist.
-- #161: define minimum monitoring checks in `docs/DEPLOYMENT_RUNBOOK.md`.
-- #162: verify PostgreSQL backup and restore path on VPS-like staging. Evidence is recorded in `docs/MVP_RELEASE_CHECKLIST.md`.
-- #163: run first private VPS smoke test after deployment approval. Procedure and evidence template: `docs/VPS_STAGING_SMOKE_TEST.md`.
-- #164: private VPS staging decision gate is documented in `docs/VPS_STAGING_DECISION_GATE.md` and records a Conditional Go for private staging only.
+- #406: preflight environment and secrets checklist.
+- #407: deploy current `main` to private staging after operator approval.
+- #408: run sample-only browser clickthrough.
+- #409: collect backup, restore, and rollback evidence on an approved safe target.
+- #410: review monitoring/security evidence and refresh the VPS decision gate.
