@@ -75,6 +75,24 @@ Before merge:
 - Tests must be added or a test gap must be documented.
 - Trading logic must be checked against `docs/STRATEGY_AND_ALERTS.md` when relevant.
 
+## Security Scan Workflow
+
+The `Security Scans` GitHub Actions workflow provides dependency and container vulnerability visibility on pull requests, pushes to `main`, a weekly schedule, and manual dispatch.
+
+Current scan coverage:
+
+- Web dependencies with `npm audit --audit-level=moderate`.
+- API Python dependencies with `pip-audit`.
+- API and web container images with Trivy for high and critical OS/library findings.
+
+Initial policy:
+
+- Scan findings are visible in GitHub Actions logs but do not automatically block all builds yet.
+- Reviewers should inspect high and critical findings, decide whether they are reachable or false positives, and create follow-up issues when remediation is not handled in the current PR.
+- False-positive or accepted-risk notes must be written without exposing secrets, private trading data, database URLs, cookies, or raw sensitive logs.
+- A green scan workflow is not a security certification, production-readiness claim, broker-readiness claim, or approval for real-money use.
+- A stricter blocking threshold requires a separate policy decision after the team has reviewed recurring scan output.
+
 ## Trading Logic Review
 
 Trading-related changes are treated conservatively:
