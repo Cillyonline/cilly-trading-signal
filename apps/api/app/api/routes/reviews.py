@@ -13,6 +13,7 @@ from app.schemas.reviews import (
     ReviewBatchRead,
     ReviewEntryCreate,
     ReviewEntryRead,
+    ReviewEntryUpdate,
 )
 from app.services.reviews import (
     ReviewEntryError,
@@ -22,6 +23,7 @@ from app.services.reviews import (
     export_review_batch_csv,
     get_review_batch,
     list_review_batches,
+    update_review_entry,
 )
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
@@ -70,6 +72,20 @@ def create_entry(
 ) -> ReviewEntryRead:
     try:
         return create_review_entry(db, user.id, batch_id, payload)
+    except ReviewEntryError as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error.message) from error
+
+
+@router.patch("/batches/{batch_id}/entries/{entry_id}", response_model=ReviewEntryRead)
+def update_entry(
+    batch_id: int,
+    entry_id: int,
+    payload: ReviewEntryUpdate,
+    db: DbSession,
+    user: CurrentUser,
+) -> ReviewEntryRead:
+    try:
+        return update_review_entry(db, user.id, batch_id, entry_id, payload)
     except ReviewEntryError as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=error.message) from error
 

@@ -2,6 +2,7 @@ import csv
 import io
 import json
 from collections import Counter
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from sqlalchemy import select
@@ -10,7 +11,12 @@ from sqlalchemy.orm import Session, selectinload
 from app.models.enums import ManualReviewLabel
 from app.models.review import ReviewBatch, ReviewEntry
 from app.models.signal import Signal
-from app.schemas.reviews import ReviewBatchCreate, ReviewBatchSummary, ReviewEntryCreate
+from app.schemas.reviews import (
+    ReviewBatchCreate,
+    ReviewBatchSummary,
+    ReviewEntryCreate,
+    ReviewEntryUpdate,
+)
 
 EVIDENCE_ONLY_NOTICE = (
     "Review batches are process evidence only. They are not backtests, profitability "
@@ -86,18 +92,31 @@ def create_review_entry(
     if batch is None:
         raise ReviewEntryError("Review batch not found.")
 
-    data = payload.model_dump()
-    if data.get("follow_up_issue_url") is not None:
-        data["follow_up_issue_url"] = str(data["follow_up_issue_url"])
-    data["symbol"] = data["symbol"].strip().upper()
-    signal_id = data.get("signal_id")
-    if signal_id is not None:
-        signal = db.get(Signal, signal_id)
-        if signal is None or signal.user_id != user_id:
-            raise ReviewEntryError("Signal not found.")
+    data = _entry_payload_data(payload)
+    _validate_signal_ownership(db, user_id, data.get("signal_id"))
 
     entry = ReviewEntry(batch_id=batch.id, user_id=user_id, **data)
     db.add(entry)
+    db.commit()
+    db.refresh(entry)
+    return entry
+
+
+def update_review_entry(
+    db: Session, user_id: int, batch_id: int, entry_id: int, payload: ReviewEntryUpdate
+) -> ReviewEntry:
+    batch = get_review_batch(db, user_id, batch_id)
+    if batch is None:
+        raise ReviewEntryError("Review batch not found.")
+    entry = db.get(ReviewEntry, entry_id)
+    if entry is None or entry.user_id != user_id or entry.batch_id != batch.id:
+        raise ReviewEntryError("Review entry not found.")
+
+    data = _entry_payload_data(payload)
+    _validate_signal_ownership(db, user_id, data.get("signal_id"))
+    for key, value in data.items():
+        setattr(entry, key, value)
+    batch.updated_at = datetime.now(UTC)
     db.commit()
     db.refresh(entry)
     return entry
@@ -176,6 +195,22 @@ def _extract_patterns(value: list | dict | None) -> list[str]:
         pattern = value.get("key") or value.get("code") or value.get("label")
         return [pattern] if isinstance(pattern, str) else []
     return []
+
+
+def _entry_payload_data(payload: ReviewEntryCreate | ReviewEntryUpdate) -> dict:
+    data = payload.model_dump()
+    if data.get("follow_up_issue_url") is not None:
+        data["follow_up_issue_url"] = str(data["follow_up_issue_url"])
+    data["symbol"] = data["symbol"].strip().upper()
+    return data
+
+
+def _validate_signal_ownership(db: Session, user_id: int, signal_id: int | None) -> None:
+    if signal_id is None:
+        return
+    signal = db.get(Signal, signal_id)
+    if signal is None or signal.user_id != user_id:
+        raise ReviewEntryError("Signal not found.")
 
 
 def _json_for_csv(value: list | dict | None) -> str:

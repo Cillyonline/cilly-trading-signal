@@ -3,9 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
-import { exportReviewBatchCsv, fetchReviewBatch, redirectToLoginOnAuthError } from "@/lib/api";
+import { exportReviewBatchCsv, fetchReviewBatch, redirectToLoginOnAuthError, updateReviewEntry } from "@/lib/api";
 import type { ManualReviewLabel, ReviewBatch, ReviewEntry } from "@/types/reviews";
-import type { AssetClass, StrategyType } from "@/types/signals";
+import type { AssetClass, ScoreClass, SignalStatus, StrategyType } from "@/types/signals";
 
 type EntryFilterState = {
   label: "" | ManualReviewLabel;
@@ -14,6 +14,21 @@ type EntryFilterState = {
   symbol: string;
   blocker: string;
   followUp: "" | "yes" | "no";
+};
+
+type EntryEditFormState = {
+  symbol: string;
+  asset_class: AssetClass;
+  strategy_type: StrategyType;
+  signal_status: SignalStatus;
+  score_class: "" | ScoreClass;
+  benchmark_context: string;
+  manual_review_label: ManualReviewLabel;
+  quality_blockers: string;
+  outcome_r: string;
+  outcome_measurement_rule: string;
+  follow_up_issue_url: string;
+  notes: string;
 };
 
 const emptyFilters: EntryFilterState = {
@@ -41,6 +56,9 @@ export default function ReviewBatchDetailPage({ params }: { params: { id: string
   const [error, setError] = useState<string | null>(null);
   const [draftText, setDraftText] = useState<string | null>(null);
   const [copyMessage, setCopyMessage] = useState<string | null>(null);
+  const [editingEntryId, setEditingEntryId] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState<EntryEditFormState | null>(null);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
   const batchId = Number(params.id);
 
   async function loadBatch() {
@@ -101,6 +119,42 @@ export default function ReviewBatchDetailPage({ params }: { params: { id: string
       setCopyMessage("Draft wurde in die Zwischenablage kopiert.");
     } catch {
       setCopyMessage("Kopieren nicht moeglich. Draft kann manuell markiert werden.");
+    }
+  }
+
+  async function handleSaveEdit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!batch || editingEntryId === null || !editForm) {
+      return;
+    }
+    setIsSavingEdit(true);
+    setError(null);
+    try {
+      await updateReviewEntry(batch.id, editingEntryId, {
+        symbol: editForm.symbol.trim(),
+        asset_class: editForm.asset_class,
+        strategy_type: editForm.strategy_type,
+        signal_status: editForm.signal_status,
+        score_class: editForm.score_class || null,
+        benchmark_context: editForm.benchmark_context.trim() || null,
+        manual_review_label: editForm.manual_review_label,
+        quality_blockers: splitList(editForm.quality_blockers),
+        outcome_r: editForm.outcome_r || null,
+        outcome_measurement_rule: editForm.outcome_measurement_rule.trim() || null,
+        follow_up_needed: editForm.manual_review_label !== "useful" || Boolean(editForm.follow_up_issue_url),
+        follow_up_issue_url: editForm.follow_up_issue_url.trim() || null,
+        notes: editForm.notes.trim() || null,
+      });
+      setEditingEntryId(null);
+      setEditForm(null);
+      await loadBatch();
+    } catch (saveError) {
+      if (redirectToLoginOnAuthError(saveError)) {
+        return;
+      }
+      setError(saveError instanceof Error ? saveError.message : "Review-Eintrag konnte nicht aktualisiert werden.");
+    } finally {
+      setIsSavingEdit(false);
     }
   }
 
@@ -200,10 +254,23 @@ export default function ReviewBatchDetailPage({ params }: { params: { id: string
                         key={entry.id}
                         batch={batch}
                         entry={entry}
+                        isEditing={editingEntryId === entry.id}
+                        editForm={editingEntryId === entry.id ? editForm : null}
+                        isSavingEdit={isSavingEdit}
+                        onCancelEdit={() => {
+                          setEditingEntryId(null);
+                          setEditForm(null);
+                        }}
                         onDraft={() => {
                           setDraftText(buildFollowUpDraft(batch, entry));
                           setCopyMessage(null);
                         }}
+                        onEdit={() => {
+                          setEditingEntryId(entry.id);
+                          setEditForm(entryToEditForm(entry));
+                        }}
+                        onEditFormChange={setEditForm}
+                        onSaveEdit={handleSaveEdit}
                       />
                     ))}
                   </div>
@@ -279,8 +346,62 @@ function EntryFilters({
   );
 }
 
-function EntryRow({ batch, entry, onDraft }: { batch: ReviewBatch; entry: ReviewEntry; onDraft: () => void }) {
+function EntryRow({
+  entry,
+  isEditing,
+  editForm,
+  isSavingEdit,
+  onCancelEdit,
+  onDraft,
+  onEdit,
+  onEditFormChange,
+  onSaveEdit,
+}: {
+  batch: ReviewBatch;
+  entry: ReviewEntry;
+  isEditing: boolean;
+  editForm: EntryEditFormState | null;
+  isSavingEdit: boolean;
+  onCancelEdit: () => void;
+  onDraft: () => void;
+  onEdit: () => void;
+  onEditFormChange: (form: EntryEditFormState) => void;
+  onSaveEdit: (event: React.FormEvent<HTMLFormElement>) => void;
+}) {
   const isAttentionFinding = entry.manual_review_label !== "useful" || entry.follow_up_needed;
+  if (isEditing && editForm) {
+    return (
+      <form className="grid gap-4 bg-slate-950/70 p-4 text-sm" onSubmit={onSaveEdit}>
+        <div className="grid gap-3 md:grid-cols-3">
+          <TextInput label="Symbol" value={editForm.symbol} onChange={(symbol) => onEditFormChange({ ...editForm, symbol })} />
+          <SelectInput label="Asset" value={editForm.asset_class} onChange={(asset_class) => onEditFormChange({ ...editForm, asset_class: asset_class as AssetClass })} options={[["stock", "Stock"], ["crypto", "Crypto"]]} />
+          <SelectInput label="Strategie" value={editForm.strategy_type} onChange={(strategy_type) => onEditFormChange({ ...editForm, strategy_type: strategy_type as StrategyType })} options={[["trend_pullback_long", "Trend Pullback"], ["base_breakout_long", "Base Breakout"]]} />
+          <SelectInput label="Status" value={editForm.signal_status} onChange={(signal_status) => onEditFormChange({ ...editForm, signal_status: signal_status as SignalStatus })} options={[["watchlist", "Watchlist"], ["armed", "Armed"], ["triggered", "Triggered"], ["invalidated", "Invalidated"], ["no_setup", "No Setup"], ["missed", "Missed"], ["expired", "Expired"]]} />
+          <SelectInput label="Score" value={editForm.score_class} onChange={(score_class) => onEditFormChange({ ...editForm, score_class: score_class as EntryEditFormState["score_class"] })} options={[["", "No score"], ["a_setup", "A Setup"], ["b_setup", "B Setup"], ["watchlist", "Watchlist"], ["no_trade", "No Trade"]]} />
+          <SelectInput label="Label" value={editForm.manual_review_label} onChange={(manual_review_label) => onEditFormChange({ ...editForm, manual_review_label: manual_review_label as ManualReviewLabel })} options={[["useful", "Useful"], ["too_permissive", "Too permissive"], ["too_strict", "Too strict"], ["unclear", "Unclear"]]} />
+        </div>
+        <div className="grid gap-3 md:grid-cols-2">
+          <TextInput label="Benchmark Context" value={editForm.benchmark_context} onChange={(benchmark_context) => onEditFormChange({ ...editForm, benchmark_context })} />
+          <TextInput label="Quality Blockers" value={editForm.quality_blockers} onChange={(quality_blockers) => onEditFormChange({ ...editForm, quality_blockers })} placeholder="market_regime, liquidity" />
+          <TextInput label="Outcome R" value={editForm.outcome_r} onChange={(outcome_r) => onEditFormChange({ ...editForm, outcome_r })} />
+          <TextInput label="Outcome Measurement Rule" value={editForm.outcome_measurement_rule} onChange={(outcome_measurement_rule) => onEditFormChange({ ...editForm, outcome_measurement_rule })} />
+          <TextInput label="Follow-up URL" value={editForm.follow_up_issue_url} onChange={(follow_up_issue_url) => onEditFormChange({ ...editForm, follow_up_issue_url })} />
+          <TextInput label="Notes" value={editForm.notes} onChange={(notes) => onEditFormChange({ ...editForm, notes })} />
+        </div>
+        <p className="text-xs text-yellow-100/80">
+          Korrektur aktualisiert den bestehenden Entry und die Batch Summary. Keine Loeschung, keine automatische Regelanpassung.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <button className="rounded-xl bg-violet-300 px-4 py-2 font-semibold text-slate-950 disabled:opacity-60" disabled={isSavingEdit} type="submit">
+            Korrektur speichern
+          </button>
+          <button className="rounded-xl border border-white/10 px-4 py-2 text-slate-200" disabled={isSavingEdit} onClick={onCancelEdit} type="button">
+            Abbrechen
+          </button>
+        </div>
+      </form>
+    );
+  }
   return (
     <article className="grid gap-3 p-4 text-sm lg:grid-cols-[1fr_auto_auto] lg:items-center">
       <div>
@@ -304,6 +425,13 @@ function EntryRow({ batch, entry, onDraft }: { batch: ReviewBatch; entry: Review
           type="button"
         >
           Draft
+        </button>
+        <button
+          className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-200 hover:border-violet-200"
+          onClick={onEdit}
+          type="button"
+        >
+          Edit
         </button>
       </div>
     </article>
@@ -499,6 +627,27 @@ function buildFollowUpDraft(batch: ReviewBatch, entry: ReviewEntry) {
     "## Suggested Follow-up",
     "Manual review required: decide whether documentation, fixture coverage, or calibration discussion is needed.",
   ].join("\n");
+}
+
+function entryToEditForm(entry: ReviewEntry): EntryEditFormState {
+  return {
+    symbol: entry.symbol,
+    asset_class: entry.asset_class,
+    strategy_type: entry.strategy_type,
+    signal_status: entry.signal_status,
+    score_class: entry.score_class ?? "",
+    benchmark_context: entry.benchmark_context ?? "",
+    manual_review_label: entry.manual_review_label,
+    quality_blockers: extractTextValues(entry.quality_blockers).join(", "),
+    outcome_r: entry.outcome_r ?? "",
+    outcome_measurement_rule: entry.outcome_measurement_rule ?? "",
+    follow_up_issue_url: entry.follow_up_issue_url ?? "",
+    notes: entry.notes ?? "",
+  };
+}
+
+function splitList(value: string): string[] {
+  return value.split(",").map((item) => item.trim()).filter(Boolean);
 }
 
 function sanitizeDraftText(value: string) {
