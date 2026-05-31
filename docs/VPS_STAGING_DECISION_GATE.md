@@ -111,7 +111,7 @@ Smoke tests:
 - Swap is not configured on the VPS.
 - This gate is based on sample/paper data only and does not validate real-money operations or private trading data handling.
 - The post-hardening smoke test confirms availability, authentication, operational hardening, and safety wording only; it does not validate that current page content is trader-actionable or suitable for real-money decisions.
-- Backup automation currently stores local VPS backups only; offsite and encrypted backup storage remain outside this gate.
+- Backup automation currently stores local VPS backups only; offsite encrypted backup storage is documented in `docs/DEPLOYMENT_RUNBOOK.md#offsite-encrypted-backups` but is not yet implemented or drill-verified on an approved offsite target.
 - The health-check timer is a private staging safety net, not a full observability stack, paging system, SLA, SLO, or production monitoring platform.
 - Staging secrets were exposed in terminal output during troubleshooting and require rotation before stronger reliance. See follow-up issue `#417`.
 - Settings logout discoverability and a dedicated screener smoke fixture remain non-blocking UX/test-data follow-ups. See issues `#418` and `#419`.
@@ -119,9 +119,9 @@ Smoke tests:
 ## Required Follow-Ups
 
 - Consider swap configuration if VPS memory pressure appears during active staging use.
-- Define offsite and encrypted backup storage before handling private trading data or relying on the VPS regularly.
+- Implement and drill-verify offsite encrypted backup storage before handling private trading data or relying on the VPS regularly.
 - Rotate exposed staging secrets before further sensitive validation or private-data handling (`#417`).
-- Define offsite and encrypted backup storage before private-data or production-like reliance (`#420`).
+- Complete an offsite encrypted backup restore drill before private-data or production-like reliance (`#420`).
 - Re-run the smoke test after any DNS, Caddy, firewall, Docker, migration, environment, backup, or monitoring change.
 - Keep current content and signal quality separate from operations readiness; do not treat reachable pages as trader-actionable validation.
 

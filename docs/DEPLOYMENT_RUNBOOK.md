@@ -937,6 +937,10 @@ Private VPS staging retention policy:
 - Move important backups off the VPS or to encrypted storage when handling real user data.
 - Periodically delete old backups intentionally; do not let disk usage grow without review.
 
+Private-data or production-like reliance additionally requires offsite encrypted
+backup storage and a restore drill from that offsite path. Local VPS dumps alone
+are acceptable only for controlled private staging with sample or paper data.
+
 Storage risks:
 
 - PostgreSQL dumps can contain trade notes, journal text, auth data, and market data.
@@ -1024,6 +1028,180 @@ Expected:
 Record only sanitized evidence: date/time, service/timer status PASS/FAIL, backup
 directory path, non-zero artifact PASS/FAIL, API health PASS/FAIL, and whether a
 restore test was performed or intentionally deferred.
+
+### Offsite Encrypted Backups
+
+Use offsite encrypted backups before private trading data, stronger operational
+reliance, or production-like exposure is introduced. This procedure defines the
+expected operating model; it is not a production-readiness statement, SLA,
+security certification, or approval to handle private data without a separate
+gate.
+
+Recommended default:
+
+- Use `restic` for client-side encrypted backups.
+- Store the repository on an operator-controlled offsite target such as SFTP,
+  S3-compatible object storage, or another provider-approved private backup
+  target.
+- Keep the existing local VPS dump path as the source:
+  `/srv/backups/cilly-trading-signal/postgres`.
+- Store restic repository credentials and `RESTIC_PASSWORD` only in a root-only
+  or deploy-user-only environment file outside the repository, such as
+  `/etc/cilly-trading-signal/offsite-backup.env` with mode `600`.
+- Store the restic password or recovery key in the operator password manager.
+  Do not store it only on the VPS.
+- Do not paste repository URLs containing credentials, access keys, secret keys,
+  `RESTIC_PASSWORD`, dump filenames with sensitive context, or restored data
+  contents into issues, PRs, docs, screenshots, or chat.
+
+Example root-only environment file shape:
+
+```ini
+RESTIC_REPOSITORY=sftp:backup-user@backup-host:/private/cilly-trading-signal/restic
+RESTIC_PASSWORD=<stored-in-password-manager>
+RESTIC_COMPRESSION=auto
+```
+
+For S3-compatible storage, use provider-specific environment variables in the
+same root-only file and keep the repository private. Do not commit or paste the
+file.
+
+One-time setup after choosing the offsite target:
+
+```bash
+install -d -m 700 /etc/cilly-trading-signal
+install -m 600 /dev/null /etc/cilly-trading-signal/offsite-backup.env
+# Edit the file locally on the VPS. Do not paste its contents into evidence.
+set -a
+. /etc/cilly-trading-signal/offsite-backup.env
+set +a
+restic init
+restic check
+```
+
+Create an encrypted offsite backup after the local PostgreSQL dump has run:
+
+```bash
+set -a
+. /etc/cilly-trading-signal/offsite-backup.env
+set +a
+restic backup /srv/backups/cilly-trading-signal/postgres --tag cilly-postgres --tag private-staging
+restic forget --tag cilly-postgres --keep-daily 14 --keep-weekly 8 --prune
+restic snapshots --tag cilly-postgres
+```
+
+Suggested systemd service after the local backup timer succeeds:
+
+```ini
+[Unit]
+Description=Cilly Trading Signal offsite encrypted backup
+Wants=network-online.target cilly-postgres-backup.service
+After=network-online.target cilly-postgres-backup.service
+
+[Service]
+Type=oneshot
+User=root
+Group=root
+WorkingDirectory=/root/repos/cilly-trading-signal
+EnvironmentFile=/etc/cilly-trading-signal/offsite-backup.env
+ExecStart=/usr/bin/restic backup /srv/backups/cilly-trading-signal/postgres --tag cilly-postgres --tag private-staging
+ExecStart=/usr/bin/restic forget --tag cilly-postgres --keep-daily 14 --keep-weekly 8 --prune
+```
+
+Suggested timer:
+
+```ini
+[Unit]
+Description=Run Cilly Trading Signal offsite encrypted backup daily
+
+[Timer]
+OnCalendar=*-*-* 04:05:00
+Persistent=true
+RandomizedDelaySec=15m
+
+[Install]
+WantedBy=timers.target
+```
+
+Verify offsite backup freshness with sanitized output only:
+
+```bash
+set -a
+. /etc/cilly-trading-signal/offsite-backup.env
+set +a
+restic snapshots --tag cilly-postgres --json | jq length
+restic check
+```
+
+Record only pass/fail, timestamp, repository category, snapshot count, and
+whether `restic check` passed. Do not record repository credentials or snapshot
+contents.
+
+#### Offsite Restore Drill
+
+Run an offsite restore drill before relying on offsite backups. The restore
+target must be disposable and must not be `cilly-trading-signal`, `staging`, or
+any production-like database.
+
+1. Choose a disposable restore directory outside the repository.
+
+```bash
+export OFFSITE_RESTORE_DIR=/srv/restore-drills/cilly-offsite-restore-YYYYMMDD
+install -d -m 700 "$OFFSITE_RESTORE_DIR"
+```
+
+2. Restore the latest offsite backup snapshot into that directory.
+
+```bash
+set -a
+. /etc/cilly-trading-signal/offsite-backup.env
+set +a
+restic restore latest --target "$OFFSITE_RESTORE_DIR" --tag cilly-postgres
+find "$OFFSITE_RESTORE_DIR" -type f -name 'cilly_trading_signal_*.dump' -printf '%s %f\n' | sort | tail -1
+```
+
+3. Select the restored dump path without printing contents.
+
+```bash
+export RESTORE_DUMP="$(find "$OFFSITE_RESTORE_DIR" -type f -name 'cilly_trading_signal_*.dump' | sort | tail -1)"
+test -s "$RESTORE_DUMP"
+```
+
+4. Restore into a disposable Compose project using the same rules as the backup
+restore drill. Create required roles in the disposable database before restore
+when the source dump contains owner metadata.
+
+```bash
+export DRILL_PROJECT=cilly_offsite_restore_drill
+docker compose -p "$DRILL_PROJECT" -f infra/docker-compose.yml up -d postgres
+docker compose -p "$DRILL_PROJECT" -f infra/docker-compose.yml exec -T postgres \
+  psql --username postgres --dbname postgres -c "DO \$\$ BEGIN IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'cilly_app') THEN CREATE ROLE cilly_app LOGIN; END IF; END \$\$;"
+docker cp "$RESTORE_DUMP" "${DRILL_PROJECT}-postgres-1:/tmp/restore.dump"
+docker compose -p "$DRILL_PROJECT" -f infra/docker-compose.yml exec -T postgres \
+  pg_restore --username postgres --dbname cilly_trading_signal --clean --if-exists /tmp/restore.dump
+docker compose -p "$DRILL_PROJECT" -f infra/docker-compose.yml exec -T postgres \
+  psql --username postgres --dbname cilly_trading_signal --tuples-only --no-align -c "select version_num from alembic_version;"
+```
+
+5. Clean up only the disposable restore project and restore directory after
+recording sanitized evidence.
+
+```bash
+docker compose -p "$DRILL_PROJECT" -f infra/docker-compose.yml down --volumes
+rm -rf -- "$OFFSITE_RESTORE_DIR"
+```
+
+Sanitized evidence to record:
+
+- Offsite target category: SFTP / S3-compatible / other private target.
+- Encryption: restic client-side encryption configured, pass/fail.
+- Snapshot count: non-zero, pass/fail.
+- `restic check`: pass/fail.
+- Restore target: disposable project name.
+- Restored dump non-zero: pass/fail.
+- Restored schema version: version only.
+- Cleanup completed: yes/no.
+- Secrets, repository credentials, dump contents, DB URLs, and private data included: no.
 
 ## PostgreSQL Restore
 
