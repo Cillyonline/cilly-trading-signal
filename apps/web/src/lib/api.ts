@@ -9,7 +9,13 @@ import type {
   MarketDataSyncResult,
 } from "@/types/imports";
 import type { PerformanceSummary } from "@/types/performance";
-import type { ReviewBatch, ReviewBatchCreatePayload, ReviewEntry, ReviewEntryCreatePayload } from "@/types/reviews";
+import type {
+  ReviewBatch,
+  ReviewBatchCreatePayload,
+  ReviewEntry,
+  ReviewEntryCreatePayload,
+  ReviewEntryUpdatePayload,
+} from "@/types/reviews";
 import type {
   ScreenerImport,
   ScreenerResult,
@@ -434,6 +440,26 @@ export async function createReviewEntry(batchId: number, payload: ReviewEntryCre
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     throw new Error(formatApiError(body?.detail, "Review-Eintrag konnte nicht gespeichert werden."));
+  }
+
+  return response.json();
+}
+
+export async function updateReviewEntry(
+  batchId: number,
+  entryId: number,
+  payload: ReviewEntryUpdatePayload,
+): Promise<ReviewEntry> {
+  const response = await credentialedFetch(`${API_BASE_URL}/reviews/batches/${batchId}/entries/${entryId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  assertAuthenticatedResponse(response);
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(formatApiError(body?.detail, "Review-Eintrag konnte nicht aktualisiert werden."));
   }
 
   return response.json();

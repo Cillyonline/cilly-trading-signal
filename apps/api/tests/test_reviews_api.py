@@ -239,6 +239,126 @@ def test_review_entry_requires_outcome_measurement_rule(client: TestClient) -> N
     assert response.status_code == 422
 
 
+def test_review_entry_edit_updates_summary_and_preserves_created_at(client: TestClient) -> None:
+    login(client)
+    batch_id = client.post(
+        "/api/reviews/batches",
+        json={"name": "Edit sample", "review_type": "paper"},
+    ).json()["id"]
+    first = client.post(
+        f"/api/reviews/batches/{batch_id}/entries",
+        json={
+            "symbol": "aapl",
+            "asset_class": "stock",
+            "strategy_type": "trend_pullback_long",
+            "signal_status": "watchlist",
+            "quality_blockers": ["market_regime"],
+            "manual_review_label": "unclear",
+        },
+    ).json()
+
+    response = client.patch(
+        f"/api/reviews/batches/{batch_id}/entries/{first['id']}",
+        json={
+            "symbol": "msft",
+            "asset_class": "stock",
+            "strategy_type": "base_breakout_long",
+            "signal_status": "armed",
+            "quality_blockers": ["liquidity"],
+            "manual_review_label": "too_strict",
+            "outcome_r": "0.5",
+            "outcome_measurement_rule": "Measured at close.",
+            "notes": "Corrected review entry.",
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["id"] == first["id"]
+    assert body["created_at"] == first["created_at"]
+    assert body["updated_at"] >= first["updated_at"]
+    assert body["symbol"] == "MSFT"
+    assert body["manual_review_label"] == "too_strict"
+    batch = client.get(f"/api/reviews/batches/{batch_id}").json()
+    assert batch["summary"]["label_counts"] == {"too_strict": 1}
+    assert batch["summary"]["follow_up_needed_count"] == 1
+
+
+def test_review_entry_edit_enforces_validation(client: TestClient) -> None:
+    login(client)
+    batch_id = client.post(
+        "/api/reviews/batches",
+        json={"name": "Validation sample", "review_type": "paper"},
+    ).json()["id"]
+    entry_id = client.post(
+        f"/api/reviews/batches/{batch_id}/entries",
+        json={
+            "symbol": "BTCUSD",
+            "asset_class": "crypto",
+            "strategy_type": "base_breakout_long",
+            "signal_status": "watchlist",
+            "manual_review_label": "useful",
+        },
+    ).json()["id"]
+
+    response = client.patch(
+        f"/api/reviews/batches/{batch_id}/entries/{entry_id}",
+        json={
+            "symbol": "BTCUSD",
+            "asset_class": "crypto",
+            "strategy_type": "base_breakout_long",
+            "signal_status": "watchlist",
+            "manual_review_label": "useful",
+            "outcome_r": "1.1",
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_review_entry_edit_rejects_other_user_entry(
+    client: TestClient, db_session: Session
+) -> None:
+    other_user = User(
+        email="owner@example.com",
+        password_hash="unused",
+        display_name="Owner",
+        role=UserRole.ADMIN,
+        is_active=True,
+    )
+    db_session.add(other_user)
+    db_session.flush()
+    entry = ReviewEntry(
+        batch_id=999,
+        user_id=other_user.id,
+        symbol="MSFT",
+        asset_class=AssetClass.STOCK,
+        strategy_type=StrategyType.TREND_PULLBACK_LONG,
+        signal_status=SignalStatus.WATCHLIST,
+        manual_review_label="unclear",
+    )
+    db_session.add(entry)
+    db_session.commit()
+    login(client)
+    batch_id = client.post(
+        "/api/reviews/batches",
+        json={"name": "Own batch", "review_type": "paper"},
+    ).json()["id"]
+
+    response = client.patch(
+        f"/api/reviews/batches/{batch_id}/entries/{entry.id}",
+        json={
+            "symbol": "MSFT",
+            "asset_class": "stock",
+            "strategy_type": "trend_pullback_long",
+            "signal_status": "watchlist",
+            "manual_review_label": "unclear",
+        },
+    )
+
+    assert response.status_code == 404
+
+
 def test_review_entry_rejects_other_user_signal(client: TestClient, db_session: Session) -> None:
     other_user = User(
         email="other@example.com",

@@ -89,3 +89,5 @@ export type ReviewEntryCreatePayload = {
   follow_up_issue_url?: string | null;
   notes?: string | null;
 };
+
+export type ReviewEntryUpdatePayload = ReviewEntryCreatePayload;

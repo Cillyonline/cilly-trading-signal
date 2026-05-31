@@ -77,6 +77,10 @@ class ReviewEntryCreate(BaseModel):
         return self
 
 
+class ReviewEntryUpdate(ReviewEntryCreate):
+    pass
+
+
 class ReviewEntryRead(BaseModel):
     id: int
     batch_id: int
