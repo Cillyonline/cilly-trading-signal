@@ -7,7 +7,7 @@ This checklist records the current MVP release-candidate posture for review and 
 ## Current Rebaseline Status
 
 - Version / candidate: final internal owner/operator review candidate after v2.7.
-- Evidence source: automated API/Web/Security Scan verification from merged v2.2-v2.7 PRs plus the latest documented smoke-test run in [MVP Smoke Test](MVP_SMOKE_TEST.md#latest-run). A current-main Docker Compose smoke rerun remains scheduled for v2.8 and remains dependent on local Docker Engine availability where applicable.
+- Evidence source: automated API/Web/Security Scan verification from merged v2.2-v2.7 PRs plus the v2.8 final internal workflow smoke recorded in [MVP Smoke Test](MVP_SMOKE_TEST.md#v28-final-internal-workflow-smoke). The final go/no-go decision gate remains pending under v2.8.
 - Status: The app remains suitable only for controlled internal/single-operator review workflows with sample or paper data unless separately approved. This is not production-ready, broker-ready, profitability-validated, live/realtime, or real-money trading evidence.
 - Current decision gate: [Deployment Readiness Decision Gate v2](DEPLOYMENT_READINESS_DECISION_GATE_V2.md) records a conditional go for local review and private owner/operator staging only; production-like exposure remains No Go.
 - Boundary: decision-support only, manual execution only, no broker integration, no automatic order execution, no profitability claims, no live/realtime claims, no trading advice, and no production-readiness claim.
@@ -23,7 +23,7 @@ This checklist records the current MVP release-candidate posture for review and 
 
 ### Current Known Gaps
 
-- Final current-main internal workflow smoke evidence is still pending under v2.8.
+- Final current-main internal workflow smoke evidence has passed for the local Docker Compose stack, current migrations, web HTTP load, and API-assisted sample-only workflow coverage; visual browser clickthrough remains a documented test gap.
 - Final internal go/no-go decision gate is still pending under v2.8.
 - Deployment readiness gate evidence needs a doc refresh after the scan workflow and incident runbook completion (`#375`).
 - Monitoring checklist should link directly to the operational incident runbook (`#376`).
@@ -31,6 +31,7 @@ This checklist records the current MVP release-candidate posture for review and 
 - Calibration finding categories still need stronger auditability (`#362`).
 - Portfolio risk review should include all active trade statuses (`#368`).
 - Mobile Screener density, mobile Trade workflow grouping, and global mobile header density remain follow-up gaps (`#381`, `#382`, `#383`).
+- A preserved local Docker volume required explicit `alembic upgrade head` before current screener/review tables existed during the v2.8 smoke rerun; migrated persistent stacks or fresh disposable stacks should verify migrations before workflow testing.
 
 ### Final Internal Review Boundary
 

@@ -93,7 +93,70 @@ Invoke-RestMethod http://localhost:8000/api/health
 If deeper API inspection is needed, use authenticated browser/API tooling only with
 local sample data. Do not paste cookies or session tokens into issues, docs, or PRs.
 
-## Current Main Smoke Attempt
+## v2.8 Final Internal Workflow Smoke
+
+Date: 2026-05-31
+
+Environment:
+
+- Windows workspace: `C:\repos\cilly-trading-signal`
+- Branch used for attempt: `issue-340-final-internal-smoke-test`
+- Deployment shape: local Docker Compose stack with PostgreSQL, API, and web.
+- Data scope: local sample/synthetic data only; no real account data, private watchlists, provider credentials, cookies, session tokens, screenshots, logs with secrets, or production data were recorded.
+- Browser/UI scope: web app HTTP load was checked; the end-to-end workflow was API-assisted because no browser automation or visual clickthrough harness is available in this environment.
+
+Commands and checks recorded:
+
+```powershell
+.\scripts\smoke_test.ps1 -TimeoutSeconds 180
+docker compose -f infra/docker-compose.yml exec api alembic upgrade head
+curl.exe --fail-with-body ... # authenticated sample-only API workflow; cookies and payload temp files not recorded
+curl.exe -fsS -I http://localhost:3000
+.\scripts\smoke_test.ps1 -Cleanup
+```
+
+Stack and service results:
+
+- Docker CLI: PASS, `Docker version 29.5.2, build 79eb04c`.
+- Docker Compose CLI: PASS, `Docker Compose version v5.1.3`.
+- Docker engine reachability: PASS.
+- Docker Compose build and stack startup: PASS.
+- PostgreSQL container health: PASS.
+- API health: PASS, `/api/health` returned `{"status":"ok","service":"Cilly Trading Signal API","version":"0.1.0","environment":"development"}`.
+- Database migrations: PASS after running `alembic upgrade head` in the API container. The preserved local Docker volume had been behind current `main`, and migrations advanced it through market-data metadata, screener import, and review batch revisions.
+- Web HTTP load: PASS, `curl.exe -fsS -I http://localhost:3000` returned `HTTP/1.1 200 OK`.
+- Cleanup: PASS, `./scripts/smoke_test.ps1 -Cleanup` stopped the stack with volumes preserved.
+
+Workflow results:
+
+- Login/session: PASS with local development credentials from `.env.example`; no cookie or token value was recorded.
+- Watchlist: PASS, created synthetic sample symbol `SMK34031132423` with `SAMPLE` exchange metadata.
+- Screener CSV import: PASS, imported one synthetic candidate row from a temporary CSV outside the repository.
+- Screener-to-Watchlist conversion: PASS, explicit conversion returned `watchlist_added` and did not create analysis, signal, trade, alert, broker action, order, buy/sell instruction, or trading advice automatically.
+- Guarded provider sync: PASS for disabled-by-default behavior; manual provider sync returned `skipped` with `unknown` freshness because provider sync is not enabled locally.
+- TradingView OHLCV CSV import: PASS for synthetic `1W`, `1D`, and `4H` fixtures under `test-data/csv/`, creating series ids `7`, `8`, and `9`.
+- Analysis: PASS, analysis on series `9` generated signal id `2` with `no_setup` / `no_trade`, preserving conservative No Trade behavior for the sample data.
+- Signal review note: PASS, an operator review note was added without any trade instruction.
+- Review batch and entry: PASS, created paper review batch id `1` and entry id `1` with label `unclear`; this remains process evidence only, not backtesting or profitability validation.
+- Manual trade record: PASS, created manual sample trade id `1`; no broker/account/order integration was involved.
+- Trade management and close flow: PASS, added management note event id `1`, closed the sample trade as `closed`, and recorded sample `result_r` of `1.2000` as documentation evidence only.
+- Journal review: PASS, created journal entry id `1` with sample-only process notes.
+- Performance/risk review: PASS, performance summary showed `closed_trade_count=1`, open risk warning status `ok`, and `journal_analytics.reviewed_trade_count=1`.
+- Alerts list: PASS, authenticated alert list returned zero alerts; no Telegram or external notification delivery was triggered.
+- Logout: PASS, logout returned HTTP `204`.
+
+Known gaps from this run:
+
+- A visual browser clickthrough was not separately recorded because the environment has no browser automation or screenshot harness. Web container build and HTTP load passed, and the authenticated data workflow passed through API calls.
+- The preserved local Docker volume required an explicit `alembic upgrade head` before current screener/review workflow tables existed. A fresh disposable stack or a migrated persistent stack should not treat missing tables as product smoke evidence.
+
+Interpretation:
+
+The v2.8 final internal workflow smoke passed for local Docker Compose startup, API health, current database migrations, web HTTP load, authenticated sample-only workflow coverage from Watchlist through Screener, CSV import, disabled provider-sync behavior, analysis, signal review, paper review batch entry, manual trade logging, management event, close flow, journal, performance/risk summary, alerts list, logout, and stack cleanup.
+
+This evidence supports controlled internal owner/operator review only. It is not a production-readiness statement, broker-readiness statement, strategy validation, backtest, profitability claim, real-money readiness claim, live/realtime data claim, trading advice, or permission for automatic order execution.
+
+## Previous Current Main Smoke Attempt
 
 Date: 2026-05-30
 
