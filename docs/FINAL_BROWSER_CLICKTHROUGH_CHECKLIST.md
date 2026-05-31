@@ -17,6 +17,7 @@ This checklist is not a production-readiness statement, broker-readiness stateme
 
 ## Prerequisites
 
+- Review [Owner/Operator Wiki](OWNER_OPERATOR_WIKI.md), [Owner/Operator Cockpit Manual](OWNER_OPERATOR_COCKPIT_MANUAL.md), and [Dashboard User Guide](DASHBOARD_USER_GUIDE.md) before recording browser evidence.
 - Docker Desktop is running and the Linux engine is reachable.
 - Local `.env` exists and uses local placeholder credentials only.
 - The local stack is started with the smoke runner:

@@ -6,6 +6,8 @@ This document explains the intended manual review flow across the trading cockpi
 
 It is not trading advice, a production-readiness claim, a live/realtime data claim, a broker-readiness claim, strategy validation, a profitability claim, or permission for automatic order execution.
 
+For task-oriented navigation, start with [Owner/Operator Wiki](OWNER_OPERATOR_WIKI.md). For a practical browser walkthrough, use [Owner/Operator Cockpit Manual](OWNER_OPERATOR_COCKPIT_MANUAL.md). For dashboard-specific interpretation, use [Dashboard User Guide](DASHBOARD_USER_GUIDE.md).
+
 ## Safety Boundaries
 
 - The app supports review and documentation only.
