@@ -22,9 +22,9 @@ For the intended end-to-end manual cockpit review sequence, see `docs/COCKPIT_RE
 
 ## Runner
 
-The `scripts/smoke_test.ps1` runner automates preflight, stack startup, and
-the API health check. It does not replace the browser portion of the smoke
-test — it only reduces manual setup ambiguity.
+The `scripts/smoke_test.ps1` runner automates preflight, stack startup, local
+database migrations, and the API health check. It does not replace the browser
+portion of the smoke test — it only reduces manual setup ambiguity.
 
 ```powershell
 # Bring the stack up and wait for /api/health
@@ -37,10 +37,15 @@ test — it only reduces manual setup ambiguity.
 .\scripts\smoke_test.ps1 -Cleanup -PurgeVolumes
 ```
 
-The runner fails fast with a clear `[FAIL]` message when the Docker engine
-pipe is unreachable. Browser steps (login, watchlist, CSV import, analysis,
-trade log, journal, performance) continue manually using the fixtures under
-`test-data/csv/`.
+The runner fails fast with a clear `[FAIL]` message when the Docker engine pipe
+is unreachable or when `alembic upgrade head` fails in the local API container.
+Browser steps (login, watchlist, CSV import, analysis, trade log, journal,
+performance) continue manually using the fixtures under `test-data/csv/`.
+
+The migration step prevents stale preserved Docker volumes from producing
+confusing workflow failures during local smoke testing. It is not a production
+migration policy, does not reset volumes, and does not remove the need for a
+separate production-like deployment gate.
 
 This script is release-validation tooling, not a production deployment claim.
 
@@ -109,7 +114,6 @@ Commands and checks recorded:
 
 ```powershell
 .\scripts\smoke_test.ps1 -TimeoutSeconds 180
-docker compose -f infra/docker-compose.yml exec api alembic upgrade head
 curl.exe --fail-with-body ... # authenticated sample-only API workflow; cookies and payload temp files not recorded
 curl.exe -fsS -I http://localhost:3000
 .\scripts\smoke_test.ps1 -Cleanup
