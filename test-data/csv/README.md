@@ -47,6 +47,26 @@ The series is intentionally regular so smoke runs are reproducible.
 Refer to `docs/MVP_SMOKE_TEST.md` and
 `docs/FINAL_BROWSER_CLICKTHROUGH_CHECKLIST.md` for the full workflows.
 
+## Repeatable Browser Smoke State
+
+Use one fake symbol per smoke run so repeated browser checks do not depend on
+private data or ambiguous leftovers from earlier runs.
+
+1. Pick a run-specific fake symbol such as `SMOKE-PAPER-YYYYMMDD-001`.
+2. Create the watchlist row manually with `SAMPLE` exchange metadata.
+3. Upload `sample_paper_1w.csv`, `sample_paper_1d.csv`, and
+   `sample_paper_4h.csv` for that symbol and matching timeframes.
+4. Upload `screener_smoke.csv` on `/screener`; duplicate states are acceptable
+   when the same fixture was used in an earlier run.
+5. If a clean local run is required, use the local disposable reset path from
+   `docs/FINAL_BROWSER_CLICKTHROUGH_CHECKLIST.md` before creating the next fake
+   symbol. Do not purge private or shared staging volumes as part of a browser
+   smoke reset.
+
+For private staging, prefer additive fake symbols and sanitized notes over
+database resets. Any cleanup that affects VPS services, volumes, backups,
+migrations, or secrets requires explicit operator approval.
+
 ## Regenerating
 
 The fixtures are produced by `scripts/generate_smoke_fixtures.py`. Output is

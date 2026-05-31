@@ -28,6 +28,9 @@ This checklist is not a production-readiness statement, broker-readiness stateme
 
 - The runner has applied migrations and returned a passing API health check.
 - Sample fixtures are available under `test-data/csv/`.
+- For repeatable local runs, follow the sample-state guidance in
+  `test-data/csv/README.md#repeatable-browser-smoke-state` and use a new fake
+  symbol for each run, such as `SMOKE-PAPER-YYYYMMDD-001`.
 - For Screener upload, use the sample-only fixture `test-data/csv/screener_smoke.csv`:
 
 ```csv
@@ -116,3 +119,8 @@ After local review, stop the stack with volumes preserved unless disposable rese
 ```
 
 Use `-PurgeVolumes` only for local disposable data resets.
+
+For private staging, do not reset volumes, restore backups, rotate secrets,
+restart services, or delete shared sample data as a browser-smoke cleanup step
+without explicit operator approval. Prefer adding a new fake symbol for the next
+run and recording duplicates as acceptable sample-state evidence.
