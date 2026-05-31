@@ -59,6 +59,7 @@ def evaluate_trend_pullback_long(payload: TrendPullbackInput) -> SignalEvaluatio
             *payload.signal_input.data_quality_flags,
             *data_quality_flags(payload),
             *( ["uncontrolled_pullback"] if not payload.pullback_controlled else [] ),
+            *( ["aggressive_pullback_volume"] if pullback_volume_is_aggressive(payload) else [] ),
             *( ["strong_resistance_nearby"] if payload.strong_resistance_nearby else [] ),
         ],
         context_risk_flags=payload.signal_input.context_risk_flags,
@@ -322,12 +323,16 @@ def initial_risk_flags(payload: TrendPullbackInput) -> list[str]:
     if not payload.pullback_controlled:
         flags.append("pullback_control_unclear")
         flags.append("uncontrolled_pullback")
-    if (
-        payload.daily.relative_volume is not None
-        and payload.daily.relative_volume > AGGRESSIVE_RELATIVE_VOLUME
-    ):
+    if pullback_volume_is_aggressive(payload):
         flags.append("aggressive_pullback_volume")
     return flags
+
+
+def pullback_volume_is_aggressive(payload: TrendPullbackInput) -> bool:
+    return (
+        payload.daily.relative_volume is not None
+        and payload.daily.relative_volume > AGGRESSIVE_RELATIVE_VOLUME
+    )
 
 
 def invalidation_reason(payload: TrendPullbackInput) -> str:
