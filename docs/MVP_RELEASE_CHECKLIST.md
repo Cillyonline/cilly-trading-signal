@@ -69,6 +69,7 @@ This checklist records the current MVP release-candidate posture for review and 
 
 - Use [MVP Smoke Test](MVP_SMOKE_TEST.md) for RC validation evidence and future reruns.
 - Use [Deployment Runbook](DEPLOYMENT_RUNBOOK.md) for local/Caddy/startup procedures, health checks, backups, restore, and operational handling.
+- Use [Application Monitoring Checklist](APPLICATION_MONITORING_CHECKLIST.md) for local, private staging, and production-like monitoring expectations before broader reliance.
 - Use the [disposable demo data reset procedure](DEPLOYMENT_RUNBOOK.md#disposable-demo-data-reset) only for local/disposable data.
 - Do not delete staging, production-like, or real-data volumes unless separately approved.
 - Do not commit backups, dumps, `.env`, secrets, database URLs, cookies, logs, screenshots with sensitive data, or private trading data.
@@ -114,7 +115,7 @@ This checklist records the current MVP release-candidate posture for review and 
 - Provider sync support is manual, guarded, and disabled by default. Current provider support starts with Daily/EOD data and does not cover promised `4H`/intraday sync, scheduler-driven imports, or automatic analysis refresh.
 - Screener CSV support does not yet include advanced filtering, bulk review actions, pagination beyond current row limits, candidate scoring, or automatic market-data refresh after Watchlist conversion.
 - Historical/paper review batches are MVP-level and do not yet include advanced filtering, CSV export, or automated follow-up issue creation.
-- Production monitoring and operational alerting are not documented as passed.
+- Production monitoring and operational alerting are not documented as passed; the application monitoring checklist is documentation for operator review, not completed production monitoring evidence.
 - Full mobile app/PWA hardening beyond responsive MVP layouts is not documented as passed.
 
 ## Blocked
