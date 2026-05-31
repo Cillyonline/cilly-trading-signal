@@ -40,6 +40,7 @@ Done:
 - Focused calibration golden-case suite, end-to-end stored OHLCV/benchmark fixtures,
   historical/paper review protocol, and app-supported review batch workflow.
 - Private VPS staging smoke test, operations hardening, and staging-only decision gate for controlled owner/operator use.
+- Deployment readiness decision gate v2 for local review, private owner/operator staging, and production-like non-go boundaries.
 
 Partial:
 
@@ -67,6 +68,7 @@ Current blockers and risks:
 - Strategy behavior remains a deterministic decision-support hypothesis and must not be presented as trading advice or validated profitability.
 - Local development depends on `uv`, Python 3.12, Node.js 20, Docker, and a reachable PostgreSQL database or Docker Compose.
 - Private VPS staging is accepted for controlled owner/operator use only after documented operations hardening; production-like or public use remains blocked until a separate operational readiness decision addresses data-handling readiness, offsite backups, security review, and monitoring expectations.
+- Deployment readiness is currently gated by `docs/DEPLOYMENT_READINESS_DECISION_GATE_V2.md`: local review and private owner/operator staging are conditionally allowed; production-like exposure remains No Go.
 - MVP release posture is tracked in `docs/MVP_RELEASE_CHECKLIST.md`; it separates Done, Partial, Missing, Blocked, and Not Included areas without claiming production readiness.
 
 ## v0.1 - Foundation

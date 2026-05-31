@@ -9,6 +9,7 @@ This checklist records the current MVP release-candidate posture for review and 
 - Version / candidate: post-v2.1 strategy-calibration rebaseline.
 - Evidence source: automated API/Web verification from merged v2.1 and follow-up PRs plus the latest documented smoke-test run in [MVP Smoke Test](MVP_SMOKE_TEST.md#latest-run). A current-main Docker Compose smoke rerun remains dependent on local Docker Engine availability where applicable.
 - Status: The app remains suitable only for controlled internal/single-operator review workflows. This is not production-ready, broker-ready, profitability-validated, live/realtime, or real-money trading evidence.
+- Current decision gate: [Deployment Readiness Decision Gate v2](DEPLOYMENT_READINESS_DECISION_GATE_V2.md) records a conditional go for local review and private owner/operator staging only; production-like exposure remains No Go.
 - Boundary: decision-support only, manual execution only, no broker integration, no automatic order execution, no profitability claims, no live/realtime claims, no trading advice, and no production-readiness claim.
 
 ## Release Candidate Status
@@ -69,6 +70,7 @@ This checklist records the current MVP release-candidate posture for review and 
 
 - Use [MVP Smoke Test](MVP_SMOKE_TEST.md) for RC validation evidence and future reruns.
 - Use [Deployment Runbook](DEPLOYMENT_RUNBOOK.md) for local/Caddy/startup procedures, health checks, backups, restore, the repeatable [Backup Restore Drill](DEPLOYMENT_RUNBOOK.md#backup-restore-drill), and operational handling.
+- Use [Deployment Readiness Decision Gate v2](DEPLOYMENT_READINESS_DECISION_GATE_V2.md) before treating local, private staging, or production-like exposure as acceptable.
 - Use [Application Monitoring Checklist](APPLICATION_MONITORING_CHECKLIST.md) for local, private staging, and production-like monitoring expectations before broader reliance.
 - Use the [disposable demo data reset procedure](DEPLOYMENT_RUNBOOK.md#disposable-demo-data-reset) only for local/disposable data.
 - Do not delete staging, production-like, or real-data volumes unless separately approved.
