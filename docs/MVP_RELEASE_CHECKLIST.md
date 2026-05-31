@@ -64,7 +64,7 @@ This checklist records the current MVP release-candidate posture for review and 
 - No profitability claim.
 - No trading advice.
 - No full penetration test.
-- No dependency/container vulnerability scan.
+- Dependency/container scanning is visibility-only unless a separate policy makes findings blocking.
 
 ### Operational Notes
 
@@ -118,6 +118,7 @@ This checklist records the current MVP release-candidate posture for review and 
 - Screener CSV support does not yet include advanced filtering, bulk review actions, pagination beyond current row limits, candidate scoring, or automatic market-data refresh after Watchlist conversion.
 - Historical/paper review batches are MVP-level and do not yet include advanced filtering, CSV export, or automated follow-up issue creation.
 - Production monitoring and operational alerting are not documented as passed; the application monitoring checklist is documentation for operator review, not completed production monitoring evidence.
+- Dependency/container scan workflow exists for visibility, but passing or non-blocking scan output is not production-readiness, security certification, or real-money-readiness evidence.
 - Full mobile app/PWA hardening beyond responsive MVP layouts is not documented as passed.
 
 ## Blocked
