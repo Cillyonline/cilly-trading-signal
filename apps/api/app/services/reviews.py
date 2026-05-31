@@ -8,7 +8,7 @@ from decimal import Decimal
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from app.models.enums import ManualReviewLabel
+from app.models.enums import ManualReviewLabel, ReviewFindingCategorySource
 from app.models.review import ReviewBatch, ReviewEntry, ReviewEntryRevision
 from app.models.signal import Signal
 from app.schemas.reviews import (
@@ -34,6 +34,8 @@ REVIEW_BATCH_CSV_HEADERS = [
     "score_class",
     "manual_review_label",
     "quality_blockers",
+    "finding_category",
+    "finding_category_source",
     "benchmark_context",
     "follow_up_needed",
     "follow_up_issue_url",
@@ -102,6 +104,7 @@ def create_review_entry(
 
     data = _entry_payload_data(payload)
     _validate_signal_ownership(db, user_id, data.get("signal_id"))
+    data = _apply_finding_category(data)
 
     entry = ReviewEntry(batch_id=batch.id, user_id=user_id, **data)
     db.add(entry)
@@ -122,6 +125,7 @@ def update_review_entry(
 
     data = _entry_payload_data(payload)
     _validate_signal_ownership(db, user_id, data.get("signal_id"))
+    data = _apply_finding_category(data)
     _record_entry_revision(db, entry)
     for key, value in data.items():
         setattr(entry, key, value)
@@ -139,7 +143,7 @@ def build_review_batch_summary(batch: ReviewBatch) -> ReviewBatchSummary:
     for entry in entries:
         for pattern in _extract_patterns(entry.quality_blockers):
             blocker_counts[pattern] += 1
-        category_counts[classify_review_finding(entry)] += 1
+        category_counts[entry.finding_category] += 1
 
     return ReviewBatchSummary(
         reviewed_count=len(entries),
@@ -188,6 +192,45 @@ def classify_review_finding(entry: ReviewEntry) -> str:
     return UNKNOWN_FINDING_CATEGORY
 
 
+def classify_review_finding_data(data: dict) -> str:
+    if data["manual_review_label"] == ManualReviewLabel.USEFUL and not data["follow_up_needed"]:
+        return UNKNOWN_FINDING_CATEGORY
+    values = [
+        data["manual_review_label"].value,
+        data.get("benchmark_context") or "",
+        data.get("outcome_measurement_rule") or "",
+        data.get("notes") or "",
+        *_extract_patterns(data.get("quality_blockers")),
+        *_extract_patterns(data.get("no_trade_reasons")),
+        *_extract_patterns(data.get("risk_flags")),
+    ]
+    text = " ".join(values).lower()
+    for category, keywords in FINDING_CATEGORY_KEYWORDS:
+        if any(keyword in text for keyword in keywords):
+            return category
+    if data["manual_review_label"] == ManualReviewLabel.TOO_STRICT:
+        return "trigger_too_strict"
+    if data["manual_review_label"] == ManualReviewLabel.TOO_PERMISSIVE:
+        return "risk_plan_unclear"
+    return UNKNOWN_FINDING_CATEGORY
+
+
+def _apply_finding_category(data: dict) -> dict:
+    if data["finding_category_source"] == ReviewFindingCategorySource.MANUAL:
+        data["finding_category"] = _normalize_finding_category(data.get("finding_category"))
+        return data
+    data["finding_category_source"] = ReviewFindingCategorySource.DERIVED
+    data["finding_category"] = classify_review_finding_data(data)
+    return data
+
+
+def _normalize_finding_category(value: str | None) -> str:
+    if value is None:
+        return UNKNOWN_FINDING_CATEGORY
+    category = value.strip().lower().replace(" ", "_")
+    return category or UNKNOWN_FINDING_CATEGORY
+
+
 def export_review_batch_csv(batch: ReviewBatch) -> str:
     output = io.StringIO()
     writer = csv.DictWriter(output, fieldnames=REVIEW_BATCH_CSV_HEADERS, lineterminator="\r\n")
@@ -206,6 +249,8 @@ def export_review_batch_csv(batch: ReviewBatch) -> str:
                 "score_class": entry.score_class.value if entry.score_class else "",
                 "manual_review_label": entry.manual_review_label.value,
                 "quality_blockers": _json_for_csv(entry.quality_blockers),
+                "finding_category": entry.finding_category,
+                "finding_category_source": entry.finding_category_source.value,
                 "benchmark_context": entry.benchmark_context or "",
                 "follow_up_needed": "yes" if entry.follow_up_needed else "no",
                 "follow_up_issue_url": entry.follow_up_issue_url or "",
@@ -276,6 +321,8 @@ def _entry_revision_snapshot(entry: ReviewEntry) -> dict:
         "target_price": _fmt_optional_decimal(entry.target_price),
         "planned_risk_reward": _fmt_optional_decimal(entry.planned_risk_reward),
         "manual_review_label": entry.manual_review_label.value,
+        "finding_category": entry.finding_category,
+        "finding_category_source": entry.finding_category_source.value,
         "outcome_r": _fmt_optional_decimal(entry.outcome_r),
         "outcome_measurement_rule": entry.outcome_measurement_rule,
         "follow_up_needed": entry.follow_up_needed,

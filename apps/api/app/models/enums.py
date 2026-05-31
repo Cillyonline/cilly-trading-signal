@@ -190,3 +190,8 @@ class ManualReviewLabel(StrEnum):
     TOO_PERMISSIVE = "too_permissive"
     TOO_STRICT = "too_strict"
     UNCLEAR = "unclear"
+
+
+class ReviewFindingCategorySource(StrEnum):
+    DERIVED = "derived"
+    MANUAL = "manual"

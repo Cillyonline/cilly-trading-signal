@@ -7,6 +7,7 @@ from app.models.enums import (
     AssetClass,
     ManualReviewLabel,
     ReviewBatchType,
+    ReviewFindingCategorySource,
     ScoreClass,
     SignalStatus,
     StrategyType,
@@ -48,6 +49,8 @@ class ReviewEntryCreate(BaseModel):
     no_trade_reasons: list | dict | None = None
     risk_flags: list | dict | None = None
     quality_blockers: list | dict | None = None
+    finding_category: str | None = Field(default=None, max_length=64)
+    finding_category_source: ReviewFindingCategorySource = ReviewFindingCategorySource.DERIVED
     entry_price: Decimal | None = None
     stop_loss: Decimal | None = None
     target_price: Decimal | None = None
@@ -113,6 +116,8 @@ class ReviewEntryRead(BaseModel):
     target_price: Decimal | None
     planned_risk_reward: Decimal | None
     manual_review_label: ManualReviewLabel
+    finding_category: str
+    finding_category_source: ReviewFindingCategorySource
     outcome_r: Decimal | None
     outcome_measurement_rule: str | None
     follow_up_needed: bool

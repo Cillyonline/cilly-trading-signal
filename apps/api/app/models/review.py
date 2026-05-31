@@ -20,6 +20,7 @@ from app.models.enums import (
     AssetClass,
     ManualReviewLabel,
     ReviewBatchType,
+    ReviewFindingCategorySource,
     ScoreClass,
     SignalStatus,
     StrategyType,
@@ -79,6 +80,10 @@ class ReviewEntry(Base):
     target_price: Mapped[Decimal | None] = mapped_column(Numeric(18, 8))
     planned_risk_reward: Mapped[Decimal | None] = mapped_column(Numeric(8, 2))
     manual_review_label: Mapped[ManualReviewLabel] = mapped_column(enum_values(ManualReviewLabel))
+    finding_category: Mapped[str] = mapped_column(String(64), default="unknown")
+    finding_category_source: Mapped[ReviewFindingCategorySource] = mapped_column(
+        enum_values(ReviewFindingCategorySource), default=ReviewFindingCategorySource.DERIVED
+    )
     outcome_r: Mapped[Decimal | None] = mapped_column(Numeric(8, 4))
     outcome_measurement_rule: Mapped[str | None] = mapped_column(Text)
     follow_up_needed: Mapped[bool] = mapped_column(Boolean, default=False)

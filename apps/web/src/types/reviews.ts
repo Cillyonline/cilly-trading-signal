@@ -4,6 +4,8 @@ export type ReviewBatchType = "historical" | "paper";
 
 export type ManualReviewLabel = "useful" | "too_permissive" | "too_strict" | "unclear";
 
+export type ReviewFindingCategorySource = "derived" | "manual";
+
 export type ReviewBatch = {
   id: number;
   name: string;
@@ -41,6 +43,8 @@ export type ReviewEntry = {
   target_price: string | null;
   planned_risk_reward: string | null;
   manual_review_label: ManualReviewLabel;
+  finding_category: string;
+  finding_category_source: ReviewFindingCategorySource;
   outcome_r: string | null;
   outcome_measurement_rule: string | null;
   follow_up_needed: boolean;
@@ -96,6 +100,8 @@ export type ReviewEntryCreatePayload = {
   score_class?: ScoreClass | null;
   quality_blockers?: string[];
   manual_review_label: ManualReviewLabel;
+  finding_category?: string | null;
+  finding_category_source?: ReviewFindingCategorySource;
   outcome_r?: string | null;
   outcome_measurement_rule?: string | null;
   follow_up_needed?: boolean;
