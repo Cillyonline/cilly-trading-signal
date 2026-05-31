@@ -55,6 +55,33 @@ export type CorrelationProxySummary = {
   review_only_notice: string;
 };
 
+export type JournalScoreSummary = {
+  average_entry_quality_score: string | null;
+  average_stop_quality_score: string | null;
+  average_exit_quality_score: string | null;
+  average_discipline_score: string | null;
+};
+
+export type JournalStrategySummary = JournalScoreSummary & {
+  strategy_type: string;
+  reviewed_trade_count: number;
+  setup_rule_followed_count: number;
+  setup_rule_broken_count: number;
+  setup_rule_unknown_count: number;
+};
+
+export type JournalAnalytics = JournalScoreSummary & {
+  closed_trade_count: number;
+  reviewed_trade_count: number;
+  missing_review_count: number;
+  setup_rule_followed_count: number;
+  setup_rule_broken_count: number;
+  setup_rule_unknown_count: number;
+  min_strategy_sample_size: number;
+  by_strategy: JournalStrategySummary[];
+  small_sample_notice: string;
+};
+
 export type OpenPortfolioRisk = {
   open_trade_count: number;
   complete_risk_count: number;
@@ -81,4 +108,5 @@ export type PerformanceSummary = {
   by_strategy: PerformanceByStrategy[];
   by_asset_class: PerformanceByAssetClass[];
   open_portfolio_risk: OpenPortfolioRisk;
+  journal_analytics: JournalAnalytics;
 };

@@ -9,6 +9,8 @@ import type {
   ConcentrationGroup,
   CorrelationProxy,
   CorrelationProxySummary,
+  JournalAnalytics,
+  JournalStrategySummary,
   OpenPortfolioRisk,
   OpenRiskGroup,
   PerformanceByAssetClass,
@@ -94,6 +96,7 @@ export default function PerformancePage() {
         {summary && summary.closed_trade_count > 0 ? (
           <>
             <SummaryGrid summary={summary} />
+            <JournalAnalyticsPanel analytics={summary.journal_analytics} />
             <StrategyBreakdown items={summary.by_strategy} />
             <AssetClassBreakdown items={summary.by_asset_class} />
           </>
@@ -139,6 +142,72 @@ function SummaryGrid({ summary }: { summary: PerformanceSummary }) {
       <Metric label="Best R" value={formatR(summary.best_r)} />
       <Metric label="Worst R" value={formatR(summary.worst_r)} />
     </section>
+  );
+}
+
+function JournalAnalyticsPanel({ analytics }: { analytics: JournalAnalytics }) {
+  return (
+    <section className="rounded-3xl border border-violet-300/20 bg-violet-300/[0.05] p-6">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm uppercase tracking-[0.3em] text-violet-200">Journal Quality</p>
+          <h2 className="mt-2 text-2xl font-semibold">Process Review Analytics</h2>
+          <p className="mt-2 max-w-3xl text-sm text-slate-300">{analytics.small_sample_notice}</p>
+        </div>
+        <span className="rounded-full border border-violet-200/30 px-4 py-2 text-sm text-violet-100">
+          {analytics.reviewed_trade_count} reviewed / {analytics.missing_review_count} missing
+        </span>
+      </div>
+      <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Metric label="Closed Trades" value={String(analytics.closed_trade_count)} />
+        <Metric label="Reviewed" value={String(analytics.reviewed_trade_count)} />
+        <Metric label="Missing Reviews" value={String(analytics.missing_review_count)} />
+        <Metric label="Rule Followed" value={String(analytics.setup_rule_followed_count)} />
+      </div>
+      <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <CompactScore label="Entry Quality" value={analytics.average_entry_quality_score} />
+        <CompactScore label="Stop Quality" value={analytics.average_stop_quality_score} />
+        <CompactScore label="Exit Quality" value={analytics.average_exit_quality_score} />
+        <CompactScore label="Discipline" value={analytics.average_discipline_score} />
+      </div>
+      <div className="mt-6 rounded-2xl border border-white/10 bg-slate-950/50 p-5">
+        <h3 className="font-semibold text-slate-100">By Strategy</h3>
+        <p className="mt-2 text-sm text-slate-400">
+          Strategy breakdown appears from {analytics.min_strategy_sample_size} reviewed journal records.
+        </p>
+        {analytics.by_strategy.length > 0 ? (
+          <div className="mt-4 grid gap-3 lg:grid-cols-2">
+            {analytics.by_strategy.map((item) => (
+              <JournalStrategyCard key={item.strategy_type} item={item} />
+            ))}
+          </div>
+        ) : (
+          <p className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-400">
+            Noch keine Strategie mit ausreichender Journal-Stichprobe.
+          </p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function JournalStrategyCard({ item }: { item: JournalStrategySummary }) {
+  return (
+    <article className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
+      <div className="flex items-center justify-between gap-3">
+        <h4 className="font-semibold text-slate-100">{formatStrategy(item.strategy_type)}</h4>
+        <span className="text-xs text-slate-400">{item.reviewed_trade_count} journals</span>
+      </div>
+      <p className="mt-2 text-sm text-slate-400">
+        Rule: {item.setup_rule_followed_count} followed / {item.setup_rule_broken_count} broken / {item.setup_rule_unknown_count} unknown
+      </p>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <CompactScore label="Entry" value={item.average_entry_quality_score} />
+        <CompactScore label="Stop" value={item.average_stop_quality_score} />
+        <CompactScore label="Exit" value={item.average_exit_quality_score} />
+        <CompactScore label="Discipline" value={item.average_discipline_score} />
+      </div>
+    </article>
   );
 }
 
@@ -488,6 +557,10 @@ function CompactMetric({ label, value }: { label: string; value: string }) {
       <p className="mt-1 text-lg font-semibold text-slate-100">{value}</p>
     </div>
   );
+}
+
+function CompactScore({ label, value }: { label: string; value: string | null }) {
+  return <CompactMetric label={label} value={value ? `${Number(value).toFixed(2)} / 5` : "-"} />;
 }
 
 function formatMoney(value: string | null) {

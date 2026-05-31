@@ -1,10 +1,10 @@
 from decimal import Decimal, ROUND_HALF_UP
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.models.enums import AssetClass, StrategyType, TradeStatus
-from app.models.trade import Trade
+from app.models.trade import JournalEntry, Trade
 from app.schemas.performance import (
     PerformanceByAssetClassRead,
     PerformanceByStrategyRead,
@@ -15,6 +15,7 @@ from app.services.settings import get_or_create_settings
 FOUR_PLACES = Decimal("0.0001")
 TWO_PLACES = Decimal("0.01")
 CONCENTRATION_WARNING_THRESHOLD_PERCENT = Decimal("50.00")
+MIN_JOURNAL_STRATEGY_SAMPLE_SIZE = 3
 RISK_REVIEW_ONLY_NOTICE = (
     "Open portfolio risk is based only on manually documented trades. It is review-only, "
     "not broker/account sync, automatic position sizing, an order recommendation, or "
@@ -29,6 +30,11 @@ CORRELATION_PROXY_REVIEW_ONLY_NOTICE = (
     "statistical correlation matrix, live market data, or trade instruction."
 )
 BTC_BETA_SYMBOL_HINTS = ("BTC", "ETH", "SOL", "ADA", "AVAX", "DOT", "MATIC", "LINK")
+JOURNAL_SMALL_SAMPLE_NOTICE = (
+    "Journal analytics are process quality summaries from manually reviewed closed trades. "
+    "Small samples are directional review prompts only, not prediction, edge validation, or "
+    "profit validation."
+)
 
 
 def get_performance_summary(db: Session, user_id: int) -> PerformanceSummaryRead:
@@ -113,6 +119,25 @@ def get_open_portfolio_risk(db: Session, user_id: int) -> dict:
     }
 
 
+def get_journal_analytics(db: Session, user_id: int) -> dict:
+    closed_trades = list(
+        db.scalars(
+            select(Trade)
+            .options(selectinload(Trade.journal_entry))
+            .where(
+                Trade.user_id == user_id,
+                Trade.status.in_((TradeStatus.CLOSED, TradeStatus.REVIEWED)),
+            )
+        )
+    )
+    reviewed_trades = [trade for trade in closed_trades if trade.journal_entry is not None]
+    analytics = _build_journal_summary(closed_trades, reviewed_trades)
+    analytics["min_strategy_sample_size"] = MIN_JOURNAL_STRATEGY_SAMPLE_SIZE
+    analytics["by_strategy"] = _build_journal_strategy_summaries(reviewed_trades)
+    analytics["small_sample_notice"] = JOURNAL_SMALL_SAMPLE_NOTICE
+    return analytics
+
+
 def _build_strategy_breakdown(
     trade_results: list[tuple[StrategyType, AssetClass, Decimal]]
 ) -> list[PerformanceByStrategyRead]:
@@ -124,6 +149,69 @@ def _build_strategy_breakdown(
         PerformanceByStrategyRead(strategy_type=group_key.value, **metrics)
         for group_key, metrics in _build_group_metrics(grouped_results)
     ]
+
+
+def _build_journal_summary(closed_trades: list[Trade], reviewed_trades: list[Trade]) -> dict:
+    journals = [trade.journal_entry for trade in reviewed_trades if trade.journal_entry is not None]
+    return {
+        "closed_trade_count": len(closed_trades),
+        "reviewed_trade_count": len(reviewed_trades),
+        "missing_review_count": len(closed_trades) - len(reviewed_trades),
+        **_build_rule_counts(journals),
+        **_build_score_summary(journals),
+    }
+
+
+def _build_journal_strategy_summaries(reviewed_trades: list[Trade]) -> list[dict]:
+    grouped: dict[StrategyType, list[JournalEntry]] = {}
+    for trade in reviewed_trades:
+        if trade.journal_entry is not None:
+            grouped.setdefault(trade.strategy_type, []).append(trade.journal_entry)
+
+    summaries: list[dict] = []
+    for strategy_type, journals in sorted(grouped.items(), key=lambda item: item[0].value):
+        if len(journals) < MIN_JOURNAL_STRATEGY_SAMPLE_SIZE:
+            continue
+        summaries.append(
+            {
+                "strategy_type": strategy_type.value,
+                "reviewed_trade_count": len(journals),
+                **_build_rule_counts(journals),
+                **_build_score_summary(journals),
+            }
+        )
+    return summaries
+
+
+def _build_rule_counts(journals: list[JournalEntry]) -> dict:
+    return {
+        "setup_rule_followed_count": sum(
+            1 for journal in journals if journal.setup_rule_followed is True
+        ),
+        "setup_rule_broken_count": sum(
+            1 for journal in journals if journal.setup_rule_followed is False
+        ),
+        "setup_rule_unknown_count": sum(
+            1 for journal in journals if journal.setup_rule_followed is None
+        ),
+    }
+
+
+def _build_score_summary(journals: list[JournalEntry]) -> dict:
+    return {
+        "average_entry_quality_score": _average_score(
+            [journal.entry_quality_score for journal in journals]
+        ),
+        "average_stop_quality_score": _average_score(
+            [journal.stop_quality_score for journal in journals]
+        ),
+        "average_exit_quality_score": _average_score(
+            [journal.exit_quality_score for journal in journals]
+        ),
+        "average_discipline_score": _average_score(
+            [journal.discipline_score for journal in journals]
+        ),
+    }
 
 
 def _build_asset_class_breakdown(
@@ -343,3 +431,10 @@ def _has_complete_risk(trade: Trade) -> bool:
 
 def _quantize(value: Decimal, exponent: Decimal) -> Decimal:
     return value.quantize(exponent, rounding=ROUND_HALF_UP)
+
+
+def _average_score(values: list[int | None]) -> Decimal | None:
+    present_values = [Decimal(value) for value in values if value is not None]
+    if not present_values:
+        return None
+    return _quantize(sum(present_values, Decimal("0")) / len(present_values), TWO_PLACES)
