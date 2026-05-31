@@ -240,98 +240,106 @@ export default function TradesPage() {
             </div>
 
             <div className="mt-6 grid gap-4">
-              <label className="grid gap-2 text-sm text-slate-300">
-                Quelle
-                <select
-                  value={form.mode}
-                  onChange={(event) => setForm({ ...form, mode: event.target.value as TradeForm["mode"] })}
-                  className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-emerald-300"
-                >
-                  <option value="watchlist">Direkt von Watchlist</option>
-                  <option value="signal">Aus Signal-Bewertung</option>
-                </select>
-              </label>
-
-              {form.mode === "signal" ? (
+              <TradeFormSection title="1. Quelle" description="Waehle nur den Ursprung der manuellen Ausfuehrung. Es wird keine Order erstellt.">
                 <label className="grid gap-2 text-sm text-slate-300">
-                  Signal
+                  Quelle
                   <select
-                    required
-                    disabled={signals.length === 0}
-                    value={form.signal_id}
-                    onChange={(event) => setForm({ ...form, signal_id: event.target.value })}
-                    className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-emerald-300 disabled:opacity-60"
+                    value={form.mode}
+                    onChange={(event) => setForm({ ...form, mode: event.target.value as TradeForm["mode"] })}
+                    className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-emerald-300"
                   >
-                    {signals.map((signal) => (
-                      <option key={signal.id} value={signal.id}>
-                        {signal.symbol} - {formatStrategy(signal.strategy_type)} - {signal.status}
-                      </option>
-                    ))}
+                    <option value="watchlist">Direkt von Watchlist</option>
+                    <option value="signal">Aus Signal-Bewertung</option>
                   </select>
                 </label>
-              ) : (
-                <>
+
+                {form.mode === "signal" ? (
                   <label className="grid gap-2 text-sm text-slate-300">
-                    Symbol
+                    Signal
                     <select
                       required
-                      disabled={watchlist.length === 0}
-                      value={form.watchlist_item_id}
-                      onChange={(event) => setForm({ ...form, watchlist_item_id: event.target.value })}
+                      disabled={signals.length === 0}
+                      value={form.signal_id}
+                      onChange={(event) => setForm({ ...form, signal_id: event.target.value })}
                       className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-emerald-300 disabled:opacity-60"
                     >
-                      {watchlist.map((item) => (
-                        <option key={item.id} value={item.id}>
-                          {item.symbol} {item.name ? `- ${item.name}` : ""}
+                      {signals.map((signal) => (
+                        <option key={signal.id} value={signal.id}>
+                          {signal.symbol} - {formatStrategy(signal.strategy_type)} - {signal.status}
                         </option>
                       ))}
                     </select>
                   </label>
-                  <label className="grid gap-2 text-sm text-slate-300">
-                    Strategie
-                    <select
-                      value={form.strategy_type}
-                      onChange={(event) => setForm({ ...form, strategy_type: event.target.value as StrategyType })}
-                      className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-emerald-300"
-                    >
-                      <option value="trend_pullback_long">Trend Pullback Long</option>
-                      <option value="base_breakout_long">Base Breakout Long</option>
-                    </select>
-                  </label>
-                </>
-              )}
+                ) : (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <label className="grid gap-2 text-sm text-slate-300">
+                      Symbol
+                      <select
+                        required
+                        disabled={watchlist.length === 0}
+                        value={form.watchlist_item_id}
+                        onChange={(event) => setForm({ ...form, watchlist_item_id: event.target.value })}
+                        className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-emerald-300 disabled:opacity-60"
+                      >
+                        {watchlist.map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.symbol} {item.name ? `- ${item.name}` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="grid gap-2 text-sm text-slate-300">
+                      Strategie
+                      <select
+                        value={form.strategy_type}
+                        onChange={(event) => setForm({ ...form, strategy_type: event.target.value as StrategyType })}
+                        className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-emerald-300"
+                      >
+                        <option value="trend_pullback_long">Trend Pullback Long</option>
+                        <option value="base_breakout_long">Base Breakout Long</option>
+                      </select>
+                    </label>
+                  </div>
+                )}
 
-              <ContextCard signal={selectedSignal} watchlistItem={selectedWatchlistItem} mode={form.mode} />
+                <ContextCard signal={selectedSignal} watchlistItem={selectedWatchlistItem} mode={form.mode} />
+              </TradeFormSection>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <NumberField label="Entry Price" value={form.entry_price} onChange={(value) => setForm({ ...form, entry_price: value })} />
-                <NumberField label="Stop Loss" value={form.stop_loss} onChange={(value) => setForm({ ...form, stop_loss: value })} />
-                <NumberField label="Target 1 optional" value={form.target_1} onChange={(value) => setForm({ ...form, target_1: value })} />
-                <NumberField label="Target 2 optional" value={form.target_2} onChange={(value) => setForm({ ...form, target_2: value })} />
-                <NumberField label="Position Size" value={form.position_size} onChange={(value) => setForm({ ...form, position_size: value })} />
-                <NumberField label="Fees optional" value={form.fees} onChange={(value) => setForm({ ...form, fees: value })} />
-              </div>
+              <TradeFormSection title="2. Risk Plan" description="Pflicht: Entry, Stop und Position Size. Backend berechnet Risiko nur zur Dokumentation.">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <NumberField label="Entry Price" value={form.entry_price} onChange={(value) => setForm({ ...form, entry_price: value })} />
+                  <NumberField label="Stop Loss" value={form.stop_loss} onChange={(value) => setForm({ ...form, stop_loss: value })} />
+                  <NumberField label="Target 1 optional" value={form.target_1} onChange={(value) => setForm({ ...form, target_1: value })} />
+                  <NumberField label="Target 2 optional" value={form.target_2} onChange={(value) => setForm({ ...form, target_2: value })} />
+                  <NumberField label="Position Size" value={form.position_size} onChange={(value) => setForm({ ...form, position_size: value })} />
+                  <NumberField label="Fees optional" value={form.fees} onChange={(value) => setForm({ ...form, fees: value })} />
+                </div>
+              </TradeFormSection>
 
-              <label className="grid gap-2 text-sm text-slate-300">
-                Opened At
-                <input
-                  required
-                  type="datetime-local"
-                  value={form.opened_at}
-                  onChange={(event) => setForm({ ...form, opened_at: event.target.value })}
-                  className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-emerald-300"
-                />
-              </label>
+              <TradeFormSection title="3. Execution Details" description="Zeitpunkt der externen manuellen Ausfuehrung. Keine Broker- oder Order-Aktion in der App.">
+                <label className="grid gap-2 text-sm text-slate-300">
+                  Opened At
+                  <input
+                    required
+                    type="datetime-local"
+                    value={form.opened_at}
+                    onChange={(event) => setForm({ ...form, opened_at: event.target.value })}
+                    className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-emerald-300"
+                  />
+                </label>
+              </TradeFormSection>
 
-              <label className="grid gap-2 text-sm text-slate-300">
-                Notes
-                <textarea
-                  value={form.notes}
-                  onChange={(event) => setForm({ ...form, notes: event.target.value })}
-                  className="min-h-24 rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-emerald-300"
-                  placeholder="Warum hast du den Trade ausserhalb der App manuell ausgefuehrt?"
-                />
-              </label>
+              <TradeFormSection title="4. Notes" description="Nur prozessbezogene Dokumentation, keine private Account- oder Orderdaten eintragen.">
+                <label className="grid gap-2 text-sm text-slate-300">
+                  Notes
+                  <textarea
+                    value={form.notes}
+                    onChange={(event) => setForm({ ...form, notes: event.target.value })}
+                    className="min-h-24 rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-emerald-300"
+                    placeholder="Warum hast du den Trade ausserhalb der App manuell ausgefuehrt?"
+                  />
+                </label>
+              </TradeFormSection>
 
               <button
                 disabled={isSaving || isLoading}
@@ -547,6 +555,26 @@ function SummaryCard({ label, value, tone = "border-white/10" }: { label: string
       <p className="text-sm text-slate-400">{label}</p>
       <p className="mt-3 text-3xl font-semibold">{value}</p>
     </article>
+  );
+}
+
+function TradeFormSection({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+      <div className="mb-4">
+        <h3 className="font-semibold text-slate-100">{title}</h3>
+        <p className="mt-1 text-xs text-slate-500">{description}</p>
+      </div>
+      <div className="grid gap-4">{children}</div>
+    </section>
   );
 }
 
