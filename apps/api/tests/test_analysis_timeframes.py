@@ -305,7 +305,7 @@ def test_missing_weekly_context_returns_conservative_no_setup() -> None:
 
         assert result.status == SignalStatus.NO_SETUP
         assert "missing_1W_data" in result.risk_flags
-        assert "poor_data_quality" in result.no_trade_reasons
+        assert "required_timeframe_data_missing" in result.no_trade_reasons
 
 
 def test_missing_4h_trigger_data_prevents_armed_status() -> None:
@@ -351,7 +351,7 @@ def test_stale_required_timeframe_data_prevents_armed_status() -> None:
 
         assert result.status == SignalStatus.NO_SETUP
         assert "market_data_stale_1D" in result.risk_flags
-        assert "poor_data_quality" in result.no_trade_reasons
+        assert "required_market_data_not_fresh" in result.no_trade_reasons
 
 
 def test_unknown_required_timeframe_data_prevents_armed_status() -> None:
@@ -379,7 +379,7 @@ def test_unknown_required_timeframe_data_prevents_armed_status() -> None:
         assert weekly.freshness_status == MarketDataFreshnessStatus.UNKNOWN
         assert result.status == SignalStatus.NO_SETUP
         assert "market_data_unknown_1W" in result.risk_flags
-        assert "poor_data_quality" in result.no_trade_reasons
+        assert "required_market_data_not_fresh" in result.no_trade_reasons
 
 
 def test_single_daily_import_cannot_produce_armed_setup() -> None:

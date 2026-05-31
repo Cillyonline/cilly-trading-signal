@@ -119,7 +119,7 @@ GOLDEN_CASES = [
         expected_score_class=ScoreClass.NO_TRADE,
         expected_no_trade_reasons={"breakout_too_extended"},
         expected_risk_flags={"breakout_extended_after_trigger"},
-        expected_quality={"data_quality": "blocked"},
+        expected_quality={"structure": "blocked", "trigger": "blocked"},
     ),
     GoldenCase(
         name="review_finding_too_strict_watchlist_missing_trigger_not_blocked",
