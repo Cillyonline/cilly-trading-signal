@@ -346,6 +346,8 @@ def base_quality_gate_flags(payload: BaseBreakoutInput) -> list[str]:
         flags.append("base_range_too_wide")
     if breakout_is_extended(payload):
         flags.append("breakout_extended_after_trigger")
+    if has_valid_breakout_trigger(payload) and not payload.close_near_high:
+        flags.append("breakout_close_not_near_high")
     if not payload.base_high_is_clear:
         flags.append("base_high_not_clear")
     if resistance_nearby(payload):
@@ -359,6 +361,8 @@ def initial_risk_flags(payload: BaseBreakoutInput) -> list[str]:
         flags.append("base_range_too_wide")
     if breakout_is_extended(payload):
         flags.append("breakout_extended_after_trigger")
+    if has_valid_breakout_trigger(payload) and not payload.close_near_high:
+        flags.append("breakout_close_not_near_high")
     if resistance_nearby(payload):
         flags.append("major_resistance_nearby")
         flags.append("strong_resistance_nearby")

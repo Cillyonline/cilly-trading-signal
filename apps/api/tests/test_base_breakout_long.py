@@ -159,6 +159,15 @@ def test_extended_breakout_forces_no_setup() -> None:
     assert "breakout_too_extended" in result.no_trade_reasons
 
 
+def test_breakout_close_not_near_high_forces_no_setup() -> None:
+    result = evaluate_base_breakout_long(breakout_payload(close_near_high=False))
+
+    assert result.status == SignalStatus.NO_SETUP
+    assert result.score_class == ScoreClass.NO_TRADE
+    assert "breakout_close_not_near_high" in result.risk_flags
+    assert "breakout_close_not_near_high" in result.no_trade_reasons
+
+
 def test_unclear_base_high_forces_no_setup() -> None:
     result = evaluate_base_breakout_long(breakout_payload(base_high_is_clear=False))
 
