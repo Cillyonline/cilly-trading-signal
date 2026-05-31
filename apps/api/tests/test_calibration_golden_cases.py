@@ -122,6 +122,17 @@ GOLDEN_CASES = [
         expected_quality={"structure": "blocked", "trigger": "blocked"},
     ),
     GoldenCase(
+        name="review_finding_too_permissive_base_breakout_weak_close_blocks",
+        evaluate=lambda: evaluate_base_breakout_long(
+            base_breakout_payload(close_near_high=False)
+        ),
+        expected_status=SignalStatus.NO_SETUP,
+        expected_score_class=ScoreClass.NO_TRADE,
+        expected_no_trade_reasons={"breakout_close_not_near_high"},
+        expected_risk_flags={"breakout_close_not_near_high"},
+        expected_quality={"trigger": "blocked"},
+    ),
+    GoldenCase(
         name="review_finding_too_strict_watchlist_missing_trigger_not_blocked",
         evaluate=lambda: evaluate_base_breakout_long(
             base_breakout_payload(close_above_base_high_4h=False, close_above_base_high_daily=False)

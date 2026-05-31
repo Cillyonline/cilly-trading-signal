@@ -49,6 +49,9 @@ NO_TRADE_REASON_MESSAGES = {
     ),
     "base_too_wide": "No Trade: base range is too wide for clean risk planning.",
     "breakout_too_extended": "No Trade: breakout is extended beyond the trigger zone.",
+    "breakout_close_not_near_high": (
+        "No Trade: breakout close is not near the high, so confirmation quality is weak."
+    ),
     "base_high_not_clear": "No Trade: base high is not clear enough for breakout review.",
     "strong_resistance_nearby": "No Trade: setup is directly below strong resistance.",
 }
@@ -105,6 +108,9 @@ NO_TRADE_NEXT_ACTIONS = {
     "base_too_wide": "Wait for a tighter base with a clearer stop and invalidation level.",
     "breakout_too_extended": (
         "Wait for a reset, retest, or new base instead of chasing the extended move."
+    ),
+    "breakout_close_not_near_high": (
+        "Wait for a stronger close near the high before reviewing this breakout."
     ),
     "base_high_not_clear": "Wait for a clearer base high before reviewing breakout confirmation.",
     "strong_resistance_nearby": (
@@ -302,6 +308,8 @@ def collect_common_no_trade_reasons(
         reasons.append("base_too_wide")
     if "breakout_extended_after_trigger" in signal_input.data_quality_flags:
         reasons.append("breakout_too_extended")
+    if "breakout_close_not_near_high" in signal_input.data_quality_flags:
+        reasons.append("breakout_close_not_near_high")
     if "base_high_not_clear" in signal_input.data_quality_flags:
         reasons.append("base_high_not_clear")
     if "strong_resistance_nearby" in signal_input.data_quality_flags:

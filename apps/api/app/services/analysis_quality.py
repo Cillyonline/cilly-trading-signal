@@ -38,6 +38,7 @@ STRUCTURE_BLOCKERS = {
 }
 TRIGGER_BLOCKERS = {
     "breakout_too_extended",
+    "breakout_close_not_near_high",
 }
 REGIME_FLAGS = {
     "stock_benchmark_context_missing",
