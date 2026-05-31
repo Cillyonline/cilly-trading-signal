@@ -108,11 +108,11 @@ export default function SettingsPage() {
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-8 text-slate-100">
       <section className="mx-auto flex max-w-5xl flex-col gap-8">
-        <header className="rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_right,#047857,transparent_32%),rgba(255,255,255,0.05)] p-8">
+        <header className="rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_right,#047857,transparent_32%),rgba(255,255,255,0.05)] p-5 sm:p-8">
           <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-sm uppercase tracking-[0.35em] text-emerald-300">Settings</p>
-              <h1 className="mt-3 text-4xl font-semibold tracking-tight">Risk Settings</h1>
+              <p className="text-sm uppercase tracking-[0.24em] text-emerald-300 sm:tracking-[0.35em]">Settings</p>
+              <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Risk Settings</h1>
               <p className="mt-3 max-w-2xl text-slate-300">
                 Lege dokumentarische Risikolimits fuer manuell erfasste Trades fest. Die App berechnet
                 und validiert Risiken, platziert aber keine Orders und fuehrt keine Positionsgroessen aus.

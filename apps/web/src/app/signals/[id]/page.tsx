@@ -126,7 +126,7 @@ export default function SignalDetailPage({ params }: { params: { id: string } })
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-8 text-slate-100">
       <section className="mx-auto flex max-w-6xl flex-col gap-8">
-        <header className="rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_right,#064e3b,transparent_36%),rgba(255,255,255,0.05)] p-8">
+        <header className="rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_right,#064e3b,transparent_36%),rgba(255,255,255,0.05)] p-5 sm:p-8">
           <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-sm uppercase tracking-[0.24em] text-emerald-300 sm:tracking-[0.35em]">Signal Detail</p>

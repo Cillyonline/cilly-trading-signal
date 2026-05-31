@@ -189,11 +189,11 @@ export default function ReviewsPage() {
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#312e81,transparent_34%),#020617] px-6 py-8 text-slate-100">
       <section className="mx-auto flex max-w-6xl flex-col gap-8">
-        <header className="rounded-3xl border border-white/10 bg-white/[0.05] p-8">
+        <header className="rounded-3xl border border-white/10 bg-white/[0.05] p-5 sm:p-8">
           <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
             <div>
-              <p className="text-sm uppercase tracking-[0.35em] text-violet-300">Historical / Paper Review</p>
-              <h1 className="mt-3 text-4xl font-semibold tracking-tight">Review-Batches erfassen</h1>
+              <p className="text-sm uppercase tracking-[0.24em] text-violet-300 sm:tracking-[0.35em]">Historical / Paper Review</p>
+              <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Review-Batches erfassen</h1>
               <p className="mt-3 max-w-3xl text-slate-300">
                 Strukturierte Evidence fuer Kalibrierung: Label, Blocker, optionale R-Notiz und Follow-up Issue.
                 Kein Backtest, keine Profitabilitaetsvalidierung, keine Trading Advice und keine Ausfuehrung.
