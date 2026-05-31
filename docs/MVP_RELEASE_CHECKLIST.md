@@ -6,11 +6,38 @@ This checklist records the current MVP release-candidate posture for review and 
 
 ## Current Rebaseline Status
 
-- Version / candidate: post-v2.1 strategy-calibration rebaseline.
-- Evidence source: automated API/Web verification from merged v2.1 and follow-up PRs plus the latest documented smoke-test run in [MVP Smoke Test](MVP_SMOKE_TEST.md#latest-run). A current-main Docker Compose smoke rerun remains dependent on local Docker Engine availability where applicable.
-- Status: The app remains suitable only for controlled internal/single-operator review workflows. This is not production-ready, broker-ready, profitability-validated, live/realtime, or real-money trading evidence.
+- Version / candidate: final internal owner/operator review candidate after v2.7.
+- Evidence source: automated API/Web/Security Scan verification from merged v2.2-v2.7 PRs plus the latest documented smoke-test run in [MVP Smoke Test](MVP_SMOKE_TEST.md#latest-run). A current-main Docker Compose smoke rerun remains scheduled for v2.8 and remains dependent on local Docker Engine availability where applicable.
+- Status: The app remains suitable only for controlled internal/single-operator review workflows with sample or paper data unless separately approved. This is not production-ready, broker-ready, profitability-validated, live/realtime, or real-money trading evidence.
 - Current decision gate: [Deployment Readiness Decision Gate v2](DEPLOYMENT_READINESS_DECISION_GATE_V2.md) records a conditional go for local review and private owner/operator staging only; production-like exposure remains No Go.
 - Boundary: decision-support only, manual execution only, no broker integration, no automatic order execution, no profitability claims, no live/realtime claims, no trading advice, and no production-readiness claim.
+
+## Final Internal Review Candidate Summary
+
+### Implemented Since v2.1
+
+- v2.2-v2.4 improved historical/paper review evidence workflows with correction support, calibration finding categories, repeated finding visibility, and documented auditability gaps.
+- v2.5 added open portfolio risk review, max open risk warnings, asset concentration warnings, simple correlation proxy warnings, and process-oriented trade journal analytics.
+- v2.6 added application monitoring checklist, structured health details, backup restore drill documentation, deployment readiness decision gate v2, dependency/container scan workflow, and operational incident runbook.
+- v2.7 added mobile layout audit, improved mobile signal cards, improved mobile review batch entry/correction grouping, and a basic PWA manifest/icons baseline.
+
+### Current Known Gaps
+
+- Final current-main internal workflow smoke evidence is still pending under v2.8.
+- Final internal go/no-go decision gate is still pending under v2.8.
+- Deployment readiness gate evidence needs a doc refresh after the scan workflow and incident runbook completion (`#375`).
+- Monitoring checklist should link directly to the operational incident runbook (`#376`).
+- Review correction audit history remains a gap (`#355`).
+- Calibration finding categories still need stronger auditability (`#362`).
+- Portfolio risk review should include all active trade statuses (`#368`).
+- Mobile Screener density, mobile Trade workflow grouping, and global mobile header density remain follow-up gaps (`#381`, `#382`, `#383`).
+
+### Final Internal Review Boundary
+
+- Internal owner/operator review only.
+- Manual execution only.
+- No broker integration, account sync, automatic order execution, automatic trade creation, or automatic position sizing.
+- No production-like public exposure, public SaaS, multi-user onboarding, billing, support operation, real-money readiness, profitability claim, backtesting validation, live/realtime claim, or trading advice.
 
 ## Release Candidate Status
 
@@ -54,6 +81,7 @@ This checklist records the current MVP release-candidate posture for review and 
 - v1.8 improved cockpit review usability across Dashboard, Signals, Alerts, Trades, and documentation while preserving manual review boundaries.
 - v1.9 added TradingView screener CSV snapshots, validation, candidate review UI, and explicit Watchlist conversion. Screener results remain review candidates only and do not create analysis, signals, trades, alerts, orders, or broker actions automatically.
 - v2.1 and follow-ups added professional strategy calibration, asset-specific overlays, benchmark-context visibility, analysis quality reports, calibration golden cases, end-to-end stored OHLCV/benchmark fixtures, and historical/paper review batches while preserving manual-review-only boundaries.
+- v2.2-v2.7 added review evidence refinement, risk/portfolio review, operational readiness documentation and scans, mobile signal/review usability improvements, and a PWA manifest baseline while preserving manual-review-only boundaries.
 
 ### Not Included
 
@@ -119,7 +147,7 @@ This checklist records the current MVP release-candidate posture for review and 
 - Historical/paper review batches are MVP-level and do not yet include advanced filtering, CSV export, or automated follow-up issue creation.
 - Production monitoring and operational alerting are not documented as passed; the application monitoring checklist is documentation for operator review, not completed production monitoring evidence.
 - Dependency/container scan workflow exists for visibility, but passing or non-blocking scan output is not production-readiness, security certification, or real-money-readiness evidence.
-- Full mobile app/PWA hardening beyond responsive MVP layouts is not documented as passed.
+- Mobile signal cards, review batch entry, and PWA manifest baseline are implemented; mobile Screener density, trade workflow grouping, header density, native app behavior, push notifications, offline trading mode, and background sync are not documented as passed.
 
 ## Blocked
 

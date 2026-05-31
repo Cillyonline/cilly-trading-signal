@@ -8,7 +8,7 @@ The goal is to keep the project focused: build a stable foundation first, then a
 
 ## Current Status
 
-The project is past the initial skeleton. The current MVP can run the core manual workflow from watchlist maintenance through CSV import or guarded manual Daily/EOD provider sync, deterministic analysis, benchmark-context review, explainable signal review, alert review, manual trade logging, journal notes, basic performance review, and TradingView screener CSV prefiltering into explicit Watchlist candidates. It is still not production-ready and must remain decision-support only.
+The project is a final internal review-candidate cockpit for controlled single owner/operator use. It can run the core manual workflow from watchlist maintenance through CSV import or guarded manual Daily/EOD provider sync, deterministic analysis, benchmark-context review, explainable signal review, alert review, manual trade logging, journal notes, performance/risk review, TradingView screener CSV prefiltering into explicit Watchlist candidates, and historical/paper review batches. It is still not production-ready and must remain decision-support only.
 
 Done:
 
@@ -41,30 +41,33 @@ Done:
   historical/paper review protocol, and app-supported review batch workflow.
 - Private VPS staging smoke test, operations hardening, and staging-only decision gate for controlled owner/operator use.
 - Deployment readiness decision gate v2 for local review, private owner/operator staging, and production-like non-go boundaries.
+- v2.2-v2.4 review workflow refinements: review entry correction support, calibration finding categories, repeated finding visibility, and documented follow-up gaps.
+- v2.5 risk and portfolio review: open portfolio risk, max open risk warnings, asset concentration warnings, correlation proxy warnings, and trade journal analytics.
+- v2.6 operational readiness: application monitoring checklist, structured health details, backup restore drill documentation, deployment readiness decision gate v2, dependency/container scan workflow, and operational incident runbook.
+- v2.7 mobile/PWA owner cockpit baseline: mobile layout audit, improved mobile signal cards, improved mobile review batch entry, and PWA manifest/icons.
 
 Partial:
 
 - CSV import is hardened for upload size, candle count, and timeframe consistency, and remains the supported manual baseline/fallback.
-- Screener CSV import is implemented as a candidate prefiltering workflow, but filtering, bulk review actions, pagination beyond the current row limits, and candidate prioritization remain future usability work.
+- Screener CSV import is implemented as a candidate prefiltering workflow with filters, bulk review actions, pagination, and explicit Watchlist conversion; mobile density and richer candidate prioritization remain future usability work.
 - Manual provider sync currently targets Daily/EOD data first; `4H`/intraday provider support remains unresolved and not promised.
-- Dashboard, journal, and performance views are MVP-level summaries, not full analytics modules.
-- Risk enforcement covers manual trade creation basics, not complete portfolio-level exposure management.
+- Dashboard, journal, and performance views include useful MVP-level summaries, risk warnings, and journal analytics, but are not full institutional analytics modules.
+- Risk enforcement covers manual trade creation basics and portfolio/risk review warnings, not complete account-level risk management or automatic position sizing.
 - Multi-timeframe analysis still requires current stored data for required `1W`, `1D`, and `4H` timeframes; provider sync does not automatically fill unsupported timeframes or rerun analysis.
-- Historical/paper review batches are implemented at an MVP level; richer review
-  analytics and exports remain future usability work.
+- Historical/paper review batches are implemented at an MVP level with correction and repeated-finding visibility; richer review analytics, audit trails, and automated follow-up workflows remain future usability work.
 - Auth is intentionally single-user and admin-only for MVP use.
 
 Missing:
 
 - Scheduled or automatic market-data sync.
-- Production-grade monitoring and operational alerting.
+- Production-grade monitoring and operational alerting beyond documented checklists and non-blocking scan visibility.
 - Multi-user mode, roles beyond the MVP admin, public registration, and password reset flows.
 - Backtesting, strategy validation, or profitability reporting.
 - Broker integration or automatic order execution.
 
 Current blockers and risks:
 
-- The app is not production-ready until deployment is repeatedly verified and monitoring, secrets operations, and security review are completed.
+- The app is not production-ready until current deployment smoke evidence, monitoring, secrets operations, restore drills, incident response, security review, and explicit owner acceptance are completed for the target environment.
 - Strategy behavior remains a deterministic decision-support hypothesis and must not be presented as trading advice or validated profitability.
 - Local development depends on `uv`, Python 3.12, Node.js 20, Docker, and a reachable PostgreSQL database or Docker Compose.
 - Private VPS staging is accepted for controlled owner/operator use only after documented operations hardening; production-like or public use remains blocked until a separate operational readiness decision addresses data-handling readiness, offsite backups, security review, and monitoring expectations.
@@ -383,16 +386,89 @@ Done when:
 - Historical/paper review remains process evidence only, not strategy validation.
 - No broker integration, automatic execution, live/realtime claim, profitability claim, or trading advice is introduced.
 
+## v2.2-v2.4 - Review Evidence Refinement
+
+Goal: make the historical/paper review workflow more useful for process evidence without turning it into backtesting or profitability validation.
+
+Status: Done, with follow-up gaps for audit history and auditable finding categories.
+
+Primary work:
+
+- Improve review entry correction support.
+- Make calibration finding categories visible and repeated findings easier to spot.
+- Preserve repeated findings as follow-up evidence only, not automatic strategy changes.
+
+Done when:
+
+- Review corrections and repeated findings support structured manual review.
+- Follow-up gaps are captured explicitly.
+- No profitability, backtesting, trading advice, or automatic execution claim is introduced.
+
+## v2.5 - Risk And Portfolio Review
+
+Goal: improve owner/operator risk visibility across open trades and historical journal records.
+
+Status: Done, with follow-up gap `#368` for active trade status coverage.
+
+Primary work:
+
+- Add open portfolio risk overview and max open risk warnings.
+- Add asset concentration and simple correlation proxy warnings.
+- Add trade journal analytics focused on process quality.
+
+Done when:
+
+- Risk warnings are explainable and conservative.
+- Unknown or incomplete risk data remains visible.
+- No automatic position sizing, account sync, broker action, or trade advice is introduced.
+
+## v2.6 - Operational Readiness
+
+Goal: improve controlled owner/operator operational posture without production-readiness overclaims.
+
+Status: Done, with follow-up gaps `#375` and `#376` for stale doc references after scan/runbook completion.
+
+Primary work:
+
+- Add application monitoring checklist and structured health details.
+- Document backup restore drill and incident response procedures.
+- Add deployment readiness decision gate v2.
+- Add non-blocking dependency and container scan workflow.
+
+Done when:
+
+- Operators have documented monitoring, backup/restore, scan, and incident-response paths.
+- Production-like exposure remains explicitly No Go without separate evidence and acceptance.
+- No secrets, private data, production-readiness claim, broker readiness, or automated execution are introduced.
+
+## v2.7 - Mobile/PWA Owner Cockpit
+
+Goal: improve mobile owner/operator review usability and baseline installability.
+
+Status: Done, with follow-up gaps `#381`, `#382`, and `#383` for Screener density, trade workflow grouping, and global header density.
+
+Primary work:
+
+- Audit mobile layouts across core review workflows.
+- Improve mobile signal cards and signal detail review hierarchy.
+- Improve mobile review batch entry and correction grouping.
+- Add PWA manifest baseline and static icons.
+
+Done when:
+
+- Signals and review batch workflows are easier to use on mobile.
+- The app has a basic installable shell.
+- No push trading, offline trading mode, background sync, live/realtime claim, broker integration, or automatic execution is introduced.
+
 ## Next Candidate Increment
 
-Recommended next planning candidates: screener usability v2, operational hardening,
-or review-batch usability refinements after enough sanitized review examples exist.
+Recommended next planning candidates after v2.8: resolve selected open gap issues, then choose between final owner/operator polish, deeper mobile workflow refinement, or narrowly scoped operational evidence work.
 
 Alternative next increments:
 
-- Screener usability v2 after calibrated review paths are further protected.
-- Operational hardening before broader exposure.
-- Review-batch export/filtering and follow-up issue workflow polish.
+- Screener/mobile usability refinements after final internal review evidence.
+- Operational evidence hardening before any broader exposure.
+- Review-batch audit history and follow-up issue workflow polish.
 
 ## Not Now
 

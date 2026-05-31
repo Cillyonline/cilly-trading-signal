@@ -2,8 +2,8 @@
 
 ## Purpose
 
-This document records the planning rebaseline after v2.1 Strategy Calibration and
-its follow-up issues. It is not a production-readiness statement, strategy
+This document records the planning rebaseline after v2.7 Mobile/PWA Owner Cockpit
+and the start of v2.8 Final Internal Review Candidate work. It is not a production-readiness statement, strategy
 validation, profitability claim, trading advice, broker-readiness claim,
 live/realtime data claim, or permission for automatic order execution.
 
@@ -12,11 +12,11 @@ live/realtime data claim, or permission for automatic order execution.
 The project now supports the core single-operator review cockpit: Watchlist,
 TradingView OHLCV CSV import, guarded manual Daily/EOD provider sync,
 deterministic multi-timeframe analysis, explainable signals, benchmark-context
-visibility, alert review, manual trade logging, journal and basic performance
-views, plus TradingView screener CSV snapshots that can be explicitly converted
-into Watchlist candidates.
+visibility, alert review, manual trade logging, journal and performance/risk
+review, TradingView screener CSV snapshots that can be explicitly converted
+into Watchlist candidates, and historical/paper review batches.
 
-v2.1 and its follow-ups improved strategy quality and reviewability:
+v2.1-v2.7 improved strategy quality, reviewability, operational posture, and mobile owner/operator usability:
 
 - Professional strategy playbook and stock/crypto overlays are documented.
 - Swing structure, pullback, breakout, stop/target, invalidation, market regime,
@@ -28,43 +28,51 @@ v2.1 and its follow-ups improved strategy quality and reviewability:
   end-to-end stored OHLCV plus benchmark-context fixtures.
 - Historical/paper review has both a documented protocol and an app-supported batch
   workflow for process evidence.
+- Review evidence workflows now include correction support, finding categories,
+  repeated finding visibility, and known auditability follow-up gaps.
+- Risk/portfolio review now includes open risk, max open risk warnings, asset concentration,
+  simple correlation proxies, and process-oriented journal analytics.
+- Operational readiness now includes monitoring checklist, structured health details,
+  backup restore drill documentation, deployment readiness gate v2, dependency/container scan
+  visibility, and an operational incident runbook.
+- Mobile owner/operator usability now has an audit, improved signal/review batch flows,
+  and a basic PWA manifest baseline.
 
 ## Options Considered
 
 | Option | Benefit | Risk / Reason Not First |
 | --- | --- | --- |
-| End-to-End Calibration Fixtures | Strengthens confidence that stored OHLCV, timeframes, and benchmark context produce expected strategy labels. | Still deterministic test coverage, not profitability evidence. |
-| Historical/Paper Review Batches | Turns the new protocol into a practical workflow for repeated `useful`, `too_permissive`, `too_strict`, and `unclear` findings. | More product surface and data-model work; should stay clearly separate from backtesting/profit claims. |
-| Screener Usability v2 | Makes daily candidate triage more practical with filtering, bulk review, pagination, and prioritization. | Useful, but should not bypass the calibrated signal-review workflow. |
-| Operational Hardening | Improves deployment confidence, monitoring, and backup posture. | Important before broader exposure, but product planning currently needs the next review-quality increment. |
-| Mobile/PWA | Improves daily access and alert/trade review on phone. | Better after the core review and calibration workflows stabilize. |
+| Final internal workflow smoke test | Verifies the current post-v2.7 workflow end to end before handoff. | Requires Docker/browser availability and sanitized evidence discipline. |
+| Final internal go/no-go decision gate | Gives an explicit owner/operator handoff decision with current evidence and gaps. | Must not become a production-readiness or real-money claim. |
+| Gap cleanup | Addresses known follow-ups from v2.3-v2.7. | Useful, but should not block final internal review unless the gap affects handoff safety. |
+| Screener/mobile/trade polish | Improves remaining dense mobile workflows. | Helpful, but can follow final internal candidate evidence. |
+| Operational evidence hardening | Refreshes deployment readiness evidence and operational docs. | Broader production-like readiness still needs a separate gate. |
 | Market Data v2 | Could reduce CSV friction and expand provider coverage. | Higher licensing, cost, freshness, and live/realtime-claim risk. |
 
 ## Decision Point
 
-Recommended next planning discussion: choose between a workflow-usability increment
-and an operational-readiness increment.
+Recommended next step: complete v2.8 Final Internal Review Candidate.
 
 Recently completed near-term technical steps:
 
-- `#300 - Expand calibration golden cases with full OHLCV and benchmark fixtures`.
-- `#299 - Add app support for historical and paper review batches`.
+- v2.5 Risk And Portfolio Review.
+- v2.6 Operational Readiness.
+- v2.7 Mobile/PWA Owner Cockpit.
 
-Recommended next candidates:
+Recommended v2.8 sequence:
 
-- Screener usability v2 for filtering, bulk review, pagination, and candidate
-  prioritization without bypassing calibrated review gates.
-- Operational hardening for monitoring, backup operations, and broader deployment
-  readiness decisions.
-- Review-batch usability refinements after enough sanitized examples exist.
+- `#339` Rebaseline product docs for final internal review candidate.
+- `#340` Run final internal workflow smoke test.
+- `#341` Final internal go/no-go decision gate.
 
 Reasoning:
 
-- The calibration and review-evidence foundations are now implemented.
-- Remaining high-value work is either daily workflow usability or deployment
-  confidence.
-- Any next step must keep deterministic fixtures and review batches clearly
-  separated from strategy validation, profitability evidence, and execution.
+- The current app has enough review, risk, operational, and mobile baseline capability
+  to warrant a final internal owner/operator handoff check.
+- The remaining v2.8 work is evidence and decision quality, not new product surface.
+- Any final decision must keep deterministic fixtures, historical/paper review,
+  security scans, and smoke checks separate from strategy validation, profitability
+  evidence, production readiness, and execution.
 
 ## Safety Boundaries
 
