@@ -311,13 +311,27 @@ function SummaryCard({ label, value, tone = "border-white/10" }: { label: string
 }
 
 function SignalCard({ signal }: { signal: Signal }) {
-  const reasoning = toTextList(signal.reasoning).slice(0, 2);
-  const riskFlags = toTextList(signal.risk_flags).slice(0, 4);
+  const reasoning = toTextList(signal.reasoning);
+  const riskFlags = toTextList(signal.risk_flags);
+  const noTradeReasons = toTextList(signal.no_trade_reasons);
 
   return (
-    <article className="grid gap-5 p-5 lg:grid-cols-[1fr_0.8fr]">
-      <div>
-        <div className="flex flex-wrap items-center gap-3">
+    <article className="grid gap-4 p-4 sm:p-5 lg:grid-cols-[1fr_0.82fr]">
+      <div className="min-w-0">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-xs uppercase tracking-[0.24em] text-slate-500">{formatStrategy(signal.strategy_type)}</p>
+            <h3 className="mt-1 break-words text-2xl font-semibold tracking-tight text-slate-50">{signal.symbol}</h3>
+          </div>
+          <a
+            className="inline-flex w-full justify-center rounded-xl border border-emerald-300/30 px-4 py-3 text-sm font-semibold text-emerald-200 hover:border-emerald-300/60 hover:text-emerald-100 sm:w-auto"
+            href={`/signals/${signal.id}`}
+          >
+            Detail pruefen
+          </a>
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           <span className={`rounded-full border px-3 py-1 text-xs ${statusTone[signal.status]}`}>
             {statusLabel[signal.status]}
           </span>
@@ -326,7 +340,16 @@ function SignalCard({ signal }: { signal: Signal }) {
               Stale CSV Review
             </span>
           ) : null}
-          <h3 className="text-lg font-semibold">{signal.symbol}</h3>
+          {noTradeReasons.length > 0 ? (
+            <span className="rounded-full border border-red-300/30 bg-red-300/10 px-3 py-1 text-xs text-red-100">
+              No-Trade Context
+            </span>
+          ) : null}
+          {riskFlags.length > 0 ? (
+            <span className="rounded-full border border-orange-300/30 bg-orange-300/10 px-3 py-1 text-xs text-orange-100">
+              {riskFlags.length} Risk Flags
+            </span>
+          ) : null}
           <span className="rounded-full bg-slate-800 px-3 py-1 text-xs uppercase text-slate-300">
             {signal.asset_class}
           </span>
@@ -340,52 +363,77 @@ function SignalCard({ signal }: { signal: Signal }) {
             {signal.bias}
           </span>
         </div>
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
           <Metric label="Score" value={formatScore(signal)} />
           <Metric label="R:R" value={signal.risk_reward ? `${formatNumber(signal.risk_reward)}R` : "-"} />
           <Metric label="Trigger" value={formatMoney(signal.trigger_level)} />
         </div>
+
         {signal.is_stale ? <StaleNotice signal={signal} compact /> : null}
-        <div className="mt-4 grid gap-3 sm:grid-cols-4">
+
+        <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Naechste manuelle Aktion</p>
+          <p className="mt-2 text-sm font-medium text-slate-200">
+            {signal.next_action || "Manuell weiter pruefen."}
+          </p>
+          <p className="mt-2 text-xs text-slate-500">Pruefhinweis, keine Order-Anweisung.</p>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Metric label="Entry Low" value={formatMoney(signal.entry_low)} compact />
           <Metric label="Entry High" value={formatMoney(signal.entry_high)} compact />
           <Metric label="Stop" value={formatMoney(signal.stop_loss)} compact />
           <Metric label="Target 1" value={formatMoney(signal.target_1)} compact />
         </div>
-        <a
-          className="mt-4 inline-flex rounded-xl border border-white/10 px-4 py-2 text-sm text-emerald-300 hover:border-emerald-300/50 hover:text-emerald-200"
-          href={`/signals/${signal.id}`}
-        >
-          Signal im Detail pruefen
-        </a>
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
-        <p className="text-sm font-medium text-slate-200">Begruendung zur manuellen Pruefung</p>
-        {reasoning.length > 0 ? (
-          <ul className="mt-3 space-y-2 text-sm text-slate-300">
-            {reasoning.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        ) : (
-          <p className="mt-3 text-sm text-slate-500">Keine Begruendung gespeichert.</p>
-        )}
-        <div className="mt-4 flex flex-wrap gap-2">
-          {riskFlags.length > 0 ? (
-            riskFlags.map((flag) => (
-              <span key={flag} className="rounded-full bg-orange-300/10 px-3 py-1 text-xs text-orange-100">
-                {flag.replaceAll("_", " ")}
-              </span>
-            ))
-          ) : (
-            <span className="rounded-full bg-emerald-300/10 px-3 py-1 text-xs text-emerald-100">
-              Keine Risk Flags
-            </span>
-          )}
-        </div>
+      <div className="grid content-start gap-3 rounded-2xl border border-white/10 bg-slate-950/60 p-3 sm:p-4">
+        <SignalContextDisclosure title="Begruendung" items={reasoning} empty="Keine Begruendung gespeichert." defaultOpen />
+        <SignalContextDisclosure title="No-Trade Gruende" items={noTradeReasons} empty="Keine harten No-Trade Gruende gespeichert." tone="red" />
+        <SignalContextDisclosure title="Risk Flags" items={riskFlags} empty="Keine Risk Flags gespeichert." tone="orange" />
       </div>
     </article>
+  );
+}
+
+function SignalContextDisclosure({
+  defaultOpen = false,
+  empty,
+  items,
+  title,
+  tone = "slate",
+}: {
+  defaultOpen?: boolean;
+  empty: string;
+  items: string[];
+  title: string;
+  tone?: "orange" | "red" | "slate";
+}) {
+  const itemClass =
+    tone === "red"
+      ? "border-red-300/20 bg-red-950/20 text-red-100"
+      : tone === "orange"
+        ? "border-orange-300/20 bg-orange-950/20 text-orange-100"
+        : "border-white/10 bg-white/[0.03] text-slate-300";
+
+  return (
+    <details open={defaultOpen} className="rounded-xl border border-white/10 bg-slate-900/70 p-3">
+      <summary className="cursor-pointer list-none text-sm font-semibold text-slate-100">
+        {title} <span className="text-xs font-normal text-slate-500">({items.length})</span>
+      </summary>
+      {items.length > 0 ? (
+        <ul className="mt-3 space-y-2 text-sm">
+          {items.map((item) => (
+            <li key={item} className={`rounded-xl border p-3 ${itemClass}`}>
+              {item.replaceAll("_", " ")}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-3 text-sm text-slate-500">{empty}</p>
+      )}
+    </details>
   );
 }
 
@@ -493,7 +541,7 @@ function formatNumber(value: string) {
   return Number.isFinite(parsed) ? parsed.toFixed(2) : value;
 }
 
-function toTextList(value: Signal["reasoning"] | Signal["risk_flags"]) {
+function toTextList(value: unknown) {
   if (Array.isArray(value)) {
     return value.map(String);
   }

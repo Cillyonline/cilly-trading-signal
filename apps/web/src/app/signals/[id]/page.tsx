@@ -129,15 +129,15 @@ export default function SignalDetailPage({ params }: { params: { id: string } })
         <header className="rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_right,#064e3b,transparent_36%),rgba(255,255,255,0.05)] p-8">
           <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-sm uppercase tracking-[0.35em] text-emerald-300">Signal Detail</p>
-              <h1 className="mt-3 text-4xl font-semibold tracking-tight">Signal vollstaendig pruefen</h1>
+              <p className="text-sm uppercase tracking-[0.24em] text-emerald-300 sm:tracking-[0.35em]">Signal Detail</p>
+              <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Signal vollstaendig pruefen</h1>
               <p className="mt-3 max-w-2xl text-slate-300">
                 Diese Ansicht zeigt die gespeicherte Setup-Bewertung als Entscheidungshilfe fuer
                 deine manuelle Pruefung. Sie ist keine Kauf- oder Verkaufsanweisung und nutzt keine
                 Live-Marktdaten.
               </p>
             </div>
-            <div className="flex gap-4 text-sm">
+            <div className="flex flex-wrap gap-4 text-sm">
               <a className="text-emerald-300 hover:text-emerald-200" href="/signals">
                 Zurueck zu Signalen
               </a>
@@ -230,6 +230,8 @@ function SignalDetail({
       </article>
 
       {signal.is_stale ? <StaleSignalBanner signal={signal} /> : null}
+
+      <SignalMobileSummary noTradeReasons={noTradeReasons} riskFlags={riskFlags} signal={signal} />
 
       <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <article className="rounded-3xl border border-emerald-400/20 bg-emerald-950/20 p-6">
@@ -375,6 +377,55 @@ function QualityReportCard({ checks }: { checks: Signal["quality_report"] }) {
         <p className="mt-5 text-sm text-slate-500">Kein Qualitaetsbericht gespeichert.</p>
       )}
     </article>
+  );
+}
+
+function SignalMobileSummary({
+  noTradeReasons,
+  riskFlags,
+  signal,
+}: {
+  noTradeReasons: string[];
+  riskFlags: string[];
+  signal: Signal;
+}) {
+  return (
+    <section className="rounded-3xl border border-white/10 bg-slate-900/70 p-4 sm:hidden">
+      <div className="flex flex-wrap gap-2">
+        <span className={`rounded-full border px-3 py-1 text-xs ${statusTone[signal.status]}`}>
+          {statusLabel[signal.status]}
+        </span>
+        <span className="rounded-full bg-slate-800 px-3 py-1 text-xs text-slate-300">
+          {formatStrategy(signal.strategy_type)}
+        </span>
+        {signal.is_stale ? (
+          <span className="rounded-full border border-orange-300/30 bg-orange-300/10 px-3 py-1 text-xs text-orange-100">
+            Stale
+          </span>
+        ) : null}
+        {noTradeReasons.length > 0 ? (
+          <span className="rounded-full border border-red-300/30 bg-red-300/10 px-3 py-1 text-xs text-red-100">
+            No-Trade Context
+          </span>
+        ) : null}
+        {riskFlags.length > 0 ? (
+          <span className="rounded-full border border-orange-300/30 bg-orange-300/10 px-3 py-1 text-xs text-orange-100">
+            {riskFlags.length} Risk Flags
+          </span>
+        ) : null}
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        <Metric label="Score" value={formatScore(signal)} />
+        <Metric label="R:R" value={signal.risk_reward ? `${formatNumber(signal.risk_reward)}R` : "-"} />
+        <Metric label="Trigger" value={formatMoney(signal.trigger_level)} />
+        <Metric label="Freshness" value={signal.is_stale ? "Stale" : "Current enough"} />
+      </div>
+      <div className="mt-4 rounded-2xl border border-emerald-300/20 bg-emerald-950/20 p-4">
+        <p className="text-xs uppercase tracking-[0.2em] text-emerald-300">Naechste manuelle Aktion</p>
+        <p className="mt-2 text-sm text-emerald-50/90">{signal.next_action || "Manuell weiter pruefen."}</p>
+        <p className="mt-2 text-xs text-emerald-50/60">Pruefhinweis, keine Order-Anweisung.</p>
+      </div>
+    </section>
   );
 }
 
