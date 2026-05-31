@@ -243,13 +243,8 @@ export default function TradeDetailPage({ params }: { params: { id: string } }) 
               <EventTimeline trade={trade} />
             </div>
             <div className="grid gap-6">
-              <JournalReviewCard
-                form={journalForm}
-                isReviewing={isReviewing}
-                onChange={setJournalForm}
-                onSubmit={submitJournal}
-                trade={trade}
-              />
+              <ManagementBoundaryCard trade={trade} />
+              <EventFormCard form={form} isSaving={isSaving} onChange={setForm} onSubmit={submitEvent} />
               <CloseTradeCard
                 form={closeForm}
                 isClosing={isClosing}
@@ -257,7 +252,13 @@ export default function TradeDetailPage({ params }: { params: { id: string } }) 
                 onSubmit={submitClose}
                 trade={trade}
               />
-              <EventFormCard form={form} isSaving={isSaving} onChange={setForm} onSubmit={submitEvent} />
+              <JournalReviewCard
+                form={journalForm}
+                isReviewing={isReviewing}
+                onChange={setJournalForm}
+                onSubmit={submitJournal}
+                trade={trade}
+              />
             </div>
           </section>
         ) : null}
@@ -363,6 +364,18 @@ function TradeSummary({ trade }: { trade: TradeDetail }) {
 
       {trade.notes ? <p className="mt-5 text-sm text-slate-300">{trade.notes}</p> : null}
     </article>
+  );
+}
+
+function ManagementBoundaryCard({ trade }: { trade: TradeDetail }) {
+  return (
+    <section className="rounded-3xl border border-sky-300/20 bg-sky-300/[0.06] p-5 sm:p-6">
+      <h2 className="text-xl font-semibold text-sky-50">Manual Management Boundary</h2>
+      <p className="mt-2 text-sm text-sky-100/80">
+        Status {trade.status}; Risiko {formatMoney(trade.initial_risk_amount)}; Result R {formatR(trade.result_r)}.
+        Alle Aktionen unten dokumentieren externe manuelle Entscheidungen. Keine Broker-Verbindung, keine Orderausfuehrung.
+      </p>
+    </section>
   );
 }
 
@@ -601,7 +614,7 @@ function CloseTradeCard({
 }) {
   if (trade.status === "closed") {
     return (
-      <section className="rounded-3xl border border-emerald-300/20 bg-emerald-300/5 p-6">
+      <section className="rounded-3xl border border-emerald-300/20 bg-emerald-300/5 p-5 sm:p-6">
         <h2 className="text-xl font-semibold">Trade geschlossen</h2>
         <p className="mt-2 text-sm text-slate-300">
           Ergebnis: {formatMoney(trade.result_amount)} / {formatR(trade.result_r)}. Dieser Close ist
@@ -612,9 +625,11 @@ function CloseTradeCard({
   }
 
   return (
-    <form onSubmit={onSubmit} className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
+    <form onSubmit={onSubmit} className="rounded-3xl border border-red-300/30 bg-red-300/[0.05] p-5 sm:p-6">
       <h2 className="text-xl font-semibold">Trade manuell schliessen</h2>
-      <p className="mt-2 text-sm text-slate-400">Loggt den Exit und berechnet Result R. Keine Orderausfuehrung.</p>
+      <p className="mt-2 text-sm text-red-100/80">
+        Finaler Close-Log fuer eine bereits extern ausgefuehrte Entscheidung. Keine Orderausfuehrung.
+      </p>
 
       <div className="mt-6 grid gap-4">
         <label className="grid gap-2 text-sm text-slate-300">
@@ -672,7 +687,7 @@ function CloseTradeCard({
         <button
           disabled={isClosing}
           type="submit"
-          className="rounded-xl bg-emerald-400 px-5 py-3 font-semibold text-slate-950 disabled:opacity-60"
+          className="rounded-xl bg-red-300 px-5 py-3 font-semibold text-slate-950 disabled:opacity-60"
         >
           {isClosing ? "Schliesse..." : "Trade Close loggen"}
         </button>
@@ -730,9 +745,11 @@ function EventFormCard({
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
   return (
-    <form onSubmit={onSubmit} className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
+    <form onSubmit={onSubmit} className="rounded-3xl border border-emerald-300/20 bg-emerald-300/[0.04] p-5 sm:p-6">
       <h2 className="text-xl font-semibold">Management Event loggen</h2>
-      <p className="mt-2 text-sm text-slate-400">Nur manuelle Dokumentation. Keine Broker-Aktion.</p>
+      <p className="mt-2 text-sm text-emerald-100/80">
+        Routine-Dokumentation fuer Notes, Stop- oder Target-Updates. Keine Broker-Aktion.
+      </p>
 
       <div className="mt-6 grid gap-4">
         <label className="grid gap-2 text-sm text-slate-300">
