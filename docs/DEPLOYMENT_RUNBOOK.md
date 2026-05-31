@@ -1411,6 +1411,29 @@ Minimum checks after first deploy or update:
 - No secrets appear in logs or screenshots.
 - UI wording still frames signals as manual decision-support only.
 
+For a compact browser spot-check after deploying current `main` to private
+staging, record sanitized pass/fail evidence for these routes:
+
+| Route or workflow | Expected result |
+| --- | --- |
+| `/login` | Login succeeds over HTTPS with the configured operator account. |
+| `/` | Dashboard loads and exposes the authenticated logout action. |
+| `/watchlist` | Fake/sample watchlist state loads or can be created manually. |
+| `/screener` | Sample screener upload path remains manual review only. |
+| `/import` | Sample CSV import controls load without private data. |
+| `/signals` | Signal cards remain decision support with No-Trade/data-quality context. |
+| `/reviews` | Paper/historical review wording remains evidence-only. |
+| `/trades` | Trade logging remains manual documentation of external actions only. |
+| `/performance` | R-multiple summaries remain historical/paper documentation only. |
+| `/alerts` | Alert events remain review prompts, not trade instructions. |
+| `/settings` | Settings load without exposing secrets and logout remains visible. |
+| Logout/protected route | Logout succeeds and protected pages require login again. |
+
+Use `docs/FINAL_BROWSER_CLICKTHROUGH_CHECKLIST.md` for the full 20-step
+browser workflow. Do not reset private staging volumes, restore backups, rotate
+secrets, or restart VPS services as part of a browser spot-check without
+explicit operator approval.
+
 ## Known Gaps
 
 - Automated deployment smoke tests are not implemented; the checklist above is manual.
