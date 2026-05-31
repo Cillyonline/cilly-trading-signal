@@ -205,6 +205,14 @@ export default function ReviewsPage() {
           </div>
         </header>
 
+        <section className="rounded-3xl border border-violet-300/20 bg-violet-300/10 p-4 text-sm text-violet-50 sm:hidden">
+          <p className="font-semibold">Mobile Review Flow</p>
+          <p className="mt-2 text-violet-100/80">
+            1. Batch waehlen, 2. Signal identifizieren, 3. Review Label und Blocker erfassen,
+            4. optional Outcome/Folgeissue dokumentieren. Evidence only, keine Regel- oder Trade-Aktion.
+          </p>
+        </section>
+
         <section className="grid gap-4 md:grid-cols-4">
           <SummaryCard label="Batches" value={String(batches.length)} />
           <SummaryCard label="Reviewed" value={String(summary.reviewedCount)} tone="border-violet-300/40" />
@@ -220,33 +228,45 @@ export default function ReviewsPage() {
             <h2 className="text-xl font-semibold">Batch anlegen</h2>
             <p className="mt-1 text-sm text-slate-400">Fixiere Review-Fenster und Datenkontext vor der Auswertung.</p>
             <div className="mt-5 grid gap-4">
-              <TextInput label="Name" value={batchForm.name} onChange={(name) => setBatchForm({ ...batchForm, name })} required />
-              <SelectInput
-                label="Typ"
-                value={batchForm.review_type}
-                onChange={(review_type) => setBatchForm({ ...batchForm, review_type: review_type as ReviewBatchType })}
-                options={[["historical", "Historical"], ["paper", "Paper"]]}
-              />
-              <div className="grid gap-4 sm:grid-cols-2">
+              <FormSection
+                eyebrow="1"
+                title="Batch Identity"
+                description="Pflicht: Name und Review-Typ. Lege den Kontext fest, bevor einzelne Signale bewertet werden."
+              >
+                <TextInput label="Name" value={batchForm.name} onChange={(name) => setBatchForm({ ...batchForm, name })} required />
                 <SelectInput
-                  label="Asset Class"
-                  value={batchForm.asset_class}
-                  onChange={(asset_class) => setBatchForm({ ...batchForm, asset_class: asset_class as BatchFormState["asset_class"] })}
-                  options={[["", "Alle"], ["stock", "Stock"], ["crypto", "Crypto"]]}
+                  label="Typ"
+                  value={batchForm.review_type}
+                  onChange={(review_type) => setBatchForm({ ...batchForm, review_type: review_type as ReviewBatchType })}
+                  options={[["historical", "Historical"], ["paper", "Paper"]]}
                 />
-                <SelectInput
-                  label="Strategie"
-                  value={batchForm.strategy_type}
-                  onChange={(strategy_type) => setBatchForm({ ...batchForm, strategy_type: strategy_type as BatchFormState["strategy_type"] })}
-                  options={[["", "Alle"], ["trend_pullback_long", "Trend Pullback"], ["base_breakout_long", "Base Breakout"]]}
-                />
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <TextInput label="Fenster Start" type="date" value={batchForm.review_window_start} onChange={(review_window_start) => setBatchForm({ ...batchForm, review_window_start })} />
-                <TextInput label="Fenster Ende" type="date" value={batchForm.review_window_end} onChange={(review_window_end) => setBatchForm({ ...batchForm, review_window_end })} />
-              </div>
-              <TextInput label="Datenquelle" value={batchForm.data_source} onChange={(data_source) => setBatchForm({ ...batchForm, data_source })} placeholder="stored csv, provider-sync..." />
-              <TextArea label="Kontextnotizen" value={batchForm.context_notes} onChange={(context_notes) => setBatchForm({ ...batchForm, context_notes })} />
+              </FormSection>
+              <FormSection
+                eyebrow="2"
+                title="Review Scope"
+                description="Optionaler Filterkontext fuer spaetere Auswertung. Keine automatische Strategieaenderung."
+              >
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <SelectInput
+                    label="Asset Class"
+                    value={batchForm.asset_class}
+                    onChange={(asset_class) => setBatchForm({ ...batchForm, asset_class: asset_class as BatchFormState["asset_class"] })}
+                    options={[["", "Alle"], ["stock", "Stock"], ["crypto", "Crypto"]]}
+                  />
+                  <SelectInput
+                    label="Strategie"
+                    value={batchForm.strategy_type}
+                    onChange={(strategy_type) => setBatchForm({ ...batchForm, strategy_type: strategy_type as BatchFormState["strategy_type"] })}
+                    options={[["", "Alle"], ["trend_pullback_long", "Trend Pullback"], ["base_breakout_long", "Base Breakout"]]}
+                  />
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <TextInput label="Fenster Start" type="date" value={batchForm.review_window_start} onChange={(review_window_start) => setBatchForm({ ...batchForm, review_window_start })} />
+                  <TextInput label="Fenster Ende" type="date" value={batchForm.review_window_end} onChange={(review_window_end) => setBatchForm({ ...batchForm, review_window_end })} />
+                </div>
+                <TextInput label="Datenquelle" value={batchForm.data_source} onChange={(data_source) => setBatchForm({ ...batchForm, data_source })} placeholder="stored csv, provider-sync..." />
+                <TextArea label="Kontextnotizen" value={batchForm.context_notes} onChange={(context_notes) => setBatchForm({ ...batchForm, context_notes })} />
+              </FormSection>
             </div>
             <button disabled={isSaving} className="mt-5 rounded-xl bg-violet-300 px-5 py-3 font-semibold text-slate-950 disabled:opacity-60" type="submit">
               Batch speichern
@@ -256,36 +276,45 @@ export default function ReviewsPage() {
           <form onSubmit={handleCreateEntry} className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
             <h2 className="text-xl font-semibold">Review-Eintrag</h2>
             <p className="mt-1 text-sm text-slate-400">Eine Zeile pro Signal oder Kandidat. Freitext nur sanitisiert erfassen.</p>
+            <p className="mt-3 rounded-2xl border border-yellow-300/20 bg-yellow-300/10 p-3 text-xs text-yellow-50">
+              Pflichtfelder: Batch, Symbol, Asset, Strategie, Signal Status und Review Label. Outcome-R ist optional und bleibt Prozess-Evidence, keine Profitabilitaetsaussage.
+            </p>
             <div className="mt-5 grid gap-4">
-              <SelectInput
-                label="Batch"
-                value={entryForm.batch_id}
-                onChange={(batch_id) => setEntryForm({ ...entryForm, batch_id })}
-                options={[["", "Batch auswaehlen"], ...batches.map((batch) => [String(batch.id), batch.name] as [string, string])]}
-              />
-              <div className="grid gap-4 sm:grid-cols-2">
-                <TextInput label="Symbol" value={entryForm.symbol} onChange={(symbol) => setEntryForm({ ...entryForm, symbol })} required />
-                <TextInput label="Signal ID optional" type="number" value={entryForm.signal_id} onChange={(signal_id) => setEntryForm({ ...entryForm, signal_id })} />
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <SelectInput label="Asset" value={entryForm.asset_class} onChange={(asset_class) => setEntryForm({ ...entryForm, asset_class: asset_class as AssetClass })} options={[["stock", "Stock"], ["crypto", "Crypto"]]} />
-                <SelectInput label="Strategie" value={entryForm.strategy_type} onChange={(strategy_type) => setEntryForm({ ...entryForm, strategy_type: strategy_type as StrategyType })} options={[["trend_pullback_long", "Trend Pullback"], ["base_breakout_long", "Base Breakout"]]} />
-              </div>
-              <div className="grid gap-4 sm:grid-cols-3">
-                <SelectInput label="Signal Status" value={entryForm.signal_status} onChange={(signal_status) => setEntryForm({ ...entryForm, signal_status: signal_status as SignalStatus })} options={[["armed", "Armed"], ["watchlist", "Watchlist"], ["no_setup", "No Setup"], ["invalidated", "Invalidated"], ["missed", "Missed"], ["expired", "Expired"], ["triggered", "Triggered"]]} />
-                <SelectInput label="Score Class" value={entryForm.score_class} onChange={(score_class) => setEntryForm({ ...entryForm, score_class: score_class as EntryFormState["score_class"] })} options={[["", "Keine"], ["a_setup", "A Setup"], ["b_setup", "B Setup"], ["watchlist", "Watchlist"], ["no_trade", "No Trade"]]} />
-                <SelectInput label="Review Label" value={entryForm.manual_review_label} onChange={(manual_review_label) => setEntryForm({ ...entryForm, manual_review_label: manual_review_label as ManualReviewLabel })} options={[["useful", "Useful"], ["too_permissive", "Too permissive"], ["too_strict", "Too strict"], ["unclear", "Unclear"]]} />
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <TextInput label="Benchmark Context" value={entryForm.benchmark_context} onChange={(benchmark_context) => setEntryForm({ ...entryForm, benchmark_context })} placeholder="present, missing, stale, mixed, bearish" />
-                <TextInput label="Quality Blockers" value={entryForm.quality_blockers} onChange={(quality_blockers) => setEntryForm({ ...entryForm, quality_blockers })} placeholder="market_regime, risk_plan..." />
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <TextInput label="Outcome R optional" value={entryForm.outcome_r} onChange={(outcome_r) => setEntryForm({ ...entryForm, outcome_r })} placeholder="1.25" />
-                <TextInput label="Follow-up Issue URL" value={entryForm.follow_up_issue_url} onChange={(follow_up_issue_url) => setEntryForm({ ...entryForm, follow_up_issue_url })} />
-              </div>
-              <TextArea label="Outcome Measurement Rule" value={entryForm.outcome_measurement_rule} onChange={(outcome_measurement_rule) => setEntryForm({ ...entryForm, outcome_measurement_rule })} />
-              <TextArea label="Sanitized Notes" value={entryForm.notes} onChange={(notes) => setEntryForm({ ...entryForm, notes })} />
+              <FormSection eyebrow="1" title="Signal Identity" description="Pflicht: Batch und Symbol. Signal ID ist optional, wenn der Review-Kandidat nicht aus einer gespeicherten Signal-ID stammt.">
+                <SelectInput
+                  label="Batch"
+                  value={entryForm.batch_id}
+                  onChange={(batch_id) => setEntryForm({ ...entryForm, batch_id })}
+                  options={[["", "Batch auswaehlen"], ...batches.map((batch) => [String(batch.id), batch.name] as [string, string])]}
+                />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <TextInput label="Symbol" value={entryForm.symbol} onChange={(symbol) => setEntryForm({ ...entryForm, symbol })} required />
+                  <TextInput label="Signal ID optional" type="number" value={entryForm.signal_id} onChange={(signal_id) => setEntryForm({ ...entryForm, signal_id })} />
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <SelectInput label="Asset" value={entryForm.asset_class} onChange={(asset_class) => setEntryForm({ ...entryForm, asset_class: asset_class as AssetClass })} options={[["stock", "Stock"], ["crypto", "Crypto"]]} />
+                  <SelectInput label="Strategie" value={entryForm.strategy_type} onChange={(strategy_type) => setEntryForm({ ...entryForm, strategy_type: strategy_type as StrategyType })} options={[["trend_pullback_long", "Trend Pullback"], ["base_breakout_long", "Base Breakout"]]} />
+                </div>
+              </FormSection>
+              <FormSection eyebrow="2" title="Review Decision" description="Pflicht: Status und Label. No Setup / No Trade bleiben gueltige Review-Ergebnisse.">
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <SelectInput label="Signal Status" value={entryForm.signal_status} onChange={(signal_status) => setEntryForm({ ...entryForm, signal_status: signal_status as SignalStatus })} options={[["armed", "Armed"], ["watchlist", "Watchlist"], ["no_setup", "No Setup"], ["invalidated", "Invalidated"], ["missed", "Missed"], ["expired", "Expired"], ["triggered", "Triggered"]]} />
+                  <SelectInput label="Score Class" value={entryForm.score_class} onChange={(score_class) => setEntryForm({ ...entryForm, score_class: score_class as EntryFormState["score_class"] })} options={[["", "Keine"], ["a_setup", "A Setup"], ["b_setup", "B Setup"], ["watchlist", "Watchlist"], ["no_trade", "No Trade"]]} />
+                  <SelectInput label="Review Label" value={entryForm.manual_review_label} onChange={(manual_review_label) => setEntryForm({ ...entryForm, manual_review_label: manual_review_label as ManualReviewLabel })} options={[["useful", "Useful"], ["too_permissive", "Too permissive"], ["too_strict", "Too strict"], ["unclear", "Unclear"]]} />
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <TextInput label="Benchmark Context" value={entryForm.benchmark_context} onChange={(benchmark_context) => setEntryForm({ ...entryForm, benchmark_context })} placeholder="present, missing, stale, mixed, bearish" />
+                  <TextInput label="Quality Blockers" value={entryForm.quality_blockers} onChange={(quality_blockers) => setEntryForm({ ...entryForm, quality_blockers })} placeholder="market_regime, risk_plan..." />
+                </div>
+              </FormSection>
+              <FormSection eyebrow="3" title="Evidence And Follow-up" description="Optional. Sanitized notes only; no private trading journal text or profitability claim.">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <TextInput label="Outcome R optional" value={entryForm.outcome_r} onChange={(outcome_r) => setEntryForm({ ...entryForm, outcome_r })} placeholder="1.25" />
+                  <TextInput label="Follow-up Issue URL" value={entryForm.follow_up_issue_url} onChange={(follow_up_issue_url) => setEntryForm({ ...entryForm, follow_up_issue_url })} />
+                </div>
+                <TextArea label="Outcome Measurement Rule" value={entryForm.outcome_measurement_rule} onChange={(outcome_measurement_rule) => setEntryForm({ ...entryForm, outcome_measurement_rule })} />
+                <TextArea label="Sanitized Notes" value={entryForm.notes} onChange={(notes) => setEntryForm({ ...entryForm, notes })} />
+              </FormSection>
             </div>
             <button disabled={isSaving || batches.length === 0} className="mt-5 rounded-xl bg-violet-300 px-5 py-3 font-semibold text-slate-950 disabled:opacity-60" type="submit">
               Eintrag speichern
@@ -408,10 +437,34 @@ function Notice({ tone, text }: { tone: "red" | "emerald"; text: string }) {
   return <div className={`rounded-2xl border p-4 text-sm ${classes}`}>{text}</div>;
 }
 
+function FormSection({
+  children,
+  description,
+  eyebrow,
+  title,
+}: {
+  children: React.ReactNode;
+  description: string;
+  eyebrow: string;
+  title: string;
+}) {
+  return (
+    <fieldset className="rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+      <legend className="px-2 text-xs uppercase tracking-[0.2em] text-violet-300">Step {eyebrow}</legend>
+      <h3 className="text-base font-semibold text-slate-100">{title}</h3>
+      <p className="mt-1 text-xs text-slate-400">{description}</p>
+      <div className="mt-4 grid gap-4">{children}</div>
+    </fieldset>
+  );
+}
+
 function TextInput({ label, value, onChange, type = "text", required = false, placeholder }: { label: string; value: string; onChange: (value: string) => void; type?: string; required?: boolean; placeholder?: string }) {
   return (
     <label className="grid gap-2 text-sm text-slate-300">
-      {label}
+      <span>
+        {label}
+        {required ? <span className="ml-1 text-violet-200">required</span> : null}
+      </span>
       <input required={required} type={type} value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-slate-100 outline-none focus:border-violet-300" />
     </label>
   );

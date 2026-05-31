@@ -373,22 +373,32 @@ function EntryRow({
   if (isEditing && editForm) {
     return (
       <form className="grid gap-4 bg-slate-950/70 p-4 text-sm" onSubmit={onSaveEdit}>
-        <div className="grid gap-3 md:grid-cols-3">
-          <TextInput label="Symbol" value={editForm.symbol} onChange={(symbol) => onEditFormChange({ ...editForm, symbol })} />
-          <SelectInput label="Asset" value={editForm.asset_class} onChange={(asset_class) => onEditFormChange({ ...editForm, asset_class: asset_class as AssetClass })} options={[["stock", "Stock"], ["crypto", "Crypto"]]} />
-          <SelectInput label="Strategie" value={editForm.strategy_type} onChange={(strategy_type) => onEditFormChange({ ...editForm, strategy_type: strategy_type as StrategyType })} options={[["trend_pullback_long", "Trend Pullback"], ["base_breakout_long", "Base Breakout"]]} />
-          <SelectInput label="Status" value={editForm.signal_status} onChange={(signal_status) => onEditFormChange({ ...editForm, signal_status: signal_status as SignalStatus })} options={[["watchlist", "Watchlist"], ["armed", "Armed"], ["triggered", "Triggered"], ["invalidated", "Invalidated"], ["no_setup", "No Setup"], ["missed", "Missed"], ["expired", "Expired"]]} />
-          <SelectInput label="Score" value={editForm.score_class} onChange={(score_class) => onEditFormChange({ ...editForm, score_class: score_class as EntryEditFormState["score_class"] })} options={[["", "No score"], ["a_setup", "A Setup"], ["b_setup", "B Setup"], ["watchlist", "Watchlist"], ["no_trade", "No Trade"]]} />
-          <SelectInput label="Label" value={editForm.manual_review_label} onChange={(manual_review_label) => onEditFormChange({ ...editForm, manual_review_label: manual_review_label as ManualReviewLabel })} options={[["useful", "Useful"], ["too_permissive", "Too permissive"], ["too_strict", "Too strict"], ["unclear", "Unclear"]]} />
-        </div>
-        <div className="grid gap-3 md:grid-cols-2">
-          <TextInput label="Benchmark Context" value={editForm.benchmark_context} onChange={(benchmark_context) => onEditFormChange({ ...editForm, benchmark_context })} />
-          <TextInput label="Quality Blockers" value={editForm.quality_blockers} onChange={(quality_blockers) => onEditFormChange({ ...editForm, quality_blockers })} placeholder="market_regime, liquidity" />
-          <TextInput label="Outcome R" value={editForm.outcome_r} onChange={(outcome_r) => onEditFormChange({ ...editForm, outcome_r })} />
-          <TextInput label="Outcome Measurement Rule" value={editForm.outcome_measurement_rule} onChange={(outcome_measurement_rule) => onEditFormChange({ ...editForm, outcome_measurement_rule })} />
-          <TextInput label="Follow-up URL" value={editForm.follow_up_issue_url} onChange={(follow_up_issue_url) => onEditFormChange({ ...editForm, follow_up_issue_url })} />
-          <TextInput label="Notes" value={editForm.notes} onChange={(notes) => onEditFormChange({ ...editForm, notes })} />
-        </div>
+        <EditSection title="Identity" description="Pflichtkontext fuer die korrigierte Review-Zeile.">
+          <div className="grid gap-3 md:grid-cols-3">
+            <TextInput label="Symbol" value={editForm.symbol} onChange={(symbol) => onEditFormChange({ ...editForm, symbol })} />
+            <SelectInput label="Asset" value={editForm.asset_class} onChange={(asset_class) => onEditFormChange({ ...editForm, asset_class: asset_class as AssetClass })} options={[["stock", "Stock"], ["crypto", "Crypto"]]} />
+            <SelectInput label="Strategie" value={editForm.strategy_type} onChange={(strategy_type) => onEditFormChange({ ...editForm, strategy_type: strategy_type as StrategyType })} options={[["trend_pullback_long", "Trend Pullback"], ["base_breakout_long", "Base Breakout"]]} />
+          </div>
+        </EditSection>
+        <EditSection title="Review Decision" description="Status, Score und Label bleiben Prozess-Evidence, keine automatische Regelanpassung.">
+          <div className="grid gap-3 md:grid-cols-3">
+            <SelectInput label="Status" value={editForm.signal_status} onChange={(signal_status) => onEditFormChange({ ...editForm, signal_status: signal_status as SignalStatus })} options={[["watchlist", "Watchlist"], ["armed", "Armed"], ["triggered", "Triggered"], ["invalidated", "Invalidated"], ["no_setup", "No Setup"], ["missed", "Missed"], ["expired", "Expired"]]} />
+            <SelectInput label="Score" value={editForm.score_class} onChange={(score_class) => onEditFormChange({ ...editForm, score_class: score_class as EntryEditFormState["score_class"] })} options={[["", "No score"], ["a_setup", "A Setup"], ["b_setup", "B Setup"], ["watchlist", "Watchlist"], ["no_trade", "No Trade"]]} />
+            <SelectInput label="Label" value={editForm.manual_review_label} onChange={(manual_review_label) => onEditFormChange({ ...editForm, manual_review_label: manual_review_label as ManualReviewLabel })} options={[["useful", "Useful"], ["too_permissive", "Too permissive"], ["too_strict", "Too strict"], ["unclear", "Unclear"]]} />
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            <TextInput label="Benchmark Context" value={editForm.benchmark_context} onChange={(benchmark_context) => onEditFormChange({ ...editForm, benchmark_context })} />
+            <TextInput label="Quality Blockers" value={editForm.quality_blockers} onChange={(quality_blockers) => onEditFormChange({ ...editForm, quality_blockers })} placeholder="market_regime, liquidity" />
+          </div>
+        </EditSection>
+        <EditSection title="Evidence" description="Optional und sanitisiert. Keine privaten Notizen oder Profitabilitaetsclaims erfassen.">
+          <div className="grid gap-3 md:grid-cols-2">
+            <TextInput label="Outcome R" value={editForm.outcome_r} onChange={(outcome_r) => onEditFormChange({ ...editForm, outcome_r })} />
+            <TextInput label="Outcome Measurement Rule" value={editForm.outcome_measurement_rule} onChange={(outcome_measurement_rule) => onEditFormChange({ ...editForm, outcome_measurement_rule })} />
+            <TextInput label="Follow-up URL" value={editForm.follow_up_issue_url} onChange={(follow_up_issue_url) => onEditFormChange({ ...editForm, follow_up_issue_url })} />
+            <TextInput label="Notes" value={editForm.notes} onChange={(notes) => onEditFormChange({ ...editForm, notes })} />
+          </div>
+        </EditSection>
         <p className="text-xs text-yellow-100/80">
           Korrektur aktualisiert den bestehenden Entry und die Batch Summary. Keine Loeschung, keine automatische Regelanpassung.
         </p>
@@ -454,6 +464,24 @@ function InfoCard({ label, value }: { label: string; value: string }) {
       <p className="text-xs uppercase tracking-wide text-slate-500">{label}</p>
       <p className="mt-2 text-sm font-semibold text-slate-100">{value}</p>
     </div>
+  );
+}
+
+function EditSection({
+  children,
+  description,
+  title,
+}: {
+  children: React.ReactNode;
+  description: string;
+  title: string;
+}) {
+  return (
+    <fieldset className="rounded-2xl border border-white/10 bg-slate-900/70 p-4">
+      <legend className="px-2 text-xs uppercase tracking-[0.2em] text-violet-300">{title}</legend>
+      <p className="text-xs text-slate-400">{description}</p>
+      <div className="mt-4 grid gap-3">{children}</div>
+    </fieldset>
   );
 }
 
