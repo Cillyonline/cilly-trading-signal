@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { AuthenticatedHeaderActions } from "@/components/authenticated-header-actions";
 import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
 import {
   fetchAlerts,
@@ -10,7 +11,6 @@ import {
   fetchSignals,
   fetchTrades,
   fetchWatchlist,
-  logout,
   redirectToLoginOnAuthError,
 } from "@/lib/api";
 import type { AlertEvent } from "@/types/alerts";
@@ -60,7 +60,7 @@ export default function Home() {
                 historisch dokumentierte Ergebnisse in R-Multiples.
               </p>
             </div>
-            <LogoutButton />
+            <AuthenticatedHeaderActions showDashboard={false} />
           </div>
         </header>
 
@@ -621,23 +621,6 @@ function DashboardError({ message }: { message: string }) {
         Pruefe, ob die API laeuft. Die Workflow-Links bleiben im Code unveraendert verfuegbar.
       </p>
     </section>
-  );
-}
-
-function LogoutButton() {
-  async function submitLogout() {
-    await logout();
-    window.location.href = "/login";
-  }
-
-  return (
-    <button
-      className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:border-emerald-300/50"
-      onClick={() => void submitLogout()}
-      type="button"
-    >
-      Logout
-    </button>
   );
 }
 

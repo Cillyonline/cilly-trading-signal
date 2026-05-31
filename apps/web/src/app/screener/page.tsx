@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
+import { AuthenticatedHeaderActions } from "@/components/authenticated-header-actions";
 import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
 import {
   ApiError,
@@ -245,14 +246,7 @@ export default function ScreenerPage() {
                 keine Watchlist-Eintraege, Signale, Trades oder Orders automatisch erstellt.
               </p>
             </div>
-            <div className="flex flex-wrap gap-4 text-sm">
-              <a className="text-emerald-300 hover:text-emerald-200" href="/watchlist">
-                Watchlist
-              </a>
-              <a className="text-emerald-300 hover:text-emerald-200" href="/">
-                Dashboard
-              </a>
-            </div>
+            <AuthenticatedHeaderActions links={[{ href: "/watchlist", label: "Watchlist" }]} />
           </div>
         </header>
 

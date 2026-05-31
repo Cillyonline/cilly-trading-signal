@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
+import { AuthenticatedHeaderActions } from "@/components/authenticated-header-actions";
 import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
 import {
   ApiError,
@@ -179,9 +180,7 @@ export default function ImportPage() {
                 Kerzen und speichert sie als Grundlage fuer eine erklaerbare Setup-Bewertung.
               </p>
             </div>
-            <a className="text-sm text-emerald-300 hover:text-emerald-200" href="/">
-              Zurueck zum Dashboard
-            </a>
+            <AuthenticatedHeaderActions />
           </div>
         </header>
 
