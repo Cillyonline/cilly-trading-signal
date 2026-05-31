@@ -62,6 +62,25 @@ def test_performance_summary_returns_empty_state(client: TestClient) -> None:
         "worst_r": None,
         "by_strategy": [],
         "by_asset_class": [],
+        "journal_analytics": {
+            "closed_trade_count": 0,
+            "reviewed_trade_count": 0,
+            "missing_review_count": 0,
+            "setup_rule_followed_count": 0,
+            "setup_rule_broken_count": 0,
+            "setup_rule_unknown_count": 0,
+            "average_entry_quality_score": None,
+            "average_stop_quality_score": None,
+            "average_exit_quality_score": None,
+            "average_discipline_score": None,
+            "min_strategy_sample_size": 3,
+            "by_strategy": [],
+            "small_sample_notice": (
+                "Journal analytics are process quality summaries from manually reviewed closed "
+                "trades. Small samples are directional review prompts only, not prediction, edge "
+                "validation, or profit validation."
+            ),
+        },
         "open_portfolio_risk": {
             "open_trade_count": 0,
             "complete_risk_count": 0,
@@ -406,6 +425,87 @@ def test_performance_summary_includes_correlation_proxy_warnings(client: TestCli
     ]
 
 
+def test_performance_summary_includes_journal_analytics(client: TestClient) -> None:
+    trades = [
+        close_trade(
+            client,
+            create_open_trade(client, "AAPL", strategy_type="trend_pullback_long"),
+            "115.00",
+        ),
+        close_trade(
+            client,
+            create_open_trade(client, "MSFT", strategy_type="trend_pullback_long"),
+            "110.00",
+        ),
+        close_trade(
+            client,
+            create_open_trade(client, "NVDA", strategy_type="trend_pullback_long"),
+            "95.00",
+        ),
+        close_trade(
+            client,
+            create_open_trade(client, "BTCUSD", strategy_type="base_breakout_long"),
+            "110.00",
+        ),
+    ]
+    create_journal_entry(
+        client,
+        trades[0]["id"],
+        setup_rule_followed=True,
+        entry_quality_score=5,
+        stop_quality_score=4,
+        exit_quality_score=3,
+        discipline_score=5,
+    )
+    create_journal_entry(
+        client,
+        trades[1]["id"],
+        setup_rule_followed=False,
+        entry_quality_score=3,
+        stop_quality_score=3,
+        exit_quality_score=2,
+        discipline_score=2,
+    )
+    create_journal_entry(
+        client,
+        trades[2]["id"],
+        setup_rule_followed=None,
+        entry_quality_score=4,
+        stop_quality_score=5,
+        exit_quality_score=None,
+        discipline_score=4,
+    )
+
+    response = client.get("/api/performance/summary")
+
+    assert response.status_code == 200
+    analytics = response.json()["journal_analytics"]
+    assert analytics["closed_trade_count"] == 4
+    assert analytics["reviewed_trade_count"] == 3
+    assert analytics["missing_review_count"] == 1
+    assert analytics["setup_rule_followed_count"] == 1
+    assert analytics["setup_rule_broken_count"] == 1
+    assert analytics["setup_rule_unknown_count"] == 1
+    assert analytics["average_entry_quality_score"] == "4.00"
+    assert analytics["average_stop_quality_score"] == "4.00"
+    assert analytics["average_exit_quality_score"] == "2.50"
+    assert analytics["average_discipline_score"] == "3.67"
+    assert "not prediction" in analytics["small_sample_notice"]
+    assert analytics["by_strategy"] == [
+        {
+            "strategy_type": "trend_pullback_long",
+            "reviewed_trade_count": 3,
+            "setup_rule_followed_count": 1,
+            "setup_rule_broken_count": 1,
+            "setup_rule_unknown_count": 1,
+            "average_entry_quality_score": "4.00",
+            "average_stop_quality_score": "4.00",
+            "average_exit_quality_score": "2.50",
+            "average_discipline_score": "3.67",
+        }
+    ]
+
+
 def create_watchlist_item(client: TestClient, symbol: str, asset_class: str = "stock") -> int:
     response = client.post(
         "/api/watchlist",
@@ -456,4 +556,28 @@ def close_trade(client: TestClient, trade: dict, exit_price: str) -> dict:
         },
     )
     assert response.status_code == 200
+    return response.json()
+
+
+def create_journal_entry(
+    client: TestClient,
+    trade_id: int,
+    setup_rule_followed: bool | None,
+    entry_quality_score: int | None,
+    stop_quality_score: int | None,
+    exit_quality_score: int | None,
+    discipline_score: int | None,
+) -> dict:
+    response = client.post(
+        f"/api/trades/{trade_id}/journal",
+        json={
+            "setup_rule_followed": setup_rule_followed,
+            "entry_quality_score": entry_quality_score,
+            "stop_quality_score": stop_quality_score,
+            "exit_quality_score": exit_quality_score,
+            "discipline_score": discipline_score,
+            "reviewed_at": "2024-01-08T10:00:00Z",
+        },
+    )
+    assert response.status_code == 201
     return response.json()
