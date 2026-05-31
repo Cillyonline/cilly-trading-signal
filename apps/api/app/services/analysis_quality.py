@@ -29,6 +29,7 @@ MISSING_DATA_REASONS = {
 }
 STRUCTURE_BLOCKERS = {
     "pullback_not_controlled",
+    "pullback_volume_aggressive",
     "base_too_wide",
     "breakout_too_extended",
     "base_high_not_clear",

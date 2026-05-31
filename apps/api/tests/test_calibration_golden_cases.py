@@ -152,6 +152,27 @@ GOLDEN_CASES = [
         expected_quality={"structure": "blocked"},
     ),
     GoldenCase(
+        name="review_finding_too_permissive_trend_pullback_aggressive_volume_blocks",
+        evaluate=lambda: evaluate_trend_pullback_long(
+            trend_payload(
+                daily=IndicatorContext(
+                    close=Decimal("100"),
+                    ema20=Decimal("98"),
+                    ema50=Decimal("94"),
+                    ema200=Decimal("80"),
+                    rsi14=Decimal("52"),
+                    atr14=Decimal("2"),
+                    relative_volume=Decimal("1.8"),
+                )
+            )
+        ),
+        expected_status=SignalStatus.NO_SETUP,
+        expected_score_class=ScoreClass.NO_TRADE,
+        expected_no_trade_reasons={"pullback_volume_aggressive"},
+        expected_risk_flags={"aggressive_pullback_volume"},
+        expected_quality={"structure": "blocked", "volume": "warning"},
+    ),
+    GoldenCase(
         name="review_finding_too_permissive_base_breakout_resistance_blocks",
         evaluate=lambda: evaluate_base_breakout_long(
             base_breakout_payload(major_resistance_level=Decimal("102"))

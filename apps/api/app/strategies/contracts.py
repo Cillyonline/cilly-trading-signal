@@ -44,6 +44,9 @@ NO_TRADE_REASON_MESSAGES = {
         "No Trade: setup is already invalidated by the stored analysis state."
     ),
     "pullback_not_controlled": "No Trade: pullback is not controlled enough for this strategy.",
+    "pullback_volume_aggressive": (
+        "No Trade: pullback volume is aggressive, so selling pressure is not controlled."
+    ),
     "base_too_wide": "No Trade: base range is too wide for clean risk planning.",
     "breakout_too_extended": "No Trade: breakout is extended beyond the trigger zone.",
     "base_high_not_clear": "No Trade: base high is not clear enough for breakout review.",
@@ -95,6 +98,9 @@ NO_TRADE_NEXT_ACTIONS = {
     ),
     "pullback_not_controlled": (
         "Wait for price to stabilize and reclaim a valid trigger level with close confirmation."
+    ),
+    "pullback_volume_aggressive": (
+        "Wait for quieter pullback volume before reviewing this trend-pullback setup."
     ),
     "base_too_wide": "Wait for a tighter base with a clearer stop and invalidation level.",
     "breakout_too_extended": (
@@ -290,6 +296,8 @@ def collect_common_no_trade_reasons(
         reasons.append("missing_reward_target")
     if "uncontrolled_pullback" in signal_input.data_quality_flags:
         reasons.append("pullback_not_controlled")
+    if "aggressive_pullback_volume" in signal_input.data_quality_flags:
+        reasons.append("pullback_volume_aggressive")
     if "base_range_too_wide" in signal_input.data_quality_flags:
         reasons.append("base_too_wide")
     if "breakout_extended_after_trigger" in signal_input.data_quality_flags:

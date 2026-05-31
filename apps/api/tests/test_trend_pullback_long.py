@@ -157,7 +157,7 @@ def test_reasoning_mentions_trend_pullback_trigger_risk_and_no_trade_checks() ->
     assert result.no_trade_reasons == []
 
 
-def test_aggressive_volume_is_deterministic_risk_flag() -> None:
+def test_aggressive_volume_blocks_trend_pullback() -> None:
     daily = base_daily_context()
     high_volume_daily = IndicatorContext(
         close=daily.close,
@@ -171,5 +171,7 @@ def test_aggressive_volume_is_deterministic_risk_flag() -> None:
 
     result = evaluate_trend_pullback_long(trend_payload(daily=high_volume_daily))
 
+    assert result.status == SignalStatus.NO_SETUP
+    assert result.score_class == ScoreClass.NO_TRADE
     assert "aggressive_pullback_volume" in result.risk_flags
-    assert result.status in {SignalStatus.WATCHLIST, SignalStatus.ARMED}
+    assert "pullback_volume_aggressive" in result.no_trade_reasons
