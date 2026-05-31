@@ -46,6 +46,73 @@ Do not cherry-pick only successful examples. Include:
   or weak risk plan.
 - Examples where the system looked too strict or too permissive.
 
+## First Structured Sample Plan
+
+The first calibration evidence batch should contain 50 to 100 reviewed examples.
+It is intentionally a process-evidence sample, not a backtest, profitability study,
+or proof of positive expectancy.
+
+Recommended initial size:
+
+- Minimum usable sample: 50 examples.
+- Preferred first pass: 80 examples.
+- Upper bound before recalibration review: 100 examples.
+
+Asset split:
+
+- Stocks: 60 percent of examples.
+- Crypto: 40 percent of examples.
+- If one asset class lacks enough clean stored data, keep the shortfall visible in
+  the batch notes instead of replacing it with cherry-picked examples.
+
+Strategy split:
+
+- Trend Pullback Long: 40 percent of examples.
+- Base Breakout Long: 40 percent of examples.
+- No Setup / No Trade / missing-context cases: 20 percent of examples.
+
+Score/status split targets:
+
+- A/B setup outputs: 25 to 35 percent.
+- Watchlist outputs that did not yet confirm: 25 to 35 percent.
+- No Trade / No Setup outputs: 25 to 35 percent.
+- Missing, stale, partial, failed, or unknown context cases: at least 10 percent,
+  included within the groups above.
+
+Sampling order:
+
+1. Define the review window, asset universe, strategies, and data source before
+   looking at outcomes.
+2. Pull candidates in deterministic order, such as by import date, screener import
+   order, signal creation date, or alphabetic symbol order within the fixed window.
+3. Keep rejected, stale, missing-context, and No Trade cases in the sample.
+4. Do not replace weak, boring, or inconclusive examples with more interesting
+   winners or losers.
+5. Stop at the planned sample size even if additional examples look attractive.
+
+Labeling rules:
+
+- Use `useful` when the output matches the playbook and gives a clear manual next
+  step, including valid No Trade outcomes.
+- Use `too_permissive` when the output allowed review despite a blocker that the
+  playbook says should downgrade or block the setup.
+- Use `too_strict` when the output blocked or downgraded a setup that the playbook
+  says should remain reviewable with explicit risk context.
+- Use `unclear` when the result may be safe but the reason, next action, or quality
+  report is not understandable enough for manual review.
+- Record `outcome_r` only when the stored risk plan and measurement rule are
+  coherent; otherwise leave it blank.
+
+Minimum batch notes:
+
+- Fixed review window and source universe.
+- Asset and strategy split achieved versus planned.
+- Counts by status, score class, label, and blocker pattern.
+- Missing or stale context count.
+- Follow-up issues created or explicitly deferred.
+- Statement that the sample is evidence for calibration discussion only and not
+  profitability, live-readiness, broker-readiness, or trading advice.
+
 ## Review Template
 
 Use the app review workflow at `/reviews` when available, or create one row per

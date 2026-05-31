@@ -62,6 +62,36 @@ Each golden case should state:
 - Expected next manual review action.
 - Risk-plan expectation: entry, stop, target, and minimum R:R where applicable.
 
+## Evidence Sample Before Rule Changes
+
+Before changing strategy behavior from review observations, collect the first
+structured historical/paper review sample described in
+`docs/HISTORICAL_PAPER_REVIEW_PROTOCOL.md`.
+
+Minimum evidence gate:
+
+- At least 50 examples are reviewed, with a preferred first pass of 80 examples.
+- Stocks and crypto are both represented, or the shortfall is explicitly recorded.
+- Trend Pullback Long, Base Breakout Long, Watchlist, No Trade, and missing/stale
+  context cases are all represented.
+- `too_permissive`, `too_strict`, and repeated `unclear` labels become follow-up
+  issues or are explicitly accepted as limitations.
+- No rule change is made only because a small sample has attractive or unattractive
+  paper outcomes.
+
+Interpretation rules:
+
+- `too_permissive` evidence usually supports tightening, clearer blockers, or
+  stronger No Trade wording.
+- `too_strict` evidence requires a golden case before any loosening is considered.
+- Repeated `unclear` evidence usually supports explanation, next-action, or quality
+  report improvements before score changes.
+- Missing/stale context evidence should preserve conservative behavior and visible
+  No Trade gates.
+
+This gate does not validate profitability or live readiness. It only determines
+whether deterministic rule work has enough structured review evidence to proceed.
+
 The current backend golden-case suite can be run with:
 
 ```powershell
