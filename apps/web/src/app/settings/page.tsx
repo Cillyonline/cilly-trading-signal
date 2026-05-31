@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
 import {
   fetchRiskSettings,
+  logout,
   redirectToLoginOnAuthError,
   sendTelegramTestMessage,
   updateRiskSettings,
@@ -105,6 +106,11 @@ export default function SettingsPage() {
     }
   }
 
+  async function submitLogout() {
+    await logout();
+    window.location.href = "/login";
+  }
+
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-8 text-slate-100">
       <section className="mx-auto flex max-w-5xl flex-col gap-8">
@@ -118,9 +124,18 @@ export default function SettingsPage() {
                 und validiert Risiken, platziert aber keine Orders und fuehrt keine Positionsgroessen aus.
               </p>
             </div>
-            <a className="text-sm text-emerald-300 hover:text-emerald-200" href="/">
-              Zurueck zum Dashboard
-            </a>
+            <div className="flex flex-wrap gap-3">
+              <a className="rounded-xl border border-white/10 px-4 py-2 text-sm text-emerald-300 hover:text-emerald-200" href="/">
+                Zurueck zum Dashboard
+              </a>
+              <button
+                className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:border-emerald-300/50"
+                onClick={() => void submitLogout()}
+                type="button"
+              >
+                Logout
+              </button>
+            </div>
           </div>
         </header>
 
