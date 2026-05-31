@@ -233,13 +233,13 @@ export default function ScreenerPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 px-6 py-8 text-slate-100">
-      <section className="mx-auto flex max-w-6xl flex-col gap-8">
-        <header className="rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_right,#7c3aed,transparent_34%),rgba(255,255,255,0.05)] p-8">
+    <main className="min-h-screen bg-slate-950 px-4 py-5 text-slate-100 sm:px-6 sm:py-8">
+      <section className="mx-auto flex max-w-6xl flex-col gap-5 sm:gap-8">
+        <header className="rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_right,#7c3aed,transparent_34%),rgba(255,255,255,0.05)] p-5 sm:p-8">
           <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-sm uppercase tracking-[0.35em] text-emerald-300">Screener</p>
-              <h1 className="mt-3 text-4xl font-semibold tracking-tight">Screener CSV pruefen</h1>
+              <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Screener CSV pruefen</h1>
               <p className="mt-3 max-w-2xl text-slate-300">
                 Importiere TradingView Screener Exporte als manuelle Review-Kandidaten. Es werden
                 keine Watchlist-Eintraege, Signale, Trades oder Orders automatisch erstellt.
@@ -259,15 +259,15 @@ export default function ScreenerPage() {
         {error ? <ErrorMessage message={error} /> : null}
         {notice ? <NoticeMessage message={notice} /> : null}
 
-        <section className="grid gap-4 md:grid-cols-4">
+        <section className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
           <SummaryCard label="Kandidaten" value={summary.candidate.toString()} tone="border-emerald-300/40" />
           <SummaryCard label="Duplikate" value={summary.duplicate.toString()} tone="border-yellow-300/40" />
           <SummaryCard label="Watchlist" value={summary.watchlist.toString()} tone="border-sky-300/40" />
           <SummaryCard label="Importe" value={imports.length.toString()} />
         </section>
 
-        <section className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
-          <form onSubmit={submitImport} className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
+        <section className="grid gap-4 lg:grid-cols-[0.85fr_1.15fr] lg:gap-6">
+          <form onSubmit={submitImport} className="rounded-3xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <h2 className="text-xl font-semibold">Screener CSV hochladen</h2>
@@ -334,7 +334,7 @@ export default function ScreenerPage() {
             </div>
           </form>
 
-          <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
+          <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
             <h2 className="text-xl font-semibold">Letzter Import</h2>
             <p className="mt-2 text-sm text-slate-400">
               Validierung, Duplikate und rejected Rows bleiben sichtbar. Partial bedeutet Review noetig,
@@ -346,8 +346,8 @@ export default function ScreenerPage() {
           </section>
         </section>
 
-        <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <section className="rounded-3xl border border-emerald-300/20 bg-emerald-300/[0.04] p-5 sm:p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="text-xl font-semibold">Screener Kandidaten</h2>
               <p className="mt-2 text-sm text-slate-400">
@@ -355,7 +355,12 @@ export default function ScreenerPage() {
                 keine automatische Analyse.
               </p>
             </div>
-            <span className="text-sm text-slate-400">{results.length} Rows</span>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-slate-400">
+              <span>{results.length} Rows</span>
+              <span className="rounded-full border border-emerald-300/20 bg-slate-950/60 px-3 py-1 text-emerald-100">
+                {selectedResultIds.length} ausgewaehlt
+              </span>
+            </div>
           </div>
 
           <ScreenerFiltersPanel
@@ -375,6 +380,13 @@ export default function ScreenerPage() {
             }}
           />
 
+          <BulkReviewActions
+            selectedCount={selectedResultIds.length}
+            isUpdating={isBulkUpdating}
+            onClear={() => setSelectedResultIds([])}
+            onUpdate={bulkUpdateStatus}
+          />
+
           <PaginationControls
             filters={filters}
             resultPage={resultPage}
@@ -384,14 +396,7 @@ export default function ScreenerPage() {
             }}
           />
 
-          <BulkReviewActions
-            selectedCount={selectedResultIds.length}
-            isUpdating={isBulkUpdating}
-            onClear={() => setSelectedResultIds([])}
-            onUpdate={bulkUpdateStatus}
-          />
-
-          <div className="mt-6 overflow-hidden rounded-2xl border border-white/10">
+          <div className="mt-4 overflow-hidden rounded-2xl border border-white/10">
             {isLoading ? (
               <p className="p-5 text-sm text-slate-400">Screener-Kandidaten werden geladen...</p>
             ) : results.length > 0 ? (
@@ -418,7 +423,7 @@ export default function ScreenerPage() {
           </div>
         </section>
 
-        <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
+        <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="text-xl font-semibold">Screener Import-Historie</h2>
@@ -538,7 +543,7 @@ function ScreenerFiltersPanel({
           options={[["10", "10"], ["25", "25"], ["50", "50"], ["100", "100"]]}
         />
       </div>
-      <div className="mt-4 flex flex-wrap gap-3">
+      <div className="mt-4 grid gap-3 sm:flex sm:flex-wrap">
         <button type="button" onClick={() => onApply(filters)} className="rounded-xl bg-emerald-400 px-4 py-2 text-sm font-semibold text-slate-950">
           Anwenden
         </button>
@@ -561,7 +566,7 @@ function PaginationControls({ filters, resultPage, onChange }: { filters: Screen
       <span>
         Seite {resultPage.page} von {resultPage.total_pages} / {resultPage.total} Kandidaten
       </span>
-      <div className="flex gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:flex">
         <button type="button" disabled={!canGoBack} onClick={() => onChange({ ...filters, page: resultPage.page - 1 })} className="rounded-xl border border-white/10 px-4 py-2 disabled:cursor-not-allowed disabled:opacity-50">
           Zurueck
         </button>
@@ -585,7 +590,7 @@ function BulkReviewActions({
   onUpdate: (status: "candidate" | "ignored" | "rejected") => void;
 }) {
   return (
-    <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/70 p-4">
+    <div className="mt-4 rounded-2xl border border-emerald-300/20 bg-slate-950/80 p-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <p className="text-sm font-semibold text-slate-200">Bulk Review Actions</p>
@@ -594,9 +599,9 @@ function BulkReviewActions({
             keine Signale, keine Trades.
           </p>
         </div>
-        <span className="text-sm text-slate-400">{selectedCount} ausgewaehlt</span>
+        <span className="w-fit rounded-full border border-emerald-300/20 px-3 py-1 text-sm text-emerald-100">{selectedCount} ausgewaehlt</span>
       </div>
-      <div className="mt-4 flex flex-wrap gap-3">
+      <div className="mt-4 grid gap-3 sm:flex sm:flex-wrap">
         <button type="button" disabled={selectedCount === 0 || isUpdating} onClick={() => onUpdate("ignored")} className="rounded-xl border border-slate-400/30 px-4 py-2 text-sm text-slate-100 disabled:cursor-not-allowed disabled:opacity-50">
           Als ignored markieren
         </button>
@@ -651,31 +656,37 @@ function ScreenerResultCard({
 }) {
   const canAddToWatchlist = result.status === "candidate" || result.status === "duplicate";
   return (
-    <article className="grid gap-5 p-5 lg:grid-cols-[1fr_0.9fr]">
+    <article className="grid gap-4 p-4 sm:p-5 lg:grid-cols-[1fr_0.9fr]">
       <div>
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-2 text-xs text-slate-400">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-xl font-semibold">{result.symbol}</h3>
+              {result.exchange ? (
+                <span className="rounded-full bg-slate-800 px-3 py-1 text-xs uppercase text-slate-300">
+                  {result.exchange}
+                </span>
+              ) : null}
+              <span className="text-sm text-slate-400">{result.asset_class}</span>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <span className={`rounded-full border px-3 py-1 text-xs ${statusTone[result.status]}`}>
+                {formatLabel(result.status)}
+              </span>
+              <span className={`rounded-full border px-3 py-1 text-xs ${priorityTone[result.review_priority]}`}>
+                {formatLabel(result.review_priority)}
+              </span>
+            </div>
+          </div>
+          <label className="flex w-fit items-center gap-2 rounded-full border border-white/10 bg-slate-950/70 px-3 py-2 text-xs text-slate-300">
             <input
               type="checkbox"
               checked={isSelected}
               onChange={(event) => onToggleSelected(event.target.checked)}
               className="h-4 w-4 rounded border-white/20 bg-slate-900"
             />
-            Bulk
+            Bulk select
           </label>
-          <span className={`rounded-full border px-3 py-1 text-xs ${statusTone[result.status]}`}>
-            {formatLabel(result.status)}
-          </span>
-          <span className={`rounded-full border px-3 py-1 text-xs ${priorityTone[result.review_priority]}`}>
-            {formatLabel(result.review_priority)}
-          </span>
-          <h3 className="text-lg font-semibold">{result.symbol}</h3>
-          {result.exchange ? (
-            <span className="rounded-full bg-slate-800 px-3 py-1 text-xs uppercase text-slate-300">
-              {result.exchange}
-            </span>
-          ) : null}
-          <span className="text-sm text-slate-400">{result.asset_class}</span>
         </div>
         <p className="mt-3 text-sm text-slate-300">{result.name ?? "Kein Name im Screener-Export."}</p>
         <p className="mt-2 text-xs text-slate-500">
@@ -687,7 +698,7 @@ function ScreenerResultCard({
           <Metric label="Volume" value={formatCompact(result.volume)} />
           <Metric label="Rel Volume" value={formatNumber(result.relative_volume)} />
         </div>
-        <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="mt-5 grid gap-3 sm:flex sm:flex-wrap sm:items-center">
           <button
             type="button"
             onClick={() => onSelect(result)}
@@ -926,17 +937,21 @@ function NoticeMessage({ message }: { message: string }) {
 function InlineErrors({ errors }: { errors: ScreenerImportError[] }) {
   return (
     <div className="mt-4 overflow-hidden rounded-xl border border-yellow-300/20 text-sm text-yellow-50">
-      <div className="grid grid-cols-[4.5rem_7rem_minmax(0,1fr)] gap-3 bg-yellow-300/10 px-3 py-2 text-xs font-semibold uppercase tracking-wide">
+      <div className="hidden grid-cols-[4.5rem_7rem_minmax(0,1fr)] gap-3 bg-yellow-300/10 px-3 py-2 text-xs font-semibold uppercase tracking-wide sm:grid">
         <span>Zeile</span>
         <span>Feld</span>
         <span>Hinweis</span>
       </div>
       <div className="divide-y divide-yellow-300/10">
         {errors.map((error, index) => (
-          <div key={`${error.row ?? "csv"}-${error.field ?? "field"}-${index}`} className="grid grid-cols-[4.5rem_7rem_minmax(0,1fr)] gap-3 px-3 py-2">
-            <span>{error.row ?? "CSV"}</span>
-            <span>{error.field ?? "-"}</span>
-            <span className="min-w-0 break-words">{error.message}</span>
+          <div key={`${error.row ?? "csv"}-${error.field ?? "field"}-${index}`} className="grid gap-2 px-3 py-3 sm:grid-cols-[4.5rem_7rem_minmax(0,1fr)] sm:gap-3 sm:py-2">
+            <span className="text-xs uppercase tracking-wide text-yellow-100/70 sm:text-sm sm:normal-case sm:tracking-normal sm:text-yellow-50">
+              <span className="sm:hidden">Zeile: </span>{error.row ?? "CSV"}
+            </span>
+            <span className="text-xs text-yellow-100/80 sm:text-sm sm:text-yellow-50">
+              <span className="sm:hidden">Feld: </span>{error.field ?? "-"}
+            </span>
+            <span className="min-w-0 break-words text-sm">{error.message}</span>
           </div>
         ))}
       </div>
@@ -946,9 +961,9 @@ function InlineErrors({ errors }: { errors: ScreenerImportError[] }) {
 
 function SummaryCard({ label, value, tone = "border-white/10" }: { label: string; value: string; tone?: string }) {
   return (
-    <article className={`rounded-2xl border ${tone} bg-slate-950/70 p-5`}>
+    <article className={`rounded-2xl border ${tone} bg-slate-950/70 p-4 sm:p-5`}>
       <p className="text-sm text-slate-400">{label}</p>
-      <p className="mt-3 text-3xl font-semibold">{value}</p>
+      <p className="mt-2 text-2xl font-semibold sm:mt-3 sm:text-3xl">{value}</p>
     </article>
   );
 }
