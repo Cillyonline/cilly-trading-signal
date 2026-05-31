@@ -62,6 +62,92 @@ Each golden case should state:
 - Expected next manual review action.
 - Risk-plan expectation: entry, stop, target, and minimum R:R where applicable.
 
+### Reviewed-Example Golden Case Template
+
+Use this template when converting a historical/paper review finding into a
+deterministic golden case. Fill it out before changing strategy implementation.
+
+```markdown
+## Golden Case: <short_descriptive_name>
+
+### Source Review Evidence
+
+- Review batch: <batch name or id>
+- Review entry ids: <ids or local references>
+- Manual review label: useful / too_permissive / too_strict / unclear
+- Repeated blocker or finding: <blocker code, label, or none>
+- Sanitized observation: <short description with no private account data>
+
+### Safety Boundary
+
+- This case is deterministic review evidence only.
+- It is not a backtest, profitability claim, trading advice, live-data claim,
+  broker-readiness claim, or execution workflow.
+- No private broker/account/fill data is included.
+
+### Fixture Inputs
+
+- Strategy: trend_pullback_long / base_breakout_long / no_strategy
+- Asset class: stock / crypto
+- Symbol: synthetic or public ticker only
+- Timeframes: 1W / 1D / 4H present or explicitly missing
+- Benchmark context: present / missing / stale / failed / partial / unknown
+- Asset-specific overlay: stock earnings/liquidity or crypto ATR/liquidity/wick risk
+- OHLCV fixture source: synthetic / anonymized public / minimal object
+
+### Expected State Coverage
+
+- Pass state: <what should pass, if any>
+- Warning state: <risk flag, missing context, stale context, or caution>
+- Blocked state: <No Trade reason or blocker, if applicable>
+
+### Expected Output
+
+- Expected status: watchlist / armed / triggered / no_setup / invalidated / missed / expired
+- Expected score class: a_setup / b_setup / watchlist / no_trade
+- Expected no-trade reasons: <codes or none>
+- Expected risk flags: <codes or none>
+- Expected quality report states: passed / warning / missing / blocked
+- Expected next action: <manual review wording, no buy/sell instruction>
+- Expected risk plan: entry / stop / target / R:R or explicit reason unavailable
+
+### Regression Intent
+
+- What future regression should this case catch?
+- Would a failure mean rules are too permissive, too strict, or unclear?
+```
+
+Pass, warning, and blocked coverage expectations:
+
+- A pass state should prove only that the documented setup requirement is present;
+  it must not imply a trade instruction.
+- A warning state should keep the candidate reviewable only when the playbook allows
+  it and the risk/context limitation is visible.
+- A blocked state should preserve `No Trade` as a successful conservative outcome.
+- Missing, stale, failed, partial, or unknown data should be tested explicitly when
+  that context caused the review finding.
+
+Anonymized OHLCV and benchmark fixture guidance:
+
+- Prefer synthetic OHLCV series that isolate one behavior, such as pullback depth,
+  breakout close, volume confirmation, or stale benchmark context.
+- If using a public example, transform prices and volumes while preserving shape,
+  order, gaps, wick structure, and relative volume relationships needed by the rule.
+- Never include brokerage fills, account size, realized P/L, screenshots, API keys,
+  or private notes.
+- Keep benchmark fixtures explicit: include enough `SPY`/`QQQ` or `BTC`/`ETH`
+  context to prove present/missing/stale/failed/partial/unknown behavior.
+
+Test naming convention:
+
+- Unit-style golden cases: `test_calibration_<strategy>_<expected_state>_<reason>`.
+- End-to-end stored fixture cases:
+  `test_calibration_e2e_<asset_class>_<strategy>_<finding>`.
+- Use reason codes in names where practical, for example
+  `test_calibration_trend_pullback_no_trade_stale_benchmark_context`.
+- Keep one behavioral assertion focus per test. If one reviewed example reveals
+  multiple unrelated findings, split it into separate golden cases.
+
 ## Evidence Sample Before Rule Changes
 
 Before changing strategy behavior from review observations, collect the first
