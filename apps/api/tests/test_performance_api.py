@@ -99,7 +99,7 @@ def test_performance_summary_returns_empty_state(client: TestClient) -> None:
                 "by_sector": [],
                 "by_industry": [],
                 "review_only_notice": (
-                    "Concentration warnings use only documented open trades and available local "
+                    "Concentration warnings use only documented active trades and available local "
                     "metadata. They are process review prompts, not a true correlation engine or "
                     "trade recommendation."
                 ),
@@ -116,9 +116,9 @@ def test_performance_summary_returns_empty_state(client: TestClient) -> None:
             "by_strategy": [],
             "by_asset_class": [],
             "review_only_notice": (
-                "Open portfolio risk is based only on manually documented trades. It is "
-                "review-only, not broker/account sync, automatic position sizing, an order "
-                "recommendation, or trading advice."
+                "Active portfolio risk is based only on manually documented non-closed trades. "
+                "It is review-only, not broker/account sync, automatic position sizing, an "
+                "order recommendation, or trading advice."
             ),
         },
     }
@@ -279,8 +279,8 @@ def test_performance_summary_includes_open_portfolio_risk(client: TestClient) ->
     assert risk["max_risk_percent"] == "1.00"
     assert risk["warning_status"] == "warning"
     assert risk["warnings"] == [
-        "Documented open risk percent exceeds the configured max risk percent.",
-        "Some open trades are missing complete documented risk data.",
+        "Documented active risk percent exceeds the configured max risk percent.",
+        "Some active trades are missing complete documented risk data.",
     ]
     assert risk["asset_concentration"]["warning_status"] == "warning"
     assert risk["correlation_proxies"]["warning_status"] == "unknown"
@@ -320,6 +320,32 @@ def test_performance_summary_includes_open_portfolio_risk(client: TestClient) ->
     assert incomplete["status"] == "open"
 
 
+def test_performance_summary_treats_managed_trade_statuses_as_active(
+    client: TestClient,
+) -> None:
+    update_account_size(client, "10000.00")
+    managed_trade = create_open_trade(client, "AAPL", asset_class="stock")
+    closed_trade = close_trade(
+        client,
+        create_open_trade(client, "MSFT", asset_class="stock"),
+        "110.00",
+    )
+
+    set_trade_status(client, managed_trade["id"], "partial_profit")
+    set_trade_status(client, closed_trade["id"], "reviewed")
+
+    response = client.get("/api/performance/summary")
+
+    assert response.status_code == 200
+    risk = response.json()["open_portfolio_risk"]
+    assert risk["open_trade_count"] == 1
+    assert risk["complete_risk_count"] == 1
+    assert risk["documented_initial_risk_amount"] == "50.00"
+    assert risk["asset_concentration"]["by_symbol"] == [
+        {"group": "AAPL", "open_trade_count": 1, "open_trade_percent": "100.00", "warning": False}
+    ]
+
+
 def test_performance_summary_marks_missing_open_risk_as_unknown(client: TestClient) -> None:
     create_open_trade(client, "MSFT", strategy_type="trend_pullback_long")
 
@@ -332,7 +358,7 @@ def test_performance_summary_marks_missing_open_risk_as_unknown(client: TestClie
     assert risk["incomplete_risk_count"] == 1
     assert risk["documented_initial_risk_percent"] == "0.0000"
     assert risk["warning_status"] == "unknown"
-    assert risk["warnings"] == ["Some open trades are missing complete documented risk data."]
+    assert risk["warnings"] == ["Some active trades are missing complete documented risk data."]
 
 
 def test_performance_summary_keeps_open_risk_ok_below_threshold(client: TestClient) -> None:
@@ -361,8 +387,8 @@ def test_performance_summary_includes_asset_concentration_warnings(client: TestC
     concentration = response.json()["open_portfolio_risk"]["asset_concentration"]
     assert concentration["warning_status"] == "warning"
     assert concentration["warning_threshold_percent"] == "50.00"
-    assert "stock represents 66.67% of open trades." in concentration["warnings"]
-    assert "unknown_sector represents 100.00% of open trades." in concentration["warnings"]
+    assert "stock represents 66.67% of active trades." in concentration["warnings"]
+    assert "unknown_sector represents 100.00% of active trades." in concentration["warnings"]
     assert "true correlation engine" in concentration["review_only_notice"]
     assert concentration["by_asset_class"] == [
         {"group": "crypto", "open_trade_count": 1, "open_trade_percent": "33.33", "warning": False},
@@ -410,7 +436,7 @@ def test_performance_summary_includes_correlation_proxy_warnings(client: TestCli
             "status": "warning",
             "open_trade_count": 2,
             "symbols": ["BTCUSD", "ETHUSD"],
-            "message": "Multiple open crypto exposures match a BTC-beta-heavy symbol proxy.",
+            "message": "Multiple active crypto exposures match a BTC-beta-heavy symbol proxy.",
         },
         {
             "key": "stock_sector_heavy",
@@ -419,7 +445,7 @@ def test_performance_summary_includes_correlation_proxy_warnings(client: TestCli
             "open_trade_count": 1,
             "symbols": ["AAPL"],
             "message": (
-                "Stock sector proxy is unknown because open trades do not store sector metadata."
+                "Stock sector proxy is unknown because active trades do not store sector metadata."
             ),
         },
     ]
@@ -557,6 +583,21 @@ def close_trade(client: TestClient, trade: dict, exit_price: str) -> dict:
     )
     assert response.status_code == 200
     return response.json()
+
+
+def set_trade_status(client: TestClient, trade_id: int, status: str) -> None:
+    from app.models import Trade, TradeStatus
+
+    db_override = client.app.dependency_overrides[get_db]
+    db_generator = db_override()
+    db = next(db_generator)
+    try:
+        trade = db.get(Trade, trade_id)
+        assert trade is not None
+        trade.status = TradeStatus(status)
+        db.commit()
+    finally:
+        db_generator.close()
 
 
 def create_journal_entry(

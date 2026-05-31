@@ -217,8 +217,8 @@ function OpenPortfolioRiskOverview({ risk }: { risk: OpenPortfolioRisk }) {
     <section className={`rounded-3xl border p-6 ${warningTone.container}`}>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className={`text-sm uppercase tracking-[0.3em] ${warningTone.eyebrow}`}>Open Risk Review</p>
-          <h2 className="mt-2 text-2xl font-semibold">Dokumentiertes Risiko offener Trades</h2>
+          <p className={`text-sm uppercase tracking-[0.3em] ${warningTone.eyebrow}`}>Active Risk Review</p>
+          <h2 className="mt-2 text-2xl font-semibold">Dokumentiertes Risiko aktiver Trades</h2>
           <p className="mt-2 max-w-3xl text-sm text-slate-300">
             {risk.review_only_notice} Fehlende Risikoangaben werden separat gezaehlt und nicht
             stillschweigend in Summen eingerechnet.
@@ -241,7 +241,7 @@ function OpenPortfolioRiskOverview({ risk }: { risk: OpenPortfolioRisk }) {
       ) : null}
 
       <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <Metric label="Open Trades" value={String(risk.open_trade_count)} />
+        <Metric label="Active Trades" value={String(risk.open_trade_count)} />
         <Metric label="Complete Risk Records" value={String(risk.complete_risk_count)} />
         <Metric label="Incomplete Risk Records" value={String(risk.incomplete_risk_count)} />
         <Metric label="Documented Initial Risk" value={formatMoney(risk.documented_initial_risk_amount)} />
@@ -318,7 +318,7 @@ function OpenRiskGroupList({
             <article key={item.group} className="rounded-xl border border-white/10 bg-white/[0.03] p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="font-medium text-slate-100">{formatter(item.group)}</p>
-                <p className="text-sm text-slate-400">{item.open_trade_count} offen</p>
+                <p className="text-sm text-slate-400">{item.open_trade_count} aktiv</p>
               </div>
               <div className="mt-3 grid gap-3 sm:grid-cols-3">
                 <CompactMetric label="Risk" value={formatMoney(item.documented_initial_risk_amount)} />
@@ -330,7 +330,7 @@ function OpenRiskGroupList({
         </div>
       ) : (
         <p className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-400">
-          Keine offenen Trades vorhanden.
+          Keine aktiven Trades vorhanden.
         </p>
       )}
     </div>
@@ -400,7 +400,7 @@ function ConcentrationGroupList({
           ))}
         </div>
       ) : (
-        <p className="mt-3 text-sm text-slate-500">Keine offenen Trades.</p>
+        <p className="mt-3 text-sm text-slate-500">Keine aktiven Trades.</p>
       )}
     </div>
   );
@@ -436,7 +436,7 @@ function CorrelationProxyPanel({ proxies }: { proxies: CorrelationProxySummary }
         </div>
       ) : (
         <p className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-4 text-sm text-slate-400">
-          Keine Proxy-Warnungen fuer offene Exposures.
+          Keine Proxy-Warnungen fuer aktive Exposures.
         </p>
       )}
     </div>
@@ -453,7 +453,7 @@ function CorrelationProxyCard({ proxy }: { proxy: CorrelationProxy }) {
       </div>
       <p className="mt-2 text-sm text-slate-400">{proxy.message}</p>
       <p className="mt-3 text-sm text-slate-300">
-        {proxy.open_trade_count} offene Trades: {proxy.symbols.length > 0 ? proxy.symbols.join(", ") : "-"}
+        {proxy.open_trade_count} aktive Trades: {proxy.symbols.length > 0 ? proxy.symbols.join(", ") : "-"}
       </p>
     </article>
   );
