@@ -6,7 +6,7 @@ This runbook describes a repeatable VPS deployment path for the single-user MVP 
 
 It is an operational guide, not a production-readiness guarantee. Before real operation, backups, monitoring, restore tests, secret rotation, and a security review still need to be completed.
 
-For the private VPS staging plan based on the current server inventory, see `docs/VPS_STAGING_PLAN.md`. The staging plan must be reviewed before changing the existing VPS because other projects already run on that server. For the sanitized staging environment checklist, see `docs/VPS_ENVIRONMENT_CHECKLIST.md`. For the private VPS smoke-test procedure and evidence template, see `docs/VPS_STAGING_SMOKE_TEST.md`. For the minimal host firewall plan and rollback procedure, see `docs/VPS_FIREWALL_HARDENING_PLAN.md`. For the non-root deploy-user procedure, see `docs/VPS_DEPLOY_USER_RUNBOOK.md`.
+For the private VPS staging plan based on the current server inventory, see `docs/VPS_STAGING_PLAN.md`. The staging plan must be reviewed before changing the existing VPS because other projects already run on that server. For the sanitized staging environment checklist, see `docs/VPS_ENVIRONMENT_CHECKLIST.md`. For the private VPS smoke-test procedure and evidence template, see `docs/VPS_STAGING_SMOKE_TEST.md`. For the minimal host firewall plan and rollback procedure, see `docs/VPS_FIREWALL_HARDENING_PLAN.md`. For the non-root deploy-user procedure, see `docs/VPS_DEPLOY_USER_RUNBOOK.md`. For local, staging, and production-like monitoring expectations, see `docs/APPLICATION_MONITORING_CHECKLIST.md`.
 For v1.3 alert-routing smoke-test evidence and the remaining operator-run Telegram provider check, see `docs/V1_3_ALERT_ROUTING_SMOKE_TEST.md`.
 
 ## Safety Boundaries
@@ -299,6 +299,8 @@ Do not run `down --volumes` on a VPS unless you intentionally want to remove Pos
 ## Minimum VPS Monitoring Checks
 
 These checks define the minimum manual monitoring baseline for private VPS staging. They are not a full observability stack and do not create a production-readiness claim.
+
+For the environment-level monitoring checklist covering local, private staging, and production-like operation, use `docs/APPLICATION_MONITORING_CHECKLIST.md` before relying more heavily on the app.
 
 Run commands from `/srv/apps/cilly-trading-signal` unless stated otherwise. Do not paste output that contains secrets, cookies, `.env` values, database URLs, private trading data, or backup contents into issues, PRs, docs, screenshots, or chat.
 
