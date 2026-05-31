@@ -422,6 +422,7 @@ function EntryRow({
           <span className="text-slate-400">{formatLabel(entry.strategy_type)}</span>
         </div>
         <p className="mt-2 text-slate-500">{entry.notes ?? "Keine Notes."}</p>
+        <RevisionHistory entry={entry} />
       </div>
       <span className="text-slate-400">{formatLabel(entry.signal_status)} / {formatLabel(entry.score_class ?? "no score")}</span>
       <div className="flex flex-wrap items-center gap-2">
@@ -447,6 +448,33 @@ function EntryRow({
       </div>
     </article>
   );
+}
+
+function RevisionHistory({ entry }: { entry: ReviewEntry }) {
+  if (entry.revisions.length === 0) {
+    return <p className="mt-2 text-xs text-slate-600">Keine Korrektur-Historie.</p>;
+  }
+
+  return (
+    <div className="mt-3 rounded-xl border border-violet-300/20 bg-violet-300/[0.04] p-3 text-xs text-slate-300">
+      <p className="font-semibold text-violet-100">Korrektur-Historie ({entry.revisions.length})</p>
+      <p className="mt-1 text-slate-400">Append-only Previous-Value-Snapshots; Evidence only.</p>
+      <div className="mt-2 grid gap-2">
+        {entry.revisions.map((revision) => (
+          <div key={revision.id} className="rounded-lg border border-white/10 bg-slate-950/50 p-2">
+            <p className="text-violet-100">
+              Revision {revision.revision_number} / vorher: {formatSnapshotValue(revision.previous_values.symbol)} / {formatSnapshotValue(revision.previous_values.manual_review_label)}
+            </p>
+            <p className="mt-1 text-slate-500">{new Date(revision.changed_at).toLocaleString()}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function formatSnapshotValue(value: unknown) {
+  return typeof value === "string" && value.length > 0 ? formatLabel(value) : "-";
 }
 
 function SummaryCard({ label, value, tone = "border-white/10" }: { label: string; value: string; tone?: string }) {
