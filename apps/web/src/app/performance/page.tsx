@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { AuthenticatedHeaderActions } from "@/components/authenticated-header-actions";
 import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
 import { exportPerformanceCsv, fetchPerformanceSummary, redirectToLoginOnAuthError } from "@/lib/api";
 import type {
@@ -78,12 +79,7 @@ export default function PerformancePage() {
               >
                 CSV exportieren
               </button>
-              <a className="text-emerald-300 hover:text-emerald-200" href="/trades">
-                Trades
-              </a>
-              <a className="text-emerald-300 hover:text-emerald-200" href="/">
-                Dashboard
-              </a>
+              <AuthenticatedHeaderActions links={[{ href: "/trades", label: "Trades" }]} />
             </div>
           </div>
         </header>

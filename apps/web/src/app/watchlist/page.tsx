@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from "react";
 
+import { AuthenticatedHeaderActions } from "@/components/authenticated-header-actions";
 import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
 import {
   API_BASE_URL,
@@ -173,9 +174,7 @@ export default function WatchlistPage() {
               und keine Trade-Anweisung.
             </p>
           </div>
-          <a className="text-sm text-emerald-300 hover:text-emerald-200" href="/">
-            Zurueck zum Dashboard
-          </a>
+          <AuthenticatedHeaderActions />
         </header>
 
         {error ? (

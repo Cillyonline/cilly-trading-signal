@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { AuthenticatedHeaderActions } from "@/components/authenticated-header-actions";
 import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
 import { createReviewBatch, createReviewEntry, fetchReviewBatches, redirectToLoginOnAuthError } from "@/lib/api";
 import type {
@@ -199,9 +200,7 @@ export default function ReviewsPage() {
                 Kein Backtest, keine Profitabilitaetsvalidierung, keine Trading Advice und keine Ausfuehrung.
               </p>
             </div>
-            <a className="text-sm text-violet-300 hover:text-violet-200" href="/">
-              Zurueck zum Dashboard
-            </a>
+            <AuthenticatedHeaderActions tone="violet" />
           </div>
         </header>
 

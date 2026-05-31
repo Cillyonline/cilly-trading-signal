@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
+import { AuthenticatedHeaderActions } from "@/components/authenticated-header-actions";
 import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
 import {
   createTrade,
@@ -209,9 +210,7 @@ export default function TradesPage() {
               >
                 CSV exportieren
               </button>
-              <a className="text-emerald-300 hover:text-emerald-200" href="/">
-                Zurueck zum Dashboard
-              </a>
+              <AuthenticatedHeaderActions />
             </div>
           </div>
         </header>

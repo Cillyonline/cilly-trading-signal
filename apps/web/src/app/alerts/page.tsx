@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { AuthenticatedHeaderActions } from "@/components/authenticated-header-actions";
 import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
 import { fetchAlerts, redirectToLoginOnAuthError } from "@/lib/api";
 import type { AlertDeliveryStatus, AlertEvent, AlertStatus, AlertType } from "@/types/alerts";
@@ -85,9 +86,7 @@ export default function AlertsPage() {
                 Review-Prompts, keine Kauf-/Verkaufsanweisungen und keine Orderausfuehrung.
               </p>
             </div>
-            <a className="text-sm text-emerald-300 hover:text-emerald-200" href="/">
-              Zurueck zum Dashboard
-            </a>
+            <AuthenticatedHeaderActions />
           </div>
         </header>
 

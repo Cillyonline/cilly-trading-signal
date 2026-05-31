@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { AuthenticatedHeaderActions } from "@/components/authenticated-header-actions";
 import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
 import { fetchSignals, redirectToLoginOnAuthError } from "@/lib/api";
 import type { ScoreClass, Signal, SignalStatus, StrategyType } from "@/types/signals";
@@ -93,9 +94,7 @@ export default function SignalsPage() {
                 dass keine Live-Freshness vorliegt und neue CSV-Daten sinnvoll sind.
               </p>
             </div>
-            <a className="text-sm text-emerald-300 hover:text-emerald-200" href="/">
-              Zurueck zum Dashboard
-            </a>
+            <AuthenticatedHeaderActions />
           </div>
         </header>
 
