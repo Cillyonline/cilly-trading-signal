@@ -17,9 +17,9 @@ Production-like exposure: No Go.
 Rationale:
 
 - The app has documented local setup, deployment runbooks, health checks, monitoring checklists, backup guidance, restore guidance, and a repeatable backup restore drill.
-- Private VPS staging previously passed documented smoke and hardening checks for controlled owner/operator use.
+- Private VPS staging passed the current documented validation pass for controlled owner/operator use, including preflight, deployment, sample-only browser clickthrough, backup/restore drill, rollback procedure review, and monitoring/security review.
 - Structured API health details are available for operator diagnostics without exposing secrets.
-- Current broader monitoring evidence, scan-result review policy, offsite encrypted backup storage, rollback evidence, privacy handling, and production-like acceptance are not yet complete.
+- Current private-staging monitoring and rollback evidence are documented, but scan-result review policy, offsite encrypted backup storage, privacy handling, secret rotation, and production-like acceptance are not yet complete.
 - The product remains decision-support only with manual execution only.
 
 ## Safety Boundaries
@@ -51,11 +51,11 @@ Rationale:
 | Deployment and rollback guidance | Pass as documented operator guidance | `docs/DEPLOYMENT_RUNBOOK.md` |
 | Structured health diagnostics | Pass for sanitized operator diagnostics | `/api/health`, `/api/health/details` |
 | Backup creation guidance | Pass as documented operator guidance | `docs/DEPLOYMENT_RUNBOOK.md#postgresql-backups` |
-| Backup restore drill procedure | Pass as documented procedure; run evidence required before operational reliance | `docs/DEPLOYMENT_RUNBOOK.md#backup-restore-drill` |
-| Monitoring expectations | Partial; checklist exists, production monitoring evidence not complete | `docs/APPLICATION_MONITORING_CHECKLIST.md` |
+| Backup restore drill procedure | Pass for private staging; current disposable VPS restore evidence recorded in `#409` | `docs/DEPLOYMENT_RUNBOOK.md#backup-restore-drill`, `docs/VPS_STAGING_DECISION_GATE.md` |
+| Monitoring expectations | Pass for private staging baseline; production monitoring evidence not complete | `docs/APPLICATION_MONITORING_CHECKLIST.md`, `#410` |
 | Dependency/container scan workflow | Partial; visibility workflow exists and runs on PRs/pushes/schedule/manual dispatch, but non-blocking output review and acceptance are still required before production-like exposure | `.github/workflows/security-scans.yml`, `docs/ENGINEERING_WORKFLOW.md#security-scan-workflow` |
 | Incident response runbook | Partial; runbook exists for conservative local/private-staging incident handling, but production-like rehearsal, ownership, and acceptance evidence are not complete | `docs/OPERATIONAL_INCIDENT_RUNBOOK.md` |
-| Offsite encrypted backups | Fail for production-like exposure; not documented as implemented | This gate |
+| Offsite encrypted backups | Fail for production-like exposure; follow-up required before private-data reliance | This gate, `#420` |
 | Production-like/public exposure decision | Fail; explicitly No Go | This gate |
 
 ## Required Evidence
@@ -90,6 +90,7 @@ Production-like exposure requires a new explicit decision. Minimum evidence must
 - Backup restore drill evidence on a disposable target using sanitized proof only.
 - Rollback evidence for app deployment and database compatibility assumptions.
 - Secret rotation and environment handling procedure.
+- Offsite encrypted backup evidence and restore drill from that storage path.
 - Explicit acceptance of residual risks by the owner/operator.
 
 ## Explicit Non-Go Conditions
