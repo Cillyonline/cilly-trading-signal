@@ -71,7 +71,7 @@ jobs:
         run: docker build -t cilly-api-scan:${{ github.sha }} -f apps/api/Dockerfile apps/api
 
       - name: Scan API image
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: cilly-api-scan:${{ github.sha }}
           format: table
@@ -84,7 +84,7 @@ jobs:
         run: docker build -t cilly-web-scan:${{ github.sha }} -f apps/web/Dockerfile apps/web
 
       - name: Scan web image
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: cilly-web-scan:${{ github.sha }}
           format: table
