@@ -7,6 +7,7 @@ This document records the MVP smoke-test workflow and the latest validation resu
 For the private VPS staging smoke-test procedure and evidence template, see `docs/VPS_STAGING_SMOKE_TEST.md`.
 For the guarded manual provider sync checklist, see `docs/PROVIDER_SYNC_SMOKE_TEST.md`.
 For the intended end-to-end manual cockpit review sequence, see `docs/COCKPIT_REVIEW_WORKFLOW.md`.
+For repeatable visual browser clickthrough evidence, see `docs/FINAL_BROWSER_CLICKTHROUGH_CHECKLIST.md`.
 
 ## Safety Scope
 
@@ -46,6 +47,9 @@ The migration step prevents stale preserved Docker volumes from producing
 confusing workflow failures during local smoke testing. It is not a production
 migration policy, does not reset volumes, and does not remove the need for a
 separate production-like deployment gate.
+
+Use `docs/FINAL_BROWSER_CLICKTHROUGH_CHECKLIST.md` to record the visual browser
+workflow after the runner succeeds.
 
 This script is release-validation tooling, not a production deployment claim.
 
