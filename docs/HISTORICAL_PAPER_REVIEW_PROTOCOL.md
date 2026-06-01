@@ -216,4 +216,4 @@ expected profit, live readiness, broker readiness, or production readiness.
 
 ## Recorded Batches
 
-- First 50-example paper calibration batch: `docs/reviews/first-50-paper-calibration-batch.md`.
+- First 80-example paper calibration batch: `docs/reviews/first-50-paper-calibration-batch.md`.
