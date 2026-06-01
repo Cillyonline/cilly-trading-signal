@@ -58,6 +58,7 @@ This wiki is not a production-readiness statement, strategy-validation claim, pr
 | Browser clickthrough | [Final Browser Clickthrough Checklist](FINAL_BROWSER_CLICKTHROUGH_CHECKLIST.md) | Manual browser evidence template for desktop/mobile. |
 | Release checklist | [MVP Release Checklist](MVP_RELEASE_CHECKLIST.md) | Current implemented/gap/boundary summary. |
 | Deployment readiness gate | [Deployment Readiness Decision Gate v2](DEPLOYMENT_READINESS_DECISION_GATE_V2.md) | Local/private staging boundaries; production-like remains No Go. |
+| Production-like requirements | [Production-Like Requirements Review](PRODUCTION_LIKE_REQUIREMENTS_REVIEW.md) | Requirements and blockers for any future production-like reconsideration. |
 | Private-data readiness gate | [Private Data Readiness Decision Gate](PRIVATE_DATA_READINESS_DECISION_GATE.md) | Routine private trading data remains blocked until separate evidence and owner acceptance. |
 | Private-data evidence | [Private Data Evidence Handling](PRIVATE_DATA_EVIDENCE_HANDLING.md) | Allowed, redacted, and forbidden evidence for issues, PRs, logs, screenshots, terminal output, and chat. |
 

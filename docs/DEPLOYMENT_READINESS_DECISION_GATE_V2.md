@@ -57,7 +57,7 @@ Rationale:
 | Incident response runbook | Partial; runbook exists for conservative local/private-staging incident handling, but production-like rehearsal, ownership, and acceptance evidence are not complete | `docs/OPERATIONAL_INCIDENT_RUNBOOK.md` |
 | Offsite encrypted backups | Procedure documented; implementation and restore evidence still required before private-data or production-like reliance | `docs/DEPLOYMENT_RUNBOOK.md#offsite-encrypted-backups`, `#420` |
 | Private-data readiness | Fail; routine private trading data use remains blocked pending separate evidence and acceptance | `docs/PRIVATE_DATA_READINESS_DECISION_GATE.md` |
-| Production-like/public exposure decision | Fail; explicitly No Go | This gate |
+| Production-like/public exposure decision | Fail; explicitly No Go; future requirements and blockers are documented separately | This gate, `docs/PRODUCTION_LIKE_REQUIREMENTS_REVIEW.md` |
 
 ## Required Evidence
 
@@ -93,6 +93,8 @@ Production-like exposure requires a new explicit decision. Minimum evidence must
 - Secret rotation and environment handling procedure.
 - Offsite encrypted backup evidence and restore drill from that storage path.
 - Explicit acceptance of residual risks by the owner/operator.
+
+See `docs/PRODUCTION_LIKE_REQUIREMENTS_REVIEW.md` for the current production-like requirements and blocker review. That review preserves the current No Go state.
 
 ## Explicit Non-Go Conditions
 
