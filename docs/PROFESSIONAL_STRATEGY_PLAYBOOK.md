@@ -126,6 +126,12 @@ way, then waits for trigger confirmation before manual review.
 - Price is near a pullback zone, but structure is not yet confirmed.
 - R:R is provisional because trigger or stop level is not final.
 
+Calibrated Watchlist example:
+
+- A constructive trend pullback without a 4H close above the lower high remains
+  Watchlist, not No Trade, when structure and risk plan are otherwise coherent.
+  The next action is to wait for close confirmation before manual review.
+
 ### No-Trade Gates
 
 - Weekly or market regime is bearish.
@@ -189,6 +195,12 @@ review only confirmed closes above a clear base high.
 - Base is forming but no close above base high exists.
 - Base is promising but needs tighter range, clearer high, or better volume pattern.
 - Next action should specify the confirmation level to watch.
+
+Calibrated Watchlist example:
+
+- A constructive base without a close above the base high remains Watchlist, not
+  No Trade, when the base and risk plan are otherwise coherent. The next action
+  is to wait for close confirmation instead of anticipating the breakout.
 
 ### No-Trade Gates
 
