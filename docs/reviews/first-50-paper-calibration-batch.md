@@ -122,6 +122,10 @@ Issue `#474` clarified missing-context No Trade wording so stale, partial,
 failed, missing, unknown, short-history, and missing-indicator cases keep the
 same conservative behavior while making the next manual action explicit.
 
+Issue `#475` added deterministic golden cases for constructive trend-pullback
+and base-breakout examples without close confirmation. These remain Watchlist,
+not No Trade or Armed, until trigger confirmation appears.
+
 ## Entry Table
 
 | ID | Symbol | Asset | Strategy bucket | Status | Score | Context | Key blockers / risk flags | Label | Finding category | Follow-up |

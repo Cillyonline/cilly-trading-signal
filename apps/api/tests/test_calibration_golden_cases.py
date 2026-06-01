@@ -142,6 +142,24 @@ GOLDEN_CASES = [
         expected_quality={"trigger": "missing", "risk_plan": "passed"},
     ),
     GoldenCase(
+        name="paper_batch_trend_pullback_constructive_without_4h_trigger_stays_watchlist",
+        evaluate=lambda: evaluate_trend_pullback_long(
+            trend_payload(close_above_small_lower_high=False, small_lower_high=Decimal("102"))
+        ),
+        expected_status=SignalStatus.WATCHLIST,
+        expected_score_class=ScoreClass.A_SETUP,
+        expected_quality={"trigger": "missing", "risk_plan": "passed"},
+    ),
+    GoldenCase(
+        name="paper_batch_base_breakout_constructive_without_close_confirmation_stays_watchlist",
+        evaluate=lambda: evaluate_base_breakout_long(
+            base_breakout_payload(close_above_base_high_4h=False, close_above_base_high_daily=False)
+        ),
+        expected_status=SignalStatus.WATCHLIST,
+        expected_score_class=ScoreClass.A_SETUP,
+        expected_quality={"trigger": "missing", "risk_plan": "passed"},
+    ),
+    GoldenCase(
         name="review_finding_unclear_risk_plan_missing_target_blocks",
         evaluate=lambda: evaluate_trend_pullback_long(
             trend_payload(target_1_override=None, target_2_override=None, recent_swing_low=None)
