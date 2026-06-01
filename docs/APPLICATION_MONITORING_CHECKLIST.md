@@ -81,6 +81,45 @@ Checklist:
 - Failed jobs: deployment, backup, restore, import, provider sync, and health-check failures produce operator-visible follow-up records.
 - Incident handling: failures that affect login, data integrity, backups, restores, or public routing are handled through the [Operational Incident Runbook](OPERATIONAL_INCIDENT_RUNBOOK.md).
 
+Required before production-like exposure is reconsidered:
+
+- External health monitoring or a documented operator-equivalent check must cover
+  API health and web route availability without exposing direct service ports.
+- Operator-visible escalation must exist for API health failure, web route
+  failure, PostgreSQL unhealthy state, repeated container restarts, failed backup
+  jobs, stale backup evidence, disk pressure, certificate expiry risk, and failed
+  restore drills.
+- Alert destinations, quiet-hours behavior, and owner/operator response windows
+  must be documented without posting tokens, chat IDs, phone numbers, private
+  email addresses, or provider account details.
+- Backup freshness and disk usage must have explicit thresholds and follow-up
+  actions before data loss or write failures are likely.
+- A failed alert, failed health check, or unavailable operator response path must
+  be treated as a No-Go condition for production-like reliance until resolved or
+  explicitly accepted.
+
+Production-like escalation expectations:
+
+| Area | Trigger | Expected operator response | Evidence boundary |
+| --- | --- | --- | --- |
+| API health | `/api/health` fails or returns unexpected status repeatedly. | Stop relying on app output, check `/api/health/details` if safe, inspect sanitized logs, open incident/follow-up. | Pass/fail, timestamp, route, commit; no raw logs with secrets/private data. |
+| Web route | HTTPS web route fails, certificate is invalid/near expiry, or Caddy routing breaks. | Stop public reliance, check Caddy/container status, verify direct ports remain private, follow deployment runbook. | HTTP status category and sanitized service status only. |
+| Service availability | Expected containers are exited, unhealthy, or repeatedly restarting. | Freeze data-changing workflows, check disk/memory/logs, escalate through incident runbook. | Service names and pass/fail only. |
+| Database | PostgreSQL unhealthy, DB-backed pages fail, migrations mismatch, or restore uncertainty exists. | Stop data-changing workflows, confirm backup state, avoid destructive repair without approval. | Health status and migration version only. |
+| Backups | Latest backup missing, zero size, stale, failed timer, failed Restic check, or stale restore drill. | Treat private-data/production-like reliance as blocked, run documented backup/restore triage, create follow-up. | Target category, snapshot ID prefix, pass/fail; no dump contents or credentials. |
+| Disk and storage | Root/Docker/PostgreSQL/backup storage approaches documented threshold. | Reduce nonessential growth, preserve DB/backups, avoid deploys/imports until safe. | Usage percentage/range only; no sensitive paths if private. |
+| Failed jobs | Deploy, backup, restore, provider sync, health check, or smoke job fails repeatedly. | Record sanitized failure category, stop affected workflow reliance, open issue. | Job name, status, follow-up link. |
+
+Private staging versus production-like monitoring:
+
+| Requirement | Private staging | Production-like reconsideration |
+| --- | --- | --- |
+| Health checks | Timer/manual checks are acceptable for controlled owner/operator staging. | External or operator-equivalent monitoring with documented escalation is required. |
+| Backups | Local/VPS backup evidence can support staging validation. | Offsite/geographic encrypted backup evidence and restore drill are required. |
+| Disk review | Daily during active staging use. | Thresholds, escalation path, and response expectation must be documented. |
+| Failed alerts/checks | Same-day review during active staging use. | Operator-visible alerting and blocked-reliance behavior must be documented. |
+| Evidence | Sanitized issue/checklist notes. | Sanitized evidence plus explicit owner/operator acceptance in a production-like gate. |
+
 ## Minimum Evidence Record
 
 For each monitoring review, record only sanitized evidence:
