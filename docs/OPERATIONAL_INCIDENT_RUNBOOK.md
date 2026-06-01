@@ -236,6 +236,93 @@ Escalate when:
 - Recent backups are missing or unverified.
 - Any private data exposure is suspected.
 
+## Private-Data Incident Rehearsal
+
+Use this rehearsal before private trading data is reconsidered, and repeat it
+after material changes to backup, restore, secret storage, deployment, auth,
+logging, or evidence handling. It is a tabletop and dry-run checklist by
+default. Do not restore over a real database, rotate real secrets, restart VPS
+services, edit server `.env` files, change firewall rules, or delete backups
+without explicit operator approval for that exact action.
+
+Scenario A: database restore decision.
+
+1. State the trigger: database unavailable, suspected corruption, wrong restore,
+   migration failure, or accidental private-data exposure.
+2. Confirm data-changing operations and trading-review reliance are stopped.
+3. Identify the intended environment class: local, private staging, or
+   disposable restore drill. The default rehearsal target is disposable only.
+4. Locate the documented restore procedure without running destructive commands:
+   `docs/DEPLOYMENT_RUNBOOK.md#postgresql-restore` and the restore-drill
+   procedure under `docs/DEPLOYMENT_RUNBOOK.md#offsite-restore-drill`.
+5. Confirm the latest backup evidence category: local VPS dump, local Windows
+   encrypted Restic, or offsite encrypted Restic. Record only snapshot ID prefix,
+   target category, non-zero status, and `restic check` pass/fail if available.
+6. Confirm which actions require explicit operator approval: replacing any real
+   database, stopping app services, restoring into private staging, deleting a
+   restore directory, or using a backup that may contain private data.
+7. Dry-run the evidence decision: what can be posted publicly, what must be
+   redacted, and what must stay only in the operator password manager or private
+   notes.
+8. Record gaps as follow-up issues if the backup source, target, restore owner,
+   approval step, or sanitized evidence path is unclear.
+
+Scenario B: secret rotation decision.
+
+1. State the trigger: suspected exposure, copied secret in chat, leaked `.env`,
+   provider-key issue, database credential issue, app `SECRET_KEY` issue, or
+   Telegram credential issue.
+2. Identify affected secret classes without printing values: app secret,
+   database password, provider API key, Telegram token/chat ID, deployment key,
+   backup repository credential, or Restic password.
+3. Confirm blast radius: login/session invalidation, provider sync, Telegram
+   delivery, database connectivity, backup access, deployment access, or VPS
+   service restart.
+4. Locate the owner/operator rotation procedure or create a gap issue if one is
+   missing. Do not paste old or new secret values into evidence.
+5. Confirm operator approval is required before changing server `.env` files,
+   restarting services, rotating database credentials, changing provider keys,
+   rotating Restic credentials, or invalidating active sessions.
+6. Define post-rotation verification with sanitized evidence only: health pass,
+   login pass, provider-sync disabled/freshness state, Telegram test pass/fail,
+   backup check pass/fail, and no secret values included.
+7. Record whether any evidence channel needs cleanup because secret or private
+   data was exposed.
+
+Rehearsal evidence template:
+
+```markdown
+## Private-Data Incident Rehearsal Evidence
+
+- Date/time UTC:
+- Rehearsal type: tabletop / dry-run / approved live action
+- Scenario: database restore / secret rotation / combined
+- Environment class: local / private staging / disposable target
+- Operator approval required for service-impacting actions: yes/no
+- Operator approval granted for service-impacting actions: yes/no/not applicable
+- Data-changing operations stopped: yes/no/not applicable
+- Trading-review reliance stopped: yes/no/not applicable
+- Backup evidence category checked: local dump / local encrypted Restic / offsite encrypted Restic / not checked
+- Restore target disposable: yes/no/not applicable
+- Secret classes reviewed without values: yes/no
+- Post-action verification defined: yes/no
+- Gaps found:
+- Follow-up issue:
+- Secrets, `.env` values, database URLs, dump contents, restored rows, private trade notes, journal text, raw logs, or screenshots with private data included: no
+```
+
+Acceptance for this rehearsal:
+
+- The operator can identify the correct restore and rotation docs without
+  exposing private data.
+- Any real restore, real secret rotation, service restart, migration, firewall
+  change, backup deletion, or private-staging change is explicitly approved
+  before execution.
+- Evidence contains only sanitized status, target class, pass/fail, snapshot ID
+  prefix when needed, and follow-up links.
+- Gaps are filed as issues rather than worked around with ad hoc destructive
+  commands.
+
 ## Stale Data Confusion
 
 Symptoms:

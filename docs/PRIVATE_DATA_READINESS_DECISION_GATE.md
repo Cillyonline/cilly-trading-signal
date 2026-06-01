@@ -48,7 +48,7 @@ Private owner/operator trading data may be reconsidered only after all of this i
 - Trade notes, journal content, performance records, watchlists, provider metadata, and restored rows have a documented privacy review. See `docs/TRADE_JOURNAL_PRIVACY_REVIEW.md` for the trade, journal, and performance review.
 - Restic restore drill recurrence and snapshot retention expectations are documented in `docs/DEPLOYMENT_RUNBOOK.md#offsite-encrypted-backups`.
 - Backup evidence avoids dump contents, restored row contents, database URLs, and secret values.
-- Incident rehearsal covers database restore and secret rotation without performing service-impacting actions unless explicitly approved by the operator.
+- Incident rehearsal covers database restore and secret rotation without performing service-impacting actions unless explicitly approved by the operator. See `docs/OPERATIONAL_INCIDENT_RUNBOOK.md#private-data-incident-rehearsal`.
 - Secret rotation procedure is documented and accepted for provider keys, app secrets, database credentials, and deployment credentials.
 - Residual risks are listed, including local-only backup risk unless an offsite encrypted target has current restore evidence.
 - The owner/operator explicitly accepts the remaining risk and scope in an issue, PR, or decision record without exposing private data.
