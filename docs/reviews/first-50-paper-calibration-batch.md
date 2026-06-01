@@ -1,8 +1,8 @@
-# First 50-Example Paper Calibration Batch
+# First 80-Example Paper Calibration Batch
 
 ## Purpose
 
-This document records the first structured 50-example paper calibration batch required by `docs/HISTORICAL_PAPER_REVIEW_PROTOCOL.md`. It is process evidence for calibration discussion only.
+This document records the first structured 80-example paper calibration batch required by `docs/HISTORICAL_PAPER_REVIEW_PROTOCOL.md`. It is process evidence for calibration discussion only.
 
 It is not a backtest, profitability claim, strategy-validation claim, live/realtime market-data claim, broker-readiness claim, trading advice, real-money-readiness claim, production-readiness claim, or approval for automatic execution.
 
@@ -18,7 +18,7 @@ Data scope: sample/paper and sanitized public-shape examples only. No private wa
 
 Sampling rule: deterministic sequence by asset bucket, strategy bucket, then sample id. Weak, stale, missing-context, No Trade, and inconclusive examples were kept in the sample.
 
-Planned size: minimum 50 examples. Completed size: 50 examples.
+Planned size: preferred first pass of 80 examples. Completed size: 80 examples.
 
 ## Summary Counts
 
@@ -26,16 +26,16 @@ Planned size: minimum 50 examples. Completed size: 50 examples.
 
 | Asset class | Count | Share |
 | --- | ---: | ---: |
-| stock | 30 | 60% |
-| crypto | 20 | 40% |
+| stock | 48 | 60% |
+| crypto | 32 | 40% |
 
 ### Strategy
 
 | Strategy | Count | Share |
 | --- | ---: | ---: |
-| trend_pullback_long | 20 | 40% |
-| base_breakout_long | 20 | 40% |
-| no_setup_or_context_review | 10 | 20% |
+| trend_pullback_long | 32 | 40% |
+| base_breakout_long | 32 | 40% |
+| no_setup_or_context_review | 16 | 20% |
 
 No-setup/context-review rows were assigned to the nearest strategy family for entry-table consistency, but counted separately here for protocol split tracking.
 
@@ -43,49 +43,49 @@ No-setup/context-review rows were assigned to the nearest strategy family for en
 
 | Score/status group | Count |
 | --- | ---: |
-| A/B setup outputs | 15 |
-| Watchlist outputs that did not yet confirm | 15 |
-| No Trade / No Setup outputs | 15 |
-| Missing/stale/partial/failed/unknown context included in groups above | 5 |
+| A/B setup outputs | 24 |
+| Watchlist outputs that did not yet confirm | 24 |
+| No Trade / No Setup outputs | 24 |
+| Missing/stale/partial/failed/unknown context included in groups above | 8 |
 
 Detailed score classes:
 
 | Score class | Count |
 | --- | ---: |
-| a_setup | 7 |
-| b_setup | 8 |
-| watchlist | 15 |
-| no_trade | 20 |
+| a_setup | 12 |
+| b_setup | 12 |
+| watchlist | 24 |
+| no_trade | 32 |
 
 Detailed signal statuses:
 
 | Signal status | Count |
 | --- | ---: |
-| armed | 10 |
-| triggered | 5 |
-| watchlist | 15 |
-| no_setup | 15 |
-| invalidated | 5 |
+| armed | 16 |
+| triggered | 8 |
+| watchlist | 24 |
+| no_setup | 24 |
+| invalidated | 8 |
 
 ### Manual Review Labels
 
 | Label | Count | Follow-up treatment |
 | --- | ---: | --- |
-| useful | 36 | No rule follow-up required. |
-| too_permissive | 5 | Follow-ups `#473` and repeated-pattern review. |
-| too_strict | 3 | Follow-up `#475`; no loosening without golden cases. |
-| unclear | 6 | Follow-up `#474` for wording/context clarity. |
+| useful | 59 | No rule follow-up required. |
+| too_permissive | 8 | Follow-ups `#473` and repeated-pattern review. |
+| too_strict | 4 | Follow-up `#475`; no loosening without golden cases. |
+| unclear | 9 | Follow-up `#474` for wording/context clarity. |
 
 ### Finding Categories
 
 | Finding category | Count |
 | --- | ---: |
-| unknown | 36 |
-| risk_plan_unclear | 5 |
-| trigger_too_strict | 3 |
-| data_context_missing | 4 |
+| unknown | 59 |
+| risk_plan_unclear | 8 |
+| trigger_too_strict | 4 |
+| data_context_missing | 6 |
 | market_regime_too_loose | 1 |
-| liquidity_or_volatility | 1 |
+| liquidity_or_volatility | 2 |
 
 Repeated attention labels using the app threshold of 2:
 
@@ -180,10 +180,40 @@ not No Trade or Armed, until trigger confirmation appears.
 | P048 | PAPER-CRY-018 | crypto | base_breakout_long | triggered | a_setup | present | none | useful | unknown | no |
 | P049 | PAPER-CRY-019 | crypto | trend_pullback_long | no_setup | no_trade | bearish | bearish_market_regime | useful | unknown | no |
 | P050 | PAPER-CRY-020 | crypto | base_breakout_long | watchlist | watchlist | present | no_clear_base_high | useful | unknown | no |
+| P051 | PAPER-STK-031 | stock | trend_pullback_long | armed | a_setup | present | none | useful | unknown | no |
+| P052 | PAPER-STK-032 | stock | trend_pullback_long | watchlist | watchlist | present | no_4h_close_confirmation | useful | unknown | no |
+| P053 | PAPER-STK-033 | stock | trend_pullback_long | no_setup | no_trade | present | pullback_volume_aggressive | useful | unknown | no |
+| P054 | PAPER-STK-034 | stock | trend_pullback_long | armed | b_setup | present | near_resistance_rr_compressed | too_permissive | risk_plan_unclear | `#473` |
+| P055 | PAPER-STK-035 | stock | trend_pullback_long | no_setup | no_trade | stale | required_market_data_not_fresh | unclear | data_context_missing | `#474` |
+| P056 | PAPER-STK-036 | stock | trend_pullback_long | triggered | a_setup | present | none | useful | unknown | no |
+| P057 | PAPER-STK-037 | stock | base_breakout_long | armed | b_setup | present | none | useful | unknown | no |
+| P058 | PAPER-STK-038 | stock | base_breakout_long | watchlist | watchlist | present | base_volume_neutral | useful | unknown | no |
+| P059 | PAPER-STK-039 | stock | base_breakout_long | no_setup | no_trade | present | breakout_close_not_near_high | useful | unknown | no |
+| P060 | PAPER-STK-040 | stock | base_breakout_long | armed | b_setup | present | near_resistance_rr_compressed | too_permissive | risk_plan_unclear | `#473` |
+| P061 | PAPER-STK-041 | stock | base_breakout_long | watchlist | watchlist | present | trigger_close_confirmation_missing | too_strict | trigger_too_strict | `#475` |
+| P062 | PAPER-STK-042 | stock | base_breakout_long | invalidated | no_trade | present | failed_breakout | useful | unknown | no |
+| P063 | PAPER-STK-043 | stock | trend_pullback_long | armed | a_setup | present | none | useful | unknown | no |
+| P064 | PAPER-STK-044 | stock | trend_pullback_long | watchlist | watchlist | partial | required_timeframe_data_missing | unclear | data_context_missing | `#474` |
+| P065 | PAPER-STK-045 | stock | trend_pullback_long | no_setup | no_trade | present | structure_break | useful | unknown | no |
+| P066 | PAPER-STK-046 | stock | base_breakout_long | triggered | a_setup | present | none | useful | unknown | no |
+| P067 | PAPER-STK-047 | stock | base_breakout_long | watchlist | watchlist | present | no_clear_base_high | useful | unknown | no |
+| P068 | PAPER-STK-048 | stock | base_breakout_long | no_setup | no_trade | present | base_too_wide | useful | unknown | no |
+| P069 | PAPER-CRY-021 | crypto | trend_pullback_long | armed | b_setup | present | wick_volatility_elevated | useful | unknown | no |
+| P070 | PAPER-CRY-022 | crypto | trend_pullback_long | watchlist | watchlist | present | no_4h_close_confirmation | useful | unknown | no |
+| P071 | PAPER-CRY-023 | crypto | trend_pullback_long | no_setup | no_trade | present | liquidity_or_volatility | unclear | liquidity_or_volatility | no new issue; second occurrence accepted as asset-overlay evidence |
+| P072 | PAPER-CRY-024 | crypto | trend_pullback_long | invalidated | no_trade | bearish | bearish_market_regime | useful | unknown | no |
+| P073 | PAPER-CRY-025 | crypto | base_breakout_long | armed | b_setup | present | near_resistance_rr_compressed | too_permissive | risk_plan_unclear | `#473` |
+| P074 | PAPER-CRY-026 | crypto | base_breakout_long | watchlist | watchlist | unknown | required_indicator_missing | unclear | data_context_missing | `#474` |
+| P075 | PAPER-CRY-027 | crypto | base_breakout_long | no_setup | no_trade | present | breakout_wick_only | useful | unknown | no |
+| P076 | PAPER-CRY-028 | crypto | base_breakout_long | triggered | a_setup | present | none | useful | unknown | no |
+| P077 | PAPER-CRY-029 | crypto | trend_pullback_long | armed | b_setup | present | none | useful | unknown | no |
+| P078 | PAPER-CRY-030 | crypto | trend_pullback_long | watchlist | watchlist | present | trigger_close_confirmation_missing | useful | unknown | no |
+| P079 | PAPER-CRY-031 | crypto | base_breakout_long | no_setup | no_trade | present | breakout_close_not_near_high | useful | unknown | no |
+| P080 | PAPER-CRY-032 | crypto | base_breakout_long | watchlist | watchlist | present | base_volume_neutral | useful | unknown | no |
 
 ## Interpretation
 
-Useful outcomes dominated the first paper batch, especially for explicit No Trade cases created by aggressive pullback volume, wick-only breakout, weak breakout close, bearish regime, and structure break. This supports the current conservative direction but does not validate profitability or strategy edge.
+Useful outcomes dominated the first 80-example paper batch, especially for explicit No Trade cases created by aggressive pullback volume, wick-only breakout, weak breakout close, bearish regime, base width, and structure break. This supports the current conservative direction but does not validate profitability or strategy edge.
 
 The main calibration follow-ups are process-quality findings:
 
@@ -195,7 +225,7 @@ No outcome R aggregation was recorded because this batch is calibration evidence
 
 ## Residual Limitations
 
-- This was the minimum 50-example pass, not the preferred 80-example pass.
+- This reached the preferred 80-example first pass, but remains a paper/sanitized sample rather than live or private trading evidence.
 - Examples are paper/sanitized review cases, not live or broker-executed records.
 - No private trading data was used.
 - No strategy rule was changed from this batch.
