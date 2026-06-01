@@ -419,6 +419,12 @@ If the service fails:
 This timer is a private staging safety net, not a paging system, SLA, SLO, public
 status page, production observability platform, trading alert, or trading advice.
 
+Browser route checks remain manual unless a future opt-in dry-run script is
+implemented under the contract in
+`docs/POST_DEPLOY_BROWSER_SMOKE_AUTOMATION_EVALUATION.md#safe-dry-run-browser-smoke-contract`.
+That contract forbids credential capture, cookies/tokens, private data,
+screenshots with sensitive data, VPS remediation, and service-impacting actions.
+
 ### Check Frequency
 
 - After every deployment or restart: run all checks.

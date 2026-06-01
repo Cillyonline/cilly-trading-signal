@@ -50,6 +50,76 @@ If this is implemented later, require a new issue and PR that documents:
 - Local-only and private-staging modes kept separate.
 - Evidence template aligned with `docs/PRIVATE_DATA_EVIDENCE_HANDLING.md`.
 
+## Safe Dry-Run Browser Smoke Contract
+
+This contract is preparation only. It does not add Playwright, browser
+automation, CI jobs, VPS actions, credential handling, or service-impacting
+behavior.
+
+Modes:
+
+| Mode | Allowed Target | Approval Boundary |
+| --- | --- | --- |
+| local-sample | Local app started by the operator with sample, synthetic, or paper data. | Operator invokes manually; no private data or provider keys. |
+| private-staging-dry-run | Existing private staging URL using a dedicated sample/paper account. | Explicit operator approval is required before each run. |
+
+Allowed route checks for a future dry-run script:
+
+| Route | Allowed Assertion |
+| --- | --- |
+| `/login` | Page loads and login form or expected auth boundary is visible. |
+| `/` | Authenticated cockpit/dashboard loads and decision-support wording is visible. |
+| `/watchlist` | Page loads without secrets; sample/fake symbols only if a create step is explicitly scoped. |
+| `/screener` | Page loads and screener copy remains review-candidate oriented. |
+| `/import` | Page loads; no private files are uploaded by the dry run. |
+| `/signals` | Signal list loads and signal language remains review support, not advice. |
+| `/reviews` | Review batch page loads and evidence-only wording remains visible. |
+| `/trades` | Trade log page loads and manual-execution boundary remains visible. |
+| `/performance` | Performance page loads and does not imply forecasts or profitability. |
+| `/alerts` | Alerts page loads and alert wording remains a review prompt only. |
+| `/settings` | Settings page loads without exposing secrets or automatic sizing claims. |
+
+Optional detail routes such as `/signals/[id]`, `/reviews/[id]`, and
+`/trades/[id]` may be checked only when the id belongs to sample/paper data
+created for that run or pre-approved by the operator.
+
+Forbidden actions:
+
+- Capturing, printing, posting, or storing cookies, session tokens, local storage,
+  passwords, `.env` values, provider keys, database URLs, raw API responses, raw
+  logs, screenshots with private data, or account/broker/trade details.
+- Uploading private CSVs, private watchlists, broker statements, private journal
+  notes, provider exports, screenshots, or DB dumps.
+- Creating broker actions, orders, automatic trades, automatic position sizing,
+  provider-key syncs, Telegram sends, or external notifications.
+- Restarting services, changing firewall rules, rotating secrets, restoring
+  backups, purging volumes, deleting private data, or remediating VPS state.
+- Treating a pass as production readiness, live/realtime readiness, broker
+  readiness, profitability validation, strategy validation, real-money readiness,
+  trading advice, or approval for automatic execution.
+
+Sanitized evidence output may contain only:
+
+- Run mode: `local-sample` or `private-staging-dry-run`.
+- Date/time, operator initials or role, branch/commit SHA, browser name, viewport
+  class, and target class without secrets.
+- Route-level pass/fail/blocked/not-run status.
+- Sanitized error category, such as `auth_failed`, `route_unavailable`,
+  `safety_copy_missing`, or `unexpected_private_data_prompt`.
+- Follow-up issue or PR links.
+- Explicit `no` answers for cookies/tokens/private data/screenshots/raw logs and
+  production/live/broker/profitability/trading-advice/automatic-execution claims.
+
+Private-staging rules:
+
+- Run only after explicit operator approval for that exact target and commit.
+- Use a sample/paper account or operator-approved sample state only.
+- Do not save credentials in the repo, CI, shell history, docs, PRs, or issues.
+- Do not capture screenshots unless a later approved implementation proves the
+  screenshot is sample-only and sanitized by default.
+- If any page exposes private or sensitive data, stop immediately and record only
+  a sanitized failure category.
+
 ## Manual Path That Remains Approved
 
 Continue using:
