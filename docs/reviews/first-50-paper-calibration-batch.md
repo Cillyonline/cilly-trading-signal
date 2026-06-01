@@ -114,6 +114,10 @@ Repeated false-positive patterns from `too_permissive` examples:
 
 No implementation rule changes were made from this batch.
 
+Issue `#473` was converted into the deterministic golden case
+`paper_batch_near_resistance_compressed_rr_blocks_review`, preserving No Trade
+behavior when nearby resistance compresses practical R:R.
+
 ## Entry Table
 
 | ID | Symbol | Asset | Strategy bucket | Status | Score | Context | Key blockers / risk flags | Label | Finding category | Follow-up |
