@@ -45,7 +45,7 @@ Private owner/operator trading data may be reconsidered only after all of this i
 - Current API/Web CI on `main` is passing for the relevant release candidate.
 - Local/private-staging deployment and browser smoke evidence uses sample or paper data and remains current.
 - Private-data evidence handling rules define allowed, redacted, and forbidden issue/PR/log/screenshot evidence.
-- Trade notes, journal content, performance records, watchlists, provider metadata, and restored rows have a documented privacy review.
+- Trade notes, journal content, performance records, watchlists, provider metadata, and restored rows have a documented privacy review. See `docs/TRADE_JOURNAL_PRIVACY_REVIEW.md` for the trade, journal, and performance review.
 - Restic restore drill recurrence and snapshot retention expectations are documented in `docs/DEPLOYMENT_RUNBOOK.md#offsite-encrypted-backups`.
 - Backup evidence avoids dump contents, restored row contents, database URLs, and secret values.
 - Incident rehearsal covers database restore and secret rotation without performing service-impacting actions unless explicitly approved by the operator.
