@@ -1511,4 +1511,7 @@ explicit operator approval.
 
 ## Known Gaps
 
-- Automated deployment smoke tests are not implemented; the checklist above is manual.
+- Automated deployment smoke tests are not implemented; the checklist above is
+  manual. The current evaluation keeps browser smoke manual for now and records
+  future implementation constraints in
+  `docs/POST_DEPLOY_BROWSER_SMOKE_AUTOMATION_EVALUATION.md`.
