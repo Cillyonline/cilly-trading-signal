@@ -181,6 +181,17 @@ GOLDEN_CASES = [
         expected_quality={"structure": "blocked"},
     ),
     GoldenCase(
+        name="paper_batch_trend_pullback_near_resistance_compressed_rr_blocks_review",
+        evaluate=lambda: evaluate_trend_pullback_long(
+            trend_payload(strong_resistance_nearby=True, target_1_override=Decimal("101.25"))
+        ),
+        expected_status=SignalStatus.NO_SETUP,
+        expected_score_class=ScoreClass.NO_TRADE,
+        expected_no_trade_reasons={"strong_resistance_nearby"},
+        expected_risk_flags={"strong_resistance_nearby"},
+        expected_quality={"structure": "blocked"},
+    ),
+    GoldenCase(
         name="review_finding_too_permissive_trend_pullback_aggressive_volume_blocks",
         evaluate=lambda: evaluate_trend_pullback_long(
             trend_payload(
