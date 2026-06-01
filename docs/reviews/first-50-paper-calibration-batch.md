@@ -118,6 +118,10 @@ Issue `#473` was converted into the deterministic golden case
 `paper_batch_near_resistance_compressed_rr_blocks_review`, preserving No Trade
 behavior when nearby resistance compresses practical R:R.
 
+Issue `#481` added explicit paper-batch resistance coverage for both strategy
+families: base-breakout resistance compression and trend-pullback resistance
+compression now have deterministic No Trade golden cases.
+
 Issue `#474` clarified missing-context No Trade wording so stale, partial,
 failed, missing, unknown, short-history, and missing-indicator cases keep the
 same conservative behavior while making the next manual action explicit.
