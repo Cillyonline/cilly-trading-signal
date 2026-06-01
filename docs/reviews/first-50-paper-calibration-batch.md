@@ -126,6 +126,11 @@ Issue `#474` clarified missing-context No Trade wording so stale, partial,
 failed, missing, unknown, short-history, and missing-indicator cases keep the
 same conservative behavior while making the next manual action explicit.
 
+Issue `#482` added direct deterministic contract coverage for paper-batch
+missing-context variants, including partial/failed provider context and
+unknown/missing timeframe context. These cases remain No Trade until context is
+refreshed or available.
+
 Issue `#475` added deterministic golden cases for constructive trend-pullback
 and base-breakout examples without close confirmation. These remain Watchlist,
 not No Trade or Armed, until trigger confirmation appears.
