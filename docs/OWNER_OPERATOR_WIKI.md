@@ -56,6 +56,7 @@ This wiki is not a production-readiness statement, strategy-validation claim, pr
 | --- | --- | --- |
 | Local Docker smoke | [MVP Smoke Test](MVP_SMOKE_TEST.md) | Smoke runner, migrations, API health, web load, and sample workflows. |
 | Browser clickthrough | [Final Browser Clickthrough Checklist](FINAL_BROWSER_CLICKTHROUGH_CHECKLIST.md) | Manual browser evidence template for desktop/mobile. |
+| Browser smoke automation | [Post-Deploy Browser Smoke Automation Evaluation](POST_DEPLOY_BROWSER_SMOKE_AUTOMATION_EVALUATION.md) | Current decision to keep post-deploy browser smoke manual for now. |
 | Release checklist | [MVP Release Checklist](MVP_RELEASE_CHECKLIST.md) | Current implemented/gap/boundary summary. |
 | Deployment readiness gate | [Deployment Readiness Decision Gate v2](DEPLOYMENT_READINESS_DECISION_GATE_V2.md) | Local/private staging boundaries; production-like remains No Go. |
 | Production-like requirements | [Production-Like Requirements Review](PRODUCTION_LIKE_REQUIREMENTS_REVIEW.md) | Requirements and blockers for any future production-like reconsideration. |
