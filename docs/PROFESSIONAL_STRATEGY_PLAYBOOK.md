@@ -136,6 +136,21 @@ way, then waits for trigger confirmation before manual review.
 - R:R is below minimum.
 - Required data quality or freshness is insufficient.
 
+Calibrated No Trade examples:
+
+- `pullback_volume_aggressive`: price may still be above EMA200 and near a
+  pullback zone, but relative pullback volume above the aggressive threshold
+  means selling pressure is not controlled. The correct next action is to wait
+  for quieter pullback volume before reviewing the setup again.
+- `pullback_not_controlled`: a pullback that loses structure, breaks below the
+  expected support zone, or fails to stabilize is not rescued by a later green
+  candle. Wait for price to stabilize and reclaim a valid trigger level with
+  close confirmation.
+- `required_market_data_not_fresh`: stale, partial, failed, missing, or unknown
+  stored data blocks review even when the visible pattern looks technically
+  constructive. Refresh data first; do not infer current setup quality from stale
+  candles.
+
 ## Base Breakout Long
 
 ### Intent
@@ -175,10 +190,27 @@ review only confirmed closes above a clear base high.
 - Base is too wide or choppy for clean risk planning.
 - Breakout is wick/spike-only without close confirmation.
 - Breakout is already extended beyond a reasonable ATR threshold.
+- Breakout closes above the base but not near the session high, weakening close
+  quality.
 - Major resistance is too close for minimum R:R.
 - Stop or invalidation is unclear.
 - R:R is below minimum.
 - Required data quality or freshness is insufficient.
+
+Calibrated No Trade examples:
+
+- `breakout_close_not_near_high`: a close above base high is not enough when the
+  candle gives back too much of the breakout range. Wait for a stronger close
+  near the high before reviewing the breakout again.
+- `breakout_too_extended`: a breakout that has already moved too far beyond the
+  base high relative to ATR is not a clean trigger. Wait for a reset, retest, or
+  new base instead of chasing the move.
+- `base_too_wide`: a broad or choppy base can produce a visible breakout but may
+  leave no clean stop or minimum 2R plan. Treat that as No Trade until structure
+  tightens.
+- `required_timeframe_data_missing`: a breakout candidate needs the required
+  weekly, daily, and trigger context. Missing required timeframe data blocks
+  setup review even when the available timeframe shows a breakout.
 
 ## Asset-Specific Overlay
 
@@ -234,6 +266,19 @@ No Trade example:
 No Trade: broader context is bearish, price is below EMA200, and the base is too
 wide for clean risk planning. Wait for fresh data and a tighter structure before
 reviewing another long setup.
+```
+
+Calibrated No Trade example set:
+
+```text
+Trend Pullback Long: No Trade because pullback volume is aggressive. The setup is
+not controlled enough for review; wait for quieter volume and a valid 4H close.
+
+Base Breakout Long: No Trade because the breakout close is not near the high.
+Close confirmation quality is weak; wait for stronger close confirmation.
+
+Data Gate: No Trade because required market data is stale, partial, failed,
+missing, or unknown. Refresh data before reviewing any long setup.
 ```
 
 ## Calibration Rule
