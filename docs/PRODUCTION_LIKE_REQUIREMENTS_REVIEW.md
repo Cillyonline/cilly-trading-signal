@@ -49,7 +49,7 @@ Production-like exposure remains blocked because these are not complete as produ
 - No explicit production-like target, exposure model, user model, domain, operator responsibility model, or owner acceptance is recorded.
 - No current production-like deployment smoke exists for an intended target.
 - Dependency/container scans are visible and thresholds are documented, but current findings still need production-like review and acceptance for the intended release.
-- Monitoring remains documented for local/private staging expectations; production-like escalation and alerting evidence is not complete.
+- Monitoring escalation expectations are documented, but production-like alert destinations, thresholds, operator response evidence, and owner acceptance are not complete.
 - Offsite/geographic backup target evaluation is documented, but target selection, configuration, and restore evidence are not complete.
 - Private-data readiness remains No Go for routine private trading records.
 - Incident rehearsal exists for private-data database restore/secret rotation, but production-like incident ownership and communication acceptance are not complete.
