@@ -144,10 +144,13 @@ reviewed signal or candidate manually when working outside the app:
 | Manual review label | useful / too_permissive / too_strict / unclear |
 | Finding category | Persisted category code; keep `unknown` when unclear |
 | Finding category source | `derived` when system-assigned, `manual` when reviewer-confirmed |
+| Repeated blocker or false-positive pattern | Pattern code when this row contributes to a repeated finding, otherwise `none` |
 | Paper or historical outcome R | Optional, if measured consistently |
 | Outcome measurement rule | How R was measured, if used |
 | Follow-up needed | yes / no |
+| Follow-up disposition | created / accepted limitation / deferred / not applicable |
 | Follow-up issue | GitHub issue URL when created |
+| Disposition rationale | Short sanitized reason if accepted, deferred, or not applicable |
 | Notes | Sanitized process notes only |
 
 ## Review Labels
@@ -189,6 +192,15 @@ Rules:
 Every `too_permissive`, `too_strict`, or repeated `unclear` label should create a
 follow-up issue unless it is intentionally accepted as a limitation.
 
+Use these dispositions consistently:
+
+| Disposition | Use When |
+| --- | --- |
+| created | A sanitized follow-up issue exists and is linked. |
+| accepted limitation | The behavior is known, safe, and intentionally left unchanged for now. |
+| deferred | The finding is real but needs a later batch, owner decision, or larger scope. |
+| not applicable | No follow-up is needed because the output matched the playbook. |
+
 Follow-up issues should include:
 
 - Sanitized example description.
@@ -208,6 +220,8 @@ At the end of each batch, summarize:
 - Count by strategy and asset class.
 - Count by manual review label.
 - Repeated blockers or missing-context patterns.
+- Repeated false-positive patterns and whether each was created, accepted,
+  deferred, or not applicable.
 - Follow-up issues created.
 - Residual limitations and whether more samples are required.
 
