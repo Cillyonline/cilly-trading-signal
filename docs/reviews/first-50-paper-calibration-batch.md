@@ -135,6 +135,9 @@ Issue `#475` added deterministic golden cases for constructive trend-pullback
 and base-breakout examples without close confirmation. These remain Watchlist,
 not No Trade or Armed, until trigger confirmation appears.
 
+Issue `#483` made the same paper-batch trigger-confirmation cases explicitly
+assert that unconfirmed constructive setups are not Armed and never Triggered.
+
 ## Entry Table
 
 | ID | Symbol | Asset | Strategy bucket | Status | Score | Context | Key blockers / risk flags | Label | Finding category | Follow-up |

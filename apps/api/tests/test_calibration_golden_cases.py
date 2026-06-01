@@ -20,6 +20,7 @@ class GoldenCase:
     expected_quality: dict[str, str]
     expected_risk_flags: set[str] = field(default_factory=set)
     expected_no_trade_reasons: set[str] = field(default_factory=set)
+    disallowed_statuses: set[SignalStatus] = field(default_factory=set)
 
 
 GOLDEN_CASES = [
@@ -149,6 +150,7 @@ GOLDEN_CASES = [
         expected_status=SignalStatus.WATCHLIST,
         expected_score_class=ScoreClass.A_SETUP,
         expected_quality={"trigger": "missing", "risk_plan": "passed"},
+        disallowed_statuses={SignalStatus.ARMED, SignalStatus.TRIGGERED},
     ),
     GoldenCase(
         name="paper_batch_base_breakout_constructive_without_close_confirmation_stays_watchlist",
@@ -158,6 +160,7 @@ GOLDEN_CASES = [
         expected_status=SignalStatus.WATCHLIST,
         expected_score_class=ScoreClass.A_SETUP,
         expected_quality={"trigger": "missing", "risk_plan": "passed"},
+        disallowed_statuses={SignalStatus.ARMED, SignalStatus.TRIGGERED},
     ),
     GoldenCase(
         name="review_finding_unclear_risk_plan_missing_target_blocks",
@@ -245,6 +248,7 @@ def test_calibration_golden_case(case: GoldenCase) -> None:
     }
 
     assert result.status == case.expected_status
+    assert result.status not in case.disallowed_statuses
     assert result.score_class == case.expected_score_class
     assert case.expected_risk_flags.issubset(set(result.risk_flags))
     assert case.expected_no_trade_reasons.issubset(set(result.no_trade_reasons))
