@@ -106,11 +106,19 @@ Repeated false-positive patterns from `too_permissive` examples:
 
 ## Follow-Up Issues Created
 
-| Issue | Pattern | Reason |
-| --- | --- | --- |
-| `#473` | repeated near-resistance risk-plan permissiveness | Too-permissive examples showed setups remaining reviewable when nearby resistance compressed practical R:R or target quality was unclear. |
-| `#474` | repeated missing-context review wording | Unclear examples were safe/conservative but did not explain missing, stale, partial, failed, or unknown context consistently enough. |
-| `#475` | repeated trigger close-confirmation strictness | Too-strict examples need golden cases before any trigger or breakout close-confirmation loosening is considered. |
+Status snapshot date: 2026-06-01. This table is sample/paper calibration
+evidence only, not live status automation, strategy validation, profitability
+evidence, trading advice, broker readiness, or production readiness.
+
+| Issue | Pattern | Reason | Disposition |
+| --- | --- | --- | --- |
+| `#473` | repeated near-resistance risk-plan permissiveness | Too-permissive examples showed setups remaining reviewable when nearby resistance compressed practical R:R or target quality was unclear. | Closed. Deterministic base-breakout No Trade golden case added. |
+| `#474` | repeated missing-context review wording | Unclear examples were safe/conservative but did not explain missing, stale, partial, failed, or unknown context consistently enough. | Closed. Missing-context No Trade wording and next actions clarified. |
+| `#475` | repeated trigger close-confirmation strictness | Too-strict examples need golden cases before any trigger or breakout close-confirmation loosening is considered. | Closed. Constructive unconfirmed setups remain Watchlist via golden cases. |
+| `#480` | batch expansion to preferred first pass | The first structured batch needed the preferred 80-example size before milestone review. | Closed. Batch expanded from 50 to 80 paper examples. |
+| `#481` | paper-batch resistance pattern coverage | Resistance-compressed R:R needed explicit strategy-family coverage. | Closed. Base-breakout and trend-pullback resistance compression are covered. |
+| `#482` | missing-context variant coverage | Missing, stale, partial, failed, or unknown context needed direct deterministic coverage. | Closed. Partial/failed provider context and unknown/missing timeframe variants remain No Trade. |
+| `#483` | watchlist trigger-confirmation coverage | Constructive setups without close confirmation needed explicit not-Armed/not-Triggered assertions. | Closed. Unconfirmed constructive setups remain Watchlist and never Triggered. |
 
 No implementation rule changes were made from this batch.
 
