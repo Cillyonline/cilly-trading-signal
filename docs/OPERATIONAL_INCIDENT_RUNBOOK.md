@@ -270,6 +270,42 @@ Escalate when:
 - A signal or alert could be misread as current when it is not.
 - Benchmark or relative-strength context is missing but not clearly visible.
 
+## Provider Sync Failure
+
+Symptoms:
+
+- Manual provider sync returns `skipped`, `failed`, or `partial`.
+- `sync_error_code` is present or freshness remains `stale`, `failed`, `partial`, or `unknown`.
+- Required `1W`, `1D`, or `4H` context is missing after a sync attempt.
+
+Stop:
+
+- Do not treat provider-backed output as current while sync status or freshness is unclear.
+- Do not paste API keys, request URLs, provider payloads, account details, database URLs, or raw logs into issues, PRs, screenshots, or chat.
+- Do not rotate secrets, restart VPS services, or edit server `.env` files without explicit operator approval.
+
+Triage:
+
+1. Identify the visible state: `skipped`, `failed`, `partial`, `stale`, `unknown`, or `fresh`.
+2. Record only the sanitized `sync_error_code`, affected timeframe, and public/fake symbol.
+3. Check whether provider sync is intentionally disabled before treating `skipped` as a defect.
+4. Confirm whether the issue is config/auth, rate limit/transport, invalid payload, partial coverage, or stale existing data.
+5. Use TradingView CSV/manual import as the fallback when current review context is needed.
+
+Recovery:
+
+- Config/auth: fix environment values outside git, then rerun manual sync.
+- Rate limit/transport: wait, reduce scope, or retry later; do not loop requests aggressively.
+- Invalid/empty payload: verify provider symbol/timeframe mapping and fallback to CSV.
+- Partial coverage: fill missing required timeframes before analysis.
+- Stale existing data: keep prior signals as historical review only until data is refreshed.
+
+Escalate when:
+
+- Repeated sync failures affect multiple symbols or required benchmark context.
+- UI wording does not make failed/partial/stale/unknown state obvious.
+- Recovery requires service restarts, secret rotation, database edits, migrations, or backup restore.
+
 ## Escalation Guidance
 
 Create a follow-up GitHub issue when:

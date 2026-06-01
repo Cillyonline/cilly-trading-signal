@@ -108,6 +108,27 @@ Examples:
 - Provider returns only daily data while `4H` was expected: `sync_status=partial`,
   `freshness_status=partial` for the missing `4H` series.
 
+## Provider Failure States And Operator Recovery
+
+Provider sync failures are manual/operator recovery events. They do not trigger
+automatic orders, automatic analysis refreshes, broker actions, or buy/sell
+instructions.
+
+| Failure state | Typical evidence | Stored state | Operator recovery |
+| --- | --- | --- | --- |
+| Provider disabled | Sync is requested while provider sync is disabled or not configured. | `sync_status=skipped`, freshness remains existing state or `unknown`. | Keep CSV/manual workflow; enable provider config only through approved environment changes. |
+| Auth/config failure | Missing API key, unsupported provider, invalid symbol mapping, or rejected credentials. | `sync_status=failed`, `freshness_status=failed` or unchanged stale state, sanitized `sync_error_code`. | Fix provider settings outside git, rerun manual sync, and avoid posting credentials or raw URLs. |
+| Rate limit or transport failure | Timeout, network failure, HTTP error, provider rate limit, or temporary outage. | `sync_status=failed`, `freshness_status=failed` when no usable newer data exists. | Wait or reduce request scope, then rerun manual sync; fall back to CSV if review is time-sensitive. |
+| Empty or invalid payload | Provider response cannot be parsed or contains no usable candles. | `sync_status=partial` or `failed`, `freshness_status=partial` or `failed`, sanitized error code. | Verify provider symbol/timeframe mapping; use known-good CSV data until resolved. |
+| Partial coverage | Some candles/timeframes persist but required review context is incomplete. | `sync_status=partial`, `freshness_status=partial`. | Do not treat setup as current; fill missing timeframe via supported manual workflow before analysis. |
+| Stale existing data | Old data remains after failed or skipped sync. | `freshness_status=stale` or `unknown` depending on metadata. | Treat existing signals as historical review only; refresh data before current setup review. |
+
+Recovery evidence should include only sanitized facts: symbol category or fake/public
+symbol, timeframe, sync status, freshness status, error code category, timestamp,
+and whether a follow-up issue was created. Do not include API keys, request URLs
+with tokens, account/subscription details, raw provider payloads, cookies, database
+URLs, or private trading notes.
+
 ## Strategy And Signal Behavior
 
 Strategy code must treat insufficient freshness as a conservative review blocker.
