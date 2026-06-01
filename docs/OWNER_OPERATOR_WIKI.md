@@ -48,7 +48,7 @@ This wiki is not a production-readiness statement, strategy-validation claim, pr
 | Screener CSV | [Screener CSV Model](SCREENER_CSV_MODEL.md) | TradingView screener CSV as review candidates only. |
 | Calibration workflow | [Strategy Calibration Workflow](STRATEGY_CALIBRATION_WORKFLOW.md) | How rule changes must be reviewed with evidence. |
 | Historical/paper review | [Historical Paper Review Protocol](HISTORICAL_PAPER_REVIEW_PROTOCOL.md) | Review batches, labels, finding categories, and follow-up evidence. |
-| First paper calibration batch | [First 80-Example Paper Calibration Batch](reviews/first-50-paper-calibration-batch.md) | First structured 80-example paper review and follow-up findings. |
+| First paper calibration batch | [First 80-Example Paper Calibration Batch](reviews/first-50-paper-calibration-batch.md) | First structured 80-example paper review with follow-up status snapshot for calibration issues. |
 | Trade/journal privacy | [Trade Journal Privacy Review](TRADE_JOURNAL_PRIVACY_REVIEW.md) | Sensitive trade, journal, and performance fields and evidence boundaries. |
 
 ## Local/Internal Review Evidence

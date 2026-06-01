@@ -216,4 +216,8 @@ expected profit, live readiness, broker readiness, or production readiness.
 
 ## Recorded Batches
 
-- First 80-example paper calibration batch: `docs/reviews/first-50-paper-calibration-batch.md`.
+- First 80-example paper calibration batch:
+  `docs/reviews/first-50-paper-calibration-batch.md`. The batch includes a
+  follow-up status snapshot for issues `#473`-`#475` and `#480`-`#483`, including
+  closed dispositions for resistance compression, missing-context clarity, and
+  watchlist trigger-confirmation coverage.
