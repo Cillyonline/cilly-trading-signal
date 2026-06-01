@@ -1043,6 +1043,9 @@ Recommended default:
 - Store the repository on an operator-controlled offsite target such as SFTP,
   S3-compatible object storage, or another provider-approved private backup
   target.
+- Use `docs/OFFSITE_BACKUP_TARGET_EVALUATION.md` to choose the target category
+  and record tradeoffs before relying on it for private-data or production-like
+  decisions.
 - Keep the existing local VPS dump path as the source:
   `/srv/backups/cilly-trading-signal/postgres`.
 - Store restic repository credentials and `RESTIC_PASSWORD` only in a root-only
