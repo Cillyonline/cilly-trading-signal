@@ -39,6 +39,51 @@ Current decision:
 - API keys, account IDs, subscription details, and provider secrets must not be
   committed or pasted into docs, issues, PRs, logs, screenshots, or chat.
 
+## Data Handling And Privacy Boundary
+
+Provider-backed market data introduces two separate data classes:
+
+1. Stored candle/freshness metadata used by the app.
+2. Provider credentials, account/subscription details, request URLs, and raw payloads
+   that must stay outside repository and evidence channels.
+
+Allowed to store in PostgreSQL for guarded manual sync:
+
+- OHLCV candles returned by the configured provider for the requested symbol/timeframe.
+- Sanitized provider metadata: `provider_name`, `provider_symbol`, optional
+  `provider_exchange`, and `provider_timeframe`.
+- Sync/freshness state: `sync_status`, `freshness_status`, `last_synced_at`, sanitized
+  `sync_error_code`, and sanitized `sync_error_message`.
+
+Forbidden in git, issues, PRs, docs, screenshots, chat, and routine evidence:
+
+- API keys, bearer tokens, request authorization headers, signed URLs, full request
+  URLs with query strings, provider account IDs, subscription tier details, invoices,
+  or billing identifiers.
+- Raw provider payloads when they include request metadata, entitlement details,
+  account context, or error output that could reveal secrets or subscription state.
+- Private watchlists, private trading notes, broker/account/fill data, personal journal
+  details, cookies, session headers, database URLs, backups, or restored row contents.
+
+Allowed evidence examples:
+
+- `sync_status=skipped`, `sync_error_code=sync_disabled` for a fake sample symbol.
+- `sync_status=failed`, `sync_error_code=provider_rate_limited` without raw response.
+- `freshness_status=partial` for `1D`/`4H` context with a fake or public sample symbol.
+- `provider_name=alpha_vantage`, `timeframe=1D`, latest candle timestamp redacted or
+  shown only when it is not private.
+
+Disallowed evidence examples:
+
+- `.env` snippets with real provider keys.
+- Full URLs such as `https://provider.example/query?...apikey=...`.
+- Raw JSON/XML provider responses copied from logs.
+- Screenshots showing private symbols, account/provider dashboards, cookies, or local
+  storage values.
+
+When in doubt, record only pass/fail, status enum, error-code category, timeframe,
+environment class, and a follow-up issue link.
+
 ## Candidate Provider Matrix
 
 | Candidate | Stocks | Crypto | EOD/Daily | Intraday/4H | Operational Notes | v1.4 Fit |

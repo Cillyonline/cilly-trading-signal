@@ -43,6 +43,7 @@ This wiki is not a production-readiness statement, strategy-validation claim, pr
 | Data model | [Data Model](DATA_MODEL.md) | Current persistence direction and entity relationships. |
 | Market data freshness | [Market Data Freshness Model](MARKET_DATA_FRESHNESS_MODEL.md) | Fresh/stale/unknown/failed/partial semantics. |
 | Provider sync | [Market Data Provider Decision](MARKET_DATA_PROVIDER_DECISION.md) | Provider support boundaries and disabled-by-default posture. |
+| Provider sync smoke | [Provider Sync Smoke Test](PROVIDER_SYNC_SMOKE_TEST.md) | Sample-only sync evidence and provider privacy boundary. |
 | Screener CSV | [Screener CSV Model](SCREENER_CSV_MODEL.md) | TradingView screener CSV as review candidates only. |
 | Calibration workflow | [Strategy Calibration Workflow](STRATEGY_CALIBRATION_WORKFLOW.md) | How rule changes must be reviewed with evidence. |
 | Historical/paper review | [Historical Paper Review Protocol](HISTORICAL_PAPER_REVIEW_PROTOCOL.md) | Review batches, labels, finding categories, and follow-up evidence. |
