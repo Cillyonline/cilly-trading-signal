@@ -1108,6 +1108,54 @@ Routine repeat procedure for the current operator-controlled encrypted target:
    non-zero dump size, Alembic version, row counts for sample data, and cleanup
    completion.
 
+Minimum recurrence before private-data reliance is reconsidered:
+
+- Encrypted restic backup: after each successful PostgreSQL dump, normally daily
+  when the VPS backup timer is active.
+- `restic check`: at least weekly, and after changing the repository target,
+  password, credentials, timer, source path, or backup host.
+- Restore drill from the encrypted restic repository: at least monthly, before
+  any private-data approval decision, and after changing backup target class,
+  retention policy, repository password, restore procedure, database major
+  version, or deployment host.
+- Evidence review: before any private-data readiness gate is changed from No Go.
+
+Minimum retention expectation before private-data reliance is reconsidered:
+
+- Keep at least 14 daily snapshots and 8 weekly snapshots for the PostgreSQL
+  backup tag unless a later owner/operator decision records a stricter policy.
+- Keep at least one recent restore-drill evidence record for the active backup
+  target class.
+- Do not delete the only known-good snapshot after a failed backup, failed
+  `restic check`, failed restore drill, password rotation, or target migration
+  until a new backup and restore drill pass.
+- If local Windows encrypted restic is the only target, record it explicitly as
+  local-only encrypted redundancy, not geographic or ransomware-resistant backup
+  coverage.
+
+Sanitized recurring evidence format:
+
+```text
+Date/time UTC:
+Repository category: local Windows encrypted / offsite SFTP / offsite S3-compatible / other private target
+Latest snapshot ID prefix: <prefix only>
+Snapshot count for cilly-postgres tag: <number>
+Retention policy observed: keep-daily 14, keep-weekly 8, pass/fail
+restic check: pass/fail
+Restore drill target: disposable, yes/no
+Restored dump non-zero: pass/fail/not run
+Restored schema version: <version only>/not run
+Cleanup completed: yes/no/not run
+Secrets, repository URL credentials, dump contents, restored rows, DB URLs, private trade notes included: no
+Residual risk: local-only target is not geographic or ransomware-resistant, if applicable
+```
+
+Do not record full repository URLs, usernames if they identify private
+infrastructure, access keys, `RESTIC_PASSWORD`, dump filenames with private
+context, restored row contents, private symbols, private journal content,
+provider payloads, screenshots of private records, or raw command output that
+contains sensitive paths or credentials.
+
 For the local Windows encrypted restic repository accepted during private
 staging validation, the same evidence rules apply. The local target is useful as
 operator-controlled encrypted redundancy, but it is not geographic or
