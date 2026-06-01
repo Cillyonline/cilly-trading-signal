@@ -138,6 +138,11 @@ way, then waits for trigger confirmation before manual review.
 
 Calibrated No Trade examples:
 
+- `strong_resistance_nearby`: nearby resistance that compresses practical R:R or
+  makes the target path unclear blocks review even when the base or pullback is
+  otherwise constructive. Wait for a cleaner target path, tighter risk plan, or
+  new structure instead of forcing a marginal setup.
+
 - `pullback_volume_aggressive`: price may still be above EMA200 and near a
   pullback zone, but relative pullback volume above the aggressive threshold
   means selling pressure is not controlled. The correct next action is to wait
@@ -208,6 +213,9 @@ Calibrated No Trade examples:
 - `base_too_wide`: a broad or choppy base can produce a visible breakout but may
   leave no clean stop or minimum 2R plan. Treat that as No Trade until structure
   tightens.
+- `strong_resistance_nearby`: a breakout into nearby major resistance is not a
+  clean risk plan when the first target is too compressed. Treat it as No Trade
+  until the base resets, target path clears, or R:R becomes coherent.
 - `required_timeframe_data_missing`: a breakout candidate needs the required
   weekly, daily, and trigger context. Missing required timeframe data blocks
   setup review even when the available timeframe shows a breakout.

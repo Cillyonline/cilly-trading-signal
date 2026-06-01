@@ -194,6 +194,17 @@ GOLDEN_CASES = [
         expected_risk_flags={"major_resistance_nearby", "strong_resistance_nearby"},
         expected_quality={"structure": "blocked"},
     ),
+    GoldenCase(
+        name="paper_batch_near_resistance_compressed_rr_blocks_review",
+        evaluate=lambda: evaluate_base_breakout_long(
+            base_breakout_payload(major_resistance_level=Decimal("101.50"))
+        ),
+        expected_status=SignalStatus.NO_SETUP,
+        expected_score_class=ScoreClass.NO_TRADE,
+        expected_no_trade_reasons={"strong_resistance_nearby"},
+        expected_risk_flags={"major_resistance_nearby", "strong_resistance_nearby"},
+        expected_quality={"structure": "blocked"},
+    ),
 ]
 
 
