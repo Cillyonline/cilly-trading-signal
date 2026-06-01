@@ -76,6 +76,9 @@ deterministic golden case. Fill it out before changing strategy implementation.
 - Review entry ids: <ids or local references>
 - Manual review label: useful / too_permissive / too_strict / unclear
 - Repeated blocker or finding: <blocker code, label, or none>
+- Repeated false-positive pattern: <pattern code or none>
+- Follow-up disposition: created / accepted limitation / deferred / not applicable
+- Linked follow-up issue: <issue url or none>
 - Sanitized observation: <short description with no private account data>
 
 ### Safety Boundary
@@ -115,6 +118,8 @@ deterministic golden case. Fill it out before changing strategy implementation.
 
 - What future regression should this case catch?
 - Would a failure mean rules are too permissive, too strict, or unclear?
+- Does the case preserve `No Trade` or `Watchlist` as an acceptable conservative
+  outcome when context, confirmation, or risk planning is incomplete?
 ```
 
 Pass, warning, and blocked coverage expectations:
