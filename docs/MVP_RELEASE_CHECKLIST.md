@@ -9,7 +9,7 @@ This checklist records the current MVP release-candidate posture for review and 
 - Version / candidate: final internal owner/operator review candidate after v2.8.
 - Evidence source: automated API/Web/Security Scan verification from merged v2.2-v2.8 PRs plus the v2.8 final internal workflow smoke recorded in [MVP Smoke Test](MVP_SMOKE_TEST.md#v28-final-internal-workflow-smoke).
 - Status: Conditional Go for controlled internal single-owner/operator review workflows with sample, synthetic, or paper data. This is not production-ready, broker-ready, profitability-validated, live/realtime, or real-money trading evidence.
-- Current decision gate: [Final Internal Review Decision Gate](FINAL_INTERNAL_REVIEW_DECISION_GATE.md) records Conditional Go for controlled internal review only. [Deployment Readiness Decision Gate v2](DEPLOYMENT_READINESS_DECISION_GATE_V2.md) still governs local/private staging boundaries; production-like exposure remains No Go.
+- Current decision gate: [Final Internal Review Decision Gate](FINAL_INTERNAL_REVIEW_DECISION_GATE.md) records Conditional Go for controlled internal review only. [Deployment Readiness Decision Gate v2](DEPLOYMENT_READINESS_DECISION_GATE_V2.md) still governs local/private staging boundaries; [Private Data Readiness Decision Gate](PRIVATE_DATA_READINESS_DECISION_GATE.md) blocks routine private trading data use; production-like exposure remains No Go.
 - Boundary: decision-support only, manual execution only, no broker integration, no automatic order execution, no profitability claims, no live/realtime claims, no trading advice, and no production-readiness claim.
 
 ## Final Internal Review Candidate Summary
@@ -28,7 +28,7 @@ This checklist records the current MVP release-candidate posture for review and 
 - Final internal go/no-go decision gate is recorded as Conditional Go for controlled internal owner/operator review only.
 - Deployment readiness evidence, monitoring runbook links, review correction audit history, auditable finding categories, active-status portfolio risk treatment, and mobile Screener/trade/header follow-ups have been addressed for controlled internal review.
 - Persistent local/private-staging volumes must still verify current migrations before workflow testing; the local smoke runner applies migrations and fails clearly on migration errors.
-- Production-grade monitoring, offsite encrypted backup operations, recurring restore evidence, rollback evidence, stricter security-scan policy, privacy handling, and explicit production-like owner acceptance remain incomplete for broader exposure.
+- Production-grade monitoring, offsite encrypted backup operations, recurring restore evidence, rollback evidence, stricter security-scan policy, private-data handling, and explicit production-like owner acceptance remain incomplete for broader exposure.
 
 ### Final Internal Review Boundary
 

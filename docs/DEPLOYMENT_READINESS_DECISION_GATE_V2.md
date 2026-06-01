@@ -31,14 +31,14 @@ Rationale:
 - No profitability, win-rate, backtest-validation, benchmark-outperformance, or real-money-readiness claim.
 - No live/realtime market-data claim.
 - No public SaaS, multi-user, billing, onboarding, or customer-support claim.
-- No handling of private trading data beyond a separately approved controlled owner/operator process.
+- No handling of private trading data beyond the separate [Private Data Readiness Decision Gate](PRIVATE_DATA_READINESS_DECISION_GATE.md).
 
 ## Gate Matrix
 
 | Environment | Current status | Approved use | Required evidence before use | Non-go conditions |
 | --- | --- | --- | --- | --- |
 | Local review | Go | Development, docs review, automated checks, disposable smoke tests, sample/paper data review | Local setup docs followed; relevant API/Web checks pass or skipped with reason; secrets stay local/untracked; no dump files in repo | Missing required config, failed auth or safety checks, committed secrets, backup dumps in repo, broker/auto-execution scope introduced |
-| Private owner/operator staging | Conditional Go | Controlled single-owner review, sample/paper workflows, sanitized operational checks | Private VPS staging gate remains valid; health checks pass; backups are external to repo; backup restore drill is documented or recently run when needed; staging secrets are server-local; monitoring checklist reviewed | Public launch, real-money claim, real private-data reliance without separate approval, failed health/smoke/backup checks, unclear restore target, unrelated VPS projects affected |
+| Private owner/operator staging | Conditional Go | Controlled single-owner review, sample/paper workflows, sanitized operational checks | Private VPS staging gate remains valid; health checks pass; backups are external to repo; backup restore drill is documented or recently run when needed; staging secrets are server-local; monitoring checklist reviewed | Public launch, real-money claim, real private-data reliance without passing the separate private-data gate, failed health/smoke/backup checks, unclear restore target, unrelated VPS projects affected |
 | Production-like exposure | No Go | None under this gate | Separate production-like gate with completed evidence for security review, reviewed dependency/container scan output, incident runbook rehearsal, operational monitoring, backup restore drill, rollback, privacy handling, and explicit owner acceptance | Any missing required evidence, unresolved critical/high security issue, no current smoke evidence, no tested restore path, no incident process rehearsal, public SaaS or broker/execution scope requested |
 
 ## Current Pass/Fail Evidence
@@ -56,6 +56,7 @@ Rationale:
 | Dependency/container scan workflow | Partial; visibility workflow exists and runs on PRs/pushes/schedule/manual dispatch, but non-blocking output review and acceptance are still required before production-like exposure | `.github/workflows/security-scans.yml`, `docs/ENGINEERING_WORKFLOW.md#security-scan-workflow` |
 | Incident response runbook | Partial; runbook exists for conservative local/private-staging incident handling, but production-like rehearsal, ownership, and acceptance evidence are not complete | `docs/OPERATIONAL_INCIDENT_RUNBOOK.md` |
 | Offsite encrypted backups | Procedure documented; implementation and restore evidence still required before private-data or production-like reliance | `docs/DEPLOYMENT_RUNBOOK.md#offsite-encrypted-backups`, `#420` |
+| Private-data readiness | Fail; routine private trading data use remains blocked pending separate evidence and acceptance | `docs/PRIVATE_DATA_READINESS_DECISION_GATE.md` |
 | Production-like/public exposure decision | Fail; explicitly No Go | This gate |
 
 ## Required Evidence
