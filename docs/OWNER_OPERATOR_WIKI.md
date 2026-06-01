@@ -67,6 +67,7 @@ This wiki is not a production-readiness statement, strategy-validation claim, pr
 | Area | Doc | Use When |
 | --- | --- | --- |
 | General deployment operations | [Deployment Runbook](DEPLOYMENT_RUNBOOK.md) | You need deployment, Caddy, backup, restore, rollback, or smoke commands. |
+| Offsite backup target | [Offsite Backup Target Evaluation](OFFSITE_BACKUP_TARGET_EVALUATION.md) | You need options, tradeoffs, and local-only backup residual risk. |
 | Monitoring checklist | [Application Monitoring Checklist](APPLICATION_MONITORING_CHECKLIST.md) | You need local/private-staging/production-like monitoring expectations. |
 | Incident response | [Operational Incident Runbook](OPERATIONAL_INCIDENT_RUNBOOK.md) | You need health, auth, data, alert, or deployment incident handling. |
 | Security scan review | [Security Scan Review Policy](SECURITY_SCAN_REVIEW_POLICY.md) | You need dependency/container scan thresholds before any production-like reconsideration. |
