@@ -73,6 +73,7 @@ export type ReviewBatchSummary = {
   repeated_blocker_patterns: string[];
   finding_category_counts: Record<string, number>;
   repeated_finding_categories: string[];
+  repeated_false_positive_patterns: string[];
   evidence_only_notice: string;
 };
 

@@ -150,6 +150,10 @@ def test_review_entries_surface_repeated_calibration_followups(
     assert body["summary"]["follow_up_needed_count"] == 2
     assert body["summary"]["repeated_attention_labels"] == ["too_permissive"]
     assert body["summary"]["repeated_blocker_patterns"] == ["market_regime"]
+    assert body["summary"]["repeated_false_positive_patterns"] == [
+        "market_regime",
+        "market_regime_too_loose",
+    ]
 
 
 def test_review_repeated_findings_require_two_matching_entries(client: TestClient) -> None:
@@ -177,8 +181,42 @@ def test_review_repeated_findings_require_two_matching_entries(client: TestClien
 
     assert first_summary["repeated_attention_labels"] == []
     assert first_summary["repeated_blocker_patterns"] == []
+    assert first_summary["repeated_false_positive_patterns"] == []
     assert second_summary["repeated_attention_labels"] == ["unclear"]
     assert second_summary["repeated_blocker_patterns"] == ["market_regime"]
+    assert second_summary["repeated_false_positive_patterns"] == []
+
+
+def test_review_summary_surfaces_repeated_false_positive_patterns(client: TestClient) -> None:
+    login(client)
+    batch_id = client.post(
+        "/api/reviews/batches",
+        json={"name": "False positive sample", "review_type": "paper"},
+    ).json()["id"]
+    for symbol in ["AAPL", "MSFT"]:
+        response = client.post(
+            f"/api/reviews/batches/{batch_id}/entries",
+            json={
+                "symbol": symbol,
+                "asset_class": "stock",
+                "strategy_type": "base_breakout_long",
+                "signal_status": "armed",
+                "score_class": "b_setup",
+                "quality_blockers": [{"key": "trigger"}],
+                "risk_flags": ["breakout_close_not_near_high"],
+                "manual_review_label": "too_permissive",
+                "notes": "Breakout looked reviewable despite weak close quality.",
+            },
+        )
+        assert response.status_code == 201
+
+    summary = client.get(f"/api/reviews/batches/{batch_id}").json()["summary"]
+
+    assert summary["repeated_false_positive_patterns"] == [
+        "breakout_close_not_near_high",
+        "trigger",
+        "trigger_too_strict",
+    ]
 
 
 def test_review_summary_classifies_repeated_finding_categories(client: TestClient) -> None:

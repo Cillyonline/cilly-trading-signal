@@ -205,7 +205,7 @@ export default function ReviewBatchDetailPage({ params }: { params: { id: string
               <SummaryCard label="Reviewed" value={String(batch.summary.reviewed_count)} />
               <SummaryCard label="Follow-ups" value={String(batch.summary.follow_up_needed_count)} tone="border-orange-300/40" />
               <SummaryCard label="Repeated Labels" value={String(batch.summary.repeated_attention_labels.length)} tone="border-yellow-300/40" />
-              <SummaryCard label="Repeated Categories" value={String(batch.summary.repeated_finding_categories.length)} tone="border-red-300/40" />
+              <SummaryCard label="False Positives" value={String(batch.summary.repeated_false_positive_patterns.length)} tone="border-red-300/40" />
             </section>
 
             <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
@@ -548,12 +548,13 @@ function RepeatedFindingPanel({ batch }: { batch: ReviewBatch }) {
     ...batch.summary.repeated_attention_labels.map((label) => `label >=2: ${formatLabel(label)}`),
     ...batch.summary.repeated_blocker_patterns.map((pattern) => `blocker >=2: ${formatLabel(pattern)}`),
     ...batch.summary.repeated_finding_categories.map((category) => `category >=2: ${formatLabel(category)}`),
+    ...batch.summary.repeated_false_positive_patterns.map((pattern) => `false-positive >=2: ${formatLabel(pattern)}`),
   ];
   return (
     <section className="rounded-3xl border border-yellow-300/30 bg-yellow-300/10 p-6">
       <h2 className="text-xl font-semibold text-yellow-50">Repeated Finding Summary</h2>
       <p className="mt-2 text-sm text-yellow-100/80">
-        Schwelle: mindestens 2 gleiche Attention-Labels oder Blocker. Das ist Follow-up Evidence only,
+        Schwelle: mindestens 2 gleiche Attention-Labels, Blocker, Kategorien oder False-Positive-Muster. Das ist Follow-up Evidence only,
         keine automatische Regelanpassung und keine Performance-Aussage.
       </p>
       {items.length === 0 ? (
