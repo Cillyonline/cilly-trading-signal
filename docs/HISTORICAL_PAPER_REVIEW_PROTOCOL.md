@@ -213,3 +213,7 @@ At the end of each batch, summarize:
 
 The summary is process evidence only. It must not be presented as proof of edge,
 expected profit, live readiness, broker readiness, or production readiness.
+
+## Recorded Batches
+
+- First 50-example paper calibration batch: `docs/reviews/first-50-paper-calibration-batch.md`.

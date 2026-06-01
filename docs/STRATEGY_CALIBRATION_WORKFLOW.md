@@ -154,6 +154,9 @@ Before changing strategy behavior from review observations, collect the first
 structured historical/paper review sample described in
 `docs/HISTORICAL_PAPER_REVIEW_PROTOCOL.md`.
 
+The first 50-example paper calibration batch is recorded in
+`docs/reviews/first-50-paper-calibration-batch.md`.
+
 Minimum evidence gate:
 
 - At least 50 examples are reviewed, with a preferred first pass of 80 examples.
