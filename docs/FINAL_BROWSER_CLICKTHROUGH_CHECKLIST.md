@@ -5,7 +5,8 @@
 This checklist records a repeatable browser clickthrough path for the final internal owner/operator workflow. It complements the API-assisted smoke runner evidence in `docs/MVP_SMOKE_TEST.md` and is intended for local or approved private-staging review with sample, synthetic, or paper data only.
 
 Automation has been evaluated and intentionally deferred for now. See
-`docs/POST_DEPLOY_BROWSER_SMOKE_AUTOMATION_EVALUATION.md`.
+`docs/POST_DEPLOY_BROWSER_SMOKE_AUTOMATION_EVALUATION.md`, including the safe
+dry-run browser smoke contract for any future opt-in script.
 
 This checklist is not a production-readiness statement, broker-readiness statement, real-money readiness claim, profitability claim, strategy-validation claim, trading advice, or approval for automatic execution.
 
