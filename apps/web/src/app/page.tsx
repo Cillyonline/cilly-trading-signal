@@ -144,6 +144,15 @@ type MarketDataQualitySummary = {
   partialCount: number;
   freshCount: number;
   issues: MarketDataQualityIssue[];
+  statusSummaries: MarketDataStatusSummary[];
+};
+
+type MarketDataStatusSummary = {
+  status: MarketDataFreshnessStatus | "missing";
+  count: number;
+  label: string;
+  guidance: string;
+  tone: "red" | "yellow" | "emerald";
 };
 
 type DashboardCard = {
@@ -466,7 +475,77 @@ function buildMarketDataQuality(watchlist: WatchlistItem[]): MarketDataQualitySu
     partialCount,
     freshCount,
     issues: issues.slice(0, 5),
+    statusSummaries: buildMarketDataStatusSummaries({
+      missingCount,
+      staleCount,
+      unknownCount,
+      failedCount,
+      partialCount,
+      freshCount,
+    }),
   };
+}
+
+function buildMarketDataStatusSummaries({
+  missingCount,
+  staleCount,
+  unknownCount,
+  failedCount,
+  partialCount,
+  freshCount,
+}: {
+  missingCount: number;
+  staleCount: number;
+  unknownCount: number;
+  failedCount: number;
+  partialCount: number;
+  freshCount: number;
+}): MarketDataStatusSummary[] {
+  const summaries: MarketDataStatusSummary[] = [
+    {
+      status: "failed",
+      count: failedCount,
+      label: "Failed",
+      guidance: "Provider/import failure: use CSV fallback or resolve sync before review.",
+      tone: "red",
+    },
+    {
+      status: "partial",
+      count: partialCount,
+      label: "Partial",
+      guidance: "Required context is incomplete; fill missing timeframe data first.",
+      tone: "red",
+    },
+    {
+      status: "missing",
+      count: missingCount,
+      label: "Missing",
+      guidance: "No stored market data; import or sync before analysis.",
+      tone: "yellow",
+    },
+    {
+      status: "stale",
+      count: staleCount,
+      label: "Stale",
+      guidance: "Treat existing signals as historical until data is refreshed.",
+      tone: "yellow",
+    },
+    {
+      status: "unknown",
+      count: unknownCount,
+      label: "Unknown",
+      guidance: "Source or freshness is unclear; keep No Trade until resolved.",
+      tone: "yellow",
+    },
+    {
+      status: "fresh",
+      count: freshCount,
+      label: "Fresh",
+      guidance: "Fresh stored data is available for deterministic review.",
+      tone: "emerald",
+    },
+  ];
+  return summaries.filter((summary) => summary.count > 0);
 }
 
 function DashboardContent({ data }: { data: DashboardData }) {
@@ -571,6 +650,18 @@ function MarketDataQualityCard({ quality }: { quality: MarketDataQualitySummary 
         <QualityMetric label="Fresh" value={quality.freshCount} />
       </div>
 
+      <div className="mt-5 grid gap-3 lg:grid-cols-3">
+        {quality.statusSummaries.map((summary) => (
+          <article key={summary.status} className={`rounded-2xl border p-4 text-sm ${marketDataStatusTone(summary.tone)}`}>
+            <div className="flex items-center justify-between gap-3">
+              <p className="font-semibold">{summary.label}</p>
+              <span className="rounded-full border border-white/15 px-3 py-1 text-xs">{summary.count}</span>
+            </div>
+            <p className="mt-2 opacity-80">{summary.guidance}</p>
+          </article>
+        ))}
+      </div>
+
       {hasIssues ? (
         <ul className="mt-5 grid gap-2 text-sm text-yellow-50 md:grid-cols-2">
           {quality.issues.map((issue) => (
@@ -588,6 +679,16 @@ function MarketDataQualityCard({ quality }: { quality: MarketDataQualitySummary 
       ) : null}
     </section>
   );
+}
+
+function marketDataStatusTone(tone: MarketDataStatusSummary["tone"]): string {
+  if (tone === "red") {
+    return "border-red-300/30 bg-red-300/10 text-red-50";
+  }
+  if (tone === "emerald") {
+    return "border-emerald-300/20 bg-emerald-300/5 text-emerald-50";
+  }
+  return "border-yellow-300/30 bg-yellow-300/10 text-yellow-50";
 }
 
 function QualityMetric({ label, value }: { label: string; value: number }) {
