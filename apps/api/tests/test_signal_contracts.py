@@ -182,7 +182,8 @@ def test_specific_data_quality_reasons_override_high_score() -> None:
         "required_indicator_missing",
     ]
     assert "required_market_data_not_fresh" in result.risk_flags
-    assert "Refresh stale, partial, failed, missing, or unknown market data" in result.next_action
+    assert "Keep No Trade" in result.next_action
+    assert "refresh stale, partial, failed, missing, or unknown market data" in result.next_action
 
 
 def test_build_signal_result_maps_watchlist_and_explainability_fields() -> None:
@@ -332,6 +333,10 @@ def test_context_no_trade_reasons_override_score() -> None:
         ("risk_reward_below_minimum", "supports at least 2R"),
         ("base_too_wide", "Wait for a tighter base"),
         ("pullback_not_controlled", "Wait for price to stabilize"),
+        ("required_timeframe_data_missing", "Keep No Trade and import all required timeframes"),
+        ("required_market_data_not_fresh", "Keep No Trade and refresh stale"),
+        ("insufficient_candle_history", "Keep No Trade until enough candle history"),
+        ("required_indicator_missing", "Keep No Trade and re-run analysis"),
     ],
 )
 def test_no_trade_next_action_is_specific(reason: str, expected_action_fragment: str) -> None:
@@ -360,6 +365,45 @@ def test_no_trade_next_action_is_specific(reason: str, expected_action_fragment:
     assert expected_action_fragment in result.next_action
     assert result.next_action != "Generic placeholder should be replaced."
     assert any(reasoning.startswith("No Trade:") for reasoning in result.reasoning)
+
+
+@pytest.mark.parametrize(
+    ("reason", "expected_reasoning_fragment"),
+    [
+        ("required_timeframe_data_missing", "full timeframe set is available"),
+        ("required_market_data_not_fresh", "current setup quality cannot be trusted"),
+        ("insufficient_candle_history", "keep this as missing context"),
+        ("required_indicator_missing", "cannot be reviewed safely"),
+    ],
+)
+def test_missing_context_no_trade_reasoning_is_actionable(
+    reason: str, expected_reasoning_fragment: str
+) -> None:
+    result = build_signal_result(
+        SignalEvaluationInput(
+            symbol="AAPL",
+            asset_class=AssetClass.STOCK,
+            strategy_type=StrategyType.TREND_PULLBACK_LONG,
+            weekly_bias=Bias.BULLISH,
+            daily_bias=Bias.BULLISH,
+            context_no_trade_reasons=[reason],
+        ),
+        ScoreBreakdown(trend=25, structure=25, momentum=15, volume=15, risk_reward=15),
+        bias=Bias.BULLISH,
+        reasoning=["Setup has technical strength."],
+        risk_flags=[],
+        next_action="Generic placeholder should be replaced.",
+        entry_low=Decimal("100"),
+        stop_loss=Decimal("95"),
+        target_1=Decimal("112"),
+        risk_reward=Decimal("2.4"),
+        has_valid_trigger_plan=True,
+    )
+
+    assert result.status == SignalStatus.NO_SETUP
+    assert result.score_class == ScoreClass.NO_TRADE
+    assert any(expected_reasoning_fragment in item for item in result.reasoning)
+    assert "Keep No Trade" in result.next_action
 
 
 def test_signal_result_rejects_triggered_status() -> None:
