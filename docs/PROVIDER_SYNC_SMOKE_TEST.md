@@ -22,8 +22,30 @@ profitability claim, or approval for automatic execution.
 - The app is running locally or in a controlled staging environment.
 - The operator is authenticated as the single admin user.
 - At least one Watchlist item exists for a non-sensitive sample symbol.
+- Preferred sample symbols are fake or clearly non-private, for example
+  `SMOKE-PROVIDER-001` for disabled/failure-path checks or a public liquid symbol
+  such as `AAPL` only when a configured provider check requires a provider-recognized
+  symbol. Do not use a private watchlist or private notes as smoke evidence.
 - No real provider key is committed to the repository.
 - `.env` and provider secrets remain local to the operator environment.
+
+## Repeatable Sample-Only Smoke Matrix
+
+Use this matrix before recording evidence. It keeps the smoke path deterministic
+without requiring private symbols, screenshots, raw logs, or provider secrets.
+
+| Path | Symbol scope | Provider config | Expected result |
+| --- | --- | --- | --- |
+| Disabled path | Fake sample Watchlist symbol such as `SMOKE-PROVIDER-001` | `MARKET_DATA_PROVIDER_SYNC_ENABLED=false` | `sync_status=skipped`, no provider request, no automatic analysis/signal/trade/alert. |
+| Failure path | Fake or public sample symbol | Enabled with mocked/local failure or known unsupported mapping | `sync_status=failed` or `partial`, sanitized error code/message only. |
+| Success path | Public provider-recognized sample symbol only | Enabled with operator-owned key outside git | `sync_status=success`, provider-backed stored data visible, no automatic downstream workflow. |
+
+For local automated/API tests, prefer the mocked provider tests in
+`apps/api/tests/test_imports_api.py` and `apps/api/tests/test_market_data_sync.py`.
+Those tests validate success, skipped, failed, partial, and sanitized-error behavior
+without network dependency or provider secrets. Browser smoke evidence should remain
+manual and sample-only unless a separate automation issue explicitly implements a
+safe harness.
 
 ## Disabled-By-Default Check
 
@@ -42,6 +64,19 @@ Manual steps:
 3. Select the sample Watchlist item and a timeframe.
 4. Click the manual provider sync action.
 5. Review the Provider Sync result panel and Import history.
+
+Optional API shape for local sample-only checks after authenticating through safe
+local tooling. Do not paste cookies or session headers into evidence:
+
+```http
+POST /api/imports/sync
+Content-Type: application/json
+
+{
+  "watchlist_item_id": <sample-watchlist-id>,
+  "timeframe": "1D"
+}
+```
 
 Expected result:
 
@@ -95,6 +130,17 @@ Expected safe failure results:
 - Failure evidence must not include raw provider payloads, API keys, request URLs with
   query strings, cookies, or private trading data.
 
+## Cleanup And Repeatability
+
+- Keep sample provider-smoke Watchlist symbols clearly prefixed, such as
+  `SMOKE-PROVIDER-`.
+- Do not reset staging volumes, rotate secrets, restart VPS services, or edit `.env`
+  as a smoke cleanup step without explicit operator approval.
+- For local disposable runs, use the documented local smoke cleanup path; otherwise
+  prefer adding a new fake sample symbol for the next run.
+- If a configured provider check used a public symbol, record only sanitized status
+  evidence and not the raw payload, request URL, or account/subscription details.
+
 ## Evidence Template
 
 Record only sanitized evidence:
@@ -107,6 +153,7 @@ Provider sync disabled check: PASS | FAIL | NOT RUN
 Configured provider check: PASS | FAIL | NOT RUN
 Provider identifier: alpha_vantage | not configured | redacted
 Timeframe tested: 1D | other
+Sample symbol scope: fake sample | public provider-recognized | redacted
 Observed sync_status: success | skipped | failed | partial
 Observed freshness_status: fresh | stale | unknown | failed | partial
 Provider metadata visible: PASS | FAIL | NOT RUN
