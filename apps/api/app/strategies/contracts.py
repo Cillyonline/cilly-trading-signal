@@ -29,16 +29,20 @@ NO_TRADE_REASON_MESSAGES = {
         "No Trade: required data is missing, stale, partial, or otherwise insufficient."
     ),
     "required_timeframe_data_missing": (
-        "No Trade: one or more required timeframes are missing for setup review."
+        "No Trade: one or more required timeframes are missing, so setup review "
+        "is blocked until the full timeframe set is available."
     ),
     "required_market_data_not_fresh": (
-        "No Trade: required market data is stale, partial, failed, missing, or unknown."
+        "No Trade: required market data is stale, partial, failed, missing, or "
+        "unknown, so current setup quality cannot be trusted."
     ),
     "insufficient_candle_history": (
-        "No Trade: candle history is too short for reliable indicator and setup review."
+        "No Trade: candle history is too short for reliable indicator and setup "
+        "review; keep this as missing context."
     ),
     "required_indicator_missing": (
-        "No Trade: required indicator context is missing after analysis."
+        "No Trade: required indicator context is missing after analysis, so the "
+        "setup cannot be reviewed safely."
     ),
     "setup_already_invalidated": (
         "No Trade: setup is already invalidated by the stored analysis state."
@@ -85,16 +89,17 @@ NO_TRADE_NEXT_ACTIONS = {
         "Refresh or provide the missing/stale timeframe and benchmark data before review."
     ),
     "required_timeframe_data_missing": (
-        "Import all required timeframes before reviewing this long setup."
+        "Keep No Trade and import all required timeframes before reviewing this long setup."
     ),
     "required_market_data_not_fresh": (
-        "Refresh stale, partial, failed, missing, or unknown market data before review."
+        "Keep No Trade and refresh stale, partial, failed, missing, or unknown market "
+        "data before review."
     ),
     "insufficient_candle_history": (
-        "Provide enough candle history for the required indicators before review."
+        "Keep No Trade until enough candle history exists for the required indicators."
     ),
     "required_indicator_missing": (
-        "Re-run analysis after indicator context is available; otherwise keep No Trade."
+        "Keep No Trade and re-run analysis after required indicator context is available."
     ),
     "setup_already_invalidated": (
         "Wait for a fresh setup instead of reusing the invalidated structure."
