@@ -20,6 +20,7 @@ This wiki is not a production-readiness statement, strategy-validation claim, pr
 | --- | --- | --- |
 | Understand current release posture | [MVP Release Checklist](MVP_RELEASE_CHECKLIST.md) | You need the current Conditional Go / No Go boundaries. |
 | Understand final internal gate | [Final Internal Review Decision Gate](FINAL_INTERNAL_REVIEW_DECISION_GATE.md) | You need the current allowed and disallowed use cases. |
+| Check private-data readiness | [Private Data Readiness Decision Gate](PRIVATE_DATA_READINESS_DECISION_GATE.md) | You need the current No Go boundary for routine private trading data use. |
 | Run local smoke checks | [MVP Smoke Test](MVP_SMOKE_TEST.md) | You need local Docker/API/Web/migration smoke evidence. |
 | Run browser workflow checks | [Final Browser Clickthrough Checklist](FINAL_BROWSER_CLICKTHROUGH_CHECKLIST.md) | You need repeatable sample-only browser evidence. |
 | Operate the cockpit workflow | [Cockpit Review Workflow](COCKPIT_REVIEW_WORKFLOW.md) | You need the manual review flow and safety boundaries. |
@@ -56,6 +57,7 @@ This wiki is not a production-readiness statement, strategy-validation claim, pr
 | Browser clickthrough | [Final Browser Clickthrough Checklist](FINAL_BROWSER_CLICKTHROUGH_CHECKLIST.md) | Manual browser evidence template for desktop/mobile. |
 | Release checklist | [MVP Release Checklist](MVP_RELEASE_CHECKLIST.md) | Current implemented/gap/boundary summary. |
 | Deployment readiness gate | [Deployment Readiness Decision Gate v2](DEPLOYMENT_READINESS_DECISION_GATE_V2.md) | Local/private staging boundaries; production-like remains No Go. |
+| Private-data readiness gate | [Private Data Readiness Decision Gate](PRIVATE_DATA_READINESS_DECISION_GATE.md) | Routine private trading data remains blocked until separate evidence and owner acceptance. |
 
 ## Operations And VPS Docs
 
