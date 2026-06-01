@@ -204,8 +204,8 @@ export default function ReviewBatchDetailPage({ params }: { params: { id: string
             <section className="grid gap-4 md:grid-cols-4">
               <SummaryCard label="Reviewed" value={String(batch.summary.reviewed_count)} />
               <SummaryCard label="Follow-ups" value={String(batch.summary.follow_up_needed_count)} tone="border-orange-300/40" />
-              <SummaryCard label="Repeated Labels" value={String(batch.summary.repeated_attention_labels.length)} tone="border-yellow-300/40" />
-              <SummaryCard label="False Positives" value={String(batch.summary.repeated_false_positive_patterns.length)} tone="border-red-300/40" />
+              <SummaryCard label="Repeated Evidence Labels" value={String(batch.summary.repeated_attention_labels.length)} tone="border-yellow-300/40" />
+              <SummaryCard label="False-Positive Patterns" value={String(batch.summary.repeated_false_positive_patterns.length)} tone="border-red-300/40" />
             </section>
 
             <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
@@ -227,9 +227,17 @@ export default function ReviewBatchDetailPage({ params }: { params: { id: string
             </section>
 
             <section className="grid gap-4 md:grid-cols-2">
-              <PatternPanel title="Label Counts" items={Object.entries(batch.summary.label_counts).map(([label, count]) => `${formatLabel(label)}: ${count}`)} />
+              <PatternPanel
+                title="Label Counts"
+                description="Manual review labels show calibration evidence distribution only; they do not change rules automatically."
+                items={Object.entries(batch.summary.label_counts).map(([label, count]) => `${formatLabel(label)}: ${count}`)}
+              />
               <RepeatedFindingPanel batch={batch} />
-              <PatternPanel title="Finding Categories" items={Object.entries(batch.summary.finding_category_counts).map(([category, count]) => `${formatLabel(category)}: ${count}`)} />
+              <PatternPanel
+                title="Finding Categories"
+                description="Categories group review observations for follow-up triage, not profitability or strategy validation."
+                items={Object.entries(batch.summary.finding_category_counts).map(([category, count]) => `${formatLabel(category)}: ${count}`)}
+              />
             </section>
 
             <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
@@ -524,10 +532,19 @@ function EditSection({
   );
 }
 
-function PatternPanel({ title, items }: { title: string; items: string[] }) {
+function PatternPanel({
+  description,
+  items,
+  title,
+}: {
+  description?: string;
+  items: string[];
+  title: string;
+}) {
   return (
     <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
       <h2 className="text-xl font-semibold">{title}</h2>
+      {description ? <p className="mt-2 text-sm text-slate-400">{description}</p> : null}
       {items.length === 0 ? (
         <p className="mt-3 text-sm text-slate-500">Keine wiederholten Muster.</p>
       ) : (
@@ -545,17 +562,18 @@ function PatternPanel({ title, items }: { title: string; items: string[] }) {
 
 function RepeatedFindingPanel({ batch }: { batch: ReviewBatch }) {
   const items = [
-    ...batch.summary.repeated_attention_labels.map((label) => `label >=2: ${formatLabel(label)}`),
-    ...batch.summary.repeated_blocker_patterns.map((pattern) => `blocker >=2: ${formatLabel(pattern)}`),
-    ...batch.summary.repeated_finding_categories.map((category) => `category >=2: ${formatLabel(category)}`),
-    ...batch.summary.repeated_false_positive_patterns.map((pattern) => `false-positive >=2: ${formatLabel(pattern)}`),
+    ...batch.summary.repeated_attention_labels.map((label) => `repeated label evidence: ${formatLabel(label)}`),
+    ...batch.summary.repeated_blocker_patterns.map((pattern) => `repeated blocker pattern: ${formatLabel(pattern)}`),
+    ...batch.summary.repeated_finding_categories.map((category) => `repeated finding category: ${formatLabel(category)}`),
+    ...batch.summary.repeated_false_positive_patterns.map((pattern) => `false-positive review pattern: ${formatLabel(pattern)}`),
   ];
   return (
     <section className="rounded-3xl border border-yellow-300/30 bg-yellow-300/10 p-6">
       <h2 className="text-xl font-semibold text-yellow-50">Repeated Finding Summary</h2>
       <p className="mt-2 text-sm text-yellow-100/80">
-        Schwelle: mindestens 2 gleiche Attention-Labels, Blocker, Kategorien oder False-Positive-Muster. Das ist Follow-up Evidence only,
-        keine automatische Regelanpassung und keine Performance-Aussage.
+        Schwelle: mindestens 2 gleiche Attention-Labels, Blocker, Kategorien oder False-Positive-Muster. False-positive bedeutet hier
+        ein potenziell zu permissives Review-Signal fuer Kalibrierung, nicht einen Trade- oder Performance-Ausgang. Das ist Follow-up
+        Evidence only, keine automatische Regelanpassung und keine Performance-Aussage.
       </p>
       {items.length === 0 ? (
         <p className="mt-4 text-sm text-yellow-100/70">Noch keine wiederholten Findings ueber der Schwelle.</p>
@@ -679,8 +697,10 @@ function buildFollowUpDraft(batch: ReviewBatch, entry: ReviewEntry) {
     `- Signal status: ${formatLabel(entry.signal_status)}`,
     `- Score class: ${formatLabel(entry.score_class ?? "no score")}`,
     `- Manual review label: ${formatLabel(entry.manual_review_label)}`,
+    `- Finding category: ${formatLabel(entry.finding_category)}`,
     `- Follow-up needed: ${entry.follow_up_needed ? "yes" : "no"}`,
     `- Quality blockers: ${blockers.length > 0 ? blockers.join(", ") : "none recorded"}`,
+    "- Repeated pattern / disposition: fill manually if this entry belongs to a repeated blocker or false-positive pattern.",
     "",
     "## Expected Behavior",
     "Describe the conservative, explainable behavior expected from the strategy or review workflow.",
