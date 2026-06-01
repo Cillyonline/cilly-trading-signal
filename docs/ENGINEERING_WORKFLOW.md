@@ -88,10 +88,10 @@ Current scan coverage:
 Initial policy:
 
 - Scan findings are visible in GitHub Actions logs but do not automatically block all builds yet.
-- Reviewers should inspect high and critical findings, decide whether they are reachable or false positives, and create follow-up issues when remediation is not handled in the current PR.
+- Reviewers should inspect high and critical findings, decide whether they are reachable or false positives, and create follow-up issues when remediation is not handled in the current PR. Use [Security Scan Review Policy](SECURITY_SCAN_REVIEW_POLICY.md) for production-like threshold and evidence expectations.
 - False-positive or accepted-risk notes must be written without exposing secrets, private trading data, database URLs, cookies, or raw sensitive logs.
 - A green scan workflow is not a security certification, production-readiness claim, broker-readiness claim, or approval for real-money use.
-- A stricter blocking threshold requires a separate policy decision after the team has reviewed recurring scan output.
+- A stricter CI-blocking threshold still requires a separate implementation decision after the team has reviewed recurring scan output.
 
 ## Trading Logic Review
 
