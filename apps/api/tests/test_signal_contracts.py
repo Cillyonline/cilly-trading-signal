@@ -186,6 +186,44 @@ def test_specific_data_quality_reasons_override_high_score() -> None:
     assert "refresh stale, partial, failed, missing, or unknown market data" in result.next_action
 
 
+@pytest.mark.parametrize(
+    ("flags", "expected_reasons"),
+    [
+        (
+            ["market_data_partial_1D", "provider_sync_failed_4H"],
+            ["required_market_data_not_fresh"],
+        ),
+        (
+            ["market_data_unknown_1W", "missing_4H_data"],
+            ["required_market_data_not_fresh", "required_timeframe_data_missing"],
+        ),
+    ],
+)
+def test_paper_batch_missing_context_variants_stay_no_trade(
+    flags: list[str], expected_reasons: list[str]
+) -> None:
+    result = build_signal_result(
+        signal_input(data_quality_flags=flags),
+        ScoreBreakdown(trend=25, structure=25, momentum=15, volume=15, risk_reward=15),
+        bias=Bias.BULLISH,
+        reasoning=["Setup has technical strength."],
+        risk_flags=[],
+        next_action="Generic placeholder should be replaced.",
+        entry_low=Decimal("100"),
+        stop_loss=Decimal("95"),
+        target_1=Decimal("112"),
+        risk_reward=Decimal("2.4"),
+        has_valid_trigger_plan=True,
+    )
+
+    assert result.status == SignalStatus.NO_SETUP
+    assert result.score_class == ScoreClass.NO_TRADE
+    assert result.no_trade_reasons == expected_reasons
+    assert set(expected_reasons).issubset(result.risk_flags)
+    assert "Keep No Trade" in result.next_action
+    assert "refresh stale, partial, failed, missing, or unknown market data" in result.next_action
+
+
 def test_build_signal_result_maps_watchlist_and_explainability_fields() -> None:
     result = build_signal_result(
         signal_input(),
