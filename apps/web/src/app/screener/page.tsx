@@ -348,6 +348,9 @@ export default function ScreenerPage() {
                 Review-Liste aus gespeicherten Screener-Snapshots. Keine Live-Daten, keine Empfehlung,
                 keine automatische Analyse.
               </p>
+              <p className="mt-2 text-xs text-emerald-100/80 sm:hidden">
+                Mobile Reihenfolge: Status pruefen, Validierung lesen, Watchlist nur bewusst per Button erstellen.
+              </p>
             </div>
             <div className="flex flex-wrap items-center gap-2 text-sm text-slate-400">
               <span>{results.length} Rows</span>
@@ -649,8 +652,9 @@ function ScreenerResultCard({
   onToggleSelected: (checked: boolean) => void;
 }) {
   const canAddToWatchlist = result.status === "candidate" || result.status === "duplicate";
+  const reviewAction = getReviewActionText(result);
   return (
-    <article className="grid gap-4 p-4 sm:p-5 lg:grid-cols-[1fr_0.9fr]">
+    <article className="grid gap-4 p-3 sm:p-5 lg:grid-cols-[1fr_0.9fr]">
       <div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -686,13 +690,16 @@ function ScreenerResultCard({
         <p className="mt-2 text-xs text-slate-500">
           Review Priority ist nur Triage-Kontext, kein Setup-Score und keine Empfehlung.
         </p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-3 rounded-2xl border border-emerald-300/20 bg-emerald-300/[0.04] p-3 text-xs text-emerald-50">
+          <span className="font-semibold">Review next: </span>{reviewAction}
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
           <Metric label="Price" value={formatNumber(result.price)} />
           <Metric label="Change %" value={formatPercent(result.change_percent)} />
           <Metric label="Volume" value={formatCompact(result.volume)} />
           <Metric label="Rel Volume" value={formatNumber(result.relative_volume)} />
         </div>
-        <div className="mt-5 grid gap-3 sm:flex sm:flex-wrap sm:items-center">
+        <div className="mt-5 grid gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
           <button
             type="button"
             onClick={() => onSelect(result)}
@@ -714,8 +721,11 @@ function ScreenerResultCard({
         </div>
       </div>
       <aside className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
-        <p className="text-sm font-medium text-slate-200">Review Kontext</p>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-medium text-slate-200">Review Kontext</p>
+          <span className="text-xs text-slate-500">Snapshot, kein Live-Check</span>
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:gap-3">
           <Metric label="Sector" value={result.sector ?? "-"} />
           <Metric label="Industry" value={result.industry ?? "-"} />
           <Metric label="RSI14" value={formatNumber(result.rsi14)} />
@@ -759,7 +769,7 @@ function ScreenerResultDetailPanel({
   const canAddToWatchlist = result.status === "candidate" || result.status === "duplicate";
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 px-4 py-6 backdrop-blur">
-      <aside className="mx-auto max-w-4xl rounded-3xl border border-white/10 bg-slate-950 p-6 shadow-2xl shadow-black/40">
+      <aside className="mx-auto max-w-4xl rounded-3xl border border-white/10 bg-slate-950 p-4 shadow-2xl shadow-black/40 sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-emerald-300">Screener Candidate</p>
@@ -802,7 +812,7 @@ function ScreenerResultDetailPanel({
           </div>
         </section>
 
-        <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-4">
           <Metric label="Exchange" value={result.exchange ?? "-"} />
           <Metric label="Currency" value={result.currency ?? "-"} />
           <Metric label="Price" value={formatNumber(result.price)} />
@@ -1003,6 +1013,22 @@ function buildSummary(results: ScreenerResult[]) {
 
 function canBulkReview(result: ScreenerResult) {
   return result.status === "candidate" || result.status === "ignored" || result.status === "rejected";
+}
+
+function getReviewActionText(result: ScreenerResult) {
+  if (asErrors(result.validation_errors).length > 0) {
+    return "Validation-Hinweise zuerst klaeren; keine Watchlist-Konvertierung ohne sauberen Snapshot.";
+  }
+  if (result.watchlist_item_id || result.status === "watchlist_added") {
+    return "Bereits verknuepft; Watchlist-Kontext pruefen statt erneut zu konvertieren.";
+  }
+  if (result.status === "duplicate") {
+    return "Duplikat-Kontext pruefen; Watchlist-Link nur bewusst bestaetigen.";
+  }
+  if (result.status === "candidate") {
+    return "Details pruefen, dann optional manuell zur Watchlist hinzufuegen.";
+  }
+  return "Review-Status ist nicht aktiv; bei Bedarf bewusst auf candidate zuruecksetzen.";
 }
 
 function toApiFilters(filters: ScreenerFiltersState): ScreenerResultFilters {
