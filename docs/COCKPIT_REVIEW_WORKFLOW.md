@@ -169,6 +169,55 @@ When recording screenshots, smoke-test notes, issue comments, or PR evidence:
 - Do not include provider API keys, Telegram tokens, chat IDs, webhook secrets, cookies, private journal text, personal trade details, raw logs with credentials, or backup dumps.
 - Redact private VPS and operational evidence before sharing.
 
+## Owner-Operator Cockpit Validation Checklist
+
+Use this checklist after cockpit UI polish or before considering any VPS or
+service-impacting rollout. This is local/sample validation evidence only. It is
+not production approval, broker readiness, strategy validation, a profitability
+claim, trading advice, or permission for automatic execution.
+
+Validation setup:
+
+| Field | Result |
+| --- | --- |
+| Date | YYYY-MM-DD |
+| Commit or branch |  |
+| Environment | local / sample / paper |
+| Desktop viewport | pass / fail / blocked / not run |
+| Mobile viewport | pass / fail / blocked / not run |
+| Private data included | no |
+| Secrets, cookies, raw logs, or `.env` values included | no |
+
+Route checklist:
+
+| Route | Desktop | Mobile | Evidence Notes |
+| --- | --- | --- | --- |
+| `/reviews/[id]` | pass / fail / blocked / not run | pass / fail / blocked / not run | Follow-up disposition is visible; draft remains manual evidence only. |
+| `/screener` | pass / fail / blocked / not run | pass / fail / blocked / not run | Candidate status, validation, and explicit Watchlist conversion are scannable. |
+| `/trades/[id]` | pass / fail / blocked / not run | pass / fail / blocked / not run | Manage, Close, and Journal groups are visually distinct. |
+
+Safety boundary checks:
+
+- Review follow-up drafts do not automatically create GitHub issues or change
+  strategy rules.
+- Screener candidates remain stored review candidates until the user explicitly
+  confirms Watchlist conversion.
+- Watchlist conversion does not create analysis, signals, trades, alerts, broker
+  actions, or orders automatically.
+- Trade Detail events, closes, and journal entries document external manual
+  decisions only.
+- No route claims live/realtime data, profitability, strategy validation, broker
+  readiness, or trading advice.
+
+Validation outcome:
+
+| Finding | Follow-up |
+| --- | --- |
+| No blocking cockpit friction found | none |
+| Minor wording/layout friction | create scoped UI/docs issue |
+| Safety boundary unclear | create high-priority follow-up before rollout |
+| Requires VPS or service restart | stop and request explicit operator approval |
+
 ## Related Docs
 
 - `docs/MVP_SPEC.md`
