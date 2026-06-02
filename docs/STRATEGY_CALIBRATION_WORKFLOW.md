@@ -207,6 +207,25 @@ These fixtures exercise stored watchlist items, `1W`/`1D`/`4H` series, benchmark
 context, signal orchestration, and analysis quality report states. They are still
 deterministic review fixtures, not backtests or profitability evidence.
 
+## v3.3 Calibration Evidence Status
+
+The v3.3 Signal Quality Calibration Pack added targeted deterministic regression
+coverage without changing production strategy behavior:
+
+- Weak risk/reward golden cases now cover both Trend Pullback Long and Base
+  Breakout Long. A setup with planned reward below the minimum 2R requirement
+  must remain `No Setup` / `No Trade` and must not become `Watchlist`, `Armed`,
+  or `Triggered`.
+- Required context coverage now includes stored end-to-end fixtures for missing
+  required `4H` trigger timeframe data and stale required `4H` trigger timeframe
+  data. Both preserve blocked data-quality review and conservative `No Trade`
+  behavior.
+
+The v3.3 cases are regression evidence only. They confirm that existing
+conservative gates are covered by tests; they are not backtests, profitability
+validation, live-readiness evidence, broker-readiness evidence, trading advice,
+or permission for automatic order execution.
+
 ## Interpreting Outputs
 
 `A-Setup` should be rare. It means the stored context, setup, trigger plan, and

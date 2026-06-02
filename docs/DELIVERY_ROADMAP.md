@@ -55,6 +55,8 @@ Done:
   rebaselined, local validation evidence was recorded, Review follow-up
   disposition, mobile Screener review, and mobile Trade Detail grouping were
   polished, and operator-run VPS update/browser smoke evidence was recorded.
+- v3.3 Signal Quality Calibration Pack added targeted regression evidence for
+  weak risk/reward rejection and missing/stale required `4H` trigger context.
 
 Partial:
 
@@ -542,11 +544,37 @@ Done when:
   execution.
 - No remaining v3.1 cockpit friction is open in the tracker.
 
+## v3.3 - Signal Quality Calibration Pack
+
+Goal: add safe overnight calibration evidence that tightens regression coverage
+around weak setup rejection and missing/stale context without broad strategy
+rewrites.
+
+Status: Done.
+
+Primary work:
+
+- Add weak risk/reward golden cases for Trend Pullback Long and Base Breakout
+  Long: `#524`.
+- Add stored e2e fixture coverage for missing and stale required `4H` trigger
+  context: `#523`.
+- Refresh calibration evidence status and review follow-up needs: `#525`, `#526`.
+
+Done when:
+
+- Weak R:R cases cannot produce `Watchlist`, `Armed`, or `Triggered`.
+- Missing/stale required trigger context remains blocked and conservative.
+- Evidence remains deterministic review coverage only, not backtesting,
+  profitability validation, live-readiness, broker-readiness, trading advice, or
+  automatic execution.
+
 ## Next Candidate Increment
 
-Recommended next planning candidate after v3.1: v3.2 Roadmap Rebaseline And Next
-Gate Decision, focused on keeping roadmap/release/gate docs aligned and choosing
-the next conservative delivery track.
+Recommended next planning candidate after v3.3: choose between production-like
+readiness hardening and another signal-quality calibration pack. Prefer
+production-like readiness only if the owner wants to move beyond private
+owner/operator staging; otherwise continue with focused paper calibration and
+golden-case coverage.
 
 Completed v3.0/v3.1 validation evidence:
 
