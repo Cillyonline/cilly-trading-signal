@@ -78,6 +78,11 @@ Safe generic evidence:
 - Secrets/private data/raw logs/screenshots with sensitive data included: no
 ```
 
+For local smoke summaries, `scripts/format_smoke_evidence.ps1` can format this
+kind of sanitized Markdown from explicit operator-provided inputs. The formatter
+must not be used to paste secrets, raw logs, cookies, tokens, browser storage,
+screenshots, database rows, provider payloads, private symbols, or private notes.
+
 Safe screenshot evidence:
 
 ```markdown

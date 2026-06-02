@@ -53,6 +53,21 @@ workflow after the runner succeeds.
 
 This script is release-validation tooling, not a production deployment claim.
 
+Optional sanitized evidence formatting:
+
+```powershell
+.\scripts\format_smoke_evidence.ps1 `
+  -CommitSha <branch-or-sha> `
+  -SmokeRunnerStatus pass `
+  -ApiHealth pass `
+  -WebLoad pass `
+  -BrowserChecklist 'not run'
+```
+
+The formatter only uses explicit command-line inputs and prints Markdown. It does
+not read `.env`, cookies, browser sessions, local storage, logs, databases,
+provider payloads, screenshots, or private trading data.
+
 ## Target Workflow
 
 1. Start the local stack with Docker Compose.
