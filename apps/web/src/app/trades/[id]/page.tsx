@@ -207,8 +207,8 @@ export default function TradeDetailPage({ params }: { params: { id: string } }) 
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 px-6 py-8 text-slate-100">
-      <section className="mx-auto flex max-w-6xl flex-col gap-8">
+    <main className="min-h-screen bg-slate-950 px-4 py-5 text-slate-100 sm:px-6 sm:py-8">
+      <section className="mx-auto flex max-w-6xl flex-col gap-5 sm:gap-8">
         <header className="rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_right,#1d4ed8,transparent_34%),rgba(255,255,255,0.05)] p-5 sm:p-8">
           <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
             <div>
@@ -237,7 +237,7 @@ export default function TradeDetailPage({ params }: { params: { id: string } }) 
             <p className="text-sm text-slate-400">Trade wird geladen...</p>
           </section>
         ) : trade ? (
-          <section className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
+          <section className="grid gap-5 sm:gap-6 lg:grid-cols-[1fr_0.9fr]">
             <div className="grid gap-6">
               <TradeSummary trade={trade} />
               <EventTimeline trade={trade} />
@@ -338,7 +338,7 @@ function optionalScore(value: string) {
 
 function TradeSummary({ trade }: { trade: TradeDetail }) {
   return (
-    <article className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
+    <article className="rounded-3xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
       <div className="flex flex-wrap items-center gap-3">
         <h2 className="text-2xl font-semibold">{trade.symbol}</h2>
         <span className="rounded-full bg-slate-800 px-3 py-1 text-xs uppercase text-slate-300">{trade.status}</span>
@@ -347,7 +347,7 @@ function TradeSummary({ trade }: { trade: TradeDetail }) {
         <span className="text-sm text-slate-400">{formatStrategy(trade.strategy_type)}</span>
       </div>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-5 grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
         <Metric label="Entry" value={formatMoney(trade.entry_price)} />
         <Metric label="Stop" value={formatMoney(trade.stop_loss)} />
         <Metric label="Target 1" value={formatMoney(trade.target_1)} />
@@ -375,7 +375,21 @@ function ManagementBoundaryCard({ trade }: { trade: TradeDetail }) {
         Status {trade.status}; Risiko {formatMoney(trade.initial_risk_amount)}; Result R {formatR(trade.result_r)}.
         Alle Aktionen unten dokumentieren externe manuelle Entscheidungen. Keine Broker-Verbindung, keine Orderausfuehrung.
       </p>
+      <div className="mt-4 grid gap-2 text-xs text-sky-50 sm:grid-cols-3">
+        <WorkflowPill label="1 Manage" text="Events und Anpassungen loggen" />
+        <WorkflowPill label="2 Close" text="Externen Exit dokumentieren" />
+        <WorkflowPill label="3 Journal" text="Nach Close Prozess reviewen" />
+      </div>
     </section>
+  );
+}
+
+function WorkflowPill({ label, text }: { label: string; text: string }) {
+  return (
+    <div className="rounded-2xl border border-sky-200/20 bg-slate-950/40 p-3">
+      <p className="font-semibold uppercase tracking-wide text-sky-100">{label}</p>
+      <p className="mt-1 text-sky-100/70">{text}</p>
+    </div>
   );
 }
 
@@ -408,8 +422,8 @@ function JournalReviewCard({
 
   if (trade.status !== "closed") {
     return (
-      <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
-        <h2 className="text-xl font-semibold">Journal Review</h2>
+      <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
+        <StepHeading step="3 Journal" title="Journal Review" />
         <p className="mt-2 text-sm text-slate-400">
           Review ist erst nach einem geschlossenen Trade moeglich. Fokus: Prozessqualitaet, Disziplin und Lernen.
         </p>
@@ -418,8 +432,8 @@ function JournalReviewCard({
   }
 
   return (
-    <form onSubmit={onSubmit} className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
-      <h2 className="text-xl font-semibold">Journal Review erfassen</h2>
+    <form onSubmit={onSubmit} className="rounded-3xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
+      <StepHeading step="3 Journal" title="Journal Review erfassen" />
       <p className="mt-2 text-sm text-slate-400">
         Reflektiert Prozess, Disziplin und Lernpunkte im R-Kontext. Keine Trade-Empfehlung.
       </p>
@@ -517,11 +531,11 @@ function JournalReviewCard({
 
 function JournalReviewSummary({ journalEntry }: { journalEntry: JournalEntry }) {
   return (
-    <section className="rounded-3xl border border-emerald-300/20 bg-emerald-300/5 p-6">
-      <h2 className="text-xl font-semibold">Journal Review</h2>
+    <section className="rounded-3xl border border-emerald-300/20 bg-emerald-300/5 p-5 sm:p-6">
+      <StepHeading step="3 Journal" title="Journal Review" />
       <p className="mt-2 text-sm text-slate-400">Erfasst am {formatDateTime(journalEntry.reviewed_at)}</p>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+      <div className="mt-5 grid grid-cols-2 gap-2 sm:gap-3">
         <Metric label="Setup Rules" value={formatBoolean(journalEntry.setup_rule_followed)} />
         <Metric label="Entry" value={formatScore(journalEntry.entry_quality_score)} />
         <Metric label="Stop" value={formatScore(journalEntry.stop_quality_score)} />
@@ -615,7 +629,7 @@ function CloseTradeCard({
   if (trade.status === "closed") {
     return (
       <section className="rounded-3xl border border-emerald-300/20 bg-emerald-300/5 p-5 sm:p-6">
-        <h2 className="text-xl font-semibold">Trade geschlossen</h2>
+        <StepHeading step="2 Close" title="Trade geschlossen" />
         <p className="mt-2 text-sm text-slate-300">
           Ergebnis: {formatMoney(trade.result_amount)} / {formatR(trade.result_r)}. Dieser Close ist
           eine manuelle Dokumentation, keine Broker-Aktion.
@@ -626,7 +640,7 @@ function CloseTradeCard({
 
   return (
     <form onSubmit={onSubmit} className="rounded-3xl border border-red-300/30 bg-red-300/[0.05] p-5 sm:p-6">
-      <h2 className="text-xl font-semibold">Trade manuell schliessen</h2>
+      <StepHeading step="2 Close" title="Trade manuell schliessen" />
       <p className="mt-2 text-sm text-red-100/80">
         Finaler Close-Log fuer eine bereits extern ausgefuehrte Entscheidung. Keine Orderausfuehrung.
       </p>
@@ -698,7 +712,7 @@ function CloseTradeCard({
 
 function EventTimeline({ trade }: { trade: TradeDetail }) {
   return (
-    <article className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
+    <article className="rounded-3xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
       <div className="flex items-center justify-between gap-4">
         <h2 className="text-xl font-semibold">Management Events</h2>
         <span className="text-sm text-slate-400">{trade.events.length} Events</span>
@@ -746,7 +760,7 @@ function EventFormCard({
 }) {
   return (
     <form onSubmit={onSubmit} className="rounded-3xl border border-emerald-300/20 bg-emerald-300/[0.04] p-5 sm:p-6">
-      <h2 className="text-xl font-semibold">Management Event loggen</h2>
+      <StepHeading step="1 Manage" title="Management Event loggen" />
       <p className="mt-2 text-sm text-emerald-100/80">
         Routine-Dokumentation fuer Notes, Stop- oder Target-Updates. Keine Broker-Aktion.
       </p>
@@ -827,6 +841,17 @@ function EventFormCard({
         </button>
       </div>
     </form>
+  );
+}
+
+function StepHeading({ step, title }: { step: string; title: string }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="rounded-full border border-white/10 bg-slate-950/60 px-3 py-1 text-xs uppercase tracking-wide text-slate-300">
+        {step}
+      </span>
+      <h2 className="text-xl font-semibold">{title}</h2>
+    </div>
   );
 }
 
