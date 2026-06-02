@@ -117,6 +117,96 @@ Invoke-RestMethod http://localhost:8000/api/health
 If deeper API inspection is needed, use authenticated browser/API tooling only with
 local sample data. Do not paste cookies or session tokens into issues, docs, or PRs.
 
+## v3.1 Owner Cockpit Local Validation Evidence
+
+Date: 2026-06-02
+
+Environment:
+
+- Windows workspace: `C:\repos\cilly-trading-signal`
+- Branch/commit context: `main` at `0390c35`
+- Deployment shape: local Docker Compose stack with PostgreSQL, API, and web.
+- Data scope: local/sample validation only; no private watchlists, broker data,
+  account data, fills, provider credentials, cookies, screenshots, database dumps,
+  raw logs, private notes, or production data were recorded.
+- Browser/UI scope: web HTTP load was checked. The desktop/mobile visual cockpit
+  checklist from `docs/COCKPIT_REVIEW_WORKFLOW.md` was not run and remains
+  operator-run evidence.
+
+Commands and checks recorded:
+
+```powershell
+.\scripts\smoke_test.ps1 -TimeoutSeconds 180
+curl.exe -fsS -I http://localhost:3000
+.\scripts\format_smoke_evidence.ps1 -CommitSha main-0390c35 -SmokeRunnerStatus pass -ApiHealth pass -WebLoad pass -BrowserChecklist 'not run'
+```
+
+Sanitized formatter output:
+
+```markdown
+## Local Smoke Evidence
+
+- Date/time UTC: 2026-06-02T19:20:49Z
+- Environment class: local
+- Workflow: local smoke
+- Commit SHA: main-0390c35
+- Check or command: scripts/smoke_test.ps1 / browser checklist summary
+- Smoke runner status: pass
+- API health: pass
+- Web load: pass
+- Browser checklist: not run
+- Sanitized details: none
+- Follow-up issue: none
+- Secrets/private data/raw logs/screenshots with sensitive data included: no
+- Cookies/tokens/browser storage/provider keys/.env values read or included: no
+- Production-readiness, broker-readiness, real-money, profitability, live/realtime, trading-advice, or automatic-execution claim made: no
+```
+
+Stack and service results:
+
+- Docker CLI: PASS, `Docker version 29.5.2, build 79eb04c`.
+- Docker Compose CLI: PASS, `Docker Compose version v5.1.3`.
+- Docker engine reachability: PASS.
+- Docker Compose build and stack startup: PASS.
+- PostgreSQL container health: PASS.
+- Database migrations: PASS, `alembic upgrade head` completed in the local API
+  container.
+- API health: PASS, `/api/health` returned healthy status.
+- Web build inside Docker: PASS; Next.js built 16 routes including
+  `/reviews/[id]`, `/screener`, and `/trades/[id]`.
+- Web HTTP load: PASS, `curl.exe -fsS -I http://localhost:3000` returned
+  `HTTP/1.1 200 OK`.
+
+Cockpit route checklist:
+
+| Route | Desktop | Mobile | Evidence Notes |
+| --- | --- | --- | --- |
+| `/reviews/[id]` | not run | not run | Route was included in successful Docker web build; visual follow-up disposition check still requires operator browser review. |
+| `/screener` | not run | not run | Route was included in successful Docker web build; visual mobile candidate review still requires operator browser review. |
+| `/trades/[id]` | not run | not run | Route was included in successful Docker web build; visual Manage/Close/Journal grouping still requires operator browser review. |
+
+Known gaps from this run:
+
+- Desktop/mobile visual browser validation was not run in this environment. Use
+  the checklist in `docs/COCKPIT_REVIEW_WORKFLOW.md` with sample, synthetic, or
+  paper data only.
+- No authenticated review, Screener, or Trade Detail workflow data was created in
+  this pass; the evidence covers local stack build/startup, migrations, API
+  health, Docker web build, web HTTP load, and sanitized evidence formatting.
+- The local stack was left running after validation so an operator can continue
+  browser review at `http://localhost:3000`. Tear down with
+  `./scripts/smoke_test.ps1 -Cleanup` when finished.
+
+Interpretation:
+
+The v3.1 owner cockpit local validation passed for local Docker Compose build,
+stack startup, current database migrations, API health, Docker web build, web
+HTTP load, and sanitized evidence formatting. This supports controlled internal
+owner/operator review only. It is not a production-readiness statement,
+broker-readiness statement, strategy validation, backtest, profitability claim,
+real-money readiness claim, live/realtime data claim, trading advice, or
+permission for automatic order execution.
+
 ## v2.9 Current-Main Local Validation Evidence
 
 Date: 2026-06-02
