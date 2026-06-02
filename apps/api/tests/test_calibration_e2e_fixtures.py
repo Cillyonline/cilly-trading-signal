@@ -65,6 +65,47 @@ def test_e2e_stock_missing_benchmark_context_caps_confidence() -> None:
         assert quality["data_quality"] == "warning"
 
 
+def test_e2e_missing_required_trigger_timeframe_blocks_review() -> None:
+    with make_session() as db:
+        candidate = create_watchlist_item(db, "MISS4H", AssetClass.STOCK)
+        create_series_with_data(db, candidate, Timeframe.ONE_WEEK, Decimal("120"))
+        daily = create_series_with_base_breakout(db, candidate, Timeframe.ONE_DAY, Decimal("111"))
+        create_benchmark(db, "SPY", AssetClass.STOCK, Decimal("350"), first_close=Decimal("330"))
+        create_benchmark(db, "QQQ", AssetClass.STOCK, Decimal("300"), first_close=Decimal("285"))
+
+        result = evaluate_from_series(db, daily)
+        quality = quality_statuses(result)
+
+        assert result.status == SignalStatus.NO_SETUP
+        assert result.score_class == ScoreClass.NO_TRADE
+        assert "required_timeframe_data_missing" in result.no_trade_reasons
+        assert quality["data_quality"] == "blocked"
+
+
+def test_e2e_stale_required_trigger_timeframe_blocks_review() -> None:
+    with make_session() as db:
+        candidate = create_watchlist_item(db, "STALE4H", AssetClass.STOCK)
+        create_series_with_data(db, candidate, Timeframe.ONE_WEEK, Decimal("120"))
+        daily = create_series_with_base_breakout(db, candidate, Timeframe.ONE_DAY, Decimal("111"))
+        create_series_with_base_breakout(
+            db,
+            candidate,
+            Timeframe.FOUR_HOURS,
+            Decimal("111"),
+            freshness_status=MarketDataFreshnessStatus.STALE,
+        )
+        create_benchmark(db, "SPY", AssetClass.STOCK, Decimal("350"), first_close=Decimal("330"))
+        create_benchmark(db, "QQQ", AssetClass.STOCK, Decimal("300"), first_close=Decimal("285"))
+
+        result = evaluate_from_series(db, daily)
+        quality = quality_statuses(result)
+
+        assert result.status == SignalStatus.NO_SETUP
+        assert result.score_class == ScoreClass.NO_TRADE
+        assert "required_market_data_not_fresh" in result.no_trade_reasons
+        assert quality["data_quality"] == "blocked"
+
+
 def test_e2e_stock_stale_benchmark_context_warns_and_caps() -> None:
     with make_session() as db:
         candidate = create_watchlist_item(db, "NVDA", AssetClass.STOCK)
