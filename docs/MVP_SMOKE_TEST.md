@@ -117,6 +117,85 @@ Invoke-RestMethod http://localhost:8000/api/health
 If deeper API inspection is needed, use authenticated browser/API tooling only with
 local sample data. Do not paste cookies or session tokens into issues, docs, or PRs.
 
+## v2.9 Current-Main Local Validation Evidence
+
+Date: 2026-06-02
+
+Environment:
+
+- Windows workspace: `C:\repos\cilly-trading-signal`
+- Branch/commit context: `main` at `9ddf365`
+- Deployment shape: local Docker Compose stack with PostgreSQL, API, and web.
+- Data scope: local/sample validation only; no private watchlists, broker data,
+  account data, fills, provider credentials, cookies, screenshots, database dumps,
+  raw logs, private notes, or production data were recorded.
+- Browser/UI scope: web HTTP load was checked. The visual browser checklist was
+  not run and remains operator-run evidence.
+
+Commands and checks recorded:
+
+```powershell
+.\scripts\smoke_test.ps1 -TimeoutSeconds 180
+curl.exe -fsS -I http://localhost:3000
+.\scripts\smoke_test.ps1 -Cleanup
+.\scripts\format_smoke_evidence.ps1 -CommitSha main-9ddf365 -SmokeRunnerStatus pass -ApiHealth pass -WebLoad pass -BrowserChecklist 'not run'
+```
+
+Sanitized formatter output:
+
+```markdown
+## Local Smoke Evidence
+
+- Date/time UTC: 2026-06-02T18:07:35Z
+- Environment class: local
+- Workflow: local smoke
+- Commit SHA: main-9ddf365
+- Check or command: scripts/smoke_test.ps1 / browser checklist summary
+- Smoke runner status: pass
+- API health: pass
+- Web load: pass
+- Browser checklist: not run
+- Sanitized details: Docker CLI and Compose available; local stack built and started; migrations applied; API health passed; web HTTP load passed; cleanup preserved volumes.
+- Follow-up issue: none
+- Secrets/private data/raw logs/screenshots with sensitive data included: no
+- Cookies/tokens/browser storage/provider keys/.env values read or included: no
+- Production-readiness, broker-readiness, real-money, profitability, live/realtime, trading-advice, or automatic-execution claim made: no
+```
+
+Stack and service results:
+
+- Docker CLI: PASS, `Docker version 29.5.2, build 79eb04c`.
+- Docker Compose CLI: PASS, `Docker Compose version v5.1.3`.
+- Docker engine reachability: PASS.
+- Docker Compose build and stack startup: PASS.
+- PostgreSQL container health: PASS.
+- Database migrations: PASS; migrations advanced the preserved local volume from
+  `20260530_0008` through `20260531_0010`.
+- API health: PASS, `/api/health` returned healthy status.
+- Web HTTP load: PASS, `curl.exe -fsS -I http://localhost:3000` returned
+  `HTTP/1.1 200 OK`.
+- Cleanup: PASS, `./scripts/smoke_test.ps1 -Cleanup` stopped the stack with
+  volumes preserved.
+
+Known gaps from this run:
+
+- The visual browser checklist was not run. Use
+  `docs/FINAL_BROWSER_CLICKTHROUGH_CHECKLIST.md` for operator-run desktop/mobile
+  browser evidence with sample, synthetic, or paper data only.
+- No authenticated workflow data was created in this validation pass; the evidence
+  covers local stack build/startup, migrations, API health, web load, formatter
+  output, and cleanup.
+
+Interpretation:
+
+The v2.9 current-main local validation passed for local Docker Compose build,
+stack startup, current database migrations, API health, web HTTP load, sanitized
+evidence formatting, and cleanup. This supports controlled internal
+owner/operator review only. It is not a production-readiness statement,
+broker-readiness statement, strategy validation, backtest, profitability claim,
+real-money readiness claim, live/realtime data claim, trading advice, or
+permission for automatic order execution.
+
 ## v2.8 Final Internal Workflow Smoke
 
 Date: 2026-05-31
