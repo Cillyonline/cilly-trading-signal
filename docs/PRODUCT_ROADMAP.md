@@ -144,8 +144,15 @@ Der aktuelle Stand ist ein kontrolliertes Owner/Operator-Review-Cockpit, kein pr
 - Open Portfolio Risk, Risk-Warnungen, Asset-Konzentration, einfache Correlation-Proxies und Trade Journal Analytics.
 - TradingView Screener CSV Snapshots, Review-Kandidaten, Bulk Review und explizite Watchlist-Konvertierung.
 - Historical/Paper Review Batches fuer Prozess-Evidence, nicht fuer Profitabilitaetsvalidierung.
+- Erste 80-Beispiel-Paper-Kalibrierung mit deterministic Golden/Contract Coverage
+  fuer Resistance-Kompression, Missing-Context No Trade und Watchlist-Trigger-
+  Confirmation.
+- Review-Evidence-Status, Templates und Evidence-only UI Copy fuer wiederholte
+  Findings und Follow-up-Dispositionen.
 - Mobile Review Verbesserungen fuer Signals und Review Batches plus installierbare PWA-Manifest-Baseline.
 - Operational Readiness Docs: Monitoring Checklist, Health Details, Backup Restore Drill, Security Scan Workflow und Incident Runbook.
+- Safe-Automation-Prep: dokumentierter Dry-run Browser-Smoke-Contract und
+  nicht-invasiver lokaler Smoke-Evidence-Formatter.
 
 Weiterhin nicht enthalten:
 
@@ -155,6 +162,7 @@ Weiterhin nicht enthalten:
 - Automatische Marktaktualisierung oder scheduler-driven Analyse.
 - Backtesting-/Profitabilitaetsvalidierung.
 - Multi-User, Rollenmodell, Registrierung, Billing oder Support-Prozesse.
+- Routine-Nutzung privater Trading-Daten ohne separaten Private-Data Gate.
 
 ## Datenquellen
 

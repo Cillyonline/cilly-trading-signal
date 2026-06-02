@@ -45,6 +45,11 @@ Done:
 - v2.5 risk and portfolio review: open portfolio risk, max open risk warnings, asset concentration warnings, correlation proxy warnings, and trade journal analytics.
 - v2.6 operational readiness: application monitoring checklist, structured health details, backup restore drill documentation, deployment readiness decision gate v2, dependency/container scan workflow, and operational incident runbook.
 - v2.7 mobile/PWA owner cockpit baseline: mobile layout audit, improved mobile signal cards, improved mobile review batch entry, and PWA manifest/icons.
+- v2.9-prep calibration and evidence work: the first paper calibration batch was
+  expanded to 80 examples, resistance/missing-context/trigger-confirmation
+  coverage was made deterministic, review evidence templates and UI wording were
+  clarified, a safe dry-run browser smoke contract was documented, and a
+  non-invasive local smoke evidence formatter was added.
 
 Partial:
 
@@ -54,7 +59,7 @@ Partial:
 - Dashboard, journal, and performance views include useful MVP-level summaries, risk warnings, and journal analytics, but are not full institutional analytics modules.
 - Risk enforcement covers manual trade creation basics and portfolio/risk review warnings, not complete account-level risk management or automatic position sizing.
 - Multi-timeframe analysis still requires current stored data for required `1W`, `1D`, and `4H` timeframes; provider sync does not automatically fill unsupported timeframes or rerun analysis.
-- Historical/paper review batches are implemented at an MVP level with correction and repeated-finding visibility; richer review analytics, audit trails, and automated follow-up workflows remain future usability work.
+- Historical/paper review batches are implemented at an MVP level with correction, repeated-finding visibility, follow-up status snapshots, and improved evidence templates; richer review analytics and automated follow-up workflows remain future usability work.
 - Auth is intentionally single-user and admin-only for MVP use.
 
 Missing:
@@ -460,15 +465,43 @@ Done when:
 - The app has a basic installable shell.
 - No push trading, offline trading mode, background sync, live/realtime claim, broker integration, or automatic execution is introduced.
 
+## v2.9 - Current-State Rebaseline And Operator Validation
+
+Goal: rebaseline the current internal review candidate after calibration/evidence
+prep, record current-main sample-only validation evidence, and identify the top
+owner/operator polish gaps before starting a larger v3.0 increment.
+
+Status: In progress.
+
+Primary work:
+
+- Rebaseline roadmap, release checklist, and gate summaries after the completed
+  paper calibration expansion, review evidence polish, and safe automation prep.
+- Record current-main sample-only smoke/validation evidence using sanitized
+  pass/fail/skipped fields and the local evidence formatter.
+- Review the owner/operator workflow from Watchlist through Review Batch, Trade
+  Log, Journal, and Performance to identify real friction points.
+- Convert only the highest-value polish findings into scoped follow-up issues.
+
+Done when:
+
+- Current docs describe the implemented, partial, missing, and blocked scope.
+- Sample-only validation evidence is recorded or a blocker is documented.
+- Top polish candidates are prioritized without private data, production-like
+  exposure, broker integration, profitability claims, or automatic execution.
+
 ## Next Candidate Increment
 
-Recommended next planning candidates after v2.8: resolve selected open gap issues, then choose between final owner/operator polish, deeper mobile workflow refinement, or narrowly scoped operational evidence work.
+Recommended next planning candidate after v2.9: v3.0 Owner Cockpit Polish,
+focused on fewer workflow clicks, clearer prioritization, better review evidence,
+and mobile usability. Operational evidence hardening remains a separate track
+before any broader exposure.
 
 Alternative next increments:
 
-- Screener/mobile usability refinements after final internal review evidence.
+- Screener/mobile usability refinements after the v2.9 workflow friction review.
 - Operational evidence hardening before any broader exposure.
-- Review-batch audit history and follow-up issue workflow polish.
+- Review-batch follow-up workflow polish after the v2.9 prioritization pass.
 
 ## Not Now
 
