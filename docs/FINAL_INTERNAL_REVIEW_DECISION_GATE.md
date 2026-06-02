@@ -40,12 +40,20 @@ Passed or acceptable for this limited gate:
 - Strategy and alert boundaries still state decision-support only, manual execution only, no broker integration, no automatic order execution, no profitability claim, and no trading advice.
 - Mobile/PWA baseline work improved signal and review-batch usability and installability without adding push trading, offline trading, background sync, broker actions, or execution.
 - v2.8 follow-up PRs added repeatable visual browser clickthrough evidence guidance, local smoke-runner migration handling, review correction audit history, auditable calibration finding categories, active-status portfolio risk treatment, direct incident-runbook monitoring links, refreshed deployment readiness evidence, mobile Screener density improvements, mobile trade workflow grouping, and responsive core-page header density reductions.
+- v2.9-prep work expanded sample/paper calibration evidence, added deterministic
+  coverage for resistance compression, missing-context No Trade, and unconfirmed
+  Watchlist behavior, improved review evidence wording/templates, documented a
+  safe dry-run browser smoke contract, and added a non-invasive local smoke
+  evidence formatter.
 
 ## Remaining Risks And Gaps
 
 These do not block controlled internal review, but they block broader exposure or stronger readiness claims:
 
 - Visual browser clickthrough remains operator-run evidence rather than automated browser evidence; use `docs/FINAL_BROWSER_CLICKTHROUGH_CHECKLIST.md` with sample/synthetic/paper data only.
+- Current-main v2.9 validation evidence is still being rebaselined; until recorded,
+  the v2.8 final internal workflow smoke remains the latest full workflow smoke
+  record.
 - Persistent local/private-staging volumes must still verify current migrations before workflow testing; the local smoke runner now applies migrations and fails clearly on migration errors.
 - Review correction audit history, auditable calibration finding categories, active-status portfolio risk treatment, and mobile follow-up polish have been addressed at an MVP internal-review level, but they do not create production, strategy-validation, or real-money readiness evidence.
 - Production-grade monitoring, offsite encrypted backups, recurring restore evidence, rollback evidence, stricter security-scan policy, privacy handling, and explicit production-like owner acceptance are not complete.
