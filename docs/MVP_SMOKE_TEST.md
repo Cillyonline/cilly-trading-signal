@@ -219,6 +219,89 @@ broker-readiness statement, strategy validation, backtest, profitability claim,
 real-money readiness claim, live/realtime data claim, trading advice, or
 permission for automatic order execution.
 
+## v3.1 VPS Update And Browser Smoke Evidence
+
+Date: 2026-06-02
+
+Environment:
+
+- Host: `trading.cillyonline.de`
+- Repo path: `/root/repos/cilly-trading-signal`
+- Compose project: `cilly-trading-signal`
+- Branch/commit after update: `main` at `b553f86`
+- Deployment shape: VPS Docker Compose proxy stack with PostgreSQL, API, web,
+  and Caddy.
+- Operator model: VPS commands were executed manually by the operator and
+  sanitized output was reviewed. No `.env`, cookies, tokens, provider keys,
+  database URLs, private trading data, raw sensitive logs, or screenshots with
+  private data were recorded.
+
+Preflight summary:
+
+- Git branch before update: `main`.
+- Git status before update: clean, tracking `origin/main`.
+- Commit before update: `e1d3e4c`.
+- Disk space: PASS, root filesystem had substantial free space.
+- Docker CLI: PASS, `Docker version 29.3.1`.
+- Docker Compose CLI: PASS, `Docker Compose version v5.1.1`.
+- Existing services before update: API, web, Caddy, and PostgreSQL were running;
+  PostgreSQL was healthy.
+
+Update commands recorded:
+
+```bash
+git fetch origin
+git pull --ff-only origin main
+docker compose --env-file .env -p cilly-trading-signal -f infra/docker-compose.yml --profile proxy up --build -d
+docker compose --env-file .env -p cilly-trading-signal -f infra/docker-compose.yml exec -T api alembic upgrade head
+docker compose --env-file .env -p cilly-trading-signal -f infra/docker-compose.yml exec -T api alembic current
+```
+
+Update results:
+
+- Git update: PASS, fast-forwarded from `e1d3e4c` to `b553f86`.
+- API image build: PASS.
+- Web image build: PASS.
+- Stack restart: PASS.
+- PostgreSQL health after restart: PASS.
+- Alembic upgrade: PASS.
+- Alembic current: PASS, `20260531_0010 (head)`.
+- Services after restart: PASS, API, web, Caddy, and PostgreSQL were running.
+
+Smoke checks:
+
+- Local VPS API health: PASS, `http://127.0.0.1:8000/api/health` returned
+  healthy staging status according to operator-provided output.
+- Public API health: PASS, `https://trading.cillyonline.de/api/health` returned
+  healthy staging status from operator-provided output and from local follow-up
+  verification.
+- Public web load: PASS, `https://trading.cillyonline.de/` returned `HTTP 200`.
+- Browser smoke: PASS, operator confirmed login and browser route smoke passed
+  after the update.
+
+Local follow-up verification from Windows:
+
+```powershell
+curl.exe --ssl-no-revoke -fsS https://trading.cillyonline.de/api/health
+curl.exe --ssl-no-revoke -fsSI https://trading.cillyonline.de/
+```
+
+The `--ssl-no-revoke` flag was needed only because Windows Schannel could not
+complete certificate revocation checking from this local environment. It was not
+used to bypass a reported VPS application failure. The public API returned
+healthy staging status and the public web endpoint returned `HTTP/1.1 200 OK`.
+
+Known gaps and boundaries:
+
+- This was a staging/VPS smoke for the current private operator deployment, not
+  a production-readiness, broker-readiness, real-money, live/realtime,
+  profitability, strategy-validation, trading-advice, or automatic-execution
+  claim.
+- No private account data, private trade data, provider credentials, cookies,
+  tokens, database URLs, backup credentials, or raw sensitive logs were recorded.
+- The separate `staging` Compose project on the host was observed as running and
+  was not modified.
+
 ## v2.9 Current-Main Local Validation Evidence
 
 Date: 2026-06-02
