@@ -10,6 +10,11 @@ Status: No Go for production-like exposure.
 
 Date: 2026-06-01.
 
+v2.9 rebaseline snapshot, 2026-06-02: current-main local validation passed for
+sample-only local stack build/startup, migrations, API health, web HTTP load,
+sanitized evidence formatting, and cleanup. This is local/internal review evidence
+only and does not satisfy production-like requirements.
+
 Production-like means any environment or workflow that has one or more of these properties:
 
 - Public internet exposure beyond controlled owner/operator staging.
@@ -55,6 +60,20 @@ Production-like exposure remains blocked because these are not complete as produ
 - Incident rehearsal exists for private-data database restore/secret rotation, but production-like incident ownership and communication acceptance are not complete.
 - Rollback and database-restore decision evidence exists as runbook guidance, not target-specific production-like proof.
 - Public SaaS, broker/account connectivity, live/realtime claims, and automatic execution remain outside the approved scope.
+
+Current evidence still missing before any reconsideration:
+
+- Exact production-like target, exposure model, user model, and owner/operator
+  residual-risk acceptance.
+- Target-environment deployment smoke, browser evidence, monitoring operation,
+  rollback evidence, and incident ownership.
+- Reviewed dependency/container scan output for the intended release and target.
+- Offsite/geographic encrypted backup configuration and restore evidence from that
+  storage path into a disposable target.
+- Privacy handling package for screenshots, logs, backups, restores, private
+  records, and evidence sharing.
+- Secret rotation and environment handling evidence for app, database, provider,
+  backup, and deployment credentials.
 
 ## Evidence Handling
 

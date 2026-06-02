@@ -14,6 +14,13 @@ Private sample/paper staging: Conditional Go when the existing local/private-sta
 
 Production-like exposure: No Go.
 
+v2.9 rebaseline snapshot, 2026-06-02: the current-main local validation evidence
+passed for local Docker Compose build/startup, migrations, API health, web HTTP
+load, sanitized evidence formatting, and cleanup using sample-only boundaries.
+This does not change the gate: routine private owner/operator trading data remains
+No Go until the required privacy, backup/restore, incident, secret-rotation, and
+owner-acceptance evidence is complete.
+
 Rationale:
 
 - Controlled local review and private owner/operator staging are currently acceptable only for sample, synthetic, paper, or explicitly sanitized workflows.
@@ -52,6 +59,16 @@ Private owner/operator trading data may be reconsidered only after all of this i
 - Secret rotation procedure is documented and accepted for provider keys, app secrets, database credentials, and deployment credentials.
 - Residual risks are listed, including local-only backup risk unless an offsite encrypted target has current restore evidence.
 - The owner/operator explicitly accepts the remaining risk and scope in an issue, PR, or decision record without exposing private data.
+
+Current blockers before reconsideration:
+
+- No explicit owner/operator acceptance for routine private trading data use is recorded.
+- No current offsite/geographic encrypted backup restore evidence is recorded for
+  routine private-data reliance.
+- No private-data target-environment incident rehearsal with accepted secret
+  rotation and restore decision boundaries is recorded.
+- No evidence package proves that screenshots, logs, backups, restores, and issue
+  evidence can be handled routinely without leaking private records.
 
 ## Allowed Evidence While Gate Is No Go
 
