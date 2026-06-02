@@ -124,14 +124,14 @@ Date: 2026-06-02
 Environment:
 
 - Windows workspace: `C:\repos\cilly-trading-signal`
-- Branch/commit context: `main` at `0390c35`
+- Branch/commit context: `main` at `d7fc8af`
 - Deployment shape: local Docker Compose stack with PostgreSQL, API, and web.
 - Data scope: local/sample validation only; no private watchlists, broker data,
   account data, fills, provider credentials, cookies, screenshots, database dumps,
   raw logs, private notes, or production data were recorded.
-- Browser/UI scope: web HTTP load was checked. The desktop/mobile visual cockpit
-  checklist from `docs/COCKPIT_REVIEW_WORKFLOW.md` was not run and remains
-  operator-run evidence.
+- Browser/UI scope: web HTTP load was checked, then the local Caddy proxy was
+  used for same-origin browser validation at `https://localhost` because direct
+  `http://localhost:3000` loads the web app but does not route `/api/*`.
 
 Commands and checks recorded:
 
@@ -139,6 +139,8 @@ Commands and checks recorded:
 .\scripts\smoke_test.ps1 -TimeoutSeconds 180
 curl.exe -fsS -I http://localhost:3000
 .\scripts\format_smoke_evidence.ps1 -CommitSha main-0390c35 -SmokeRunnerStatus pass -ApiHealth pass -WebLoad pass -BrowserChecklist 'not run'
+docker compose -f infra/docker-compose.yml --profile proxy up -d caddy
+curl.exe -k -fsS https://localhost/api/health
 ```
 
 Sanitized formatter output:
@@ -176,32 +178,42 @@ Stack and service results:
   `/reviews/[id]`, `/screener`, and `/trades/[id]`.
 - Web HTTP load: PASS, `curl.exe -fsS -I http://localhost:3000` returned
   `HTTP/1.1 200 OK`.
+- Local Caddy proxy startup: PASS, `caddy` started with the existing proxy
+  profile and routed `/api/*` to the API container.
+- Proxied API health: PASS, `curl.exe -k -fsS https://localhost/api/health`
+  returned healthy status. `-k` was used only for the local self-signed Caddy
+  certificate.
+- Proxied login/session path: PASS. Local placeholder admin login succeeded
+  through `https://localhost/api/auth/login`, and `/api/auth/me` returned `200`
+  with the same session. Cookie values were not recorded.
 
 Cockpit route checklist:
 
 | Route | Desktop | Mobile | Evidence Notes |
 | --- | --- | --- | --- |
-| `/reviews/[id]` | not run | not run | Route was included in successful Docker web build; visual follow-up disposition check still requires operator browser review. |
-| `/screener` | not run | not run | Route was included in successful Docker web build; visual mobile candidate review still requires operator browser review. |
-| `/trades/[id]` | not run | not run | Route was included in successful Docker web build; visual Manage/Close/Journal grouping still requires operator browser review. |
+| `/reviews/[id]` | pass | pass | Operator browser check confirmed Review Entries, `Suggested disposition: deferred`, evidence-only copy, Draft, and Edit are visible. Mobile emulation passed. |
+| `/screener` | pass | pass | Operator mobile validation passed; no remaining mobile candidate-review friction reported. |
+| `/trades/[id]` | pass | pass | Operator mobile validation passed; no remaining Manage/Close/Journal grouping friction reported. |
 
 Known gaps from this run:
 
-- Desktop/mobile visual browser validation was not run in this environment. Use
-  the checklist in `docs/COCKPIT_REVIEW_WORKFLOW.md` with sample, synthetic, or
-  paper data only.
-- No authenticated review, Screener, or Trade Detail workflow data was created in
-  this pass; the evidence covers local stack build/startup, migrations, API
-  health, Docker web build, web HTTP load, and sanitized evidence formatting.
+- Direct `http://localhost:3000` is suitable for web-load checks but not for
+  authenticated browser validation, because the browser API base path is `/api`
+  and requires same-origin proxy routing. Use `https://localhost` for local
+  browser validation with the Caddy profile.
+- No blocking desktop or mobile cockpit friction was reported by the operator
+  validation. Issue `#515` can be closed without follow-up UI work unless later
+  evidence contradicts this pass.
 - The local stack was left running after validation so an operator can continue
-  browser review at `http://localhost:3000`. Tear down with
+  browser review at `https://localhost`. Tear down with
   `./scripts/smoke_test.ps1 -Cleanup` when finished.
 
 Interpretation:
 
 The v3.1 owner cockpit local validation passed for local Docker Compose build,
 stack startup, current database migrations, API health, Docker web build, web
-HTTP load, and sanitized evidence formatting. This supports controlled internal
+HTTP load, Caddy-routed same-origin browser access, proxied login/session, and
+operator desktop/mobile cockpit review. This supports controlled internal
 owner/operator review only. It is not a production-readiness statement,
 broker-readiness statement, strategy validation, backtest, profitability claim,
 real-money readiness claim, live/realtime data claim, trading advice, or
