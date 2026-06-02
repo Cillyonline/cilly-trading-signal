@@ -14,6 +14,12 @@ Date: 2026-05-31.
 
 Production-like exposure: No Go.
 
+v2.9 rebaseline snapshot, 2026-06-02: current-main local validation passed for
+Docker Compose build/startup, migrations, API health, web HTTP load, sanitized
+evidence formatting, and cleanup. This strengthens local review evidence only;
+it does not approve production-like exposure, routine private data, broker use,
+live/realtime claims, profitability claims, or automatic execution.
+
 Rationale:
 
 - The app has documented local setup, deployment runbooks, health checks, monitoring checklists, backup guidance, restore guidance, and a repeatable backup restore drill.
@@ -58,6 +64,17 @@ Rationale:
 | Offsite encrypted backups | Procedure documented; implementation and restore evidence still required before private-data or production-like reliance | `docs/DEPLOYMENT_RUNBOOK.md#offsite-encrypted-backups`, `#420` |
 | Private-data readiness | Fail; routine private trading data use remains blocked pending separate evidence and acceptance | `docs/PRIVATE_DATA_READINESS_DECISION_GATE.md` |
 | Production-like/public exposure decision | Fail; explicitly No Go; future requirements and blockers are documented separately | This gate, `docs/PRODUCTION_LIKE_REQUIREMENTS_REVIEW.md` |
+
+Current No-Go summary:
+
+- Local review remains Go for sample, synthetic, and paper workflows when relevant
+  checks pass and secrets stay local/untracked.
+- Private owner/operator staging remains Conditional Go only under the existing
+  private-staging gate and sanitized evidence boundaries.
+- Production-like exposure remains No Go because target-specific monitoring,
+  offsite backup restore evidence, incident ownership, rollback, scan acceptance,
+  privacy handling, secret rotation, and owner acceptance are not complete.
+- Routine private trading data remains No Go under the separate private-data gate.
 
 ## Required Evidence
 
