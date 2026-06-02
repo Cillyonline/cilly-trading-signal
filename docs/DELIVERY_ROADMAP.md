@@ -50,6 +50,11 @@ Done:
   coverage was made deterministic, review evidence templates and UI wording were
   clarified, a safe dry-run browser smoke contract was documented, and a
   non-invasive local smoke evidence formatter was added.
+- v2.9 current-state rebaseline, v3.0 Owner Cockpit Polish, and v3.1 Operator
+  Validation And Evidence are complete. The owner/operator review workflow was
+  rebaselined, local validation evidence was recorded, Review follow-up
+  disposition, mobile Screener review, and mobile Trade Detail grouping were
+  polished, and operator-run VPS update/browser smoke evidence was recorded.
 
 Partial:
 
@@ -59,7 +64,7 @@ Partial:
 - Dashboard, journal, and performance views include useful MVP-level summaries, risk warnings, and journal analytics, but are not full institutional analytics modules.
 - Risk enforcement covers manual trade creation basics and portfolio/risk review warnings, not complete account-level risk management or automatic position sizing.
 - Multi-timeframe analysis still requires current stored data for required `1W`, `1D`, and `4H` timeframes; provider sync does not automatically fill unsupported timeframes or rerun analysis.
-- Historical/paper review batches are implemented at an MVP level with correction, repeated-finding visibility, follow-up status snapshots, and improved evidence templates; richer review analytics and automated follow-up workflows remain future usability work.
+- Historical/paper review batches are implemented at an MVP level with correction, repeated-finding visibility, follow-up status snapshots, improved evidence templates, and clearer follow-up disposition drafting; richer review analytics and automated follow-up workflows remain future usability work.
 - Auth is intentionally single-user and admin-only for MVP use.
 
 Missing:
@@ -72,7 +77,7 @@ Missing:
 
 Current blockers and risks:
 
-- The app is not production-ready until current deployment smoke evidence, monitoring, secrets operations, restore drills, incident response, security review, and explicit owner acceptance are completed for the target environment.
+- The app is not production-ready until production-like monitoring, secrets operations, restore drills, incident response rehearsal, security/scan acceptance, private-data handling, rollback evidence, and explicit owner acceptance are completed for the target environment. Current local and private VPS smoke evidence supports controlled owner/operator review only.
 - Strategy behavior remains a deterministic decision-support hypothesis and must not be presented as trading advice or validated profitability.
 - Local development depends on `uv`, Python 3.12, Node.js 20, Docker, and a reachable PostgreSQL database or Docker Compose.
 - Private VPS staging is accepted for controlled owner/operator use only after documented operations hardening; production-like or public use remains blocked until a separate operational readiness decision addresses data-handling readiness, offsite backups, security review, and monitoring expectations.
@@ -471,7 +476,7 @@ Goal: rebaseline the current internal review candidate after calibration/evidenc
 prep, record current-main sample-only validation evidence, and identify the top
 owner/operator polish gaps before starting a larger v3.0 increment.
 
-Status: In progress.
+Status: Done.
 
 Primary work:
 
@@ -490,18 +495,67 @@ Done when:
 - Top polish candidates are prioritized without private data, production-like
   exposure, broker integration, profitability claims, or automatic execution.
 
+## v3.0 - Owner Cockpit Polish
+
+Goal: reduce owner/operator workflow friction after the v2.9 rebaseline while
+preserving manual review, evidence-only calibration, and no-execution boundaries.
+
+Status: Done.
+
+Primary work:
+
+- Polish Review follow-up disposition visibility and draft wording: `#506`.
+- Polish mobile Screener candidate review density and next-action clarity: `#507`.
+- Polish mobile Trade Detail workflow grouping for Manage, Close, and Journal:
+  `#508`.
+
+Done when:
+
+- Review follow-up disposition is clearer without automatic issue creation or
+  strategy-rule changes.
+- Screener candidates remain manual review candidates with explicit Watchlist
+  conversion only.
+- Trade Detail remains manual documentation only, with clearer mobile grouping.
+- CI, local build, and PR review pass.
+
+## v3.1 - Operator Validation And Evidence
+
+Goal: validate the v3.0 cockpit polish with local/sample evidence and an
+operator-run VPS smoke before choosing the next delivery gate.
+
+Status: Done.
+
+Primary work:
+
+- Add a repeatable owner/operator cockpit validation checklist: `#516`.
+- Record local Docker Compose, API health, web load, Caddy-routed browser login,
+  and desktop/mobile cockpit validation evidence: `#514`, `#515`.
+- Update the private VPS deployment from `e1d3e4c` to `b553f86`, rebuild/restart
+  the stack, verify Alembic head, API health, public web load, and operator
+  browser smoke, then record sanitized evidence: `#520`.
+
+Done when:
+
+- Local/sample and private VPS evidence is recorded without secrets, cookies,
+  private trading data, production-readiness claims, profitability claims,
+  live/realtime claims, trading advice, broker integration, or automatic
+  execution.
+- No remaining v3.1 cockpit friction is open in the tracker.
+
 ## Next Candidate Increment
 
-Recommended next planning candidate after v2.9: v3.0 Owner Cockpit Polish,
-focused on fewer workflow clicks, clearer prioritization, better review evidence,
-and mobile usability. Operational evidence hardening remains a separate track
-before any broader exposure.
+Recommended next planning candidate after v3.1: v3.2 Roadmap Rebaseline And Next
+Gate Decision, focused on keeping roadmap/release/gate docs aligned and choosing
+the next conservative delivery track.
 
-Accepted v3.0 polish candidates from the v2.9 workflow friction review:
+Completed v3.0/v3.1 validation evidence:
 
 - Review follow-up disposition workflow polish: `#506`.
 - Mobile Screener candidate review polish: `#507`.
 - Mobile Trade Detail workflow grouping polish: `#508`.
+- Owner/operator cockpit validation checklist: `#516`.
+- Local and operator browser validation evidence: `#514`, `#515`.
+- VPS update and browser smoke evidence: `#520`.
 
 Deferred candidates:
 
@@ -510,11 +564,17 @@ Deferred candidates:
 - Browser smoke automation, pending a separate implementation issue under the
   safe dry-run contract and dependency review.
 
-Alternative next increments:
+Alternative next increments after v3.2:
 
-- Screener/mobile usability refinements after the v2.9 workflow friction review.
-- Operational evidence hardening before any broader exposure.
-- Review-batch follow-up workflow polish after the v2.9 prioritization pass.
+- Production-like readiness hardening, if the owner wants to move beyond private
+  owner/operator staging.
+- Safe browser smoke automation under the documented dry-run contract.
+- Data-context handoff UI improvements, if a fresh browser walkthrough confirms
+  the friction in the app.
+- Provider/intraday data expansion after cost, license, rate-limit, and safety
+  review.
+- Additional paper calibration and golden-case coverage before strategy-rule
+  changes.
 
 ## Not Now
 

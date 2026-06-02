@@ -6,8 +6,8 @@ This checklist records the current MVP release-candidate posture for review and 
 
 ## Current Rebaseline Status
 
-- Version / candidate: final internal owner/operator review candidate during v2.9 current-state rebaseline.
-- Evidence source: automated API/Web/Security Scan verification from merged v2.2-v2.9-prep PRs plus the v2.8 final internal workflow smoke recorded in [MVP Smoke Test](MVP_SMOKE_TEST.md#v28-final-internal-workflow-smoke). Current-main sample-only validation evidence is tracked as v2.9 follow-up work.
+- Version / candidate: final internal owner/operator review candidate after v3.1 operator validation and VPS smoke.
+- Evidence source: automated API/Web/Security Scan verification from merged PRs, v2.8 final internal workflow smoke, v2.9 current-main local validation, v3.1 local/browser cockpit validation, and v3.1 private VPS update/browser smoke recorded in [MVP Smoke Test](MVP_SMOKE_TEST.md).
 - Status: Conditional Go for controlled internal single-owner/operator review workflows with sample, synthetic, or paper data. This is not production-ready, broker-ready, profitability-validated, live/realtime, or real-money trading evidence.
 - Current decision gate: [Final Internal Review Decision Gate](FINAL_INTERNAL_REVIEW_DECISION_GATE.md) records Conditional Go for controlled internal review only. [Deployment Readiness Decision Gate v2](DEPLOYMENT_READINESS_DECISION_GATE_V2.md) still governs local/private staging boundaries; [Private Data Readiness Decision Gate](PRIVATE_DATA_READINESS_DECISION_GATE.md) blocks routine private trading data use; production-like exposure remains No Go.
 - Boundary: decision-support only, manual execution only, no broker integration, no automatic order execution, no profitability claims, no live/realtime claims, no trading advice, and no production-readiness claim.
@@ -22,11 +22,14 @@ This checklist records the current MVP release-candidate posture for review and 
 - v2.7 added mobile layout audit, improved mobile signal cards, improved mobile review batch entry/correction grouping, mobile Screener density improvements, mobile trade workflow grouping, responsive core-page header density reductions, and a basic PWA manifest/icons baseline.
 - v2.8 rebaselined product docs, recorded final internal workflow smoke evidence, added smoke-runner migration handling, repeatable browser clickthrough guidance, and the final internal owner/operator review decision gate.
 - v2.9-prep expanded the first paper calibration batch to 80 examples, added deterministic resistance/missing-context/trigger-confirmation coverage, improved review evidence templates and UI wording, documented a safe dry-run browser smoke contract, and added a non-invasive smoke evidence formatter.
+- v2.9 rebaselined current status, recorded local sample-only smoke evidence, refreshed gate summaries, and prioritized owner/operator cockpit polish candidates.
+- v3.0 polished Review follow-up disposition, mobile Screener candidate review, and mobile Trade Detail workflow grouping.
+- v3.1 added an operator cockpit validation checklist, recorded local/browser validation evidence, confirmed no remaining mobile cockpit friction, updated the private VPS to current app code, and recorded VPS browser smoke evidence.
 
 ### Current Known Gaps
 
-- Final current-main internal workflow smoke evidence has passed for the local Docker Compose stack, current migrations, web HTTP load, and API-assisted sample-only workflow coverage; repeatable browser clickthrough guidance exists but remains operator-run rather than automated evidence.
-- v2.9 current-main sample-only validation evidence is the next planned evidence update; until recorded, v2.8 smoke remains the latest full workflow evidence.
+- Current local and private VPS owner/operator evidence has passed for Docker Compose build/startup, migrations, API health, web load, Caddy-routed browser login, cockpit desktop/mobile validation, and VPS browser smoke.
+- Repeatable browser clickthrough guidance exists, but automated browser smoke remains a future optional implementation under the safe dry-run contract.
 - Final internal go/no-go decision gate is recorded as Conditional Go for controlled internal owner/operator review only.
 - Deployment readiness evidence, monitoring runbook links, review correction audit history, auditable finding categories, active-status portfolio risk treatment, and mobile Screener/trade/header follow-ups have been addressed for controlled internal review.
 - Persistent local/private-staging volumes must still verify current migrations before workflow testing; the local smoke runner applies migrations and fails clearly on migration errors.
