@@ -173,6 +173,17 @@ GOLDEN_CASES = [
         expected_quality={"risk_plan": "blocked", "data_quality": "blocked"},
     ),
     GoldenCase(
+        name="v3_3_trend_pullback_weak_risk_reward_blocks_review",
+        evaluate=lambda: evaluate_trend_pullback_long(
+            trend_payload(target_1_override=Decimal("105"))
+        ),
+        expected_status=SignalStatus.NO_SETUP,
+        expected_score_class=ScoreClass.NO_TRADE,
+        expected_no_trade_reasons={"risk_reward_below_minimum"},
+        expected_quality={"risk_plan": "blocked"},
+        disallowed_statuses={SignalStatus.WATCHLIST, SignalStatus.ARMED, SignalStatus.TRIGGERED},
+    ),
+    GoldenCase(
         name="review_finding_too_permissive_trend_pullback_resistance_blocks",
         evaluate=lambda: evaluate_trend_pullback_long(
             trend_payload(strong_resistance_nearby=True)
@@ -236,6 +247,17 @@ GOLDEN_CASES = [
         expected_no_trade_reasons={"strong_resistance_nearby"},
         expected_risk_flags={"major_resistance_nearby", "strong_resistance_nearby"},
         expected_quality={"structure": "blocked"},
+    ),
+    GoldenCase(
+        name="v3_3_base_breakout_weak_risk_reward_blocks_review",
+        evaluate=lambda: evaluate_base_breakout_long(
+            base_breakout_payload(target_1_override=Decimal("108"))
+        ),
+        expected_status=SignalStatus.NO_SETUP,
+        expected_score_class=ScoreClass.NO_TRADE,
+        expected_no_trade_reasons={"risk_reward_below_minimum"},
+        expected_quality={"risk_plan": "blocked"},
+        disallowed_statuses={SignalStatus.WATCHLIST, SignalStatus.ARMED, SignalStatus.TRIGGERED},
     ),
 ]
 
