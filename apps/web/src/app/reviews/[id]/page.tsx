@@ -33,6 +33,8 @@ type EntryEditFormState = {
   notes: string;
 };
 
+type FollowUpDisposition = "created" | "accepted limitation" | "deferred" | "not applicable";
+
 const emptyFilters: EntryFilterState = {
   label: "",
   assetClass: "",
@@ -382,6 +384,7 @@ function EntryRow({
   onSaveEdit: (event: React.FormEvent<HTMLFormElement>) => void;
 }) {
   const isAttentionFinding = entry.manual_review_label !== "useful" || entry.follow_up_needed;
+  const disposition = getFollowUpDisposition(entry);
   if (isEditing && editForm) {
     return (
       <form className="grid gap-4 bg-slate-950/70 p-4 text-sm" onSubmit={onSaveEdit}>
@@ -407,12 +410,12 @@ function EntryRow({
             <SelectInput label="Category Source" value={editForm.finding_category_source} onChange={(finding_category_source) => onEditFormChange({ ...editForm, finding_category_source: finding_category_source as ReviewFindingCategorySource })} options={[["derived", "Derived"], ["manual", "Manual confirmed"]]} />
           </div>
         </EditSection>
-        <EditSection title="Evidence" description="Optional und sanitisiert. Keine privaten Notizen oder Profitabilitaetsclaims erfassen.">
+        <EditSection title="Evidence" description="Optional und sanitisiert. Disposition ueber URL oder Notes festhalten; keine privaten Notizen oder Profitabilitaetsclaims erfassen.">
           <div className="grid gap-3 md:grid-cols-2">
             <TextInput label="Outcome R" value={editForm.outcome_r} onChange={(outcome_r) => onEditFormChange({ ...editForm, outcome_r })} />
             <TextInput label="Outcome Measurement Rule" value={editForm.outcome_measurement_rule} onChange={(outcome_measurement_rule) => onEditFormChange({ ...editForm, outcome_measurement_rule })} />
             <TextInput label="Follow-up URL" value={editForm.follow_up_issue_url} onChange={(follow_up_issue_url) => onEditFormChange({ ...editForm, follow_up_issue_url })} />
-            <TextInput label="Notes" value={editForm.notes} onChange={(notes) => onEditFormChange({ ...editForm, notes })} />
+            <TextInput label="Disposition / Notes" value={editForm.notes} onChange={(notes) => onEditFormChange({ ...editForm, notes })} placeholder="accepted limitation / akzeptierte Limitierung / deferred rationale" />
           </div>
         </EditSection>
         <p className="text-xs text-yellow-100/80">
@@ -441,6 +444,12 @@ function EntryRow({
         <p className="mt-2 text-xs text-slate-400">
           Kategorie: {formatLabel(entry.finding_category)} ({entry.finding_category_source === "manual" ? "manual confirmed" : "derived"})
         </p>
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+          <span className={`rounded-full border px-3 py-1 ${dispositionTone[disposition]}`}>
+            Suggested disposition: {disposition}
+          </span>
+          <span className="text-slate-500">Planning evidence only; final rationale belongs in sanitized notes or linked issue.</span>
+        </div>
         <RevisionHistory entry={entry} />
       </div>
       <span className="text-slate-400">{formatLabel(entry.signal_status)} / {formatLabel(entry.score_class ?? "no score")}</span>
@@ -685,6 +694,7 @@ function extractTextValues(value: unknown): string[] {
 
 function buildFollowUpDraft(batch: ReviewBatch, entry: ReviewEntry) {
   const blockers = extractTextValues(entry.quality_blockers);
+  const disposition = getFollowUpDisposition(entry);
   return [
     `## Calibration Follow-up: ${entry.symbol} ${formatLabel(entry.manual_review_label)}`,
     "",
@@ -699,8 +709,11 @@ function buildFollowUpDraft(batch: ReviewBatch, entry: ReviewEntry) {
     `- Manual review label: ${formatLabel(entry.manual_review_label)}`,
     `- Finding category: ${formatLabel(entry.finding_category)}`,
     `- Follow-up needed: ${entry.follow_up_needed ? "yes" : "no"}`,
+    `- Suggested disposition: ${disposition}`,
+    `- Follow-up issue URL: ${entry.follow_up_issue_url ?? "not linked"}`,
     `- Quality blockers: ${blockers.length > 0 ? blockers.join(", ") : "none recorded"}`,
-    "- Repeated pattern / disposition: fill manually if this entry belongs to a repeated blocker or false-positive pattern.",
+    "- Repeated pattern: fill manually if this entry belongs to a repeated blocker, repeated category, or false-positive review pattern.",
+    "- Disposition rationale: fill manually when accepted limitation, deferred, or not applicable.",
     "",
     "## Expected Behavior",
     "Describe the conservative, explainable behavior expected from the strategy or review workflow.",
@@ -715,8 +728,42 @@ function buildFollowUpDraft(batch: ReviewBatch, entry: ReviewEntry) {
     "- Notes have been reviewed for private account data before filing.",
     "",
     "## Suggested Follow-up",
-    "Manual review required: decide whether documentation, fixture coverage, or calibration discussion is needed.",
+    suggestedFollowUpText(disposition),
   ].join("\n");
+}
+
+const dispositionTone: Record<FollowUpDisposition, string> = {
+  "accepted limitation": "border-yellow-300/40 bg-yellow-300/10 text-yellow-100",
+  created: "border-emerald-300/40 bg-emerald-300/10 text-emerald-100",
+  deferred: "border-orange-300/40 bg-orange-300/10 text-orange-100",
+  "not applicable": "border-slate-500/40 bg-slate-800/60 text-slate-300",
+};
+
+function getFollowUpDisposition(entry: ReviewEntry): FollowUpDisposition {
+  if (entry.follow_up_issue_url) {
+    return "created";
+  }
+  if (!entry.follow_up_needed && entry.manual_review_label === "useful") {
+    return "not applicable";
+  }
+  const notes = entry.notes?.toLowerCase() ?? "";
+  if (notes.includes("accepted limitation") || notes.includes("akzeptierte limitierung")) {
+    return "accepted limitation";
+  }
+  return "deferred";
+}
+
+function suggestedFollowUpText(disposition: FollowUpDisposition) {
+  if (disposition === "created") {
+    return "Linked issue exists. Verify it contains sanitized evidence, expected behavior, actual output, and safety boundaries.";
+  }
+  if (disposition === "not applicable") {
+    return "No follow-up expected unless later repeated evidence changes the review decision.";
+  }
+  if (disposition === "accepted limitation") {
+    return "Document why the behavior is known, safe, and intentionally left unchanged for now.";
+  }
+  return "Manual review required: decide whether to create a sanitized issue, accept the limitation, or defer to a later batch.";
 }
 
 function entryToEditForm(entry: ReviewEntry): EntryEditFormState {
