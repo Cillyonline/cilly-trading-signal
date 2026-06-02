@@ -20,10 +20,17 @@ evidence formatting, and cleanup. This strengthens local review evidence only;
 it does not approve production-like exposure, routine private data, broker use,
 live/realtime claims, profitability claims, or automatic execution.
 
+v3.1 validation snapshot, 2026-06-02: owner/operator cockpit validation passed
+for local Caddy-routed browser login, desktop/mobile cockpit review, and private
+VPS update/browser smoke at `trading.cillyonline.de`. This keeps private
+owner/operator staging in Conditional Go only; it does not approve
+production-like exposure, routine private data, broker use, live/realtime claims,
+profitability claims, or automatic execution.
+
 Rationale:
 
 - The app has documented local setup, deployment runbooks, health checks, monitoring checklists, backup guidance, restore guidance, and a repeatable backup restore drill.
-- Private VPS staging passed the current documented validation pass for controlled owner/operator use, including preflight, deployment, sample-only browser clickthrough, backup/restore drill, rollback procedure review, and monitoring/security review.
+- Private VPS staging passed the current documented validation pass for controlled owner/operator use, including preflight, deployment, sample-only browser clickthrough, backup/restore drill, rollback procedure review, monitoring/security review, and the v3.1 operator-run update/browser smoke.
 - Structured API health details are available for operator diagnostics without exposing secrets.
 - Current private-staging monitoring and rollback evidence are documented, but scan-result review policy, offsite encrypted backup storage, privacy handling, secret rotation, and production-like acceptance are not yet complete.
 - The product remains decision-support only with manual execution only.
@@ -54,6 +61,7 @@ Rationale:
 | Manual execution and no-broker safety boundary | Pass | `docs/MVP_RELEASE_CHECKLIST.md`, `docs/STRATEGY_AND_ALERTS.md` |
 | Local/API/Web CI on recent PRs | Pass | Latest merged PR checks on `main` |
 | Private VPS staging decision | Pass for private owner/operator staging only | `docs/VPS_STAGING_DECISION_GATE.md` |
+| v3.1 local and private VPS smoke evidence | Pass for controlled owner/operator validation only | `docs/MVP_SMOKE_TEST.md#v31-owner-cockpit-local-validation-evidence`, `docs/MVP_SMOKE_TEST.md#v31-vps-update-and-browser-smoke-evidence` |
 | Deployment and rollback guidance | Pass as documented operator guidance | `docs/DEPLOYMENT_RUNBOOK.md` |
 | Structured health diagnostics | Pass for sanitized operator diagnostics | `/api/health`, `/api/health/details` |
 | Backup creation guidance | Pass as documented operator guidance | `docs/DEPLOYMENT_RUNBOOK.md#postgresql-backups` |

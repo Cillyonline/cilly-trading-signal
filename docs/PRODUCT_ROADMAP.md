@@ -149,10 +149,14 @@ Der aktuelle Stand ist ein kontrolliertes Owner/Operator-Review-Cockpit, kein pr
   Confirmation.
 - Review-Evidence-Status, Templates und Evidence-only UI Copy fuer wiederholte
   Findings und Follow-up-Dispositionen.
-- Mobile Review Verbesserungen fuer Signals und Review Batches plus installierbare PWA-Manifest-Baseline.
+- Mobile Review Verbesserungen fuer Signals, Review Batches, Screener-Kandidaten
+  und Trade Detail Workflows plus installierbare PWA-Manifest-Baseline.
 - Operational Readiness Docs: Monitoring Checklist, Health Details, Backup Restore Drill, Security Scan Workflow und Incident Runbook.
 - Safe-Automation-Prep: dokumentierter Dry-run Browser-Smoke-Contract und
   nicht-invasiver lokaler Smoke-Evidence-Formatter.
+- v3.1 Owner/Operator Validation Evidence: lokale Docker-/Browser-Validation,
+  Operator-Checkliste, private VPS-Aktualisierung und Browser-Smoke sind
+  dokumentiert fuer kontrollierte Owner/Operator-Nutzung.
 
 Weiterhin nicht enthalten:
 
@@ -163,6 +167,9 @@ Weiterhin nicht enthalten:
 - Backtesting-/Profitabilitaetsvalidierung.
 - Multi-User, Rollenmodell, Registrierung, Billing oder Support-Prozesse.
 - Routine-Nutzung privater Trading-Daten ohne separaten Private-Data Gate.
+- Produktionseinsatz oder production-like Public Exposure ohne separaten Gate,
+  Monitoring-/Backup-/Incident-/Security-/Privacy-Evidence und explizite
+  Owner-Akzeptanz.
 
 ## Datenquellen
 
