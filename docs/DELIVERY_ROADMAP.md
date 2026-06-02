@@ -497,6 +497,19 @@ focused on fewer workflow clicks, clearer prioritization, better review evidence
 and mobile usability. Operational evidence hardening remains a separate track
 before any broader exposure.
 
+Accepted v3.0 polish candidates from the v2.9 workflow friction review:
+
+- Review follow-up disposition workflow polish: `#506`.
+- Mobile Screener candidate review polish: `#507`.
+- Mobile Trade Detail workflow grouping polish: `#508`.
+
+Deferred candidates:
+
+- Data-context handoff UI changes, pending a sample browser walkthrough that
+  confirms the friction in the app rather than only in documentation.
+- Browser smoke automation, pending a separate implementation issue under the
+  safe dry-run contract and dependency review.
+
 Alternative next increments:
 
 - Screener/mobile usability refinements after the v2.9 workflow friction review.
