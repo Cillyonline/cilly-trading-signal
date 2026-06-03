@@ -149,8 +149,13 @@ Evidence:
 
 - API health route: PASS via local `Invoke-RestMethod` against
   `https://trading.cillyonline.de/api/health`, returning healthy staging status.
-- Web route: NOT CONCLUSIVE from local non-interactive PowerShell / Windows
-  Schannel checks. See `docs/MVP_SMOKE_TEST.md#v35-existing-vps-public-route-partial-evidence`.
+- API health route: PASS via local `curl.exe --ssl-no-revoke` against
+  `https://trading.cillyonline.de/api/health`.
+- Web route: PASS via local `curl.exe --ssl-no-revoke -fsSI` against
+  `https://trading.cillyonline.de/`, returning `HTTP/1.1 200 OK` through Caddy.
+- Web/API route checks without the Windows Schannel revocation workaround remain
+  not conclusive from this local environment. See
+  `docs/MVP_SMOKE_TEST.md#v35-existing-vps-public-route-partial-evidence`.
 - Containers: not checked; requires operator-guided VPS status evidence.
 - PostgreSQL: not checked; requires operator-guided VPS or authenticated smoke
   evidence.
@@ -167,8 +172,9 @@ Evidence:
 
 Conclusion:
 
-- This partial evidence confirms only that the public API health route is
-  reachable and healthy from the local environment.
+- This partial evidence confirms that the public API health and public web route
+  are reachable from the local environment when using the same Windows Schannel
+  revocation workaround recorded in v3.1.
 - It does not satisfy production-like monitoring escalation evidence and does not
   close the v3.5 monitoring issue. Full completion still requires operator-visible
   monitoring coverage for API health, web route, containers, PostgreSQL,
