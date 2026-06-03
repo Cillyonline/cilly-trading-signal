@@ -22,6 +22,12 @@ v3.5 status, 2026-06-03: no offsite target is currently prepared. The offsite
 backup and restore drill is blocked on target selection and operator-held
 credential setup. See `docs/OFFSITE_BACKUP_TARGET_EVALUATION.md#v35-blocked-evidence`.
 
+v3.6 status, 2026-06-03: private S3-compatible object storage is selected as the
+first offsite/geographic target category. Provider, bucket/repository, access
+credentials, Restic repository settings, backup, check, retention, and restore
+drill remain operator-required and are not complete. See
+`docs/OFFSITE_BACKUP_TARGET_EVALUATION.md#v36-target-category-and-credential-path`.
+
 ## Acceptance Checklist
 
 | Area | Required evidence before reliance | Status before operator run |
