@@ -124,6 +124,11 @@ It supports manual owner/operator private-staging review only and does not
 approve production-like exposure, external alerting, offsite backup reliance, or
 routine private trading data.
 
+v3.5 offsite backup/restore status is blocked because no offsite/geographic
+target is currently prepared. See
+`docs/OFFSITE_BACKUP_TARGET_EVALUATION.md#v35-blocked-evidence`. Production-like
+exposure and routine private trading data remain No Go.
+
 ## Evidence Handling
 
 Use `docs/PRIVATE_DATA_EVIDENCE_HANDLING.md` for all production-like review evidence. Do not include secrets, `.env` values, database URLs, cookies, tokens, provider keys, backup repository credentials, raw logs, screenshots with private data, dump contents, restored rows, private watchlists, trade notes, journal notes, broker/account data, or provider dashboards.
