@@ -302,6 +302,59 @@ Known gaps and boundaries:
 - The separate `staging` Compose project on the host was observed as running and
   was not modified.
 
+## v3.5 Existing VPS Public Route Partial Evidence
+
+Date: 2026-06-03
+
+Scope:
+
+- Target: existing VPS at `trading.cillyonline.de`.
+- Exposure: controlled private owner/operator staging only.
+- Data class: sample, synthetic, and paper data only.
+- Approved action class: non-destructive public route smoke only.
+
+Checks run from the local Windows workspace:
+
+```powershell
+Invoke-RestMethod -Uri "https://trading.cillyonline.de/api/health" -Method GET
+curl.exe -fsSI https://trading.cillyonline.de/
+curl.exe -fsS https://trading.cillyonline.de/api/health
+curl.exe -fsS https://trading.cillyonline.de/api/health/details
+```
+
+Results:
+
+- Public API health via `Invoke-RestMethod`: PASS, returned healthy staging
+  status with service `Cilly Trading Signal API`, version `0.1.0`, and
+  environment `staging`.
+- Public web route via `Invoke-WebRequest -Method Head`: NOT CONCLUSIVE from this
+  non-interactive PowerShell environment because `Invoke-WebRequest` attempted an
+  interactive behavior that is unavailable in non-interactive mode.
+- Public web/API checks via `curl.exe`: NOT CONCLUSIVE from this Windows
+  environment because Schannel certificate revocation checking failed with
+  `CRYPT_E_NO_REVOCATION_CHECK`. This matches the known local Windows
+  revocation-check limitation recorded in the v3.1 evidence; it is not evidence
+  of a VPS application failure.
+
+Not run in this partial check:
+
+- SSH/VPS command checks.
+- `git pull`, deployment, restart, migration, or rollback command.
+- Compose status, container health, local VPS API route, or Alembic current.
+- Browser login smoke.
+- Restore drill, backup check, secret rotation, firewall, DNS, or private-data
+  workflow.
+
+Conclusion:
+
+- This partial evidence supports only that the public API health route was
+  reachable and healthy from the local environment.
+- It does not satisfy the full v3.5 target deployment smoke and rollback
+  readiness issue. Full completion still requires operator-guided VPS evidence
+  for commit, service state, migration version, browser/login smoke, and rollback
+  readiness.
+- Production-like exposure and routine private trading data remain No Go.
+
 ## v2.9 Current-Main Local Validation Evidence
 
 Date: 2026-06-02
