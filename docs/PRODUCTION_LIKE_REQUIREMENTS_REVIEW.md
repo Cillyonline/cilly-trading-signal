@@ -106,6 +106,12 @@ Security scan acceptance evidence is tracked in
 sanitized review record for current dependency and container scan output, but it
 does not accept findings or approve production-like exposure by itself.
 
+v3.5 private-staging smoke scan evidence for commit
+`d94a59a5a32e3bcfa743be1a3de606b0969a040d` is recorded in
+`docs/V3_5_SECURITY_SCAN_ACCEPTANCE_EVIDENCE.md`. It supports the approved
+private-staging smoke scope only and does not change the production-like No Go
+decision.
+
 ## Evidence Handling
 
 Use `docs/PRIVATE_DATA_EVIDENCE_HANDLING.md` for all production-like review evidence. Do not include secrets, `.env` values, database URLs, cookies, tokens, provider keys, backup repository credentials, raw logs, screenshots with private data, dump contents, restored rows, private watchlists, trade notes, journal notes, broker/account data, or provider dashboards.
