@@ -21,6 +21,13 @@ This does not change the gate: routine private owner/operator trading data remai
 No Go until the required privacy, backup/restore, incident, secret-rotation, and
 owner-acceptance evidence is complete.
 
+v3.7 backup posture decision, 2026-06-03: existing VPS backups plus local
+encrypted Restic are accepted by the owner/operator for current controlled private
+staging only. This does not change this gate: routine private owner/operator
+trading data remains No Go until offsite/geographic backup and restore evidence,
+privacy handling, incident rehearsal, secret rotation, and explicit residual-risk
+acceptance are complete.
+
 Rationale:
 
 - Controlled local review and private owner/operator staging are currently acceptable only for sample, synthetic, paper, or explicitly sanitized workflows.
