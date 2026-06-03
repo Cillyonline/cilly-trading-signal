@@ -89,6 +89,11 @@ Offsite backup and restore acceptance criteria are tracked in
 required proof, but no offsite target, backup, restore drill, or owner/operator
 acceptance has been completed by the checklist itself.
 
+Rollback and migration safety decisions are tracked in
+`docs/ROLLBACK_MIGRATION_SAFETY_CHECKLIST.md`. That checklist defines
+deployment stop conditions and rollback/restore decision points, but it does not
+provide target-specific production-like proof by itself.
+
 ## Evidence Handling
 
 Use `docs/PRIVATE_DATA_EVIDENCE_HANDLING.md` for all production-like review evidence. Do not include secrets, `.env` values, database URLs, cookies, tokens, provider keys, backup repository credentials, raw logs, screenshots with private data, dump contents, restored rows, private watchlists, trade notes, journal notes, broker/account data, or provider dashboards.

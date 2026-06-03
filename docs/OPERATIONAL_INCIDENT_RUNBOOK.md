@@ -159,6 +159,8 @@ Triage:
 Rollback or recovery:
 
 - If the migration did not alter the database, roll back the app to the previous known-good commit using `docs/DEPLOYMENT_RUNBOOK.md#basic-rollback`.
+- Use `docs/ROLLBACK_MIGRATION_SAFETY_CHECKLIST.md` to decide whether app-only
+  rollback, disposable restore diagnosis, or a separate repair plan is required.
 - If the migration partially applied, stop and create a repair plan before touching the database.
 - Test any restore or repair first on a disposable target using `docs/DEPLOYMENT_RUNBOOK.md#backup-restore-drill`.
 
