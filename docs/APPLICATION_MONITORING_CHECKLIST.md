@@ -6,6 +6,10 @@ This checklist defines the minimum monitoring review expected before relying mor
 
 It is not a monitoring service integration, production-readiness claim, SLA, trading alerting system, broker readiness statement, or profitability evidence.
 
+For the production-like monitoring escalation plan and evidence template, see
+`docs/PRODUCTION_LIKE_MONITORING_ESCALATION_PLAN.md`. That plan is required
+planning evidence only and does not approve production-like exposure.
+
 ## Safety And Privacy Rules
 
 - Do not commit or paste `.env` files, database URLs, credentials, cookies, API keys, backup dumps, raw logs, screenshots with private data, or trading journal contents.
