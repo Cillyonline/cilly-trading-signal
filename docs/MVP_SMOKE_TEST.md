@@ -317,6 +317,8 @@ Checks run from the local Windows workspace:
 
 ```powershell
 Invoke-RestMethod -Uri "https://trading.cillyonline.de/api/health" -Method GET
+curl.exe --ssl-no-revoke -fsS https://trading.cillyonline.de/api/health
+curl.exe --ssl-no-revoke -fsSI https://trading.cillyonline.de/
 curl.exe -fsSI https://trading.cillyonline.de/
 curl.exe -fsS https://trading.cillyonline.de/api/health
 curl.exe -fsS https://trading.cillyonline.de/api/health/details
@@ -327,12 +329,16 @@ Results:
 - Public API health via `Invoke-RestMethod`: PASS, returned healthy staging
   status with service `Cilly Trading Signal API`, version `0.1.0`, and
   environment `staging`.
+- Public API health via `curl.exe --ssl-no-revoke`: PASS, returned healthy
+  staging status.
+- Public web route via `curl.exe --ssl-no-revoke`: PASS, returned `HTTP/1.1 200
+  OK` through Caddy with Next.js response headers.
 - Public web route via `Invoke-WebRequest -Method Head`: NOT CONCLUSIVE from this
   non-interactive PowerShell environment because `Invoke-WebRequest` attempted an
   interactive behavior that is unavailable in non-interactive mode.
-- Public web/API checks via `curl.exe`: NOT CONCLUSIVE from this Windows
-  environment because Schannel certificate revocation checking failed with
-  `CRYPT_E_NO_REVOCATION_CHECK`. This matches the known local Windows
+- Public web/API checks via `curl.exe` without `--ssl-no-revoke`: NOT CONCLUSIVE
+  from this Windows environment because Schannel certificate revocation checking
+  failed with `CRYPT_E_NO_REVOCATION_CHECK`. This matches the known local Windows
   revocation-check limitation recorded in the v3.1 evidence; it is not evidence
   of a VPS application failure.
 
@@ -347,8 +353,10 @@ Not run in this partial check:
 
 Conclusion:
 
-- This partial evidence supports only that the public API health route was
-  reachable and healthy from the local environment.
+- This partial evidence supports that the public API health route was reachable
+  and healthy, and that the public web route returned `HTTP 200`, from the local
+  environment when using the same Windows Schannel revocation workaround recorded
+  in v3.1.
 - It does not satisfy the full v3.5 target deployment smoke and rollback
   readiness issue. Full completion still requires operator-guided VPS evidence
   for commit, service state, migration version, browser/login smoke, and rollback
