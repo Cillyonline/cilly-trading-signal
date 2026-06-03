@@ -27,6 +27,12 @@ owner/operator staging in Conditional Go only; it does not approve
 production-like exposure, routine private data, broker use, live/realtime claims,
 profitability claims, or automatic execution.
 
+v3.5 owner/operator target decision, 2026-06-03: the existing VPS remains the
+target for controlled private owner/operator staging only. Sample, synthetic, and
+paper data are the only approved data classes for the next smoke step. The next
+approved action class is non-destructive smoke evidence only. See
+`docs/V3_5_TARGET_AND_OWNER_ACCEPTANCE.md`.
+
 Rationale:
 
 - The app has documented local setup, deployment runbooks, health checks, monitoring checklists, backup guidance, restore guidance, and a repeatable backup restore drill.

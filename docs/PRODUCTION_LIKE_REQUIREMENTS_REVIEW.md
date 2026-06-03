@@ -10,6 +10,13 @@ Status: No Go for production-like exposure.
 
 Date: 2026-06-01.
 
+v3.5 owner/operator decision, 2026-06-03: the existing VPS target
+`trading.cillyonline.de` remains controlled private owner/operator staging only,
+with sample, synthetic, and paper data only. The next approved action class is
+non-destructive smoke evidence only. See
+`docs/V3_5_TARGET_AND_OWNER_ACCEPTANCE.md`. Production-like exposure and routine
+private trading data remain No Go.
+
 v2.9 rebaseline snapshot, 2026-06-02: current-main local validation passed for
 sample-only local stack build/startup, migrations, API health, web HTTP load,
 sanitized evidence formatting, and cleanup. This is local/internal review evidence
