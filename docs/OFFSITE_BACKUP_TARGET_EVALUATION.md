@@ -6,13 +6,20 @@ This document evaluates stronger offsite or geographic backup targets beyond the
 
 ## Current Decision
 
-Status: No offsite/geographic target selected.
+Status: target category selected; provider and credentials not configured.
 
 v3.5 decision, 2026-06-03: the owner/operator confirmed that no offsite target is
 currently prepared. No Restic offsite configuration, backup upload, `restic
 check`, retention command, restore drill, credential handling, or provider setup
 was performed. Offsite/geographic backup readiness remains blocked until a
 separate target is selected and configured with operator-held credentials.
+
+v3.6 decision, 2026-06-03: use private S3-compatible object storage as the first
+offsite/geographic target category. No provider account, bucket, access key,
+repository URL, Restic password, backup, `restic check`, retention command, or
+restore drill was configured or run by this decision. Offsite backup and restore
+readiness remains blocked until the operator prepares credentials outside git,
+issues, PRs, docs, logs, screenshots, and chat.
 
 Current local encrypted Restic repository: useful as operator-controlled encrypted redundancy, but local-only backup remains a blocker for private-data reliance and production-like exposure.
 
@@ -98,6 +105,76 @@ Conclusion:
 - Production-like exposure remains No Go.
 - No follow-up implementation should proceed until an offsite target and
   credential handling path are explicitly approved by the owner/operator.
+
+## v3.6 Target Category And Credential Path
+
+Date: 2026-06-03
+
+Selected target category: private S3-compatible object storage.
+
+Rationale:
+
+- Restic has mature S3-compatible backend support.
+- Object storage can provide geographic separation from the existing VPS and the
+  local workstation when the provider region/account is selected accordingly.
+- Bucket lifecycle, access policy, and retention can be reviewed explicitly.
+- The operating model is simpler than maintaining a separate SFTP host when no
+  hardened second host already exists.
+
+Residual risks:
+
+- Access keys must be created, scoped, stored, rotated, and recovered safely.
+- Bucket privacy and region/account recovery depend on the chosen provider.
+- Cost, lifecycle behavior, object-lock/versioning, and deletion semantics must
+  be understood before reliance.
+- Restore semantics are not proven until a disposable restore drill passes.
+- A selected target category is not the same as configured offsite backup
+  readiness.
+
+Credential handling path:
+
+- Store S3 access credentials and Restic repository settings only in a
+  root-only or deploy-user-only environment file on the VPS, such as
+  `/etc/cilly-trading-signal/offsite-backup.env` with mode `600`.
+- Store the Restic password or recovery key in the operator password manager and
+  not only on the VPS.
+- Do not paste repository URLs with credentials, access keys, secret keys,
+  `RESTIC_PASSWORD`, bucket names if private, provider account IDs, invoices,
+  billing identifiers, database URLs, dump contents, restored rows, or private
+  trading data into git, issues, PRs, docs, logs, screenshots, or chat.
+- Rotate or replace credentials only with explicit operator approval because a
+  mistake can break backup and restore access.
+
+Go/no-go checklist before any Restic command is run:
+
+1. Provider and region are selected by the owner/operator.
+2. Bucket/repository target is private and geographically separate from the VPS
+   and local workstation failure domains.
+3. Access credentials are created with the narrowest practical scope for the
+   backup repository.
+4. Credentials are stored in the operator password manager and server-local env
+   file only.
+5. The server-local env file permissions are verified as owner-only readable.
+6. The source remains the external PostgreSQL backup directory, not the git
+   checkout or raw database volume.
+7. The disposable restore target name and cleanup command are selected before
+   restore begins.
+8. Evidence boundaries are reviewed: snapshot ID prefix, count, pass/fail,
+   schema version, and cleanup status only.
+
+Next issue to create when credentials are prepared:
+
+- Run `restic init`, first encrypted backup, `restic check`, retention command,
+  and disposable restore drill using
+  `docs/OFFSITE_BACKUP_RESTORE_ACCEPTANCE_CHECKLIST.md`.
+
+Conclusion:
+
+- Offsite target category selection is complete.
+- Offsite backup/restore readiness remains blocked until credentials are prepared
+  and the later operator-run Restic backup/restore drill passes.
+- Private-data readiness remains No Go.
+- Production-like exposure remains No Go.
 
 ## Secret Handling Boundary
 

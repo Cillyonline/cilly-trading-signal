@@ -1085,6 +1085,12 @@ For S3-compatible storage, use provider-specific environment variables in the
 same root-only file and keep the repository private. Do not commit or paste the
 file.
 
+The v3.6 selected first target category is private S3-compatible object storage.
+This selects the target class only; it does not configure a provider, create
+credentials, initialize Restic, run a backup, or prove restore readiness. Use
+`docs/OFFSITE_BACKUP_TARGET_EVALUATION.md#v36-target-category-and-credential-path`
+before any operator-run setup.
+
 One-time setup after choosing the offsite target:
 
 ```bash
