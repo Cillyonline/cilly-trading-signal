@@ -54,6 +54,10 @@ Private owner/operator trading data may be reconsidered only after all of this i
 - Private-data evidence handling rules define allowed, redacted, and forbidden issue/PR/log/screenshot evidence. See `docs/PRIVATE_DATA_EVIDENCE_HANDLING.md`.
 - Trade notes, journal content, performance records, watchlists, provider metadata, and restored rows have a documented privacy review. See `docs/TRADE_JOURNAL_PRIVACY_REVIEW.md` for the trade, journal, and performance review.
 - Restic restore drill recurrence and snapshot retention expectations are documented in `docs/DEPLOYMENT_RUNBOOK.md#offsite-encrypted-backups`.
+- Offsite backup and restore acceptance criteria are documented in
+  `docs/OFFSITE_BACKUP_RESTORE_ACCEPTANCE_CHECKLIST.md`, but operator-run target
+  selection, backup, `restic check`, restore evidence, and residual-risk
+  acceptance are still required before this gate can be reconsidered.
 - Backup evidence avoids dump contents, restored row contents, database URLs, and secret values.
 - Incident rehearsal covers database restore and secret rotation without performing service-impacting actions unless explicitly approved by the operator. See `docs/OPERATIONAL_INCIDENT_RUNBOOK.md#private-data-incident-rehearsal`.
 - Secret rotation procedure is documented and accepted for provider keys, app secrets, database credentials, and deployment credentials.
