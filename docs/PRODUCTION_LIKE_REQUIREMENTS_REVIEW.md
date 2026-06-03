@@ -94,6 +94,11 @@ Rollback and migration safety decisions are tracked in
 deployment stop conditions and rollback/restore decision points, but it does not
 provide target-specific production-like proof by itself.
 
+Security scan acceptance evidence is tracked in
+`docs/SECURITY_SCAN_ACCEPTANCE_TEMPLATE.md`. That template defines the required
+sanitized review record for current dependency and container scan output, but it
+does not accept findings or approve production-like exposure by itself.
+
 ## Evidence Handling
 
 Use `docs/PRIVATE_DATA_EVIDENCE_HANDLING.md` for all production-like review evidence. Do not include secrets, `.env` values, database URLs, cookies, tokens, provider keys, backup repository credentials, raw logs, screenshots with private data, dump contents, restored rows, private watchlists, trade notes, journal notes, broker/account data, or provider dashboards.

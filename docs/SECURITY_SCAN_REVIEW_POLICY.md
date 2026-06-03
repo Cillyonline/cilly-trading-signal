@@ -63,6 +63,11 @@ Forbidden evidence:
 
 ## Review Template
 
+For the production-like acceptance evidence format, use
+`docs/SECURITY_SCAN_ACCEPTANCE_TEMPLATE.md`. That template expands this policy
+into a concrete review record but does not change scanner behavior, suppress
+findings, or approve production-like exposure by itself.
+
 ```markdown
 ## Security Scan Review
 
