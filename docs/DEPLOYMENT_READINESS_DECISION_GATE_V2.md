@@ -41,6 +41,12 @@ This does not approve production-like exposure, routine private trading data,
 offsite backup reliance, broker use, live/realtime claims, profitability claims,
 or automatic execution.
 
+v3.7 backup posture decision, 2026-06-03: for current controlled private
+owner/operator staging only, the owner/operator accepts existing VPS backups plus
+the local encrypted Restic backup as sufficient for now. Offsite/geographic
+backup remains future hardening before routine private-data or production-like
+reliance. See `docs/OFFSITE_BACKUP_TARGET_EVALUATION.md#v37-current-private-staging-backup-posture`.
+
 Rationale:
 
 - The app has documented local setup, deployment runbooks, health checks, monitoring checklists, backup guidance, restore guidance, and a repeatable backup restore drill.

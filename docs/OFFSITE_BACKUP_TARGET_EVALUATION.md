@@ -21,6 +21,13 @@ restore drill was configured or run by this decision. Offsite backup and restore
 readiness remains blocked until the operator prepares credentials outside git,
 issues, PRs, docs, logs, screenshots, and chat.
 
+v3.7 owner/operator backup posture decision, 2026-06-03: for the current
+controlled private owner/operator staging scope, the operator accepts the
+existing VPS backup plus local encrypted Restic backup posture as sufficient for
+now. This does not replace offsite/geographic backup readiness for routine
+private trading data, stronger operational reliance, or production-like
+reconsideration.
+
 Current local encrypted Restic repository: useful as operator-controlled encrypted redundancy, but local-only backup remains a blocker for private-data reliance and production-like exposure.
 
 Local-only encrypted backup limitations:
@@ -175,6 +182,53 @@ Conclusion:
   and the later operator-run Restic backup/restore drill passes.
 - Private-data readiness remains No Go.
 - Production-like exposure remains No Go.
+
+## v3.7 Current Private-Staging Backup Posture
+
+Date: 2026-06-03
+
+Decision:
+
+- Current accepted scope: controlled private owner/operator staging only.
+- Accepted current backup posture for that scope: existing VPS PostgreSQL backup
+  automation plus existing local encrypted Restic backup.
+- Offsite/geographic S3-compatible target category: selected as future hardening,
+  but not configured.
+- Routine private trading data: still No Go.
+- Production-like exposure: still No Go.
+
+Rationale:
+
+- The current VPS backup automation provides recent external-to-repository
+  PostgreSQL dump evidence for private staging mechanics.
+- The local encrypted Restic repository provides operator-controlled encrypted
+  redundancy outside the VPS.
+- For the current private staging scope, the owner/operator accepts the residual
+  risk that this is not full geographic/offsite readiness.
+
+Residual risks accepted only for current private staging:
+
+- Local encrypted backup may share failure domains with the operator workstation
+  or local storage.
+- Local encrypted backup is not sufficient proof of geographic recovery.
+- A successful local restore does not prove offsite provider recovery.
+- Provider-independent offsite restore remains untested until a future S3 target
+  is configured and drill-verified.
+
+Not approved by this decision:
+
+- Routine private owner/operator trading data reliance.
+- Production-like or public exposure.
+- Broker/account integration, automatic execution, live/realtime claims,
+  profitability claims, strategy-validation claims, or trading advice.
+- Treating local encrypted Restic as equivalent to offsite/geographic backup.
+
+Next optional hardening:
+
+- Prepare private S3-compatible provider/bucket credentials outside git, issues,
+  PRs, docs, logs, screenshots, and chat.
+- Run a later operator-guided Restic offsite backup/check/retention/restore drill
+  only after credentials are prepared safely.
 
 ## Secret Handling Boundary
 

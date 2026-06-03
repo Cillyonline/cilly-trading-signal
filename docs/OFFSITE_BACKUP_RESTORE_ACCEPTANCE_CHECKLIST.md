@@ -28,6 +28,12 @@ credentials, Restic repository settings, backup, check, retention, and restore
 drill remain operator-required and are not complete. See
 `docs/OFFSITE_BACKUP_TARGET_EVALUATION.md#v36-target-category-and-credential-path`.
 
+v3.7 status, 2026-06-03: the owner/operator accepts existing VPS backups plus the
+local encrypted Restic backup as sufficient for the current controlled private
+staging scope only. This does not complete this offsite acceptance checklist and
+does not approve routine private-data or production-like reliance. See
+`docs/OFFSITE_BACKUP_TARGET_EVALUATION.md#v37-current-private-staging-backup-posture`.
+
 ## Acceptance Checklist
 
 | Area | Required evidence before reliance | Status before operator run |
