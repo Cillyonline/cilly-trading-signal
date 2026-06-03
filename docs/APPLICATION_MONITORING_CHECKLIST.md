@@ -134,6 +134,47 @@ For each monitoring review, record only sanitized evidence:
 - Follow-up issue or incident record, if needed.
 - Confirmation that no secrets, private data, raw logs, backup contents, or credentials were included.
 
+## v3.5 Existing VPS Partial Monitoring Evidence
+
+Date: 2026-06-03
+
+Scope:
+
+- Target: existing VPS at `trading.cillyonline.de`.
+- Exposure: controlled private owner/operator staging only.
+- Data class: sample, synthetic, and paper data only.
+- Action class: non-destructive public route check only.
+
+Evidence:
+
+- API health route: PASS via local `Invoke-RestMethod` against
+  `https://trading.cillyonline.de/api/health`, returning healthy staging status.
+- Web route: NOT CONCLUSIVE from local non-interactive PowerShell / Windows
+  Schannel checks. See `docs/MVP_SMOKE_TEST.md#v35-existing-vps-public-route-partial-evidence`.
+- Containers: not checked; requires operator-guided VPS status evidence.
+- PostgreSQL: not checked; requires operator-guided VPS or authenticated smoke
+  evidence.
+- Disk/storage: not checked; requires operator-guided VPS evidence.
+- Backup freshness: not checked; remains blocked pending operator approval.
+- Certificate status: not accepted as monitored; local Schannel revocation check
+  was inconclusive from this environment.
+- Failed jobs: not checked; requires operator-visible monitoring/timer/job review.
+- Alert destination class: not reviewed; requires owner/operator decision.
+- Fallback path: not reviewed; requires owner/operator decision.
+- Operator response window: not accepted; requires owner/operator decision.
+- Secrets/private data/raw logs included: no.
+- Production-like exposure approved by this evidence: no.
+
+Conclusion:
+
+- This partial evidence confirms only that the public API health route is
+  reachable and healthy from the local environment.
+- It does not satisfy production-like monitoring escalation evidence and does not
+  close the v3.5 monitoring issue. Full completion still requires operator-visible
+  monitoring coverage for API health, web route, containers, PostgreSQL,
+  disk/storage, backup freshness, certificate status, failed jobs, alert
+  destination class, fallback path, and response windows.
+
 ## Escalation Triggers
 
 Create a follow-up issue or incident record when any of these occur:
