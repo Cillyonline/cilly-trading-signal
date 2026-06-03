@@ -112,6 +112,12 @@ v3.5 private-staging smoke scan evidence for commit
 private-staging smoke scope only and does not change the production-like No Go
 decision.
 
+v3.5 existing VPS smoke and rollback-readiness evidence for private staging at
+commit `b553f86` is recorded in
+`docs/MVP_SMOKE_TEST.md#v35-existing-vps-operator-smoke-and-rollback-readiness-evidence`.
+It supports controlled private owner/operator staging only. Production-like
+exposure and routine private trading data remain No Go.
+
 ## Evidence Handling
 
 Use `docs/PRIVATE_DATA_EVIDENCE_HANDLING.md` for all production-like review evidence. Do not include secrets, `.env` values, database URLs, cookies, tokens, provider keys, backup repository credentials, raw logs, screenshots with private data, dump contents, restored rows, private watchlists, trade notes, journal notes, broker/account data, or provider dashboards.
