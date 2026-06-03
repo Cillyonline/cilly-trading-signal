@@ -79,6 +79,11 @@ Current evidence still missing before any reconsideration:
 - Secret rotation and environment handling evidence for app, database, provider,
   backup, and deployment credentials.
 
+Monitoring escalation planning is tracked in
+`docs/PRODUCTION_LIKE_MONITORING_ESCALATION_PLAN.md`. That plan defines required
+coverage and evidence boundaries, but it does not configure monitoring or approve
+production-like exposure.
+
 ## Evidence Handling
 
 Use `docs/PRIVATE_DATA_EVIDENCE_HANDLING.md` for all production-like review evidence. Do not include secrets, `.env` values, database URLs, cookies, tokens, provider keys, backup repository credentials, raw logs, screenshots with private data, dump contents, restored rows, private watchlists, trade notes, journal notes, broker/account data, or provider dashboards.
