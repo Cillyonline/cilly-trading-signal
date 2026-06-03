@@ -33,6 +33,14 @@ paper data are the only approved data classes for the next smoke step. The next
 approved action class is non-destructive smoke evidence only. See
 `docs/V3_5_TARGET_AND_OWNER_ACCEPTANCE.md`.
 
+v3.5 existing VPS smoke evidence, 2026-06-03: operator-run non-destructive VPS
+status, public route, migration-version, browser/login/logout, and rollback
+readiness checks passed for the existing private staging target at commit
+`b553f86`. See `docs/MVP_SMOKE_TEST.md#v35-existing-vps-operator-smoke-and-rollback-readiness-evidence`.
+This does not approve production-like exposure, routine private trading data,
+offsite backup reliance, broker use, live/realtime claims, profitability claims,
+or automatic execution.
+
 Rationale:
 
 - The app has documented local setup, deployment runbooks, health checks, monitoring checklists, backup guidance, restore guidance, and a repeatable backup restore drill.

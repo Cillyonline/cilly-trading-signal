@@ -363,6 +363,100 @@ Conclusion:
   readiness.
 - Production-like exposure and routine private trading data remain No Go.
 
+## v3.5 Existing VPS Operator Smoke And Rollback Readiness Evidence
+
+Date: 2026-06-03
+
+Environment:
+
+- Host: `trading.cillyonline.de`.
+- Repo path: `/root/repos/cilly-trading-signal`.
+- Compose project: `cilly-trading-signal`.
+- Branch/commit: `main` at `b553f86`.
+- Deployment shape: existing VPS Docker Compose proxy stack with PostgreSQL, API,
+  web, and Caddy.
+- Operator model: VPS commands and browser checks were run manually by the
+  owner/operator. Sanitized pass/fail evidence was recorded only.
+
+Scope:
+
+- Controlled private owner/operator staging only.
+- Sample, synthetic, and paper data only.
+- Non-destructive smoke and rollback-readiness review only.
+- No deployment, restart, migration, restore, backup, secret rotation, firewall,
+  DNS, private-data, broker, or automatic-execution action was performed.
+
+VPS status evidence:
+
+- Git branch: PASS, `main`.
+- Git commit: PASS, `b553f86`.
+- Git status: PASS, clean and tracking `origin/main`.
+- Compose project status: PASS, `cilly-trading-signal` running with four
+  services.
+- Services: PASS, API, web, Caddy, and PostgreSQL were running.
+- PostgreSQL health: PASS, PostgreSQL container reported healthy.
+- API direct port exposure: PASS for private operator check, API bound to
+  `127.0.0.1:8000`.
+- Web direct port exposure: PASS for private operator check, web bound to
+  `127.0.0.1:3000`.
+- Public Caddy route: PASS, Caddy exposed ports `80` and `443`.
+- Alembic current: PASS, `20260531_0010 (head)`.
+- Local VPS API health: PASS, `http://127.0.0.1:8000/api/health` returned
+  healthy staging status.
+- Public web route: PASS, `https://trading.cillyonline.de/` returned `HTTP 200`
+  through Caddy.
+- Compose isolation: PASS, unrelated `staging` Compose project was visible as a
+  separate running project and was not modified.
+
+Browser smoke evidence:
+
+| Route or workflow | Result |
+| --- | --- |
+| Login page loads | PASS |
+| Login succeeds | PASS |
+| Dashboard loads | PASS |
+| Watchlist page loads | PASS |
+| Screener page loads | PASS |
+| Import page loads | PASS |
+| Signals page loads | PASS |
+| Reviews page loads | PASS |
+| Trades page loads | PASS |
+| Performance page loads | PASS |
+| Alerts page loads | PASS |
+| Settings page loads | PASS |
+| Logout succeeds | PASS |
+| Protected page requires login after logout | PASS |
+
+Rollback readiness review:
+
+- Previous known-good process: documented in `docs/DEPLOYMENT_RUNBOOK.md#basic-rollback`.
+- Rollback/migration decision matrix: documented in
+  `docs/ROLLBACK_MIGRATION_SAFETY_CHECKLIST.md`.
+- Current migration version known: PASS, `20260531_0010 (head)`.
+- Migration state for this smoke: no migration was run; schema state was checked
+  only.
+- App-only rollback assumption: would require confirming previous app/schema
+  compatibility before use.
+- Restore decision point: any unclear schema state, partial migration, or data
+  corruption concern must stop rollout and use disposable restore diagnosis
+  before live repair.
+- Backup freshness: not checked in this issue; handled separately by `#544`.
+- Data-changing workflows: not performed as part of this smoke.
+
+Known gaps and boundaries:
+
+- This evidence satisfies the v3.5 target deployment smoke and rollback-readiness
+  review for controlled private owner/operator staging only.
+- This does not satisfy full monitoring escalation evidence; that remains tracked
+  by `#543`.
+- This does not satisfy offsite encrypted backup or restore-drill evidence; that
+  remains tracked by `#544`.
+- This is not production-like approval, private-data approval, broker-readiness,
+  live/realtime readiness, profitability validation, strategy validation, trading
+  advice, or approval for automatic execution.
+- No `.env`, secrets, cookies, tokens, database URLs, raw logs, backup contents,
+  private trading records, private screenshots, or restored rows were recorded.
+
 ## v2.9 Current-Main Local Validation Evidence
 
 Date: 2026-06-02
