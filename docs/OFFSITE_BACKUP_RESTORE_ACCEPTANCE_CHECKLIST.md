@@ -18,6 +18,10 @@ evidence. Private-data reliance and production-like exposure remain No Go until 
 separate gate records current sanitized evidence and explicit owner/operator
 acceptance.
 
+v3.5 status, 2026-06-03: no offsite target is currently prepared. The offsite
+backup and restore drill is blocked on target selection and operator-held
+credential setup. See `docs/OFFSITE_BACKUP_TARGET_EVALUATION.md#v35-blocked-evidence`.
+
 ## Acceptance Checklist
 
 | Area | Required evidence before reliance | Status before operator run |

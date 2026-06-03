@@ -8,6 +8,12 @@ This document evaluates stronger offsite or geographic backup targets beyond the
 
 Status: No offsite/geographic target selected.
 
+v3.5 decision, 2026-06-03: the owner/operator confirmed that no offsite target is
+currently prepared. No Restic offsite configuration, backup upload, `restic
+check`, retention command, restore drill, credential handling, or provider setup
+was performed. Offsite/geographic backup readiness remains blocked until a
+separate target is selected and configured with operator-held credentials.
+
 Current local encrypted Restic repository: useful as operator-controlled encrypted redundancy, but local-only backup remains a blocker for private-data reliance and production-like exposure.
 
 Local-only encrypted backup limitations:
@@ -49,6 +55,49 @@ Preferred path before private-data or production-like reliance is reconsidered:
 3. Run `restic init`, first backup, `restic check`, retention command, and a restore drill into a disposable target.
 4. Record only sanitized evidence: target category, snapshot ID prefix, snapshot count, check pass/fail, restore target class, schema version, and cleanup status.
 5. Keep the local Windows encrypted Restic repository as secondary redundancy, not as the primary readiness target.
+
+## v3.5 Blocked Evidence
+
+Date: 2026-06-03
+
+Decision:
+
+- Offsite target category selected: none.
+- Operator-controlled SFTP target: not prepared.
+- Private S3-compatible target: not prepared.
+- Managed Restic-compatible target: not prepared.
+- Offline/removable target: not accepted as current primary readiness target.
+- Existing local/VPS backup evidence: useful for private staging mechanics only,
+  not sufficient for offsite/geographic readiness.
+
+Actions intentionally not performed:
+
+- No provider account or bucket/server was configured.
+- No backup credentials, repository URL, access key, SSH key, or Restic password
+  was created, inspected, pasted, or recorded.
+- No `restic init`, `restic backup`, `restic check`, `restic forget`, `restic
+  restore`, Docker restore drill, or cleanup command was run.
+- No restore was attempted against a live, staging, production-like, or disposable
+  database.
+
+Blocked next step:
+
+1. Choose a target category: operator-controlled SFTP on a separate host or a
+   private S3-compatible bucket are the preferred first options.
+2. Create/store credentials only on the VPS or in the operator password manager,
+   never in git, issues, PRs, docs, screenshots, logs, or chat.
+3. Configure Restic using `docs/DEPLOYMENT_RUNBOOK.md#offsite-encrypted-backups`.
+4. Run encrypted backup, `restic check`, retention, and disposable restore drill.
+5. Record only sanitized evidence using
+   `docs/OFFSITE_BACKUP_RESTORE_ACCEPTANCE_CHECKLIST.md`.
+
+Conclusion:
+
+- Offsite backup and restore readiness remains blocked.
+- Private-data readiness remains No Go.
+- Production-like exposure remains No Go.
+- No follow-up implementation should proceed until an offsite target and
+  credential handling path are explicitly approved by the owner/operator.
 
 ## Secret Handling Boundary
 
