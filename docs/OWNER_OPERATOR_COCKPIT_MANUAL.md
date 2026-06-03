@@ -15,6 +15,22 @@ This manual is not trading advice, a production-readiness statement, broker-read
 - Use sample, synthetic, or paper data for smoke tests, PR evidence, browser clickthroughs, and VPS validation evidence.
 - Do not share secrets, cookies, session data, `.env` values, database URLs, raw logs, private symbols, private journal text, account data, or screenshots with sensitive data.
 
+## Signal Radar Ampel
+
+The cockpit uses German traffic-light decisions to make review outcomes easier to
+read. They summarize the stored signal context; they do not change the strategy
+rules and are not trading instructions.
+
+| Ampel | Label | Meaning | Operator action |
+| --- | --- | --- | --- |
+| Green | `Paper-Kandidat` | The setup is strong enough for manual paper review. | Review context, risk, and chart manually. No automatic or real trade is created. |
+| Yellow | `Beobachten` | The setup is interesting but not strong enough for a clear review decision. | Keep on watchlist and wait for cleaner confirmation. |
+| Red | `Kein Trade` | A required filter or quality blocker rejects the setup. | Do not trade and do not log as paper trade. Recheck after new data or changed context. |
+| Gray | `Datenproblem` | Required data is missing, stale, failed, partial, or not sufficient. | Fix/import/sync data first. Treat analysis as blocked. |
+
+Operator rule: green and yellow mean "look closer" only. They never mean buy,
+sell, place an order, or connect to a broker.
+
 ## Recommended Operator Flow
 
 Use this order for a clean sample-only review session:
@@ -128,6 +144,7 @@ Operator checks:
 
 - Use sample CSV fixtures for smoke/evidence runs.
 - Confirm timeframe and symbol match the intended sample symbol.
+- Read the Ampel decision before reading technical backend metrics.
 - Treat conservative `No Setup` or `No Trade` as valid output.
 - Confirm analysis does not create trades or orders.
 
@@ -143,8 +160,10 @@ Open `/signals`.
 
 Purpose:
 
-- Review stored signal cards.
-- Inspect setup score, status, stale state, risk flags, No-Trade reasons, and next action.
+- Review the Signal Radar.
+- Prioritize `Paper-Kandidat` and `Beobachten` while keeping `Kein Trade` and
+  `Datenproblem` visible as valid conservative outcomes.
+- Inspect setup score, status, stale state, risk flags, No-Trade reasons, and next action only after the Ampel decision is understood.
 
 Operator checks:
 

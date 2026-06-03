@@ -57,6 +57,9 @@ Done:
   polished, and operator-run VPS update/browser smoke evidence was recorded.
 - v3.3 Signal Quality Calibration Pack added targeted regression evidence for
   weak risk/reward rejection and missing/stale required `4H` trigger context.
+- v3.8 Decision Clarity Radar began adding German Ampel decision labels for
+  `Paper-Kandidat`, `Beobachten`, `Kein Trade`, and `Datenproblem` so operators
+  can interpret stored signal reviews before reading technical backend fields.
 
 Partial:
 
