@@ -13,6 +13,7 @@ import {
   redirectToLoginOnAuthError,
   syncMarketData,
 } from "@/lib/api";
+import { buildSignalDecision, signalDecisionDotClass, signalDecisionToneClass } from "@/lib/signal-decision";
 import type {
   CsvImportError,
   CsvImportResult,
@@ -705,12 +706,14 @@ function providerSyncState(result: MarketDataSyncResult) {
 
 function AnalysisResultCard({ result }: { result: MarketDataAnalysisResult }) {
   const signal = result.signal;
-  const reasons = signal.reasoning.slice(0, 3);
+  const decision = buildSignalDecision(signal);
+  const reasons = decision.reasons;
+  const technicalReasons = signal.reasoning.slice(0, 3);
   const flags = signal.risk_flags.slice(0, 4);
   const noTradeReasons = signal.no_trade_reasons.slice(0, 4);
 
   return (
-    <section className="grid gap-5 rounded-2xl border border-emerald-300/20 bg-emerald-300/5 p-4">
+    <section className="grid gap-5 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-sm font-medium text-emerald-100">Analyse abgeschlossen</p>
@@ -721,8 +724,36 @@ function AnalysisResultCard({ result }: { result: MarketDataAnalysisResult }) {
         </a>
       </div>
 
+      <div className={`rounded-2xl border p-5 ${signalDecisionToneClass(decision.tone)}`}>
+        <div className="flex flex-wrap items-center gap-3">
+          <span className={`h-4 w-4 rounded-full ${signalDecisionDotClass(decision.tone)}`} />
+          <p className="text-sm font-semibold uppercase tracking-[0.2em]">{decision.label}</p>
+          <span className="rounded-full border border-current/20 px-3 py-1 text-xs">
+            Qualitaet: {decision.quality}
+          </span>
+        </div>
+        <p className="mt-4 text-2xl font-semibold text-slate-50">{decision.headline}</p>
+        <p className="mt-2 max-w-2xl text-sm">{decision.action}</p>
+
+        <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_0.9fr]">
+          <div className="rounded-xl border border-current/15 bg-slate-950/30 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] opacity-80">Warum?</p>
+            <ul className="mt-3 space-y-2 text-sm">
+              {reasons.map((reason) => (
+                <li key={reason}>- {reason}</li>
+              ))}
+            </ul>
+          </div>
+          <div className="rounded-xl border border-current/15 bg-slate-950/30 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] opacity-80">Was jetzt?</p>
+            <p className="mt-3 text-sm">{decision.action}</p>
+            <p className="mt-2 text-xs opacity-75">Keine automatische Order. Echte Ausfuehrung bleibt manuell.</p>
+          </div>
+        </div>
+      </div>
+
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Metric label="Status" value={signal.status.replaceAll("_", " ")} />
+        <Metric label="Backend Status" value={signal.status.replaceAll("_", " ")} />
         <Metric label="Score" value={`${signal.score} / ${signal.score_class.replaceAll("_", " ")}`} />
         <Metric label="R:R" value={signal.risk_reward ? `${formatNumber(signal.risk_reward)}R` : "-"} />
         <Metric label="Snapshots" value={result.indicator_snapshot_count.toString()} />
@@ -739,7 +770,7 @@ function AnalysisResultCard({ result }: { result: MarketDataAnalysisResult }) {
         <p className="mt-2 text-sm text-slate-300">{signal.next_action}</p>
       </div>
 
-      <TextList title="Begruendung" empty="Keine Begruendung gespeichert." items={reasons} />
+      <TextList title="Technische Begruendung" empty="Keine Begruendung gespeichert." items={technicalReasons} />
       <QualityReport checks={signal.quality_report} />
       <BadgeList title="Risk Flags" empty="Keine Risk Flags" items={flags} tone="orange" />
       <BadgeList title="No-Trade Gruende" empty="Keine No-Trade Gruende" items={noTradeReasons} tone="slate" />

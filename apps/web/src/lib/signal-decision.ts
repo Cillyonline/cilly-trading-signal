@@ -14,6 +14,17 @@ export type SignalDecisionInput = {
   is_stale?: boolean;
 };
 
+export type SignalDecisionLike = {
+  status: string;
+  score: number | null;
+  score_class: string | null;
+  risk_reward: string | number | null;
+  risk_flags: string[] | Record<string, unknown> | null;
+  no_trade_reasons: string[] | Record<string, unknown> | null;
+  quality_report: AnalysisQualityCheck[];
+  is_stale?: boolean;
+};
+
 export type SignalDecision = {
   kind: SignalDecisionKind;
   tone: SignalDecisionTone;
@@ -68,7 +79,7 @@ const TECHNICAL_TEXT: Record<string, string> = {
   poor_data_quality: "Die Datenqualitaet reicht nicht aus.",
 };
 
-export function buildSignalDecision(input: SignalDecisionInput): SignalDecision {
+export function buildSignalDecision(input: SignalDecisionLike): SignalDecision {
   const riskFlags = normalizeTextList(input.risk_flags);
   const noTradeReasons = normalizeTextList(input.no_trade_reasons);
   const hasDataProblem = hasBlockingDataProblem(input, riskFlags, noTradeReasons);
@@ -158,7 +169,7 @@ export function signalDecisionDotClass(tone: SignalDecisionTone): string {
 }
 
 function hasBlockingDataProblem(
-  input: SignalDecisionInput,
+  input: SignalDecisionLike,
   riskFlags: string[],
   noTradeReasons: string[],
 ): boolean {
@@ -179,7 +190,7 @@ function hasBlockingDataProblem(
 }
 
 function decisionReasons(
-  input: SignalDecisionInput,
+  input: SignalDecisionLike,
   riskFlags: string[],
   noTradeReasons: string[],
   fallback: string[],
