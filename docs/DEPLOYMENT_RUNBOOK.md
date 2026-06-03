@@ -247,6 +247,11 @@ Firewall changes are operator-run server changes. Do not claim they are applied 
 
 ## Updates And Migrations
 
+Before production-like reconsideration or any target with private-data risk, use
+`docs/ROLLBACK_MIGRATION_SAFETY_CHECKLIST.md` to record migration, rollback,
+backup, restore, and stop-condition decisions. The checklist is guidance only and
+does not approve service-impacting action without operator approval.
+
 1. Connect to the VPS and enter the repository.
 
 ```bash
@@ -1457,6 +1462,10 @@ Stop the drill and create a follow-up issue if:
 ## Basic Rollback
 
 Rollback assumes the previous commit is still available and the database schema is compatible with the previous app version.
+
+For the rollback and migration decision matrix, use
+`docs/ROLLBACK_MIGRATION_SAFETY_CHECKLIST.md` before relying on rollback as
+production-like evidence.
 
 1. Identify the previous known-good commit.
 
