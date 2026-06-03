@@ -73,7 +73,15 @@ For provider sync:
 
 ### 4. Signal Review
 
-Use the Signals list to filter and group review candidates by status, setup type, score band, and freshness context.
+Use the Signal Radar to filter and group review candidates by German Ampel
+decision, status, setup type, score band, and freshness context.
+
+Ampel interpretation:
+
+- `Paper-Kandidat` / green: strong enough for manual paper review; still not a real trade instruction.
+- `Beobachten` / yellow: interesting, but wait for cleaner confirmation or trigger context.
+- `Kein Trade` / red: rejected by No-Trade logic or quality blockers.
+- `Datenproblem` / gray: data must be fixed before the setup is reviewable.
 
 Signal interpretation rules:
 

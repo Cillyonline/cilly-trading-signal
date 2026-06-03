@@ -85,6 +85,21 @@ Konservative Regel:
 - provider-backed data that is stale, failed, partial, missing, or unknown must not be treated as current without explicit freshness checks.
 - insufficient freshness should add clear no-trade reasons such as `market_data_stale`, `market_data_missing_timeframe`, `market_data_sync_failed`, `market_data_partial`, or `market_data_source_unknown`.
 
+## Signal Radar Ampel
+
+The UI may summarize stored signal state with a German traffic-light decision
+layer. This layer is presentation-only: it does not loosen strategy rules, does
+not change scores, and does not create trading instructions.
+
+- `Paper-Kandidat` / green: strong enough for manual paper review. The operator still checks context, chart, risk, and execution externally.
+- `Beobachten` / yellow: interesting but not clean enough for a trade decision; wait for clearer confirmation.
+- `Kein Trade` / red: No-Trade logic, trend, structure, market regime, or risk-plan blockers reject the setup.
+- `Datenproblem` / gray: required market data, indicators, freshness, or timeframes are missing or insufficient.
+
+`No Trade` and `Datenproblem` remain first-class conservative outcomes. Green or
+yellow labels mean review priority only, never buy/sell advice or automatic
+execution.
+
 ## Strategie A: Trend Pullback Long
 
 ### Idee

@@ -229,6 +229,20 @@ Use it to open:
 - Performance: review historical documented R and active risk.
 - Review Batches: collect paper/historical calibration evidence.
 
+## Signal Radar Decisions
+
+The Signal Radar and Import analysis use a German traffic-light layer above the
+technical signal fields:
+
+- `Paper-Kandidat` / green: strong enough for manual paper review, not a real trade instruction.
+- `Beobachten` / yellow: interesting, but wait for cleaner confirmation.
+- `Kein Trade` / red: rejected by a required filter or quality blocker.
+- `Datenproblem` / gray: missing, stale, failed, partial, or insufficient data blocks review.
+
+Use the Ampel first, then inspect technical fields such as score, risk flags,
+No-Trade reasons, trigger, stop, and target. A green or yellow decision is still
+only a review prompt; external execution remains manual and outside the app.
+
 ## Cockpit Snapshot
 
 The snapshot shows recent signals, active trades, and review-needed trades.
