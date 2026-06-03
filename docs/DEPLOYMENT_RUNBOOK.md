@@ -1043,6 +1043,11 @@ expected operating model; it is not a production-readiness statement, SLA,
 security certification, or approval to handle private data without a separate
 gate.
 
+For the offsite backup and restore acceptance checklist, see
+`docs/OFFSITE_BACKUP_RESTORE_ACCEPTANCE_CHECKLIST.md`. That checklist defines
+required evidence and operator-required actions; it does not execute or approve
+backup, restore, private-data, or production-like reliance by itself.
+
 Recommended default:
 
 - Use `restic` for client-side encrypted backups.
