@@ -181,6 +181,72 @@ Conclusion:
   disk/storage, backup freshness, certificate status, failed jobs, alert
   destination class, fallback path, and response windows.
 
+## v3.5 Existing VPS Monitoring Escalation Evidence
+
+Date: 2026-06-03
+
+Scope:
+
+- Target: existing VPS at `trading.cillyonline.de`.
+- Exposure: controlled private owner/operator staging only.
+- Data class: sample, synthetic, and paper data only.
+- Monitoring model: operator-visible systemd timers plus manual SSH/GitHub review;
+  no external alert integration is approved by this evidence.
+- Quiet-hours behavior: no overnight reliance. Failed checks are reviewed during
+  the next active owner/operator window unless the operator is actively using the
+  app.
+- Response windows: high severity same day during active staging use; medium
+  severity next active owner/operator day; low severity backlog/follow-up.
+
+Technical evidence:
+
+- Compose services: PASS, API, web, Caddy, and PostgreSQL running.
+- PostgreSQL health: PASS, PostgreSQL container healthy.
+- API direct route: PASS, `http://127.0.0.1:8000/api/health` returned healthy
+  staging status.
+- Public web route: PASS, `https://trading.cillyonline.de/` returned `HTTP 200`
+  through Caddy.
+- Disk/storage: PASS, root filesystem used 9% with substantial free space.
+- Docker usage: REVIEWED, images and build cache are present; no cleanup was run.
+- Health timer: PASS, `cilly-vps-health-check.timer` active and waiting.
+- Last health-check service run: PASS, exited `0/SUCCESS` with `failed_checks=0`.
+- Health-check evidence included PASS statuses for HTTPS route, PostgreSQL, API,
+  web, Caddy, disk usage, and backup freshness.
+- Backup timer: PASS, `cilly-postgres-backup.timer` active and waiting.
+- Last backup service run: PASS, exited `0/SUCCESS`.
+- Backup freshness: PASS for private staging, latest listed PostgreSQL dump was
+  from 2026-06-03 and non-zero.
+- Recent backup artifacts: REVIEWED, five recent non-zero dump files listed under
+  the external backup directory.
+- Failed jobs: PASS for reviewed timer status; latest health and backup services
+  were inactive/dead after successful one-shot completion, not failed.
+- Certificate/public route status: PASS for web route HTTP response through Caddy;
+  no separate certificate-expiry monitor is approved by this evidence.
+
+Escalation evidence:
+
+- Alert destination class: manual SSH/GitHub review by owner/operator.
+- Fallback path: direct manual SSH status checks using this checklist and the
+  operational incident runbook.
+- Quiet-hours behavior: no overnight reliance; review in next active operator
+  window unless actively using the app.
+- Owner/operator response window accepted: yes for private staging only.
+- Failed-monitoring No-Go behavior accepted: yes. If health, route, database,
+  backup freshness, or timer checks fail, stronger reliance stops until reviewed
+  or explicitly accepted.
+- Secrets/private data/raw logs included: no.
+- Production-like exposure approved by this evidence: no.
+
+Remaining gaps:
+
+- This does not configure external alerting, push, email, Telegram, phone, or a
+  third-party monitoring dashboard.
+- This does not satisfy offsite encrypted backup or restore-drill evidence; that
+  remains tracked separately.
+- This does not approve routine private trading data, production-like exposure,
+  broker integration, automatic execution, live/realtime claims, profitability
+  claims, or trading advice.
+
 ## Escalation Triggers
 
 Create a follow-up issue or incident record when any of these occur:

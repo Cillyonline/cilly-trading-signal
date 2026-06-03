@@ -118,6 +118,12 @@ commit `b553f86` is recorded in
 It supports controlled private owner/operator staging only. Production-like
 exposure and routine private trading data remain No Go.
 
+v3.5 existing VPS monitoring escalation evidence for private staging is recorded
+in `docs/APPLICATION_MONITORING_CHECKLIST.md#v35-existing-vps-monitoring-escalation-evidence`.
+It supports manual owner/operator private-staging review only and does not
+approve production-like exposure, external alerting, offsite backup reliance, or
+routine private trading data.
+
 ## Evidence Handling
 
 Use `docs/PRIVATE_DATA_EVIDENCE_HANDLING.md` for all production-like review evidence. Do not include secrets, `.env` values, database URLs, cookies, tokens, provider keys, backup repository credentials, raw logs, screenshots with private data, dump contents, restored rows, private watchlists, trade notes, journal notes, broker/account data, or provider dashboards.
