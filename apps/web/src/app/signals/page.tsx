@@ -76,6 +76,7 @@ export default function SignalsPage() {
 
   const summary = useMemo(() => buildSummary(signals), [signals]);
   const filteredSignals = useMemo(() => filterSignals(signals, filters), [signals, filters]);
+  const rankedSignals = useMemo(() => rankSignals(filteredSignals), [filteredSignals]);
 
   if (authStatus !== "authenticated") {
     return <ProtectedRouteLoading />;
@@ -87,12 +88,12 @@ export default function SignalsPage() {
         <header className="rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_right,#064e3b,transparent_36%),rgba(255,255,255,0.05)] p-5 sm:p-8">
           <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-sm uppercase tracking-[0.24em] text-emerald-300 sm:tracking-[0.35em]">Signals</p>
-              <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Signal-Karten pruefen</h1>
+              <p className="text-sm uppercase tracking-[0.24em] text-emerald-300 sm:tracking-[0.35em]">Signal Radar</p>
+              <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Heute relevante Setups sehen</h1>
               <p className="mt-3 max-w-2xl text-slate-300">
-                Persistierte Setup-Bewertungen aus dem Backend. Die Karten unterstuetzen deine
-                manuelle Pruefung und sind keine Kauf- oder Verkaufsanweisung. Stale Hinweise bedeuten,
-                dass keine Live-Freshness vorliegt und neue CSV-Daten sinnvoll sind.
+                Das Radar sortiert gespeicherte Setup-Bewertungen nach manueller Relevanz. Gruen und
+                Gelb heissen pruefen oder beobachten, Rot heisst Kein Trade. Keine Karte ist eine
+                Kauf- oder Verkaufsanweisung.
               </p>
             </div>
             <AuthenticatedHeaderActions />
@@ -100,10 +101,10 @@ export default function SignalsPage() {
         </header>
 
         <section className="grid gap-4 md:grid-cols-4">
-          <SummaryCard label="Alle Signale" value={signals.length.toString()} />
-          <SummaryCard label="Armed" value={summary.armed.toString()} tone="border-emerald-300/40" />
-          <SummaryCard label="Watchlist" value={summary.watchlist.toString()} tone="border-yellow-300/40" />
-          <SummaryCard label="Stale" value={summary.stale.toString()} tone="border-orange-300/40" />
+          <SummaryCard label="Paper-Kandidaten" value={summary.paperCandidates.toString()} tone="green" />
+          <SummaryCard label="Beobachten" value={summary.observe.toString()} tone="yellow" />
+          <SummaryCard label="Kein Trade" value={summary.noTrade.toString()} tone="red" />
+          <SummaryCard label="Datenproblem" value={summary.dataProblem.toString()} tone="gray" />
         </section>
 
         {error ? (
@@ -115,10 +116,10 @@ export default function SignalsPage() {
         <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-xl font-semibold">Persistierte Signale</h2>
+              <h2 className="text-xl font-semibold">Radar-Rangliste</h2>
               <p className="mt-1 text-sm text-slate-400">
-                Sortierung kommt vom Backend. Detailseiten zeigen die gespeicherte Begruendung,
-                damit du den Kontext selbst pruefen kannst.
+                Relevante Kandidaten stehen oben. No-Trade und Datenprobleme bleiben sichtbar, aber
+                werden konservativ nachrangig sortiert.
               </p>
             </div>
             <button
@@ -147,7 +148,7 @@ export default function SignalsPage() {
               <FilteredEmptyState />
             ) : (
               <div className="divide-y divide-white/10">
-                {filteredSignals.map((signal) => (
+                {rankedSignals.map((signal) => (
                   <SignalCard key={signal.id} signal={signal} />
                 ))}
               </div>
@@ -212,13 +213,13 @@ function SignalFiltersPanel({
           onChange={(value) => onChange({ ...filters, status: value as SignalFilters["status"] })}
           options={[
             ["all", "Alle Status"],
-            ["triggered", "Triggered"],
-            ["armed", "Armed"],
+            ["triggered", "Trigger erreicht"],
+            ["armed", "Pruefbereit"],
             ["watchlist", "Watchlist"],
-            ["no_setup", "No Setup"],
-            ["invalidated", "Invalidated"],
-            ["missed", "Missed"],
-            ["expired", "Expired"],
+            ["no_setup", "Kein Setup"],
+            ["invalidated", "Ungueltig"],
+            ["missed", "Verpasst"],
+            ["expired", "Abgelaufen"],
           ]}
         />
 
@@ -238,7 +239,7 @@ function SignalFiltersPanel({
           value={filters.scoreClass}
           onChange={(value) => onChange({ ...filters, scoreClass: value as SignalFilters["scoreClass"] })}
           options={[
-            ["all", "Alle Score Classes"],
+            ["all", "Alle Qualitaeten"],
             ["a_setup", "A Setup"],
             ["b_setup", "B Setup"],
             ["watchlist", "Watchlist"],
@@ -301,10 +302,26 @@ function FilterSelect({
   );
 }
 
-function SummaryCard({ label, value, tone = "border-white/10" }: { label: string; value: string; tone?: string }) {
+function SummaryCard({
+  label,
+  value,
+  tone = "default",
+}: {
+  label: string;
+  value: string;
+  tone?: "green" | "yellow" | "red" | "gray" | "default";
+}) {
+  const toneClass = {
+    default: "border-white/10 bg-slate-950/70 text-slate-100",
+    green: "border-emerald-300/40 bg-emerald-300/10 text-emerald-100",
+    yellow: "border-yellow-300/40 bg-yellow-300/10 text-yellow-100",
+    red: "border-red-300/40 bg-red-300/10 text-red-100",
+    gray: "border-slate-400/40 bg-slate-400/10 text-slate-100",
+  }[tone];
+
   return (
-    <article className={`rounded-2xl border ${tone} bg-slate-950/70 p-5`}>
-      <p className="text-sm text-slate-400">{label}</p>
+    <article className={`rounded-2xl border p-5 ${toneClass}`}>
+      <p className="text-sm opacity-80">{label}</p>
       <p className="mt-3 text-3xl font-semibold">{value}</p>
     </article>
   );
@@ -483,11 +500,24 @@ function FilteredEmptyState() {
 }
 
 function buildSummary(signals: Signal[]) {
+  const decisions = signals.map((signal) => buildSignalDecision(signal));
   return {
-    armed: signals.filter((signal) => signal.status === "armed").length,
-    watchlist: signals.filter((signal) => signal.status === "watchlist").length,
-    stale: signals.filter((signal) => signal.is_stale).length,
+    paperCandidates: decisions.filter((decision) => decision.kind === "paper_candidate").length,
+    observe: decisions.filter((decision) => decision.kind === "observe").length,
+    noTrade: decisions.filter((decision) => decision.kind === "no_trade").length,
+    dataProblem: decisions.filter((decision) => decision.kind === "data_problem").length,
   };
+}
+
+function rankSignals(signals: Signal[]) {
+  return [...signals].sort((left, right) => {
+    const leftDecision = buildSignalDecision(left);
+    const rightDecision = buildSignalDecision(right);
+    if (leftDecision.priority !== rightDecision.priority) {
+      return leftDecision.priority - rightDecision.priority;
+    }
+    return (right.score ?? 0) - (left.score ?? 0);
+  });
 }
 
 function filterSignals(signals: Signal[], filters: SignalFilters) {
