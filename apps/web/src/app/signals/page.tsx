@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AuthenticatedHeaderActions } from "@/components/authenticated-header-actions";
 import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
 import { fetchSignals, redirectToLoginOnAuthError } from "@/lib/api";
+import { buildSignalDecision, signalDecisionDotClass, signalDecisionToneClass } from "@/lib/signal-decision";
 import type { ScoreClass, Signal, SignalStatus, StrategyType } from "@/types/signals";
 
 type SignalFilters = {
@@ -313,6 +314,7 @@ function SignalCard({ signal }: { signal: Signal }) {
   const reasoning = toTextList(signal.reasoning);
   const riskFlags = toTextList(signal.risk_flags);
   const noTradeReasons = toTextList(signal.no_trade_reasons);
+  const decision = buildSignalDecision(signal);
 
   return (
     <article className="grid gap-4 p-4 sm:p-5 lg:grid-cols-[1fr_0.82fr]">
@@ -328,6 +330,18 @@ function SignalCard({ signal }: { signal: Signal }) {
           >
             Detail pruefen
           </a>
+        </div>
+
+        <div className={`mt-4 rounded-2xl border p-4 ${signalDecisionToneClass(decision.tone)}`}>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className={`h-3 w-3 rounded-full ${signalDecisionDotClass(decision.tone)}`} />
+            <p className="text-sm font-semibold uppercase tracking-[0.18em]">{decision.label}</p>
+            <span className="rounded-full border border-current/20 px-3 py-1 text-xs">
+              Qualitaet: {decision.quality}
+            </span>
+          </div>
+          <p className="mt-3 text-lg font-semibold text-slate-50">{decision.headline}</p>
+          <p className="mt-2 text-sm">{decision.action}</p>
         </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-2">
