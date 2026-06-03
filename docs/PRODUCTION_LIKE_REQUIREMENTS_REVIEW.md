@@ -61,6 +61,10 @@ Production-like exposure remains blocked because these are not complete as produ
 - Rollback and database-restore decision evidence exists as runbook guidance, not target-specific production-like proof.
 - Public SaaS, broker/account connectivity, live/realtime claims, and automatic execution remain outside the approved scope.
 
+The consolidated production-like evidence map is tracked in
+`docs/PRODUCTION_LIKE_READINESS_GAP_REGISTER.md`. That register is planning
+evidence only and does not change this No Go decision.
+
 Current evidence still missing before any reconsideration:
 
 - Exact production-like target, exposure model, user model, and owner/operator
