@@ -82,6 +82,8 @@ Partial:
 - v4.1 provider operations now document provider-key handling, explicit VPS restart
   approval, sanitized smoke evidence, and rollback boundaries before any provider
   secret is changed on a server.
+- v4.1 review is recorded in `docs/reviews/v4-1-provider-path-review.md` with
+  follow-ups for paid-provider evaluation and explicit-key Daily/EOD smoke evidence.
 - Dashboard, journal, and performance views include useful MVP-level summaries, risk warnings, and journal analytics, but are not full institutional analytics modules.
 - Risk enforcement covers manual trade creation basics and portfolio/risk review warnings, not complete account-level risk management or automatic position sizing.
 - Multi-timeframe analysis still requires current stored data for required `1W`, `1D`, and `4H` timeframes; provider sync does not automatically fill unsupported timeframes or rerun analysis.
