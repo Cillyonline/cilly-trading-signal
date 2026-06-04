@@ -111,6 +111,10 @@ Partial:
   `docs/V4_4_PRACTICAL_OPERATOR_WORKFLOW_DECISION.md`; the owner/operator selected a
   zero-budget, CSV-first workflow with a universe, active review shortlist, and
   trigger shortlist instead of broad paid provider reliance.
+- v4.4 Practical Operator Workflow is complete and reviewed in
+  `docs/reviews/v4-4-practical-operator-workflow-review.md`; it added the
+  daily/weekly operator playbook, CSV-Arbeitsplan on `/import`, Active Review
+  shortlist on `/signals`, and Trigger Radar workflow polish.
 - Dashboard, journal, and performance views include useful MVP-level summaries, risk warnings, and journal analytics, but are not full institutional analytics modules.
 - Risk enforcement covers manual trade creation basics and portfolio/risk review warnings, not complete account-level risk management or automatic position sizing.
 - Multi-timeframe analysis still requires current stored data for required `1W`, `1D`, and `4H` timeframes; provider sync does not automatically fill unsupported timeframes or rerun analysis.
@@ -136,8 +140,8 @@ Current blockers and risks:
 - Provider reliance beyond guarded Daily/EOD smoke remains intentionally deferred
   until coverage, rate limits, licensing, storage rights, and watchlist scale are
   accepted explicitly.
-- v4.4 implementation work remains open for the daily/weekly playbook, trigger-focused
-  Import guidance, active review shortlist, and Trigger Radar workflow polish.
+- Future operator validation should use a separate browser-smoke or VPS-smoke issue
+  when the next deployment is explicitly approved.
 
 ## v0.1 - Foundation
 
