@@ -4,6 +4,7 @@ from decimal import Decimal
 from pydantic import BaseModel, Field
 
 from app.models.enums import AssetClass, Bias, ScoreClass, SignalStatus, StrategyType, Timeframe
+from app.schemas.analysis import TriggerProximityState
 
 
 class SignalReviewEventRead(BaseModel):
@@ -45,6 +46,7 @@ class SignalRead(BaseModel):
     risk_flags: list | dict | None
     no_trade_reasons: list | dict | None
     next_action: str | None
+    trigger_proximity_state: TriggerProximityState
     quality_report: list[dict[str, str]] = Field(default_factory=list)
     review_note: str | None
     created_at: datetime
