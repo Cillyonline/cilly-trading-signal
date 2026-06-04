@@ -719,6 +719,9 @@ function buildImportReadinessGroups(
   const grouped = new Map<string, Set<Timeframe>>();
 
   for (const item of history) {
+    if (!isUsableImportHistoryItem(item)) {
+      continue;
+    }
     const symbol = item.symbol.toUpperCase();
     if (!grouped.has(symbol)) {
       grouped.set(symbol, new Set());
@@ -748,6 +751,15 @@ function buildImportReadinessGroups(
       };
     })
     .sort((left, right) => Number(right.complete) - Number(left.complete) || left.symbol.localeCompare(right.symbol));
+}
+
+function isUsableImportHistoryItem(item: ImportHistoryItem) {
+  return (
+    item.candle_count > 0 &&
+    item.status !== "failed" &&
+    item.sync_status !== "failed" &&
+    item.sync_status !== "skipped"
+  );
 }
 
 function detectCsvFile(fileName: string): DetectedCsvFile {
