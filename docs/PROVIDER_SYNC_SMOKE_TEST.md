@@ -29,6 +29,8 @@ profitability claim, or approval for automatic execution.
   symbol. Do not use a private watchlist or private notes as smoke evidence.
 - No real provider key is committed to the repository.
 - `.env` and provider secrets remain local to the operator environment.
+- VPS `.env` edits, API restarts, stack restarts, or provider-key rotation require
+  explicit owner/operator approval for that environment before they are performed.
 
 ## Repeatable Sample-Only Smoke Matrix
 
@@ -103,6 +105,10 @@ This check is optional and requires an operator-owned provider key configured ou
 the repository. Do not paste the key, full request URL, raw provider response, or
 provider account/subscription details into evidence.
 
+For VPS or private staging, do not set, rotate, remove, or print the provider key
+as part of this checklist unless the owner/operator explicitly approved that exact
+operation. Record only sanitized status evidence after the operator-approved change.
+
 Configuration shape:
 
 ```dotenv
@@ -151,6 +157,9 @@ Expected safe failure results:
   `SMOKE-PROVIDER-`.
 - Do not reset staging volumes, rotate secrets, restart VPS services, or edit `.env`
   as a smoke cleanup step without explicit operator approval.
+- If provider sync must be rolled back after an approved VPS test, disable
+  `MARKET_DATA_PROVIDER_SYNC_ENABLED`, restart only with approval, and confirm a
+  skipped manual data update without printing `.env` or provider request details.
 - For local disposable runs, use the documented local smoke cleanup path; otherwise
   prefer adding a new fake sample symbol for the next run.
 - If a configured provider check used a public symbol, record only sanitized status

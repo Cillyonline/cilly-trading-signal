@@ -105,6 +105,44 @@ Market data provider sync is manual and fails closed. If `MARKET_DATA_PROVIDER_S
 
 Do not commit `.env` or paste secrets into issues, PRs, logs, or screenshots.
 
+### Provider Secret And VPS Operation Checklist
+
+Provider keys are operational secrets. Adding, rotating, testing, or removing a
+provider key on a VPS is a server operation and must not be performed by an agent
+or script without explicit owner/operator approval for that specific environment.
+
+Before enabling provider sync on a VPS:
+
+- Confirm the target environment, branch or commit, and Compose project name.
+- Confirm the provider identifier and timeframe scope; the current implemented path
+  is guarded Alpha Vantage Daily/EOD only.
+- Confirm that `1W` and `4H` still use TradingView CSV fallback unless a later
+  provider decision explicitly changes that scope.
+- Confirm that the operator owns the provider account/key and accepts the provider
+  terms, rate limits, and storage/licensing assumptions.
+- Confirm the rollback plan: set `MARKET_DATA_PROVIDER_SYNC_ENABLED=false`, restart
+  the API/stack, and verify `/api/health` plus a skipped manual sync response.
+- Confirm evidence rules: record only status enums, sanitized error codes, timeframe,
+  environment class, and commit SHA; never record the key, request URL, raw payload,
+  account/subscription details, cookies, database URLs, or private symbols.
+
+When changing provider settings on a VPS:
+
+- Edit only the VPS-local `.env` or approved secret store; do not change `.env.example`
+  with real values.
+- Do not print `.env`, shell history, or provider request URLs into terminal captures
+  that may be pasted into chat, issues, PRs, screenshots, or docs.
+- Restart only after explicit approval because restarts may interrupt the cockpit.
+- After restart, verify API health and the disabled, failure, or success path using
+  `docs/PROVIDER_SYNC_SMOKE_TEST.md` with sample-only evidence.
+- If the API fails startup after a provider change, roll back by disabling provider
+  sync or restoring the previous secret value, then restart and record sanitized
+  status only.
+
+Provider-key handling does not approve live/realtime data, automatic refresh,
+automatic signal generation, alerts, broker integration, order execution, public
+production readiness, strategy validation, or profitability claims.
+
 ## Production Secrets And Config Guards
 
 Use a secret generator for `SECRET_KEY`, `ADMIN_INITIAL_PASSWORD`, `POSTGRES_PASSWORD`, and `TRADINGVIEW_WEBHOOK_SECRET`. Prefer at least 32 random characters for secrets and unique values per environment.
