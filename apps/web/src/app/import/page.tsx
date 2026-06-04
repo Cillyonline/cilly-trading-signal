@@ -42,6 +42,14 @@ type BulkImportItem = {
   error: ImportPageError | null;
 };
 
+type DetectedCsvFile = {
+  fileName: string;
+  symbol: string | null;
+  exchange: string | null;
+  timeframe: Timeframe | null;
+  warning: string | null;
+};
+
 export default function ImportPage() {
   const authStatus = useProtectedRoute();
   const [items, setItems] = useState<WatchlistItem[]>([]);
@@ -88,6 +96,7 @@ export default function ImportPage() {
     () => items.find((item) => item.id.toString() === watchlistItemId) ?? null,
     [items, watchlistItemId],
   );
+  const detectedFiles = useMemo(() => files.map((selectedFile) => detectCsvFile(selectedFile.name)), [files]);
 
   if (authStatus !== "authenticated") {
     return <ProtectedRouteLoading />;
@@ -296,6 +305,8 @@ export default function ImportPage() {
                   </p>
                 </div>
               ) : null}
+
+              {detectedFiles.length > 0 ? <DetectedCsvPreview items={detectedFiles} /> : null}
 
               {selectedItem ? (
                 <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-sm text-slate-300">
@@ -603,6 +614,86 @@ function BulkImportResultList({ items, symbol }: { items: BulkImportItem[]; symb
       </div>
     </article>
   );
+}
+
+function DetectedCsvPreview({ items }: { items: DetectedCsvFile[] }) {
+  return (
+    <div className="rounded-2xl border border-sky-300/20 bg-sky-300/10 p-4 text-sm text-sky-50">
+      <p className="font-medium">Dateinamen-Vorschau</p>
+      <p className="mt-1 text-sky-100/80">
+        Die App erkennt Symbol und Timeframe aus bekannten TradingView-Dateinamen. Importiert wird in
+        diesem Schritt noch mit der oben gewaehlten manuellen Zuordnung.
+      </p>
+      <div className="mt-3 grid gap-2">
+        {items.map((item) => (
+          <div key={item.fileName} className="rounded-xl border border-white/10 bg-slate-950/40 p-3">
+            <p className="break-words font-semibold text-slate-100">{item.fileName}</p>
+            <div className="mt-2 flex flex-wrap gap-2 text-xs">
+              <span className="rounded-full bg-slate-800 px-3 py-1 text-slate-200">
+                Symbol: {item.symbol ?? "unklar"}
+              </span>
+              <span className="rounded-full bg-slate-800 px-3 py-1 text-slate-200">
+                Timeframe: {item.timeframe ?? "unklar"}
+              </span>
+              {item.exchange ? (
+                <span className="rounded-full bg-slate-800 px-3 py-1 text-slate-200">
+                  Exchange: {item.exchange}
+                </span>
+              ) : null}
+            </div>
+            {item.warning ? <p className="mt-2 text-xs text-yellow-100">{item.warning}</p> : null}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function detectCsvFile(fileName: string): DetectedCsvFile {
+  const baseName = fileName.replace(/\.csv$/i, "");
+  const timeframeMatch = baseName.match(/(?:^|[,_\s-])(1D|1W|240|4H)(?:[,_\s-]|$)/i);
+  const timeframe = normalizeDetectedTimeframe(timeframeMatch?.[1] ?? null);
+  const prefixedMatch = baseName.match(
+    /^([A-Z0-9]+)[_,\s-]+([A-Z0-9.:-]+?)(?:[_,\s-]+(?:1D|1W|240|4H)\b|$)/i,
+  );
+  const symbolOnlyMatch = baseName.match(/^([A-Z0-9.:-]+?)(?:[_,\s-]+(?:1D|1W|240|4H)\b|$)/i);
+  const detectedExchange = prefixedMatch?.[1]?.toUpperCase() ?? null;
+  const detectedSymbol = normalizeDetectedSymbol(prefixedMatch?.[2] ?? null);
+  const exchange = detectedSymbol && detectedSymbol !== timeframe ? detectedExchange : null;
+  const symbol = exchange ? detectedSymbol : normalizeDetectedSymbol(symbolOnlyMatch?.[1] ?? null);
+  const warning =
+    symbol && timeframe
+      ? null
+      : "Dateiname konnte nicht eindeutig erkannt werden. Bitte Symbol und Timeframe manuell pruefen.";
+
+  return {
+    fileName,
+    symbol,
+    exchange,
+    timeframe,
+    warning,
+  };
+}
+
+function normalizeDetectedTimeframe(value: string | null): Timeframe | null {
+  if (!value) {
+    return null;
+  }
+  const normalized = value.toUpperCase();
+  if (normalized === "240" || normalized === "4H") {
+    return "4H";
+  }
+  if (normalized === "1D" || normalized === "1W") {
+    return normalized;
+  }
+  return null;
+}
+
+function normalizeDetectedSymbol(value: string | null) {
+  if (!value) {
+    return null;
+  }
+  return value.replace(/^.*:/, "").toUpperCase();
 }
 
 function ImportResultCard({
