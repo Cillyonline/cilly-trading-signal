@@ -87,6 +87,10 @@ Partial:
 - Paid provider evaluation now has a documented checklist for watchlist scope,
   required timeframes, rate limits, pricing, storage/licensing rights, failure
   behavior, and no-secret evidence boundaries before any provider reliance expands.
+- v4.2 final technical verification is recorded in
+  `docs/reviews/v4-2-final-technical-verification.md`: local frontend build passed,
+  current `main` CI/Security Scans were green, and local backend checks remain
+  blocked only by missing local `uv` tooling.
 - Dashboard, journal, and performance views include useful MVP-level summaries, risk warnings, and journal analytics, but are not full institutional analytics modules.
 - Risk enforcement covers manual trade creation basics and portfolio/risk review warnings, not complete account-level risk management or automatic position sizing.
 - Multi-timeframe analysis still requires current stored data for required `1W`, `1D`, and `4H` timeframes; provider sync does not automatically fill unsupported timeframes or rerun analysis.
