@@ -26,6 +26,15 @@ type TriggerRadarItem = {
   action: string;
 };
 
+type ActiveReviewItem = {
+  signal: Signal;
+  label: string;
+  reason: string;
+  action: string;
+  priority: number;
+  tone: "green" | "yellow" | "orange" | "gray";
+};
+
 const emptyFilters: SignalFilters = {
   symbol: "",
   status: "all",
@@ -84,6 +93,7 @@ export default function SignalsPage() {
   }, [authStatus]);
 
   const summary = useMemo(() => buildSummary(signals), [signals]);
+  const activeReviewItems = useMemo(() => buildActiveReviewItems(signals), [signals]);
   const triggerRadarItems = useMemo(() => buildTriggerRadarItems(signals), [signals]);
   const filteredSignals = useMemo(() => filterSignals(signals, filters), [signals, filters]);
   const rankedSignals = useMemo(() => rankSignals(filteredSignals), [filteredSignals]);
@@ -116,6 +126,8 @@ export default function SignalsPage() {
           <SummaryCard label="Kein Trade" value={summary.noTrade.toString()} tone="red" />
           <SummaryCard label="Datenproblem" value={summary.dataProblem.toString()} tone="gray" />
         </section>
+
+        <ActiveReviewShortlistSection items={activeReviewItems} isLoading={isLoading} />
 
         <TriggerRadarSection items={triggerRadarItems} isLoading={isLoading} />
 
@@ -169,6 +181,72 @@ export default function SignalsPage() {
         </section>
       </section>
     </main>
+  );
+}
+
+function ActiveReviewShortlistSection({ isLoading, items }: { isLoading: boolean; items: ActiveReviewItem[] }) {
+  return (
+    <section className="rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.14),transparent_34%),rgba(255,255,255,0.03)] p-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-emerald-300">Active Review</p>
+          <h2 className="mt-2 text-xl font-semibold">Heutige Shortlist</h2>
+          <p className="mt-2 max-w-3xl text-sm text-slate-400">
+            Kompakte Arbeitsliste aus Paper-Kandidat, Beobachten, Trigger-Naehe und Datenproblemen.
+            Sie ersetzt nicht die Detailpruefung und erzeugt keine Analyse, Alerts, Trades oder Orders.
+          </p>
+        </div>
+        <span className="rounded-full border border-emerald-300/20 bg-emerald-300/10 px-3 py-1 text-sm text-emerald-100">
+          {items.length} Fokuskarte(n)
+        </span>
+      </div>
+
+      <div className="mt-5 grid gap-3 lg:grid-cols-4">
+        {isLoading ? (
+          <p className="rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-sm text-slate-400">
+            Shortlist wird geladen...
+          </p>
+        ) : items.length === 0 ? (
+          <p className="rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-sm text-slate-400 lg:col-span-4">
+            Keine aktiven Review-Kandidaten. Importiere aktuelle CSV-Daten oder pruefe die Radar-Rangliste.
+          </p>
+        ) : (
+          items.slice(0, 8).map((item) => <ActiveReviewCard key={item.signal.id} item={item} />)
+        )}
+      </div>
+    </section>
+  );
+}
+
+function ActiveReviewCard({ item }: { item: ActiveReviewItem }) {
+  const toneClass = {
+    green: "border-emerald-300/40 bg-emerald-300/10 text-emerald-100",
+    yellow: "border-yellow-300/40 bg-yellow-300/10 text-yellow-100",
+    orange: "border-orange-300/40 bg-orange-300/10 text-orange-100",
+    gray: "border-slate-400/40 bg-slate-400/10 text-slate-100",
+  }[item.tone];
+
+  return (
+    <article className={`rounded-2xl border p-4 ${toneClass}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-lg font-semibold text-slate-50">{item.signal.symbol}</h3>
+          <p className="mt-1 text-xs uppercase tracking-[0.18em] opacity-80">{item.label}</p>
+        </div>
+        <span className="rounded-full border border-current/20 px-3 py-1 text-xs">
+          {statusLabel[item.signal.status]}
+        </span>
+      </div>
+      <p className="mt-3 text-sm font-medium text-slate-50">{item.reason}</p>
+      <p className="mt-2 text-sm">{item.action}</p>
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <Metric label="Score" value={formatScore(item.signal)} compact />
+        <Metric label="Trigger" value={formatMoney(item.signal.trigger_level)} compact />
+      </div>
+      <a className="mt-4 inline-flex text-sm font-semibold text-current hover:text-slate-50" href={`/signals/${item.signal.id}`}>
+        Detail pruefen
+      </a>
+    </article>
   );
 }
 
@@ -591,6 +669,79 @@ function buildSummary(signals: Signal[]) {
     noTrade: decisions.filter((decision) => decision.kind === "no_trade").length,
     dataProblem: decisions.filter((decision) => decision.kind === "data_problem").length,
   };
+}
+
+function buildActiveReviewItems(signals: Signal[]): ActiveReviewItem[] {
+  return signals
+    .map(toActiveReviewItem)
+    .filter((item): item is ActiveReviewItem => item !== null)
+    .sort(
+      (left, right) =>
+        left.priority - right.priority ||
+        (right.signal.score ?? 0) - (left.signal.score ?? 0) ||
+        left.signal.symbol.localeCompare(right.signal.symbol),
+    );
+}
+
+function toActiveReviewItem(signal: Signal): ActiveReviewItem | null {
+  const decision = buildSignalDecision(signal);
+
+  if (decision.kind === "paper_candidate") {
+    return {
+      signal,
+      label: "Paper-Kandidat",
+      reason: "Starker manueller Review-Kandidat.",
+      action: "Chart, 4H-Kontext, Risiko und Invalidation manuell pruefen.",
+      priority: 0,
+      tone: "green",
+    };
+  }
+
+  if (signal.trigger_proximity_state === "at_trigger" && !signal.is_stale) {
+    return {
+      signal,
+      label: "Am Trigger",
+      reason: "Gespeicherter Trigger-Kontext ist nah genug fuer fokussierte Review.",
+      action: "4H-Daten, Setup-Qualitaet und Risikoplan pruefen. Keine Order aus der App.",
+      priority: 1,
+      tone: "orange",
+    };
+  }
+
+  if (signal.trigger_proximity_state === "near_trigger" && !signal.is_stale) {
+    return {
+      signal,
+      label: "Nah dran",
+      reason: "Trigger-Naehe macht das Symbol relevant fuer die kleine Trigger-Liste.",
+      action: "4H-CSV gezielt aktualisieren und Detailkarte pruefen.",
+      priority: 2,
+      tone: "orange",
+    };
+  }
+
+  if (decision.kind === "observe") {
+    return {
+      signal,
+      label: "Beobachten",
+      reason: "Interessant, aber noch kein klarer Paper-Kandidat.",
+      action: "Auf der aktiven Review-Liste lassen und nach neuer 1D/4H-CSV erneut pruefen.",
+      priority: 3,
+      tone: "yellow",
+    };
+  }
+
+  if (decision.kind === "data_problem" || signal.is_stale) {
+    return {
+      signal,
+      label: "Datenproblem",
+      reason: signal.is_stale ? "Datenstand ist stale." : "Daten oder Freshness blockieren die Review.",
+      action: "CSV-Arbeitsplan auf /import nutzen und fehlende oder stale Timeframes gezielt aktualisieren.",
+      priority: 4,
+      tone: "gray",
+    };
+  }
+
+  return null;
 }
 
 function buildTriggerRadarItems(signals: Signal[]): TriggerRadarItem[] {
