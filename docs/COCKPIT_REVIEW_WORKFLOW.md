@@ -63,6 +63,19 @@ For CSV imports:
 - Verify symbol, asset class, timeframe, required OHLCV columns, candle count, and import result.
 - Use the import result as stored historical context only.
 - Run analysis only after the relevant timeframes are present and plausible.
+- For bulk CSV work, review filename detection before import. Supported patterns
+  include `BATS_AAPL_1D.csv`, `BATS_AAPL_240.csv`, `GETTEX_ABEA, 1W.csv`, and
+  `AAPL_1D.csv`; `240` is treated as `4H`.
+- Treat the filename preview as a guardrail only. The actual import still follows
+  the manually selected Watchlist symbol and Timeframe.
+- Use Import Readiness as a planning view that combines saved usable imports with
+  the current filename preview. Do not treat preview-only readiness as analyzed or
+  proven data; confirm saved import results before relying on Analyze-All.
+- Use Analyze-All only by explicit click. It should analyze complete symbols,
+  skip incomplete symbols with missing-timeframe reasons, and show Ampel/radar
+  decisions per symbol.
+- Failed files, skipped provider placeholders, zero-candle rows, stale/partial data,
+  or unclear filenames are review blockers, not silent success.
 
 For provider sync:
 

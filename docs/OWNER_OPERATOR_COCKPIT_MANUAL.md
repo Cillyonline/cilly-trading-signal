@@ -139,19 +139,39 @@ Purpose:
 
 - Import stored OHLCV CSV data for Watchlist symbols.
 - Run analysis deliberately from stored data.
+- Use bulk CSV import as the low-friction fallback when provider sync is unavailable,
+  disabled, stale, partial, or unsupported for the needed timeframe.
 
 Operator checks:
 
 - Use sample CSV fixtures for smoke/evidence runs.
 - Confirm timeframe and symbol match the intended sample symbol.
+- For bulk imports, select all intended CSV files together, then review the filename
+  preview before submitting.
+- Supported TradingView-style filename patterns include exchange-prefixed names such
+  as `BATS_AAPL_1D.csv`, `BATS_AAPL_240.csv`, and comma/space variants such as
+  `GETTEX_ABEA, 1W.csv`; `240` is interpreted as `4H`.
+- The current import action still uses the manually selected Watchlist symbol and
+  Timeframe. The filename preview is a safety check, not automatic remapping.
+- Use Import Readiness as a planning view across saved usable imports and the
+  current filename preview. Before batch analysis, confirm the files were actually
+  submitted and the saved import results are usable for `1W`, `1D`, and `4H`.
+- Use `Vollstaendige Symbole analysieren` only when you want to explicitly analyze
+  all complete imported symbols. Incomplete symbols must stay skipped with a visible
+  missing-timeframe reason.
 - Read the Ampel decision before reading technical backend metrics.
 - Treat conservative `No Setup` or `No Trade` as valid output.
 - Confirm analysis does not create trades or orders.
+- Confirm CSV files contain public/synthetic OHLCV only, not broker exports, account
+  balances, fills, private notes, or personal identifiers.
 
 Stop if:
 
 - Data source, timeframe, or symbol is wrong.
 - Import creates unexpected private data exposure.
+- Filename preview is unclear or conflicts with the manually selected symbol/timeframe.
+- Readiness marks required timeframes as missing and the workflow would require
+  guessing or overriding that blocker.
 - Analysis copy implies guaranteed outcome, profitability, or trading instruction.
 
 ## 6. Signals
