@@ -38,6 +38,8 @@ type ImportPageError = {
 
 type BulkImportItem = {
   fileName: string;
+  targetSymbol: string | null;
+  targetTimeframe: Timeframe | null;
   status: "success" | "failed";
   result: CsvImportResult | null;
   error: ImportPageError | null;
@@ -49,6 +51,16 @@ type DetectedCsvFile = {
   exchange: string | null;
   timeframe: Timeframe | null;
   warning: string | null;
+};
+
+type CsvFileMapping = {
+  fileName: string;
+  detectedSymbol: string | null;
+  detectedExchange: string | null;
+  detectedTimeframe: Timeframe | null;
+  warning: string | null;
+  watchlistItemId: string;
+  timeframe: Timeframe | "";
 };
 
 type ImportReadinessGroup = {
@@ -80,7 +92,9 @@ export default function ImportPage() {
   const [timeframe, setTimeframe] = useState<Timeframe>("1D");
   const [file, setFile] = useState<File | null>(null);
   const [files, setFiles] = useState<File[]>([]);
+  const [fileMappings, setFileMappings] = useState<CsvFileMapping[]>([]);
   const [result, setResult] = useState<CsvImportResult | null>(null);
+  const [resultSymbol, setResultSymbol] = useState<string | null>(null);
   const [bulkResults, setBulkResults] = useState<BulkImportItem[]>([]);
   const [syncResult, setSyncResult] = useState<MarketDataSyncResult | null>(null);
   const [history, setHistory] = useState<ImportHistoryItem[]>([]);
@@ -122,9 +136,14 @@ export default function ImportPage() {
     [items, watchlistItemId],
   );
   const detectedFiles = useMemo(() => files.map((selectedFile) => detectCsvFile(selectedFile.name)), [files]);
+  const mappedFiles = useMemo(() => buildMappedDetectedFiles(fileMappings, items), [fileMappings, items]);
   const readinessGroups = useMemo(
-    () => buildImportReadinessGroups(history, detectedFiles),
-    [history, detectedFiles],
+    () => buildImportReadinessGroups(history, mappedFiles.length > 0 ? mappedFiles : detectedFiles),
+    [history, mappedFiles, detectedFiles],
+  );
+  const mappingHasInvalidRows = useMemo(
+    () => fileMappings.some((mapping) => !mapping.watchlistItemId || !mapping.timeframe),
+    [fileMappings],
   );
   const batchAnalysisPlan = useMemo(() => buildBatchAnalysisPlan(history), [history]);
   const providerCapabilityHints = useMemo(() => buildProviderCapabilityHints(syncResult), [syncResult]);
@@ -137,41 +156,60 @@ export default function ImportPage() {
     event.preventDefault();
     setError(null);
     setResult(null);
+    setResultSymbol(null);
     setBulkResults([]);
     setSyncResult(null);
     setAnalysisResult(null);
     setBatchAnalysisResults([]);
 
     const selectedFiles = files.length > 0 ? files : file ? [file] : [];
-    if (!watchlistItemId || selectedFiles.length === 0) {
-      setError(toSimpleError("Waehle ein Symbol und mindestens eine CSV-Datei aus."));
+    if (selectedFiles.length === 0) {
+      setError(toSimpleError("Waehle mindestens eine CSV-Datei aus."));
+      return;
+    }
+
+    if (fileMappings.length !== selectedFiles.length || mappingHasInvalidRows) {
+      setError(
+        toSimpleError(
+          "Korrigiere zuerst die CSV-Zuordnung. Jede Datei braucht ein Watchlist-Symbol und einen Timeframe.",
+        ),
+      );
       return;
     }
 
     setIsImporting(true);
     const importedItems: BulkImportItem[] = [];
     try {
-      for (const selectedFile of selectedFiles) {
+      for (let index = 0; index < selectedFiles.length; index += 1) {
+        const selectedFile = selectedFiles[index];
+        const mapping = fileMappings[index];
+        const targetTimeframe = mapping.timeframe as Timeframe;
+        const targetItem = items.find((item) => item.id.toString() === mapping.watchlistItemId) ?? null;
         const formData = new FormData();
-        formData.append("watchlist_item_id", watchlistItemId);
-        formData.append("timeframe", timeframe);
+        formData.append("watchlist_item_id", mapping.watchlistItemId);
+        formData.append("timeframe", targetTimeframe);
         formData.append("file", selectedFile);
 
         try {
           const imported = await importCsv(formData);
           importedItems.push({
             fileName: selectedFile.name,
+            targetSymbol: targetItem?.symbol ?? null,
+            targetTimeframe,
             status: "success",
             result: imported,
             error: null,
           });
           setResult(imported);
+          setResultSymbol(targetItem?.symbol ?? null);
         } catch (importError) {
           if (redirectToLoginOnAuthError(importError)) {
             return;
           }
           importedItems.push({
             fileName: selectedFile.name,
+            targetSymbol: targetItem?.symbol ?? null,
+            targetTimeframe,
             status: "failed",
             result: null,
             error: toImportError(importError),
@@ -346,7 +384,7 @@ export default function ImportPage() {
 
             <div className="mt-6 grid gap-4">
               <label className="grid gap-2 text-sm text-slate-300">
-                Symbol
+                Standard-Symbol / Provider-Kontext
                 <select
                   required
                   disabled={isLoading || items.length === 0}
@@ -363,7 +401,7 @@ export default function ImportPage() {
               </label>
 
               <label className="grid gap-2 text-sm text-slate-300">
-                Timeframe
+                Standard-Timeframe / Provider-Kontext
                 <select
                   value={timeframe}
                   onChange={(event) => setTimeframe(event.target.value as Timeframe)}
@@ -388,6 +426,8 @@ export default function ImportPage() {
                     const selectedFiles = Array.from(event.target.files ?? []);
                     setFiles(selectedFiles);
                     setFile(selectedFiles[0] ?? null);
+                    setFileMappings(buildCsvFileMappings(selectedFiles, items));
+                    setResultSymbol(null);
                   }}
                   className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-400 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-slate-950 focus:border-emerald-300"
                 />
@@ -397,12 +437,14 @@ export default function ImportPage() {
                 <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-sm text-slate-300">
                   <p className="font-medium text-slate-100">{files.length} Datei(en) ausgewaehlt</p>
                   <p className="mt-1 text-slate-400">
-                    In diesem Schritt werden alle Dateien mit dem aktuell gewaehlten Symbol und Timeframe importiert.
+                    Pruefe die Zuordnung je Datei. Der Import startet erst nach explizitem Klick.
                   </p>
                 </div>
               ) : null}
 
-              {detectedFiles.length > 0 ? <DetectedCsvPreview items={detectedFiles} /> : null}
+              {fileMappings.length > 0 ? (
+                <CsvFileMappingTable items={items} mappings={fileMappings} onChange={setFileMappings} />
+              ) : null}
 
               {readinessGroups.length > 0 ? <ImportReadinessPanel groups={readinessGroups} /> : null}
 
@@ -422,7 +464,7 @@ export default function ImportPage() {
               ) : null}
 
               <button
-                disabled={isImporting || isLoading || items.length === 0}
+                disabled={isImporting || isLoading || items.length === 0 || mappingHasInvalidRows}
                 type="submit"
                 className="rounded-xl bg-emerald-400 px-5 py-3 font-semibold text-slate-950 disabled:opacity-60"
               >
@@ -443,14 +485,14 @@ export default function ImportPage() {
               {isLoading ? (
                 <p className="p-5 text-sm text-slate-400">Importdaten werden geladen...</p>
               ) : bulkResults.length > 1 || (bulkResults.length === 1 && bulkResults[0]?.status === "failed") ? (
-                <BulkImportResultList items={bulkResults} symbol={selectedItem?.symbol ?? "Symbol"} />
+                <BulkImportResultList items={bulkResults} />
               ) : result ? (
                 <ImportResultCard
                   analysisResult={analysisResult}
                   isAnalyzing={analyzingSeriesId === result.series_id}
                   onAnalyze={() => void runAnalysis()}
                   result={result}
-                  symbol={selectedItem?.symbol ?? "Symbol"}
+                  symbol={resultSymbol ?? selectedItem?.symbol ?? "Symbol"}
                 />
               ) : (
                 <EmptyState />
@@ -550,6 +592,7 @@ export default function ImportPage() {
                     item={item}
                     onAnalyze={() => {
                       setResult(toImportResult(item));
+                      setResultSymbol(item.symbol);
                       void runAnalysisForSeries(item.series_id);
                     }}
                   />
@@ -682,7 +725,7 @@ function toImportResult(item: ImportHistoryItem): CsvImportResult {
   };
 }
 
-function BulkImportResultList({ items, symbol }: { items: BulkImportItem[]; symbol: string }) {
+function BulkImportResultList({ items }: { items: BulkImportItem[] }) {
   const successCount = items.filter((item) => item.status === "success").length;
   const failedCount = items.length - successCount;
 
@@ -694,7 +737,8 @@ function BulkImportResultList({ items, symbol }: { items: BulkImportItem[]; symb
           {successCount} erfolgreich, {failedCount} fehlgeschlagen
         </h3>
         <p className="mt-2 text-sm text-slate-400">
-          Ziel-Symbol: {symbol}. Fehler in einzelnen Dateien blockieren die anderen Importe nicht.
+          Fehler in einzelnen Dateien blockieren die anderen Importe nicht. Pruefe jede Zuordnung,
+          bevor du Analysen startest.
         </p>
       </div>
 
@@ -712,6 +756,14 @@ function BulkImportResultList({ items, symbol }: { items: BulkImportItem[]; symb
               <p className="break-words text-sm font-semibold text-slate-100">{item.fileName}</p>
               <span className="rounded-full border border-current/20 px-3 py-1 text-xs text-slate-100">
                 {item.status === "success" ? "Importiert" : "Fehler"}
+              </span>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2 text-xs">
+              <span className="rounded-full bg-slate-900/70 px-3 py-1 text-slate-100">
+                Ziel: {item.targetSymbol ?? "unklar"}
+              </span>
+              <span className="rounded-full bg-slate-900/70 px-3 py-1 text-slate-100">
+                Timeframe: {item.targetTimeframe ?? "unklar"}
               </span>
             </div>
             {item.result ? (
@@ -740,37 +792,159 @@ function BulkImportResultList({ items, symbol }: { items: BulkImportItem[]; symb
   );
 }
 
-function DetectedCsvPreview({ items }: { items: DetectedCsvFile[] }) {
+function CsvFileMappingTable({
+  items,
+  mappings,
+  onChange,
+}: {
+  items: WatchlistItem[];
+  mappings: CsvFileMapping[];
+  onChange: (items: CsvFileMapping[]) => void;
+}) {
+  const invalidCount = mappings.filter((mapping) => !mapping.watchlistItemId || !mapping.timeframe).length;
+
+  function updateMapping(fileName: string, changes: Partial<CsvFileMapping>) {
+    onChange(mappings.map((mapping) => (mapping.fileName === fileName ? { ...mapping, ...changes } : mapping)));
+  }
+
   return (
     <div className="rounded-2xl border border-sky-300/20 bg-sky-300/10 p-4 text-sm text-sky-50">
-      <p className="font-medium">Dateinamen-Vorschau</p>
-      <p className="mt-1 text-sky-100/80">
-        Die App erkennt Symbol und Timeframe aus bekannten TradingView-Dateinamen. Importiert wird in
-        diesem Schritt noch mit der oben gewaehlten manuellen Zuordnung.
-      </p>
-      <div className="mt-3 grid gap-2">
-        {items.map((item) => (
-          <div key={item.fileName} className="rounded-xl border border-white/10 bg-slate-950/40 p-3">
-            <p className="break-words font-semibold text-slate-100">{item.fileName}</p>
-            <div className="mt-2 flex flex-wrap gap-2 text-xs">
-              <span className="rounded-full bg-slate-800 px-3 py-1 text-slate-200">
-                Symbol: {item.symbol ?? "unklar"}
-              </span>
-              <span className="rounded-full bg-slate-800 px-3 py-1 text-slate-200">
-                Timeframe: {item.timeframe ?? "unklar"}
-              </span>
-              {item.exchange ? (
-                <span className="rounded-full bg-slate-800 px-3 py-1 text-slate-200">
-                  Exchange: {item.exchange}
-                </span>
-              ) : null}
-            </div>
-            {item.warning ? <p className="mt-2 text-xs text-yellow-100">{item.warning}</p> : null}
-          </div>
-        ))}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="font-medium">CSV-Zuordnung vor Import</p>
+          <p className="mt-1 text-sky-100/80">
+            Pruefe Symbol und Timeframe je Datei. Unklare Zeilen muessen korrigiert werden, bevor
+            der manuelle Import startet.
+          </p>
+        </div>
+        {invalidCount > 0 ? (
+          <span className="rounded-full border border-yellow-300/30 bg-yellow-300/10 px-3 py-1 text-xs text-yellow-50">
+            {invalidCount} Zeile(n) blockiert
+          </span>
+        ) : (
+          <span className="rounded-full border border-emerald-300/30 bg-emerald-300/10 px-3 py-1 text-xs text-emerald-50">
+            Alle Zeilen bereit
+          </span>
+        )}
       </div>
+      <p className="mt-3 rounded-xl border border-white/10 bg-slate-950/40 p-3 text-xs text-sky-100/80">
+        Diese Tabelle speichert keine privaten Broker-, Depot- oder Orderdaten. Sie ordnet nur
+        ausgewaehlte oeffentliche OHLCV-CSV-Dateien bestehenden Watchlist-Symbolen zu.
+      </p>
+      <div className="mt-3 overflow-x-auto rounded-xl border border-white/10">
+        <table className="min-w-full divide-y divide-white/10 text-left text-xs">
+          <thead className="bg-slate-950/70 text-sky-100/80">
+            <tr>
+              <th className="px-3 py-2 font-semibold">Datei</th>
+              <th className="px-3 py-2 font-semibold">Erkannt</th>
+              <th className="px-3 py-2 font-semibold">Ziel-Symbol</th>
+              <th className="px-3 py-2 font-semibold">Timeframe</th>
+              <th className="px-3 py-2 font-semibold">Status</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/10 bg-slate-950/40">
+            {mappings.map((mapping) => {
+              const isBlocked = !mapping.watchlistItemId || !mapping.timeframe;
+              return (
+                <tr key={mapping.fileName} className={isBlocked ? "bg-yellow-300/5" : undefined}>
+                  <td className="max-w-[13rem] px-3 py-3 align-top text-slate-100">
+                    <p className="break-words font-semibold">{mapping.fileName}</p>
+                    {mapping.detectedExchange ? (
+                      <p className="mt-1 text-slate-400">Exchange: {mapping.detectedExchange}</p>
+                    ) : null}
+                  </td>
+                  <td className="px-3 py-3 align-top text-slate-300">
+                    <div className="grid gap-1">
+                      <span>Symbol: {mapping.detectedSymbol ?? "unklar"}</span>
+                      <span>Timeframe: {mapping.detectedTimeframe ?? "unklar"}</span>
+                    </div>
+                    {mapping.warning ? <p className="mt-2 text-yellow-100">{mapping.warning}</p> : null}
+                  </td>
+                  <td className="px-3 py-3 align-top">
+                    <select
+                      value={mapping.watchlistItemId}
+                      onChange={(event) => updateMapping(mapping.fileName, { watchlistItemId: event.target.value })}
+                      className="w-full min-w-40 rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-slate-100 outline-none focus:border-emerald-300"
+                    >
+                      <option value="">Symbol waehlen</option>
+                      {items.map((item) => (
+                        <option key={`${mapping.fileName}-${item.id}`} value={item.id}>
+                          {item.symbol} {item.name ? `- ${item.name}` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-3 py-3 align-top">
+                    <select
+                      value={mapping.timeframe}
+                      onChange={(event) => updateMapping(mapping.fileName, { timeframe: event.target.value as Timeframe })}
+                      className="w-full min-w-28 rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-slate-100 outline-none focus:border-emerald-300"
+                    >
+                      <option value="">Waehlen</option>
+                      {timeframes.map((value) => (
+                        <option key={`${mapping.fileName}-${value}`} value={value}>
+                          {value}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-3 py-3 align-top">
+                    <span
+                      className={`inline-flex rounded-full border px-3 py-1 ${
+                        isBlocked
+                          ? "border-yellow-300/30 bg-yellow-300/10 text-yellow-50"
+                          : "border-emerald-300/30 bg-emerald-300/10 text-emerald-50"
+                      }`}
+                    >
+                      {isBlocked ? "Korrektur noetig" : "Bereit"}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-3 text-xs text-sky-100/80">
+        Import bleibt manuell. Es wird keine Analyse, kein Alert, kein Trade und keine Broker-Aktion
+        automatisch erstellt.
+      </p>
     </div>
   );
+}
+
+function buildCsvFileMappings(files: File[], items: WatchlistItem[]): CsvFileMapping[] {
+  return files.map((file) => {
+    const detected = detectCsvFile(file.name);
+    const matchedItem = detected.symbol ? findWatchlistItemBySymbol(items, detected.symbol) : null;
+    return {
+      fileName: file.name,
+      detectedSymbol: detected.symbol,
+      detectedExchange: detected.exchange,
+      detectedTimeframe: detected.timeframe,
+      warning: detected.warning,
+      watchlistItemId: matchedItem?.id.toString() ?? "",
+      timeframe: detected.timeframe ?? "",
+    };
+  });
+}
+
+function buildMappedDetectedFiles(mappings: CsvFileMapping[], items: WatchlistItem[]): DetectedCsvFile[] {
+  return mappings.map((mapping) => {
+    const item = items.find((watchlistItem) => watchlistItem.id.toString() === mapping.watchlistItemId) ?? null;
+    return {
+      fileName: mapping.fileName,
+      symbol: item?.symbol.toUpperCase() ?? mapping.detectedSymbol,
+      exchange: mapping.detectedExchange,
+      timeframe: mapping.timeframe || mapping.detectedTimeframe,
+      warning: mapping.warning,
+    };
+  });
+}
+
+function findWatchlistItemBySymbol(items: WatchlistItem[], symbol: string) {
+  const normalizedSymbol = symbol.toUpperCase();
+  return items.find((item) => item.symbol.toUpperCase() === normalizedSymbol) ?? null;
 }
 
 function ImportReadinessPanel({ groups }: { groups: ImportReadinessGroup[] }) {
