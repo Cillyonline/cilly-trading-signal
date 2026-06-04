@@ -6,18 +6,23 @@ Date: 2026-06-04
 
 Recommended next milestone: `v4.3 - Operational Evidence Closure`.
 
-Rationale: all non-VPS/non-secret v3.8-v4.2 radar, CSV workflow, trigger radar,
-provider-path, verification, and roadmap work is complete. The remaining open work is
-operational evidence that requires explicit owner/operator action.
+Rationale: all non-secret v3.8-v4.2 radar, CSV workflow, trigger radar,
+provider-path, verification, roadmap, and private VPS Trigger Radar smoke work is
+complete. The remaining open work requires explicit provider-key approval.
 
 ## v4.3 - Operational Evidence Closure
 
-Goal: close remaining operator-run evidence gaps without expanding product scope.
+Goal: close the remaining operator-run provider evidence gap without expanding
+product scope.
 
 Primary items:
 
-- #605: Trigger Radar VPS smoke after the next approved deployment.
 - #614: Provider Daily/EOD smoke only after explicit provider-key approval.
+
+Already closed:
+
+- #605: Trigger Radar VPS smoke after approved deployment passed and is recorded in
+  `docs/reviews/v4-2-vps-trigger-radar-smoke.md`.
 
 Done when:
 

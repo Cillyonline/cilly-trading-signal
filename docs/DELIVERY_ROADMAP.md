@@ -99,6 +99,9 @@ Partial:
 - v4.2 final repository audit is recorded in
   `docs/reviews/v4-2-final-repository-audit.md`; next milestone direction is
   recorded in `docs/NEXT_MILESTONE_DECISION.md`.
+- v4.2 private VPS Trigger Radar smoke is recorded in
+  `docs/reviews/v4-2-vps-trigger-radar-smoke.md`; deployment health, `/import`,
+  `/signals`, Signal Radar, Trigger Radar, and manual-only wording passed.
 - Dashboard, journal, and performance views include useful MVP-level summaries, risk warnings, and journal analytics, but are not full institutional analytics modules.
 - Risk enforcement covers manual trade creation basics and portfolio/risk review warnings, not complete account-level risk management or automatic position sizing.
 - Multi-timeframe analysis still requires current stored data for required `1W`, `1D`, and `4H` timeframes; provider sync does not automatically fill unsupported timeframes or rerun analysis.
@@ -122,8 +125,8 @@ Current blockers and risks:
 - Deployment readiness is currently gated by `docs/DEPLOYMENT_READINESS_DECISION_GATE_V2.md`: local review and private owner/operator staging are conditionally allowed; production-like exposure remains No Go.
 - MVP release posture is tracked in `docs/MVP_RELEASE_CHECKLIST.md`; it separates Done, Partial, Missing, Blocked, and Not Included areas without claiming production readiness.
 - Remaining open operational evidence is intentionally blocked rather than assumed:
-  #605 needs an approved VPS deployment/browser smoke, and #614 needs explicit
-  provider-key approval before any configured Daily/EOD provider smoke.
+  #614 needs explicit provider-key approval before any configured Daily/EOD provider
+  smoke.
 
 ## v0.1 - Foundation
 
