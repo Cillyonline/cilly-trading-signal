@@ -79,6 +79,10 @@ Recommended scope:
 - Record sanitized pass/fail evidence only.
 - File focused follow-up issues only for observed workflow blockers.
 
+Checklist:
+
+- `docs/V4_5_OPERATOR_WORKFLOW_VALIDATION_CHECKLIST.md`
+
 Default if no explicit deployment approval is given:
 
 - Run local/browser validation only.
