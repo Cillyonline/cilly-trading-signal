@@ -195,6 +195,99 @@ follow-up issue must document:
 - Licensing constraints and whether data can be stored in PostgreSQL.
 - Sanitized smoke-test evidence using non-sensitive symbols and no API secrets.
 
+## Paid Provider Evaluation Checklist
+
+This checklist must be completed before selecting, paying for, or operationally
+depending on a broader market-data provider. It is a planning gate only. It does not
+approve a purchase, API key setup, VPS restart, automated sync, live/realtime data,
+broker integration, automatic execution, strategy validation, or profitability claim.
+
+### 1. Watchlist And Asset Scope
+
+Record sanitized assumptions only:
+
+- Approximate watchlist size for the next 3, 6, and 12 months.
+- Required asset classes: US stocks, non-US stocks, ETFs, crypto, FX, or other.
+- Required exchanges and symbol formats, including exchange suffixes or provider
+  mapping quirks.
+- Whether symbols are public examples, paper review symbols, or private owner/operator
+  symbols that must not appear in screenshots, issues, PRs, or docs.
+- Expected growth buffer so rate limits are not sized only for today's list.
+
+### 2. Timeframe And Freshness Requirements
+
+Decide explicitly:
+
+- Is Daily/EOD enough, or is `4H`/intraday required before provider reliance is useful?
+- Are weekly candles needed from the provider, or can `1W` remain CSV-derived?
+- What maximum delay is acceptable before the UI should mark provider data stale?
+- Does the provider supply adjusted or unadjusted OHLCV, and how are splits/dividends
+  handled for stocks?
+- For crypto, which exchange's candles are authoritative when symbols trade on
+  multiple venues?
+
+### 3. Provider Capability And Failure Behavior
+
+For each candidate provider, document without secrets:
+
+- Supported asset classes, exchanges, symbols, and timeframes.
+- Rate limits for the expected watchlist size and sync frequency.
+- Historical lookback limits and whether enough candles are available for analysis.
+- Empty response, partial response, rate-limit, invalid-symbol, and transport-failure
+  behavior.
+- Whether failures can be represented with sanitized `sync_error_code` values without
+  storing raw provider payloads.
+- Whether provider capability output can remain explicit, for example supported `1D`
+  and unsupported `4H` with CSV fallback.
+
+### 4. Pricing, Terms, And Storage Rights
+
+Before any purchase or reliance, record:
+
+- Pricing tier assumptions without account IDs, invoices, billing identifiers, or
+  subscription dashboard screenshots.
+- Whether the terms allow storing OHLCV candles in PostgreSQL for private
+  owner/operator review.
+- Whether redistribution, screenshots, or public evidence are restricted.
+- Whether delayed/realtime labeling is required by the provider.
+- Cancellation or downgrade risk if the provider becomes too expensive or unreliable.
+
+### 5. Security And Operations
+
+Provider credentials must stay outside the repository and evidence channels.
+
+Required before configuring a real key:
+
+- Explicit owner/operator approval for the target environment and operation.
+- Secret location and rotation plan, preferably VPS-local `.env` or approved secret
+  store only.
+- Startup guard behavior for missing, placeholder, or unsupported provider config.
+- Rollback plan: disable provider sync, restart with approval, and verify skipped
+  manual data update.
+- Sanitized smoke evidence plan using `docs/PROVIDER_SYNC_SMOKE_TEST.md`.
+
+Forbidden evidence:
+
+- API keys, request URLs with query strings, authorization headers, provider account
+  IDs, subscription details, raw payloads, `.env` contents, cookies, database URLs,
+  private watchlists, broker data, account data, or fill data.
+
+### 6. Decision Record Required Before Implementation
+
+Before implementing or enabling broader provider reliance, create a decision record
+or issue that states:
+
+- Selected provider and non-sensitive tier assumptions.
+- Approved asset classes, exchanges, and timeframes.
+- Whether `4H`/intraday is included or still CSV fallback.
+- Storage/licensing acceptance.
+- Rate-limit and stale-data assumptions.
+- Failure and rollback behavior.
+- Verification plan and sanitized evidence boundaries.
+
+If any item is unknown, keep TradingView CSV as the fallback and do not expand
+provider reliance.
+
 ## Final Statement
 
 The current provider work makes data source, freshness, sync status, and safety

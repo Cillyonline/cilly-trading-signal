@@ -84,6 +84,9 @@ Partial:
   secret is changed on a server.
 - v4.1 review is recorded in `docs/reviews/v4-1-provider-path-review.md` with
   follow-ups for paid-provider evaluation and explicit-key Daily/EOD smoke evidence.
+- Paid provider evaluation now has a documented checklist for watchlist scope,
+  required timeframes, rate limits, pricing, storage/licensing rights, failure
+  behavior, and no-secret evidence boundaries before any provider reliance expands.
 - Dashboard, journal, and performance views include useful MVP-level summaries, risk warnings, and journal analytics, but are not full institutional analytics modules.
 - Risk enforcement covers manual trade creation basics and portfolio/risk review warnings, not complete account-level risk management or automatic position sizing.
 - Multi-timeframe analysis still requires current stored data for required `1W`, `1D`, and `4H` timeframes; provider sync does not automatically fill unsupported timeframes or rerun analysis.
