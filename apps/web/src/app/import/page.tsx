@@ -135,6 +135,9 @@ export default function ImportPage() {
             result: null,
             error: toImportError(importError),
           });
+          if (selectedFiles.length === 1) {
+            setError(toImportError(importError));
+          }
         }
         setBulkResults([...importedItems]);
       }
@@ -330,7 +333,7 @@ export default function ImportPage() {
             <div className="mt-6 overflow-hidden rounded-2xl border border-white/10">
               {isLoading ? (
                 <p className="p-5 text-sm text-slate-400">Importdaten werden geladen...</p>
-              ) : bulkResults.length > 1 ? (
+              ) : bulkResults.length > 1 || (bulkResults.length === 1 && bulkResults[0]?.status === "failed") ? (
                 <BulkImportResultList items={bulkResults} symbol={selectedItem?.symbol ?? "Symbol"} />
               ) : result ? (
                 <ImportResultCard
