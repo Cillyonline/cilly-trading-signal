@@ -336,7 +336,9 @@ def parse_timestamp(
                 timestamp //= 1000
             return datetime.fromtimestamp(timestamp, UTC)
         except (OSError, OverflowError, ValueError):
-            errors.append(CsvImportError(row=row_number, field="time", message="Invalid timestamp."))
+            errors.append(
+                CsvImportError(row=row_number, field="time", message="Invalid timestamp.")
+            )
             return None
 
     for parser in (datetime.fromisoformat,):
