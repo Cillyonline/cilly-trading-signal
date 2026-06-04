@@ -50,6 +50,13 @@ type DetectedCsvFile = {
   warning: string | null;
 };
 
+type ImportReadinessGroup = {
+  symbol: string;
+  present: Timeframe[];
+  missing: Timeframe[];
+  complete: boolean;
+};
+
 export default function ImportPage() {
   const authStatus = useProtectedRoute();
   const [items, setItems] = useState<WatchlistItem[]>([]);
@@ -97,6 +104,10 @@ export default function ImportPage() {
     [items, watchlistItemId],
   );
   const detectedFiles = useMemo(() => files.map((selectedFile) => detectCsvFile(selectedFile.name)), [files]);
+  const readinessGroups = useMemo(
+    () => buildImportReadinessGroups(history, detectedFiles),
+    [history, detectedFiles],
+  );
 
   if (authStatus !== "authenticated") {
     return <ProtectedRouteLoading />;
@@ -307,6 +318,8 @@ export default function ImportPage() {
               ) : null}
 
               {detectedFiles.length > 0 ? <DetectedCsvPreview items={detectedFiles} /> : null}
+
+              {readinessGroups.length > 0 ? <ImportReadinessPanel groups={readinessGroups} /> : null}
 
               {selectedItem ? (
                 <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-sm text-slate-300">
@@ -647,6 +660,94 @@ function DetectedCsvPreview({ items }: { items: DetectedCsvFile[] }) {
       </div>
     </div>
   );
+}
+
+function ImportReadinessPanel({ groups }: { groups: ImportReadinessGroup[] }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-sm text-slate-300">
+      <p className="font-medium text-slate-100">Import-Readiness nach Symbol</p>
+      <p className="mt-1 text-slate-400">
+        Fuer eine vollstaendige Analyse werden `1W`, `1D` und `4H` benoetigt. Diese Uebersicht nutzt
+        gespeicherte Importe und die aktuelle Dateivorschau.
+      </p>
+      <div className="mt-3 grid gap-2">
+        {groups.map((group) => (
+          <div
+            key={group.symbol}
+            className={`rounded-xl border p-3 ${
+              group.complete
+                ? "border-emerald-300/30 bg-emerald-300/10"
+                : "border-yellow-300/30 bg-yellow-300/10"
+            }`}
+          >
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <p className="font-semibold text-slate-100">{group.symbol}</p>
+              <span className="rounded-full border border-current/20 px-3 py-1 text-xs text-slate-100">
+                {group.present.length}/3 Timeframes
+              </span>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2 text-xs">
+              {timeframes.map((value) => (
+                <span
+                  key={`${group.symbol}-${value}`}
+                  className={`rounded-full px-3 py-1 ${
+                    group.present.includes(value)
+                      ? "bg-emerald-300/20 text-emerald-100"
+                      : "bg-slate-800 text-slate-300"
+                  }`}
+                >
+                  {value}
+                </span>
+              ))}
+            </div>
+            {group.missing.length > 0 ? (
+              <p className="mt-2 text-xs text-yellow-100">Fehlt: {group.missing.join(", ")}</p>
+            ) : (
+              <p className="mt-2 text-xs text-emerald-100">Vollstaendig fuer Analyse vorbereitet.</p>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function buildImportReadinessGroups(
+  history: ImportHistoryItem[],
+  detectedFiles: DetectedCsvFile[],
+): ImportReadinessGroup[] {
+  const grouped = new Map<string, Set<Timeframe>>();
+
+  for (const item of history) {
+    const symbol = item.symbol.toUpperCase();
+    if (!grouped.has(symbol)) {
+      grouped.set(symbol, new Set());
+    }
+    grouped.get(symbol)?.add(item.timeframe);
+  }
+
+  for (const item of detectedFiles) {
+    if (!item.symbol || !item.timeframe) {
+      continue;
+    }
+    if (!grouped.has(item.symbol)) {
+      grouped.set(item.symbol, new Set());
+    }
+    grouped.get(item.symbol)?.add(item.timeframe);
+  }
+
+  return Array.from(grouped.entries())
+    .map(([symbol, presentSet]) => {
+      const present = timeframes.filter((value) => presentSet.has(value));
+      const missing = timeframes.filter((value) => !presentSet.has(value));
+      return {
+        symbol,
+        present,
+        missing,
+        complete: missing.length === 0,
+      };
+    })
+    .sort((left, right) => Number(right.complete) - Number(left.complete) || left.symbol.localeCompare(right.symbol));
 }
 
 function detectCsvFile(fileName: string): DetectedCsvFile {
