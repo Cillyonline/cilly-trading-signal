@@ -82,6 +82,15 @@ manual review.
 7. Check freshness, setup quality, risk flags, invalidation, and No-Trade reasons.
 8. Make any external trading decision manually outside the app.
 
+Trigger Radar order of operations:
+
+1. Update `4H` CSV only for the small trigger shortlist.
+2. Open each visible Trigger Radar card through `Detail pruefen`.
+3. Confirm freshness, risk, invalidation, and No-Trade context before any external
+   action.
+4. Keep extra candidates in Radar-Rangliste instead of expanding the trigger shortlist
+   beyond practical size.
+
 Do not treat `Nah dran`, `Am Trigger`, an alert, or a green Ampel as a buy/sell or
 entry instruction. They mean review the stored context.
 
