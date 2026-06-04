@@ -90,6 +90,18 @@ def valid_weekly_csv(row_count: int = 20) -> str:
     return "\n".join(rows)
 
 
+def valid_epoch_csv(row_count: int = 20, milliseconds: bool = False) -> str:
+    rows = ["time,open,high,low,close,Volume"]
+    start = datetime(2024, 1, 1, tzinfo=UTC)
+    for index in range(row_count):
+        current_time = start + timedelta(days=index)
+        timestamp = int(current_time.timestamp())
+        if milliseconds:
+            timestamp *= 1000
+        rows.append(f"{timestamp},100,110,90,105,1000")
+    return "\n".join(rows)
+
+
 def sequential_csv(row_count: int = 201) -> str:
     rows = ["time,open,high,low,close,volume"]
     start = date(2024, 1, 1)
@@ -139,6 +151,39 @@ def test_import_csv_persists_valid_candles(client: TestClient) -> None:
     assert result["sync_status"] == "not_applicable"
     assert result["last_synced_at"] is None
     assert result["errors"] == []
+
+
+def test_import_csv_accepts_tradingview_header_case(client: TestClient) -> None:
+    watchlist_item_id = create_watchlist_item(client)
+    csv_content = valid_csv().replace(
+        "time,open,high,low,close,volume",
+        "time,open,high,low,close,Volume",
+    )
+
+    response = post_csv_import(client, watchlist_item_id, csv_content)
+
+    assert response.status_code == 200
+    assert response.json()["candle_count"] == 20
+
+
+def test_import_csv_accepts_tradingview_epoch_seconds(client: TestClient) -> None:
+    watchlist_item_id = create_watchlist_item(client)
+
+    response = post_csv_import(client, watchlist_item_id, valid_epoch_csv())
+
+    assert response.status_code == 200
+    assert response.json()["start_time"].startswith("2024-01-01")
+    assert response.json()["candle_count"] == 20
+
+
+def test_import_csv_accepts_tradingview_epoch_milliseconds(client: TestClient) -> None:
+    watchlist_item_id = create_watchlist_item(client)
+
+    response = post_csv_import(client, watchlist_item_id, valid_epoch_csv(milliseconds=True))
+
+    assert response.status_code == 200
+    assert response.json()["start_time"].startswith("2024-01-01")
+    assert response.json()["candle_count"] == 20
 
 
 def test_list_imports_returns_authenticated_user_history(client: TestClient) -> None:

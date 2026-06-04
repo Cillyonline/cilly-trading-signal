@@ -157,6 +157,8 @@ def evaluate_csv_freshness(end_time: datetime, timeframe: Timeframe) -> MarketDa
 
 def parse_tradingview_csv(content: str, errors: list[CsvImportError]) -> list[ParsedCandle]:
     reader = csv.DictReader(StringIO(content))
+    if reader.fieldnames is not None:
+        reader.fieldnames = [field.strip().lower() for field in reader.fieldnames]
     columns = set(reader.fieldnames or [])
     missing_columns = sorted(REQUIRED_COLUMNS - columns)
     if missing_columns:
@@ -326,6 +328,18 @@ def parse_timestamp(
     if not normalized:
         errors.append(CsvImportError(row=row_number, field="time", message="Time is required."))
         return None
+
+    if normalized.isdigit():
+        try:
+            timestamp = int(normalized)
+            if timestamp > 9_999_999_999:
+                timestamp //= 1000
+            return datetime.fromtimestamp(timestamp, UTC)
+        except (OSError, OverflowError, ValueError):
+            errors.append(
+                CsvImportError(row=row_number, field="time", message="Invalid timestamp.")
+            )
+            return None
 
     for parser in (datetime.fromisoformat,):
         try:
