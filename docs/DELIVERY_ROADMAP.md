@@ -66,6 +66,8 @@ Done:
 - v3.9 review is recorded in `docs/reviews/v3-9-low-friction-csv-workflow-review.md`.
 - v4.0 Trigger Radar started with stored-candle trigger proximity, a Signals-page
   Trigger Radar, and explicit docs that trigger/alert states mean review, not trade execution.
+- v4.0 review is recorded in `docs/reviews/v4-0-trigger-radar-review.md` with
+  follow-ups for signal-read proximity, UI alignment, and VPS smoke evidence.
 
 Partial:
 
