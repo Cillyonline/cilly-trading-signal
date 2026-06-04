@@ -1,4 +1,5 @@
 from decimal import Decimal
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -10,6 +11,13 @@ from app.models.enums import (
     StrategyType,
     Timeframe,
 )
+
+TriggerProximityState = Literal[
+    "not_available",
+    "far_from_trigger",
+    "near_trigger",
+    "at_trigger",
+]
 
 
 class SignalAnalysisResult(BaseModel):
@@ -33,6 +41,7 @@ class SignalAnalysisResult(BaseModel):
     risk_flags: list[str]
     next_action: str
     no_trade_reasons: list[str]
+    trigger_proximity_state: TriggerProximityState
     quality_report: list[dict[str, str]] = []
 
 
