@@ -14,6 +14,18 @@ advice, or approval for automatic execution.
 Status: First practical provider path selected for guarded Daily/EOD stock sync;
 broader provider reliance remains deferred.
 
+Current v4.4 operator decision:
+
+- The owner/operator selected a zero-budget, CSV-first practical workflow for mixed
+  assets with about 20 current symbols and about 200 expected symbols.
+- TradingView CSV remains the operational baseline for `1W`, `1D`, and `4H`.
+- Alpha Vantage remains an optional guarded Daily/EOD smoke path only. The configured
+  smoke failed safely with `provider_rate_limited`, so it is not treated as the
+  operating data backbone.
+- Paid provider evaluation is deferred until the operator accepts a non-zero budget or
+  `4H`/intraday automation becomes mandatory enough to justify provider cost,
+  licensing review, and rate-limit planning.
+
 Current decision:
 
 - Keep TradingView CSV import as a supported data source.
