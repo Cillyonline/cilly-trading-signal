@@ -7,6 +7,7 @@ from app.models.enums import (
     Bias,
     MarketDataFreshnessStatus,
     MarketDataStatus,
+    SignalStatus,
     StrategyType,
     Timeframe,
 )
@@ -32,6 +33,7 @@ MIN_ANALYSIS_CANDLES = 200
 REQUIRED_TIMEFRAMES = (Timeframe.ONE_WEEK, Timeframe.ONE_DAY, Timeframe.FOUR_HOURS)
 BASE_LOOKBACK_CANDLES = 20
 MIN_BASE_CANDLES = 5
+NEAR_TRIGGER_DISTANCE_PCT = Decimal("0.01")
 
 
 class TimeframeAnalysisData:
@@ -76,6 +78,9 @@ def analyze_market_data_series(db: Session, series: MarketDataSeries) -> MarketD
     signal_result = evaluate_mvp_signal_engine(
         build_signal_engine_input(db, series, candles, snapshots)
     )
+    trigger_data = load_timeframe_analysis_data(db, series, candles, snapshots).get(
+        signal_result.timeframe_trigger
+    )
 
     series.status = (
         MarketDataStatus.ANALYZED
@@ -110,9 +115,38 @@ def analyze_market_data_series(db: Session, series: MarketDataSeries) -> MarketD
         indicator_snapshot_count=len(snapshots),
         signal=SignalAnalysisResult(
             **signal_result.__dict__,
+            trigger_proximity_state=classify_trigger_proximity(signal_result, trigger_data),
             quality_report=build_analysis_quality_report(signal_result),
         ),
     )
+
+
+def classify_trigger_proximity(
+    signal: object,
+    trigger_data: TimeframeAnalysisData | None,
+) -> str:
+    trigger_level = getattr(signal, "trigger_level", None)
+    no_trade_reasons = getattr(signal, "no_trade_reasons", []) or []
+    if (
+        getattr(signal, "status", None) == SignalStatus.NO_SETUP
+        or no_trade_reasons
+        or trigger_level is None
+        or trigger_data is None
+        or trigger_data.latest_candle is None
+    ):
+        return "not_available"
+
+    latest_candle = trigger_data.latest_candle
+    if latest_candle.close >= trigger_level:
+        return "at_trigger"
+    if latest_candle.high >= trigger_level:
+        return "near_trigger"
+    if trigger_level <= 0:
+        return "not_available"
+    trigger_distance = (trigger_level - latest_candle.close) / trigger_level
+    if Decimal("0") <= trigger_distance <= NEAR_TRIGGER_DISTANCE_PCT:
+        return "near_trigger"
+    return "far_from_trigger"
 
 
 def build_signal_engine_input(

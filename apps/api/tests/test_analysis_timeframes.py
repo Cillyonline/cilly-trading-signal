@@ -1,5 +1,6 @@
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
+from types import SimpleNamespace
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -19,7 +20,12 @@ from app.models.enums import (
 from app.models.market_data import IndicatorSnapshot, MarketDataCandle, MarketDataSeries
 from app.models.user import User
 from app.models.watchlist import WatchlistItem
-from app.services.analysis import analyze_market_data_series, build_signal_engine_input
+from app.services.analysis import (
+    TimeframeAnalysisData,
+    analyze_market_data_series,
+    build_signal_engine_input,
+    classify_trigger_proximity,
+)
 from app.strategies.orchestrator import evaluate_mvp_signal_engine
 
 
@@ -285,7 +291,52 @@ def test_analyze_market_data_persists_base_breakout_signal() -> None:
         assert result.signal.strategy_type == StrategyType.BASE_BREAKOUT_LONG
         assert result.signal.status == SignalStatus.ARMED
         assert result.signal.trigger_level == Decimal("110")
+        assert result.signal.trigger_proximity_state == "at_trigger"
         assert any(check["key"] == "risk_plan" for check in result.signal.quality_report)
+
+
+def test_trigger_proximity_classifies_distance_from_stored_trigger_candle() -> None:
+    signal = SimpleNamespace(
+        status=SignalStatus.ARMED,
+        trigger_level=Decimal("100"),
+        no_trade_reasons=[],
+    )
+
+    assert (
+        classify_trigger_proximity(signal, trigger_data(close="95", high="96"))
+        == "far_from_trigger"
+    )
+    assert (
+        classify_trigger_proximity(signal, trigger_data(close="99.25", high="99.50"))
+        == "near_trigger"
+    )
+    assert (
+        classify_trigger_proximity(signal, trigger_data(close="98", high="100"))
+        == "near_trigger"
+    )
+    assert (
+        classify_trigger_proximity(signal, trigger_data(close="100", high="101"))
+        == "at_trigger"
+    )
+
+
+def test_trigger_proximity_missing_data_and_no_trade_are_not_available() -> None:
+    armed_signal = SimpleNamespace(
+        status=SignalStatus.ARMED,
+        trigger_level=Decimal("100"),
+        no_trade_reasons=[],
+    )
+    no_trade_signal = SimpleNamespace(
+        status=SignalStatus.NO_SETUP,
+        trigger_level=Decimal("100"),
+        no_trade_reasons=["required_timeframe_data_missing"],
+    )
+
+    assert classify_trigger_proximity(armed_signal, None) == "not_available"
+    assert (
+        classify_trigger_proximity(no_trade_signal, trigger_data(close="100", high="101"))
+        == "not_available"
+    )
 
 
 def test_missing_weekly_context_returns_conservative_no_setup() -> None:
@@ -434,6 +485,15 @@ def make_session() -> Session:
     TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
     Base.metadata.create_all(bind=engine)
     return TestingSessionLocal()
+
+
+def trigger_data(close: str, high: str) -> TimeframeAnalysisData:
+    candle = SimpleNamespace(close=Decimal(close), high=Decimal(high))
+    return TimeframeAnalysisData(
+        series=SimpleNamespace(timeframe=Timeframe.FOUR_HOURS),
+        candles=[candle],
+        snapshots=[SimpleNamespace()],
+    )
 
 
 def create_watchlist_item(db: Session, symbol: str = "AAPL") -> WatchlistItem:

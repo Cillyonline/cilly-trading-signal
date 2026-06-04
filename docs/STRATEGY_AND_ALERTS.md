@@ -66,6 +66,25 @@ Regel:
 - 4H Close = Entry Trigger
 - Daily Close = staerkere Bestaetigung
 
+## Trigger Proximity
+
+Trigger proximity is calculated only from the latest stored trigger-timeframe
+candle and the stored trigger level from analysis. It is a deterministic review
+state, not live monitoring and not an execution instruction.
+
+States:
+
+- `not_available`: trigger level, stored trigger candle, or setup quality is not
+  sufficient. No-Trade/No-Setup outcomes must stay here and are not promoted.
+- `far_from_trigger`: latest stored close is more than 1% below the trigger and
+  the stored candle did not touch the trigger.
+- `near_trigger`: latest stored close is within 1% below the trigger, or the
+  stored candle high touched the trigger without a close at/above it.
+- `at_trigger`: latest stored close is at or above the trigger level.
+
+This state may help rank manual review attention, but it does not create alerts,
+orders, broker actions, or buy/sell instructions.
+
 ## Signal Freshness
 
 MVP-Signale basieren auf gespeicherten Analysen aus TradingView CSV-Daten oder
