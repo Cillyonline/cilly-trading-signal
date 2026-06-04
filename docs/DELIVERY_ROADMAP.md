@@ -102,6 +102,11 @@ Partial:
 - v4.2 private VPS Trigger Radar smoke is recorded in
   `docs/reviews/v4-2-vps-trigger-radar-smoke.md`; deployment health, `/import`,
   `/signals`, Signal Radar, Trigger Radar, and manual-only wording passed.
+- v4.3 provider Daily/EOD smoke is recorded in
+  `docs/reviews/v4-3-provider-daily-eod-smoke.md`; after explicit provider-key
+  approval, the manual Alpha Vantage `1D` path failed safely with sanitized
+  `provider_rate_limited` evidence and no automatic analysis, signal, trade, order,
+  broker action, or alert creation.
 - Dashboard, journal, and performance views include useful MVP-level summaries, risk warnings, and journal analytics, but are not full institutional analytics modules.
 - Risk enforcement covers manual trade creation basics and portfolio/risk review warnings, not complete account-level risk management or automatic position sizing.
 - Multi-timeframe analysis still requires current stored data for required `1W`, `1D`, and `4H` timeframes; provider sync does not automatically fill unsupported timeframes or rerun analysis.
@@ -124,9 +129,9 @@ Current blockers and risks:
 - Private VPS staging is accepted for controlled owner/operator use only after documented operations hardening; production-like or public use remains blocked until a separate operational readiness decision addresses data-handling readiness, offsite backups, security review, and monitoring expectations.
 - Deployment readiness is currently gated by `docs/DEPLOYMENT_READINESS_DECISION_GATE_V2.md`: local review and private owner/operator staging are conditionally allowed; production-like exposure remains No Go.
 - MVP release posture is tracked in `docs/MVP_RELEASE_CHECKLIST.md`; it separates Done, Partial, Missing, Blocked, and Not Included areas without claiming production readiness.
-- Remaining open operational evidence is intentionally blocked rather than assumed:
-  #614 needs explicit provider-key approval before any configured Daily/EOD provider
-  smoke.
+- Provider reliance beyond guarded Daily/EOD smoke remains intentionally deferred
+  until coverage, rate limits, licensing, storage rights, and watchlist scale are
+  accepted explicitly.
 
 ## v0.1 - Foundation
 
