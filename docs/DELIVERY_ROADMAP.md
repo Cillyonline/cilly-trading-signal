@@ -115,6 +115,10 @@ Partial:
   `docs/reviews/v4-4-practical-operator-workflow-review.md`; it added the
   daily/weekly operator playbook, CSV-Arbeitsplan on `/import`, Active Review
   shortlist on `/signals`, and Trigger Radar workflow polish.
+- v4.5 Operator Workflow Validation is complete and reviewed in
+  `docs/reviews/v4-5-operator-workflow-validation-review.md`; it added the local
+  validation checklist and recorded local build/checklist evidence for `/import` and
+  `/signals` without VPS, secrets, provider expansion, or private data.
 - Dashboard, journal, and performance views include useful MVP-level summaries, risk warnings, and journal analytics, but are not full institutional analytics modules.
 - Risk enforcement covers manual trade creation basics and portfolio/risk review warnings, not complete account-level risk management or automatic position sizing.
 - Multi-timeframe analysis still requires current stored data for required `1W`, `1D`, and `4H` timeframes; provider sync does not automatically fill unsupported timeframes or rerun analysis.
@@ -142,6 +146,8 @@ Current blockers and risks:
   accepted explicitly.
 - Future operator validation should use a separate browser-smoke or VPS-smoke issue
   when the next deployment is explicitly approved.
+- Authenticated browser smoke remains optional future validation; it is not a blocker
+  for the current local workflow evidence.
 
 ## v0.1 - Foundation
 
