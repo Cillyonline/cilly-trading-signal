@@ -107,6 +107,10 @@ Partial:
   approval, the manual Alpha Vantage `1D` path failed safely with sanitized
   `provider_rate_limited` evidence and no automatic analysis, signal, trade, order,
   broker action, or alert creation.
+- v4.4 Practical Operator Workflow decision is recorded in
+  `docs/V4_4_PRACTICAL_OPERATOR_WORKFLOW_DECISION.md`; the owner/operator selected a
+  zero-budget, CSV-first workflow with a universe, active review shortlist, and
+  trigger shortlist instead of broad paid provider reliance.
 - Dashboard, journal, and performance views include useful MVP-level summaries, risk warnings, and journal analytics, but are not full institutional analytics modules.
 - Risk enforcement covers manual trade creation basics and portfolio/risk review warnings, not complete account-level risk management or automatic position sizing.
 - Multi-timeframe analysis still requires current stored data for required `1W`, `1D`, and `4H` timeframes; provider sync does not automatically fill unsupported timeframes or rerun analysis.
@@ -132,6 +136,8 @@ Current blockers and risks:
 - Provider reliance beyond guarded Daily/EOD smoke remains intentionally deferred
   until coverage, rate limits, licensing, storage rights, and watchlist scale are
   accepted explicitly.
+- v4.4 implementation work remains open for the daily/weekly playbook, trigger-focused
+  Import guidance, active review shortlist, and Trigger Radar workflow polish.
 
 ## v0.1 - Foundation
 

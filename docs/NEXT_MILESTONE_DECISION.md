@@ -4,12 +4,12 @@ Date: 2026-06-04
 
 ## Decision
 
-Recommended next milestone: `v4.4 - Provider Evaluation Decision`.
+Recommended next milestone: `v4.4 - Practical Operator Workflow`.
 
 Rationale: all non-secret v3.8-v4.2 radar, CSV workflow, trigger radar,
 provider-path, verification, roadmap, private VPS Trigger Radar smoke, and configured
-provider Daily/EOD safe-failure smoke work is complete. The next decision is whether
-provider reliance should expand beyond guarded Daily/EOD smoke.
+provider Daily/EOD safe-failure smoke work is complete. The owner/operator selected a
+zero-budget, CSV-first workflow with simple handling as the top priority.
 
 ## v4.3 - Operational Evidence Closure
 
@@ -39,24 +39,30 @@ Done when:
 - No production-readiness, live/realtime, broker-readiness, strategy-validation,
   profitability, or automatic-execution claim is introduced.
 
-## v4.4 - Provider Evaluation Decision
+## v4.4 - Practical Operator Workflow
 
-Goal: decide whether provider reliance should expand beyond guarded Daily/EOD smoke.
+Goal: make daily use practical without paid provider reliance.
 
-Inputs required:
+Decision:
 
-- Watchlist size and expected growth.
-- Required asset classes, exchanges, symbols, and timeframes.
-- Whether `4H`/intraday provider data is required.
-- Pricing and rate-limit assumptions.
-- Storage/licensing acceptance.
-- Secret handling and rollback plan.
+- TradingView CSV remains the operational baseline for `1W`, `1D`, and `4H`.
+- Alpha Vantage remains optional guarded Daily/EOD smoke only.
+- Broad provider reliance is deferred because provider budget is 0 EUR and the
+  configured Alpha Vantage smoke failed safely with `provider_rate_limited`.
+- Daily work should focus on a universe, active review shortlist, and trigger
+  shortlist instead of updating about 200 symbols multiple times per day.
 
-Default if inputs are incomplete:
+Planned issues:
 
-- Keep TradingView CSV as the supported baseline/fallback.
-- Keep Alpha Vantage as guarded Daily/EOD smoke only.
-- Do not enable scheduler-driven sync or provider reliance for `4H`.
+- #625: record the practical operator workflow decision.
+- #626: add a daily and weekly operator playbook.
+- #627: add trigger-focused Import page guidance.
+- #628: add an active review shortlist.
+- #629: improve Trigger Radar operator workflow.
+
+Decision record:
+
+- `docs/V4_4_PRACTICAL_OPERATOR_WORKFLOW_DECISION.md`
 
 ## Not Now
 
