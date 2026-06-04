@@ -85,7 +85,15 @@ type BatchAnalysisResultItem = {
   result: MarketDataAnalysisResult | null;
 };
 
-type BatchAnalysisFilter = "all" | "paper" | "watch" | "no_trade" | "data_problem" | "skipped" | "failed";
+type BatchAnalysisFilter =
+  | "all"
+  | "paper"
+  | "watch"
+  | "no_trade"
+  | "data_problem"
+  | "pending"
+  | "skipped"
+  | "failed";
 
 export default function ImportPage() {
   const authStatus = useProtectedRoute();
@@ -1034,7 +1042,7 @@ function BatchAnalysisPanel({
       <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <Metric label="Symbole" value={plan.length.toString()} />
         <Metric label="Analysebereit" value={completeCount.toString()} />
-        <Metric label="Uebersprungen" value={skippedCount.toString()} />
+        <Metric label="Geplant uebersprungen" value={skippedCount.toString()} />
         <Metric label="Paper-Kandidat" value={summary.paper.toString()} />
         <Metric label="Beobachten" value={summary.watch.toString()} />
         <Metric label="Kein Trade" value={(summary.noTrade + summary.dataProblem).toString()} />
@@ -1167,6 +1175,7 @@ const batchAnalysisFilterOptions: {
   { value: "watch", label: "Beobachten", summaryKey: "watch" },
   { value: "no_trade", label: "Kein Trade", summaryKey: "noTrade" },
   { value: "data_problem", label: "Datenproblem", summaryKey: "dataProblem" },
+  { value: "pending", label: "Bereit/Wartet", summaryKey: "pending" },
   { value: "skipped", label: "Uebersprungen", summaryKey: "skipped" },
   { value: "failed", label: "Fehler", summaryKey: "failed" },
 ];
@@ -1177,6 +1186,7 @@ type BatchAnalysisSummary = {
   watch: number;
   noTrade: number;
   dataProblem: number;
+  pending: number;
   skipped: number;
   failed: number;
 };
@@ -1188,6 +1198,7 @@ function summarizeBatchAnalysisResults(items: BatchAnalysisResultItem[]): BatchA
     watch: 0,
     noTrade: 0,
     dataProblem: 0,
+    pending: 0,
     skipped: 0,
     failed: 0,
   };
@@ -1202,6 +1213,8 @@ function summarizeBatchAnalysisResults(items: BatchAnalysisResultItem[]): BatchA
       summary.noTrade += 1;
     } else if (filter === "data_problem") {
       summary.dataProblem += 1;
+    } else if (filter === "pending") {
+      summary.pending += 1;
     } else if (filter === "skipped") {
       summary.skipped += 1;
     } else if (filter === "failed") {
@@ -1216,7 +1229,10 @@ function batchAnalysisFilterForItem(item: BatchAnalysisResultItem): Exclude<Batc
   if (item.status === "failed") {
     return "failed";
   }
-  if (item.status === "skipped" || item.status === "pending" || !item.result) {
+  if (item.status === "pending") {
+    return "pending";
+  }
+  if (item.status === "skipped" || !item.result) {
     return "skipped";
   }
 
