@@ -11,7 +11,8 @@ advice, or approval for automatic execution.
 
 ## Decision Summary
 
-Status: Manual provider sync MVP implemented for a guarded Daily/EOD path.
+Status: First practical provider path selected for guarded Daily/EOD stock sync;
+broader provider reliance remains deferred.
 
 Current decision:
 
@@ -21,6 +22,12 @@ Current decision:
 - Treat Daily/EOD data as the first practical provider-backed target.
 - Use Alpha Vantage as the first implemented adapter path for Daily/EOD sync behind
   the provider boundary.
+- Keep Alpha Vantage as the current practical first path for US-stock Daily/EOD
+  smoke and operator learning because it is already implemented and sufficient to
+  validate provider plumbing, freshness states, and failure handling.
+- Defer a paid/production-like provider decision until provider terms, symbol
+  coverage, storage rights, rate limits, and `4H` availability are reviewed against
+  the actual watchlist size.
 - Keep `4H`/intraday provider support unresolved until provider cost, licensing, and
   rate-limit constraints are confirmed.
 - Do not claim live, real-time, or trader-actionable data freshness from manual
@@ -83,6 +90,38 @@ Disallowed evidence examples:
 
 When in doubt, record only pass/fail, status enum, error-code category, timeframe,
 environment class, and a follow-up issue link.
+
+## v4.1 Practical Provider Comparison
+
+This comparison is for provider-path planning only. It does not configure API keys,
+select a subscription, approve storing provider data beyond current guarded scope,
+or create any live/realtime data claim.
+
+| Provider | US Stocks | `1D` / EOD | `4H` / Intraday | Main Strength | Main Risk | Practical v4.1 Position |
+| --- | --- | --- | --- | --- | --- | --- |
+| Twelve Data | Broad coverage depending on plan | Supported on relevant plans | Supported depending on plan and entitlement | One API surface for daily and intraday; potentially useful if `4H` becomes required. | Plan/entitlement, symbol mapping, and storage/licensing terms need confirmation. | Candidate for a later paid provider evaluation, not immediate default. |
+| Tiingo | Strong US equities focus depending on plan | Strong daily/equity fit | Intraday availability depends on plan/API | Good fit for adjusted daily US-stock data and clearer equity focus. | Intraday/crypto coverage and storage terms need confirmation. | Candidate if Daily/EOD quality is prioritized over unified stock/crypto coverage. |
+| Polygon.io | Strong US market coverage on paid plans | Supported | Strong paid intraday support | High-quality US-stock/intraday path if budget and licensing fit. | Cost, entitlement complexity, and production-like licensing burden. | Candidate for later serious intraday path, not low-friction first step. |
+| EODHD | Broad EOD-oriented market coverage depending on plan | Strong EOD fit | Intraday availability depends on plan | Practical EOD-first vendor with broad symbol coverage. | Intraday details, exchange entitlements, and storage terms need review. | Candidate for Daily/EOD replacement if Alpha Vantage proves limiting. |
+| Alpha Vantage | Broad public symbols, plan-dependent reliability | Supported and already implemented | Intraday exists but rate limits and `4H` construction need caution | Already implemented; good for validating guarded provider plumbing with no new code path. | Free/low-cost rate limits, adjusted-data details, and reliability may limit scale. | Current practical first path for guarded Daily/EOD smoke only. |
+
+Recommendation:
+
+- Keep Alpha Vantage as the first practical provider path for the next controlled
+  Daily/EOD smoke because the adapter and tests already exist.
+- Do not expand provider reliance to `4H`, automated refresh, or production-like use
+  yet.
+- Keep TradingView CSV as the required fallback and the only currently reliable way
+  to fill all `1W`, `1D`, and `4H` timeframes for multi-timeframe analysis.
+- Revisit Twelve Data, Tiingo, Polygon, and EODHD only after recording watchlist size,
+  required symbols/exchanges, expected sync frequency, budget, and storage/licensing
+  acceptance.
+
+Deferral:
+
+- No paid provider is selected in this issue.
+- No provider secret, API key, account ID, subscription tier, or VPS setting is added.
+- No provider is approved as live/realtime or broker/execution-ready.
 
 ## Candidate Provider Matrix
 
