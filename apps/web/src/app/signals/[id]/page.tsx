@@ -9,6 +9,7 @@ import {
   updateSignalReviewNote,
   updateSignalStatus,
 } from "@/lib/api";
+import { buildSignalDecision, signalDecisionDotClass, signalDecisionToneClass } from "@/lib/signal-decision";
 import type { Signal, SignalReviewEvent, SignalStatus } from "@/types/signals";
 
 const statusTone: Record<SignalStatus, string> = {
@@ -199,6 +200,11 @@ function SignalDetail({
   const reasoning = toTextList(signal.reasoning);
   const riskFlags = toTextList(signal.risk_flags);
   const noTradeReasons = toTextList(signal.no_trade_reasons);
+  const decision = buildSignalDecision({
+    ...signal,
+    risk_flags: riskFlags,
+    no_trade_reasons: noTradeReasons,
+  });
 
   return (
     <section className="grid gap-6">
@@ -225,6 +231,33 @@ function SignalDetail({
           <div className="grid gap-3 sm:grid-cols-2 lg:min-w-96">
             <Metric label="Score" value={formatScore(signal)} />
             <Metric label="R:R" value={signal.risk_reward ? `${formatNumber(signal.risk_reward)}R` : "-"} />
+          </div>
+        </div>
+      </article>
+
+      <article className={`rounded-3xl border p-6 ${signalDecisionToneClass(decision.tone)}`}>
+        <div className="flex flex-wrap items-center gap-3">
+          <span className={`h-4 w-4 rounded-full ${signalDecisionDotClass(decision.tone)}`} />
+          <p className="text-sm font-semibold uppercase tracking-[0.22em]">{decision.label}</p>
+          <span className="rounded-full border border-current/20 px-3 py-1 text-xs">
+            Qualitaet: {decision.quality}
+          </span>
+        </div>
+        <h3 className="mt-4 text-2xl font-semibold text-slate-50">{decision.headline}</h3>
+        <p className="mt-2 max-w-2xl text-sm">{decision.action}</p>
+        <div className="mt-5 grid gap-3 lg:grid-cols-[1fr_0.8fr]">
+          <div className="rounded-2xl border border-current/15 bg-slate-950/30 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] opacity-80">Warum?</p>
+            <ul className="mt-3 space-y-2 text-sm">
+              {decision.reasons.map((reason) => (
+                <li key={reason}>- {reason}</li>
+              ))}
+            </ul>
+          </div>
+          <div className="rounded-2xl border border-current/15 bg-slate-950/30 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] opacity-80">Was jetzt?</p>
+            <p className="mt-3 text-sm">{decision.action}</p>
+            <p className="mt-2 text-xs opacity-75">Review-Hinweis, keine Order-Anweisung.</p>
           </div>
         </div>
       </article>
