@@ -32,6 +32,11 @@ STALE_SIGNAL_STATUSES = {
     SignalStatus.ARMED,
     SignalStatus.TRIGGERED,
 }
+TERMINAL_SIGNAL_STATUSES = {
+    SignalStatus.INVALIDATED,
+    SignalStatus.MISSED,
+    SignalStatus.EXPIRED,
+}
 NEAR_TRIGGER_DISTANCE_PCT = Decimal("0.01")
 
 
@@ -65,6 +70,7 @@ def stale_signal_reason(signal: Signal) -> str | None:
 def signal_trigger_proximity_state(db: Session, signal: Signal) -> str:
     if (
         signal.status == SignalStatus.NO_SETUP
+        or signal.status in TERMINAL_SIGNAL_STATUSES
         or signal.score_class == ScoreClass.NO_TRADE
         or signal.no_trade_reasons
         or is_signal_stale(signal)
@@ -100,7 +106,11 @@ def latest_trigger_candle(db: Session, signal: Signal) -> MarketDataCandle | Non
                 (MarketDataStatus.ANALYZED, MarketDataStatus.VALIDATED)
             )
         )
-        .order_by(MarketDataSeries.imported_at.desc(), MarketDataSeries.id.desc())
+        .order_by(
+            MarketDataSeries.end_time.desc(),
+            MarketDataSeries.imported_at.desc(),
+            MarketDataSeries.id.desc(),
+        )
     )
     if series is None:
         return None

@@ -298,25 +298,73 @@ def test_no_setup_signal_read_keeps_trigger_proximity_not_available(
     assert response.json()["trigger_proximity_state"] == "not_available"
 
 
+def test_terminal_signal_read_keeps_trigger_proximity_not_available(
+    client: TestClient, db_session: Session
+) -> None:
+    signal = create_signal(db_session, status=SignalStatus.INVALIDATED)
+    signal.trigger_level = Decimal("100")
+    signal.timeframe_trigger = Timeframe.FOUR_HOURS
+    create_trigger_candle(db_session, signal.watchlist_item_id, close="101", high="102")
+    db_session.commit()
+    login(client)
+
+    response = client.get(f"/api/signals/{signal.id}")
+
+    assert response.status_code == 200
+    assert response.json()["trigger_proximity_state"] == "not_available"
+
+
+def test_signal_read_uses_latest_trigger_candle_end_time(
+    client: TestClient, db_session: Session
+) -> None:
+    signal = create_signal(db_session, status=SignalStatus.ARMED)
+    signal.trigger_level = Decimal("100")
+    signal.timeframe_trigger = Timeframe.FOUR_HOURS
+    create_trigger_candle(
+        db_session,
+        signal.watchlist_item_id,
+        close="99.50",
+        high="99.75",
+        end_time=datetime(2024, 1, 2, tzinfo=UTC),
+    )
+    create_trigger_candle(
+        db_session,
+        signal.watchlist_item_id,
+        close="90",
+        high="91",
+        end_time=datetime(2024, 1, 1, tzinfo=UTC),
+    )
+    db_session.commit()
+    login(client)
+
+    response = client.get(f"/api/signals/{signal.id}")
+
+    assert response.status_code == 200
+    assert response.json()["trigger_proximity_state"] == "near_trigger"
+
+
 def create_trigger_candle(
     db: Session,
     watchlist_item_id: int,
     close: str,
     high: str,
+    end_time: datetime | None = None,
 ) -> None:
+    candle_time = end_time or datetime.now(UTC)
     series = MarketDataSeries(
         watchlist_item_id=watchlist_item_id,
         source=MarketDataSource.TRADINGVIEW_CSV,
         timeframe=Timeframe.FOUR_HOURS,
         candle_count=1,
         status=MarketDataStatus.ANALYZED,
+        end_time=candle_time,
     )
     db.add(series)
     db.flush()
     db.add(
         MarketDataCandle(
             series_id=series.id,
-            timestamp=datetime.now(UTC),
+            timestamp=candle_time,
             open=Decimal(close),
             high=Decimal(high),
             low=Decimal("98"),
