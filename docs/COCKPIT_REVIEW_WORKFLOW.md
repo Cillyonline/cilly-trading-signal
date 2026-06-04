@@ -104,6 +104,15 @@ Signal interpretation rules:
 - `invalidated`, `missed`, and `expired` are terminal or cleanup-oriented review states.
 - `No Setup` and `No Trade` are expected conservative outcomes when requirements are not met.
 
+Trigger Radar interpretation:
+
+- Use Trigger Radar to decide which stored setup to inspect first, not whether to trade.
+- `Trigger geplant` means watch only; confirmation is not complete.
+- `Nah dran` means manually review 4H confirmation, freshness, risk, and chart context.
+- `Am Trigger` means review the stored trigger event; it still is not an entry instruction.
+- Do not promote stale data, missing trigger levels, No-Trade reasons, `Kein Trade`,
+  or `Datenproblem` into trigger candidates.
+
 On Signal Detail, inspect reasoning, risk flags, no-trade reasons, entry/stop/target context, invalidation, and review history. A score describes setup quality only; it is not a probability, edge claim, or instruction.
 
 ### 5. Alert Event Review
@@ -115,6 +124,10 @@ Use Alerts as an audit trail for webhook and notification events:
 - Skipped states can be expected when routing is disabled, a policy blocks delivery, dedup suppresses noise, or rate limits apply.
 - Delivery success only means notification delivery was recorded; it does not validate a trade decision.
 - Alert messages must remain review-oriented and must not imply automatic execution.
+- Treat any alert as a request to review stored context. It is not permission to buy,
+  sell, enter, size, or route an order.
+- If 4H confirmation, freshness, or risk context is unclear, keep the conservative
+  outcome and do not act outside the app.
 
 When an alert references a signal, inspect the signal detail before making any external decision. If data is stale or the setup is invalidated, keep the conservative outcome.
 

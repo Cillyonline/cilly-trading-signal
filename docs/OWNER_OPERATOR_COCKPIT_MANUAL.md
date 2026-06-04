@@ -181,6 +181,7 @@ Open `/signals`.
 Purpose:
 
 - Review the Signal Radar.
+- Review the Trigger Radar as a manual attention queue for stored trigger context.
 - Prioritize `Paper-Kandidat` and `Beobachten` while keeping `Kein Trade` and
   `Datenproblem` visible as valid conservative outcomes.
 - Inspect setup score, status, stale state, risk flags, No-Trade reasons, and next action only after the Ampel decision is understood.
@@ -189,12 +190,16 @@ Operator checks:
 
 - `No Trade` remains first-class and valid.
 - Triggered and armed statuses are prompts for manual review only.
+- `Trigger geplant`, `Nah dran`, and `Am Trigger` are German review labels, not
+  execution labels.
+- `Nah dran` requires manual 4H close/freshness/risk review before any external decision.
 - Stale data and missing context are reviewed before acting outside the app.
 - Risk flags and quality blockers are read before considering any manual external action.
 
 Stop if:
 
 - A signal is interpreted as a buy/sell instruction.
+- A trigger or alert is interpreted as permission to enter, size, route, or automate a trade.
 - Required data context is stale, missing, failed, unknown, or partial.
 - Risk plan is incomplete or unclear.
 
