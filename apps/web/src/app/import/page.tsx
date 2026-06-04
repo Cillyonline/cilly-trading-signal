@@ -653,9 +653,14 @@ function detectCsvFile(fileName: string): DetectedCsvFile {
   const baseName = fileName.replace(/\.csv$/i, "");
   const timeframeMatch = baseName.match(/(?:^|[,_\s-])(1D|1W|240|4H)(?:[,_\s-]|$)/i);
   const timeframe = normalizeDetectedTimeframe(timeframeMatch?.[1] ?? null);
-  const symbolMatch = baseName.match(/^([A-Z0-9]+)[_,\s-]+([A-Z0-9.:-]+?)(?:[_,\s-]+(?:1D|1W|240|4H)\b|$)/i);
-  const exchange = symbolMatch?.[1]?.toUpperCase() ?? null;
-  const symbol = normalizeDetectedSymbol(symbolMatch?.[2] ?? null);
+  const prefixedMatch = baseName.match(
+    /^([A-Z0-9]+)[_,\s-]+([A-Z0-9.:-]+?)(?:[_,\s-]+(?:1D|1W|240|4H)\b|$)/i,
+  );
+  const symbolOnlyMatch = baseName.match(/^([A-Z0-9.:-]+?)(?:[_,\s-]+(?:1D|1W|240|4H)\b|$)/i);
+  const detectedExchange = prefixedMatch?.[1]?.toUpperCase() ?? null;
+  const detectedSymbol = normalizeDetectedSymbol(prefixedMatch?.[2] ?? null);
+  const exchange = detectedSymbol && detectedSymbol !== timeframe ? detectedExchange : null;
+  const symbol = exchange ? detectedSymbol : normalizeDetectedSymbol(symbolOnlyMatch?.[1] ?? null);
   const warning =
     symbol && timeframe
       ? null
