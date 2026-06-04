@@ -217,13 +217,13 @@ Konsequenz: Tech Architecture und Implementierung folgen diesen Vorgaben.
 
 ## 21. Manueller Provider-Sync Vor Automatischer Marktaktualisierung
 
-Status: entschieden
+Status: entschieden, v4.1 bestaetigt
 
-Entscheidung: Provider-gestuetzte Marktdaten werden zuerst als manueller, disabled-by-default Sync umgesetzt. Der erste implementierte Provider-Pfad ist Alpha Vantage Daily/EOD hinter einer provider-neutralen Boundary.
+Entscheidung: Provider-gestuetzte Marktdaten werden zuerst als manueller, disabled-by-default Sync umgesetzt. Der erste praktische Provider-Pfad bleibt Alpha Vantage Daily/EOD hinter einer provider-neutralen Boundary. Eine paid/production-like Provider-Auswahl fuer Twelve Data, Tiingo, Polygon oder EODHD wird vorerst vertagt.
 
-Begruendung: Manuelle Syncs sind pruefbar, testbar und sicherer als Scheduler. Daily/EOD ist der kleinste sinnvolle Provider-Scope; `4H`/Intraday bleibt von Kosten, Lizenz, Coverage und Rate Limits abhaengig.
+Begruendung: Manuelle Syncs sind pruefbar, testbar und sicherer als Scheduler. Daily/EOD ist der kleinste sinnvolle Provider-Scope. Alpha Vantage ist bereits implementiert und reicht fuer Plumbing-, Freshness- und Fehlerpfad-Smoke. `4H`/Intraday, breitere Watchlists, Speicherung, Lizenz und Rate Limits bleiben provider- und planabhaengig.
 
-Konsequenz: TradingView CSV bleibt Baseline und Fallback. Provider-Daten werden mit Source/Freshness/Sync-Metadaten gespeichert und konservativ bewertet. Es gibt keinen Live-/Realtime-Claim, keine automatische Analyse nach Sync, keine Broker-Anbindung und keine automatische Orderausfuehrung.
+Konsequenz: TradingView CSV bleibt Baseline und Fallback, insbesondere fuer `1W`/`1D`/`4H` Vollstaendigkeit. Provider-Daten werden mit Source/Freshness/Sync-Metadaten gespeichert und konservativ bewertet. Es gibt keinen Live-/Realtime-Claim, keine automatische Analyse nach Sync, keine Broker-Anbindung und keine automatische Orderausfuehrung. Secrets, Provider-Accounts und VPS-Konfiguration bleiben ausserhalb dieser Entscheidung.
 
 ## 22. Strategie-Kalibrierung Optimiert Signalqualitaet, Nicht Signalmenge
 

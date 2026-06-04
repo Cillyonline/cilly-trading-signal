@@ -76,6 +76,9 @@ Partial:
   complete-symbol analysis; it remains the supported manual baseline/fallback.
 - Screener CSV import is implemented as a candidate prefiltering workflow with filters, bulk review actions, pagination, and explicit Watchlist conversion; mobile density and richer candidate prioritization remain future usability work.
 - Manual provider sync currently targets Daily/EOD data first; `4H`/intraday provider support remains unresolved and not promised.
+- v4.1 provider-path decision keeps Alpha Vantage as the practical first guarded
+  Daily/EOD smoke path and defers a paid/provider-reliance decision until coverage,
+  licensing, rate limits, storage rights, and watchlist size are reviewed.
 - Dashboard, journal, and performance views include useful MVP-level summaries, risk warnings, and journal analytics, but are not full institutional analytics modules.
 - Risk enforcement covers manual trade creation basics and portfolio/risk review warnings, not complete account-level risk management or automatic position sizing.
 - Multi-timeframe analysis still requires current stored data for required `1W`, `1D`, and `4H` timeframes; provider sync does not automatically fill unsupported timeframes or rerun analysis.
