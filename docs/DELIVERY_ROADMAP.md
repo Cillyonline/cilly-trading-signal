@@ -63,6 +63,7 @@ Done:
 - v3.9 Low-Friction CSV Workflow added bulk CSV import, TradingView filename
   preview including `240 = 4H`, Import Readiness by symbol, and an explicit
   Analyze-All action for complete imported symbols.
+- v3.9 review is recorded in `docs/reviews/v3-9-low-friction-csv-workflow-review.md`.
 
 Partial:
 
