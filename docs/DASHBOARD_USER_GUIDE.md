@@ -330,6 +330,21 @@ Use the Ampel first, then inspect technical fields such as score, risk flags,
 No-Trade reasons, trigger, stop, and target. A green or yellow decision is still
 only a review prompt; external execution remains manual and outside the app.
 
+### Active Review Shortlist
+
+The Signals page includes an Active Review shortlist for daily work. It ranks a small
+set of current review cards from existing signal data:
+
+- `Paper-Kandidat`: strongest manual paper-review candidates.
+- `Am Trigger` and `Nah dran`: symbols that may need targeted `4H` CSV refresh and
+  detail review.
+- `Beobachten`: interesting symbols to keep on the active list.
+- `Datenproblem`: stale or blocked data that should be fixed before review.
+
+The shortlist does not create analysis, alerts, trades, orders, broker actions, or
+buy/sell instructions. It is only a practical worklist before reading the full Radar
+Rangliste.
+
 ## Cockpit Snapshot
 
 The snapshot shows recent signals, active trades, and review-needed trades.

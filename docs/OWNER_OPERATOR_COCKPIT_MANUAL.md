@@ -197,6 +197,8 @@ Open `/signals`.
 Purpose:
 
 - Review the Signal Radar.
+- Start with the Active Review shortlist to avoid scanning the full Watchlist when
+  only a few symbols need attention.
 - Review the Trigger Radar as a manual attention queue for stored trigger context.
 - Prioritize `Paper-Kandidat` and `Beobachten` while keeping `Kein Trade` and
   `Datenproblem` visible as valid conservative outcomes.

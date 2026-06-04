@@ -55,9 +55,10 @@ session.
 3. Refresh `1D` CSV for the active review shortlist.
 4. Review Import Readiness for the refreshed symbols.
 5. Analyze complete symbols deliberately.
-6. Open `/signals` and read Ampel outcomes before technical fields.
-7. Move symbols into or out of the active review shortlist based on current context.
-8. Identify the smaller trigger shortlist for any intraday `4H` review.
+6. Open `/signals` and start with the Active Review shortlist.
+7. Read Ampel outcomes before technical fields.
+8. Move symbols into or out of the active review shortlist based on current context.
+9. Identify the smaller trigger shortlist for any intraday `4H` review.
 
 Operator interpretation:
 
