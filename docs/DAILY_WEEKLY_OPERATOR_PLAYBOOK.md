@@ -51,12 +51,13 @@ Use this flow once per trading day, after the daily close or before your next re
 session.
 
 1. Open the dashboard and check data quality first.
-2. Open `/import` and refresh `1D` CSV for the active review shortlist.
-3. Review Import Readiness for the refreshed symbols.
-4. Analyze complete symbols deliberately.
-5. Open `/signals` and read Ampel outcomes before technical fields.
-6. Move symbols into or out of the active review shortlist based on current context.
-7. Identify the smaller trigger shortlist for any intraday `4H` review.
+2. Open `/import` and read the CSV-Arbeitsplan before selecting files.
+3. Refresh `1D` CSV for the active review shortlist.
+4. Review Import Readiness for the refreshed symbols.
+5. Analyze complete symbols deliberately.
+6. Open `/signals` and read Ampel outcomes before technical fields.
+7. Move symbols into or out of the active review shortlist based on current context.
+8. Identify the smaller trigger shortlist for any intraday `4H` review.
 
 Operator interpretation:
 
@@ -73,10 +74,12 @@ manual review.
 1. Keep the trigger shortlist small, normally 5-15 symbols.
 2. Export targeted `4H` CSV for those symbols around relevant candle closes.
 3. Import the `4H` files through `/import` and verify mapping before submit.
-4. Review Import Readiness and analyze only complete symbols.
-5. Open Trigger Radar and read proximity labels as manual review priorities.
-6. Check freshness, setup quality, risk flags, invalidation, and No-Trade reasons.
-7. Make any external trading decision manually outside the app.
+4. Use the CSV-Arbeitsplan and Import Readiness to confirm `4H` is targeted, not a
+   full-universe refresh.
+5. Analyze only complete symbols.
+6. Open Trigger Radar and read proximity labels as manual review priorities.
+7. Check freshness, setup quality, risk flags, invalidation, and No-Trade reasons.
+8. Make any external trading decision manually outside the app.
 
 Do not treat `Nah dran`, `Am Trigger`, an alert, or a green Ampel as a buy/sell or
 entry instruction. They mean review the stored context.
