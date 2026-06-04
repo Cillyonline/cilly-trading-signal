@@ -85,6 +85,8 @@ type BatchAnalysisResultItem = {
   result: MarketDataAnalysisResult | null;
 };
 
+type BatchAnalysisFilter = "all" | "paper" | "watch" | "no_trade" | "data_problem" | "skipped" | "failed";
+
 export default function ImportPage() {
   const authStatus = useProtectedRoute();
   const [items, setItems] = useState<WatchlistItem[]>([]);
@@ -100,6 +102,7 @@ export default function ImportPage() {
   const [history, setHistory] = useState<ImportHistoryItem[]>([]);
   const [analysisResult, setAnalysisResult] = useState<MarketDataAnalysisResult | null>(null);
   const [batchAnalysisResults, setBatchAnalysisResults] = useState<BatchAnalysisResultItem[]>([]);
+  const [batchAnalysisFilter, setBatchAnalysisFilter] = useState<BatchAnalysisFilter>("all");
   const [isLoading, setIsLoading] = useState(true);
   const [isImporting, setIsImporting] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -562,7 +565,9 @@ export default function ImportPage() {
           </div>
 
           <BatchAnalysisPanel
+            filter={batchAnalysisFilter}
             isAnalyzing={isBatchAnalyzing}
+            onFilterChange={setBatchAnalysisFilter}
             plan={batchAnalysisPlan}
             results={batchAnalysisResults}
           />
@@ -998,11 +1003,15 @@ function ImportReadinessPanel({ groups }: { groups: ImportReadinessGroup[] }) {
 }
 
 function BatchAnalysisPanel({
+  filter,
   isAnalyzing,
+  onFilterChange,
   plan,
   results,
 }: {
+  filter: BatchAnalysisFilter;
   isAnalyzing: boolean;
+  onFilterChange: (filter: BatchAnalysisFilter) => void;
   plan: BatchAnalysisPlanItem[];
   results: BatchAnalysisResultItem[];
 }) {
@@ -1017,19 +1026,62 @@ function BatchAnalysisPanel({
   const completeCount = plan.filter((item) => item.seriesId).length;
   const skippedCount = plan.length - completeCount;
   const visibleItems = results.length > 0 ? results : plan.map(toPlannedBatchAnalysisResult);
+  const summary = summarizeBatchAnalysisResults(visibleItems);
+  const filteredItems = visibleItems.filter((item) => batchAnalysisFilterForItem(item) === filter || filter === "all");
 
   return (
     <div className="mt-5 grid gap-4">
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <Metric label="Symbole" value={plan.length.toString()} />
         <Metric label="Analysebereit" value={completeCount.toString()} />
         <Metric label="Uebersprungen" value={skippedCount.toString()} />
+        <Metric label="Paper-Kandidat" value={summary.paper.toString()} />
+        <Metric label="Beobachten" value={summary.watch.toString()} />
+        <Metric label="Kein Trade" value={(summary.noTrade + summary.dataProblem).toString()} />
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-sm text-slate-300">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="font-medium text-slate-100">Batch-Filter</p>
+            <p className="mt-1 text-slate-400">
+              Standard zeigt alle Ergebnisse, inklusive uebersprungener und fehlgeschlagener Symbole.
+            </p>
+          </div>
+          <span className="rounded-full border border-white/10 bg-slate-800 px-3 py-1 text-xs text-slate-300">
+            Sichtbar: {filteredItems.length}/{visibleItems.length}
+          </span>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {batchAnalysisFilterOptions.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => onFilterChange(option.value)}
+              className={`rounded-full border px-3 py-1 text-xs transition ${
+                filter === option.value
+                  ? "border-emerald-300/50 bg-emerald-300/15 text-emerald-100"
+                  : "border-white/10 bg-slate-900 text-slate-300 hover:border-emerald-300/30"
+              }`}
+            >
+              {option.label} ({summary[option.summaryKey]})
+            </button>
+          ))}
+        </div>
+        <p className="mt-3 text-xs text-slate-400">
+          Filter aendern nur die Ansicht. Sie erzeugen keine Trades, Alerts oder Kauf-/Verkaufsanweisungen.
+        </p>
       </div>
 
       <div className="grid gap-3">
-        {visibleItems.map((item) => (
+        {filteredItems.map((item) => (
           <BatchAnalysisResultCard key={item.symbol} isAnalyzing={isAnalyzing} item={item} />
         ))}
+        {filteredItems.length === 0 ? (
+          <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-sm text-slate-400">
+            Keine Ergebnisse fuer diesen Filter. Wechsle zu "Alle", um Safety-Blocker wieder sichtbar zu machen.
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -1103,6 +1155,82 @@ function toPlannedBatchAnalysisResult(item: BatchAnalysisPlanItem): BatchAnalysi
     reason: item.skipReason,
     result: null,
   };
+}
+
+const batchAnalysisFilterOptions: {
+  value: BatchAnalysisFilter;
+  label: string;
+  summaryKey: keyof BatchAnalysisSummary;
+}[] = [
+  { value: "all", label: "Alle", summaryKey: "all" },
+  { value: "paper", label: "Paper-Kandidat", summaryKey: "paper" },
+  { value: "watch", label: "Beobachten", summaryKey: "watch" },
+  { value: "no_trade", label: "Kein Trade", summaryKey: "noTrade" },
+  { value: "data_problem", label: "Datenproblem", summaryKey: "dataProblem" },
+  { value: "skipped", label: "Uebersprungen", summaryKey: "skipped" },
+  { value: "failed", label: "Fehler", summaryKey: "failed" },
+];
+
+type BatchAnalysisSummary = {
+  all: number;
+  paper: number;
+  watch: number;
+  noTrade: number;
+  dataProblem: number;
+  skipped: number;
+  failed: number;
+};
+
+function summarizeBatchAnalysisResults(items: BatchAnalysisResultItem[]): BatchAnalysisSummary {
+  const summary: BatchAnalysisSummary = {
+    all: items.length,
+    paper: 0,
+    watch: 0,
+    noTrade: 0,
+    dataProblem: 0,
+    skipped: 0,
+    failed: 0,
+  };
+
+  for (const item of items) {
+    const filter = batchAnalysisFilterForItem(item);
+    if (filter === "paper") {
+      summary.paper += 1;
+    } else if (filter === "watch") {
+      summary.watch += 1;
+    } else if (filter === "no_trade") {
+      summary.noTrade += 1;
+    } else if (filter === "data_problem") {
+      summary.dataProblem += 1;
+    } else if (filter === "skipped") {
+      summary.skipped += 1;
+    } else if (filter === "failed") {
+      summary.failed += 1;
+    }
+  }
+
+  return summary;
+}
+
+function batchAnalysisFilterForItem(item: BatchAnalysisResultItem): Exclude<BatchAnalysisFilter, "all"> {
+  if (item.status === "failed") {
+    return "failed";
+  }
+  if (item.status === "skipped" || item.status === "pending" || !item.result) {
+    return "skipped";
+  }
+
+  const decision = buildSignalDecision(item.result.signal);
+  if (decision.label === "Paper-Kandidat") {
+    return "paper";
+  }
+  if (decision.label === "Beobachten") {
+    return "watch";
+  }
+  if (decision.label === "Datenproblem") {
+    return "data_problem";
+  }
+  return "no_trade";
 }
 
 function buildImportReadinessGroups(
