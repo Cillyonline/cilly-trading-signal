@@ -4,12 +4,12 @@ Date: 2026-06-04
 
 ## Decision
 
-Recommended next milestone: `v4.5 - Operator Workflow Validation`.
+Recommended next milestone: `v4.6 - Browser Workflow Smoke`.
 
-Rationale: v4.4 Practical Operator Workflow is implemented and reviewed. The next
-highest-value step is operator validation of the new `/import` CSV-Arbeitsplan,
-Active Review shortlist, and Trigger Radar workflow before adding more product
-surface area.
+Rationale: v4.5 Operator Workflow Validation is complete with local build and
+checklist evidence. The remaining validation gap is optional authenticated browser
+smoke of `/import` and `/signals`, local by default and VPS-only after explicit
+approval.
 
 ## v4.3 - Operational Evidence Closure
 
@@ -72,6 +72,9 @@ Decision record:
 Goal: validate the practical owner/operator workflow in the browser after the v4.4
 changes.
 
+Status: Done. Review is recorded in
+`docs/reviews/v4-5-operator-workflow-validation-review.md`.
+
 Recommended scope:
 
 - Browser smoke `/import` CSV-Arbeitsplan, Import Readiness, and Analyze-All guidance.
@@ -87,6 +90,25 @@ Default if no explicit deployment approval is given:
 
 - Run local/browser validation only.
 - Do not touch VPS, secrets, `.env`, provider keys, or deployment state.
+
+## v4.6 - Browser Workflow Smoke
+
+Goal: run authenticated browser validation of the v4.4/v4.5 workflow when the
+operator wants visual/runtime assurance.
+
+Recommended scope:
+
+- Local browser smoke of `/import` CSV-Arbeitsplan and Import Readiness.
+- Local browser smoke of `/signals` Active Review and Trigger Radar.
+- Mobile and desktop viewport checks when feasible.
+- Sanitized pass/fail evidence only.
+
+Default boundary:
+
+- Keep validation local unless the owner/operator explicitly approves private VPS
+  deployment/update steps.
+- Do not add provider reliance, broker integration, automatic execution, or
+  live/realtime claims.
 
 ## Not Now
 
