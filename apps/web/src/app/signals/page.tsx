@@ -6,7 +6,7 @@ import { AuthenticatedHeaderActions } from "@/components/authenticated-header-ac
 import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
 import { fetchSignals, redirectToLoginOnAuthError } from "@/lib/api";
 import { buildSignalDecision, signalDecisionDotClass, signalDecisionToneClass } from "@/lib/signal-decision";
-import type { ScoreClass, Signal, SignalStatus, StrategyType } from "@/types/signals";
+import type { ScoreClass, Signal, SignalStatus, StrategyType, TriggerProximityState } from "@/types/signals";
 
 type SignalFilters = {
   symbol: string;
@@ -17,7 +17,7 @@ type SignalFilters = {
   context: "all" | "risk_flags" | "no_trade_reasons";
 };
 
-type TriggerRadarState = "at_trigger" | "near_trigger" | "planned" | "not_available";
+type TriggerRadarState = Exclude<TriggerProximityState, "not_available">;
 
 type TriggerRadarItem = {
   signal: Signal;
@@ -215,8 +215,7 @@ function TriggerRadarCard({ item }: { item: TriggerRadarItem }) {
   const toneClass = {
     at_trigger: "border-emerald-300/40 bg-emerald-300/10 text-emerald-100",
     near_trigger: "border-yellow-300/40 bg-yellow-300/10 text-yellow-100",
-    planned: "border-sky-300/30 bg-sky-300/10 text-sky-100",
-    not_available: "border-slate-500/30 bg-slate-800/60 text-slate-300",
+    far_from_trigger: "border-sky-300/30 bg-sky-300/10 text-sky-100",
   }[item.state];
 
   return (
@@ -613,12 +612,13 @@ function toTriggerRadarItem(signal: Signal): TriggerRadarItem | null {
     decision.kind === "data_problem" ||
     noTradeReasons.length > 0 ||
     signal.is_stale ||
-    !signal.trigger_level
+    !signal.trigger_level ||
+    signal.trigger_proximity_state === "not_available"
   ) {
     return null;
   }
 
-  if (signal.status === "triggered") {
+  if (signal.trigger_proximity_state === "at_trigger") {
     return {
       signal,
       state: "at_trigger",
@@ -626,7 +626,7 @@ function toTriggerRadarItem(signal: Signal): TriggerRadarItem | null {
       action: "Gespeicherten Trigger-Kontext manuell pruefen. Keine automatische Order.",
     };
   }
-  if (signal.status === "armed") {
+  if (signal.trigger_proximity_state === "near_trigger") {
     return {
       signal,
       state: "near_trigger",
@@ -634,23 +634,19 @@ function toTriggerRadarItem(signal: Signal): TriggerRadarItem | null {
       action: "Trigger-Level, 4H-Kontext und Risikoplan manuell gegenpruefen.",
     };
   }
-  if (signal.status === "watchlist") {
-    return {
-      signal,
-      state: "planned",
-      label: "Trigger geplant",
-      action: "Beobachten, aber auf sauberere Bestaetigung warten.",
-    };
-  }
-  return null;
+  return {
+    signal,
+    state: "far_from_trigger",
+    label: "Weiter weg",
+    action: "Trigger bleibt nur Beobachtung. Nicht als aktuellen Einstieg interpretieren.",
+  };
 }
 
 function triggerRadarPriority(state: TriggerRadarState) {
   return {
     at_trigger: 0,
     near_trigger: 1,
-    planned: 2,
-    not_available: 3,
+    far_from_trigger: 2,
   }[state];
 }
 

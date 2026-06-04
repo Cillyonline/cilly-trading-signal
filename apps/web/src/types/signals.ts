@@ -8,6 +8,8 @@ export type StrategyType = "trend_pullback_long" | "base_breakout_long";
 
 export type Timeframe = "1W" | "1D" | "4H";
 
+export type TriggerProximityState = "not_available" | "far_from_trigger" | "near_trigger" | "at_trigger";
+
 export type AssetClass = "stock" | "crypto";
 
 export type Signal = {
@@ -36,6 +38,7 @@ export type Signal = {
   risk_flags: string[] | Record<string, unknown> | null;
   no_trade_reasons: string[] | Record<string, unknown> | null;
   next_action: string | null;
+  trigger_proximity_state: TriggerProximityState;
   quality_report: AnalysisQualityCheck[];
   review_note: string | null;
   created_at: string;
