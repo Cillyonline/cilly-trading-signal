@@ -60,9 +60,10 @@ Done:
 - v3.8 Decision Clarity Radar began adding German Ampel decision labels for
   `Paper-Kandidat`, `Beobachten`, `Kein Trade`, and `Datenproblem` so operators
   can interpret stored signal reviews before reading technical backend fields.
-- v3.9 Low-Friction CSV Workflow added bulk CSV import, TradingView filename
-  preview including `240 = 4H`, Import Readiness by symbol, and an explicit
-  Analyze-All action for complete imported symbols.
+- v3.9/v4.2 Low-Friction CSV Workflow added bulk CSV import, TradingView filename
+  detection including `240 = 4H`, a per-file CSV mapping table, Import Readiness by
+  symbol, an explicit Analyze-All action for complete imported symbols, compact
+  batch outcome counts, and batch filters for Ampel/skipped/failed/waiting states.
 - v3.9 review is recorded in `docs/reviews/v3-9-low-friction-csv-workflow-review.md`.
 - v4.0 Trigger Radar started with stored-candle trigger proximity, a Signals-page
   Trigger Radar, and explicit docs that trigger/alert states mean review, not trade execution.
@@ -72,8 +73,9 @@ Done:
 Partial:
 
 - CSV import is hardened for upload size, candle count, timeframe consistency,
-  filename-preview guardrails, bulk upload, readiness grouping, and explicit
-  complete-symbol analysis; it remains the supported manual baseline/fallback.
+  filename detection, editable per-file mapping, bulk upload, readiness grouping,
+  compact batch review, filters, and explicit complete-symbol analysis; it remains
+  the supported manual baseline/fallback.
 - Screener CSV import is implemented as a candidate prefiltering workflow with filters, bulk review actions, pagination, and explicit Watchlist conversion; mobile density and richer candidate prioritization remain future usability work.
 - Manual provider sync currently targets Daily/EOD data first; `4H`/intraday provider support remains unresolved and not promised.
 - v4.1 provider-path decision keeps Alpha Vantage as the practical first guarded
@@ -91,6 +93,9 @@ Partial:
   `docs/reviews/v4-2-final-technical-verification.md`: local frontend build passed,
   current `main` CI/Security Scans were green, and local backend checks remain
   blocked only by missing local `uv` tooling.
+- v4.2 operator docs now include a concrete 12-file CSV walkthrough for four symbols
+  across `1W`, `1D`, and `240 = 4H`, including mapping, readiness, Analyze-All,
+  skipped reasons, and private-data exclusions.
 - Dashboard, journal, and performance views include useful MVP-level summaries, risk warnings, and journal analytics, but are not full institutional analytics modules.
 - Risk enforcement covers manual trade creation basics and portfolio/risk review warnings, not complete account-level risk management or automatic position sizing.
 - Multi-timeframe analysis still requires current stored data for required `1W`, `1D`, and `4H` timeframes; provider sync does not automatically fill unsupported timeframes or rerun analysis.
@@ -113,6 +118,9 @@ Current blockers and risks:
 - Private VPS staging is accepted for controlled owner/operator use only after documented operations hardening; production-like or public use remains blocked until a separate operational readiness decision addresses data-handling readiness, offsite backups, security review, and monitoring expectations.
 - Deployment readiness is currently gated by `docs/DEPLOYMENT_READINESS_DECISION_GATE_V2.md`: local review and private owner/operator staging are conditionally allowed; production-like exposure remains No Go.
 - MVP release posture is tracked in `docs/MVP_RELEASE_CHECKLIST.md`; it separates Done, Partial, Missing, Blocked, and Not Included areas without claiming production readiness.
+- Remaining open operational evidence is intentionally blocked rather than assumed:
+  #605 needs an approved VPS deployment/browser smoke, and #614 needs explicit
+  provider-key approval before any configured Daily/EOD provider smoke.
 
 ## v0.1 - Foundation
 

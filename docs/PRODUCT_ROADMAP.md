@@ -134,8 +134,11 @@ Prioritaeten:
 Der aktuelle Stand ist ein kontrolliertes Owner/Operator-Review-Cockpit, kein produktionsreifes Trading-System. Implementiert sind:
 
 - Watchlist fuer Aktien und Krypto.
-- TradingView OHLCV CSV Import als manuelle Baseline.
-- Guarded manual Daily/EOD provider sync mit Source/Freshness-Kontext, disabled-by-default.
+- TradingView OHLCV CSV Import als manuelle Baseline mit Bulk-Import,
+  Dateinamen-Erkennung, pro-Datei-Zuordnung, Readiness nach Symbol,
+  Analyze-All fuer vollstaendige Symbole und Batch-Ergebnisfiltern.
+- Guarded manual Daily/EOD provider sync mit Source/Freshness-Kontext,
+  Timeframe-Capability-Hinweisen, disabled-by-default.
 - Deterministische Multi-Timeframe-Analyse mit erklaerbaren Long-only Setups.
 - Benchmark-Kontext fuer gespeicherte Daily-Kontexte (`SPY`/`QQQ`, `BTC`/`ETH`).
 - Explainable Signal Review mit Reasoning, Risk Flags, No-Trade-Gruenden, Next Action und stale Signal Visibility.
@@ -157,6 +160,9 @@ Der aktuelle Stand ist ein kontrolliertes Owner/Operator-Review-Cockpit, kein pr
 - v3.1 Owner/Operator Validation Evidence: lokale Docker-/Browser-Validation,
   Operator-Checkliste, private VPS-Aktualisierung und Browser-Smoke sind
   dokumentiert fuer kontrollierte Owner/Operator-Nutzung.
+- v3.8-v4.2 Radar-/Import-/Provider-Refinement: deutsche Ampel-Entscheidungen,
+  Trigger Radar auf gespeicherten Daten, 12-Dateien-CSV-Walkthrough, Provider-
+  Capability-Matrix und Paid-Provider-Evaluationsgate sind dokumentiert.
 
 Weiterhin nicht enthalten:
 
@@ -164,6 +170,10 @@ Weiterhin nicht enthalten:
 - Broker-/Exchange-Integration, Account Sync oder automatische Orders.
 - Live-/Realtime-Marktdatenversprechen.
 - Automatische Marktaktualisierung oder scheduler-driven Analyse.
+- 4H/intraday Provider-Reliance ohne separate Provider-, Lizenz-, Kosten- und
+  Rate-Limit-Entscheidung.
+- VPS Trigger-Radar-Smoke nach dem naechsten Deployment und real-key Provider-Smoke
+  ohne explizite Owner/Operator-Freigabe.
 - Backtesting-/Profitabilitaetsvalidierung.
 - Multi-User, Rollenmodell, Registrierung, Billing oder Support-Prozesse.
 - Routine-Nutzung privater Trading-Daten ohne separaten Private-Data Gate.
