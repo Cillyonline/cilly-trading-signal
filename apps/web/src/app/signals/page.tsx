@@ -17,6 +17,15 @@ type SignalFilters = {
   context: "all" | "risk_flags" | "no_trade_reasons";
 };
 
+type TriggerRadarState = "at_trigger" | "near_trigger" | "planned" | "not_available";
+
+type TriggerRadarItem = {
+  signal: Signal;
+  state: TriggerRadarState;
+  label: string;
+  action: string;
+};
+
 const emptyFilters: SignalFilters = {
   symbol: "",
   status: "all",
@@ -75,6 +84,7 @@ export default function SignalsPage() {
   }, [authStatus]);
 
   const summary = useMemo(() => buildSummary(signals), [signals]);
+  const triggerRadarItems = useMemo(() => buildTriggerRadarItems(signals), [signals]);
   const filteredSignals = useMemo(() => filterSignals(signals, filters), [signals, filters]);
   const rankedSignals = useMemo(() => rankSignals(filteredSignals), [filteredSignals]);
 
@@ -106,6 +116,8 @@ export default function SignalsPage() {
           <SummaryCard label="Kein Trade" value={summary.noTrade.toString()} tone="red" />
           <SummaryCard label="Datenproblem" value={summary.dataProblem.toString()} tone="gray" />
         </section>
+
+        <TriggerRadarSection items={triggerRadarItems} isLoading={isLoading} />
 
         {error ? (
           <div className="rounded-2xl border border-red-400/30 bg-red-950/40 p-4 text-sm text-red-100">
@@ -157,6 +169,79 @@ export default function SignalsPage() {
         </section>
       </section>
     </main>
+  );
+}
+
+function TriggerRadarSection({ isLoading, items }: { isLoading: boolean; items: TriggerRadarItem[] }) {
+  const atTriggerCount = items.filter((item) => item.state === "at_trigger").length;
+  const nearTriggerCount = items.filter((item) => item.state === "near_trigger").length;
+
+  return (
+    <section className="rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(20,184,166,0.16),transparent_34%),rgba(255,255,255,0.03)] p-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-emerald-300">Trigger Radar</p>
+          <h2 className="mt-2 text-xl font-semibold">Manuelle Trigger-Review priorisieren</h2>
+          <p className="mt-2 max-w-3xl text-sm text-slate-400">
+            Zeigt gespeicherte Signale mit Trigger-Level und reviewbarem Status. Kein Live-Preis,
+            keine Order, kein Alert. No-Trade und Datenprobleme werden hier nicht hochgestuft.
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-2 text-sm sm:min-w-56">
+          <Metric label="Am Trigger" value={atTriggerCount.toString()} compact />
+          <Metric label="Nah dran" value={nearTriggerCount.toString()} compact />
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-3 lg:grid-cols-3">
+        {isLoading ? (
+          <p className="rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-sm text-slate-400">
+            Trigger Radar wird geladen...
+          </p>
+        ) : items.length === 0 ? (
+          <p className="rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-sm text-slate-400 lg:col-span-3">
+            Keine reviewbaren Trigger-Kandidaten. No-Trade, stale Daten und fehlende Trigger-Level
+            bleiben bewusst draussen.
+          </p>
+        ) : (
+          items.slice(0, 6).map((item) => <TriggerRadarCard key={item.signal.id} item={item} />)
+        )}
+      </div>
+    </section>
+  );
+}
+
+function TriggerRadarCard({ item }: { item: TriggerRadarItem }) {
+  const toneClass = {
+    at_trigger: "border-emerald-300/40 bg-emerald-300/10 text-emerald-100",
+    near_trigger: "border-yellow-300/40 bg-yellow-300/10 text-yellow-100",
+    planned: "border-sky-300/30 bg-sky-300/10 text-sky-100",
+    not_available: "border-slate-500/30 bg-slate-800/60 text-slate-300",
+  }[item.state];
+
+  return (
+    <article className={`rounded-2xl border p-4 ${toneClass}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-lg font-semibold text-slate-50">{item.signal.symbol}</h3>
+          <p className="mt-1 text-xs uppercase tracking-[0.18em] opacity-80">{item.label}</p>
+        </div>
+        <span className="rounded-full border border-current/20 px-3 py-1 text-xs">
+          {statusLabel[item.signal.status]}
+        </span>
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <Metric label="Trigger" value={formatMoney(item.signal.trigger_level)} compact />
+        <Metric label="Score" value={formatScore(item.signal)} compact />
+      </div>
+      <p className="mt-3 text-sm">{item.action}</p>
+      <a
+        className="mt-4 inline-flex text-sm font-semibold text-current hover:text-slate-50"
+        href={`/signals/${item.signal.id}`}
+      >
+        Detail pruefen
+      </a>
+    </article>
   );
 }
 
@@ -507,6 +592,66 @@ function buildSummary(signals: Signal[]) {
     noTrade: decisions.filter((decision) => decision.kind === "no_trade").length,
     dataProblem: decisions.filter((decision) => decision.kind === "data_problem").length,
   };
+}
+
+function buildTriggerRadarItems(signals: Signal[]): TriggerRadarItem[] {
+  return signals
+    .map(toTriggerRadarItem)
+    .filter((item): item is TriggerRadarItem => item !== null)
+    .sort(
+      (left, right) =>
+        triggerRadarPriority(left.state) - triggerRadarPriority(right.state) ||
+        (right.signal.score ?? 0) - (left.signal.score ?? 0),
+    );
+}
+
+function toTriggerRadarItem(signal: Signal): TriggerRadarItem | null {
+  const decision = buildSignalDecision(signal);
+  const noTradeReasons = toTextList(signal.no_trade_reasons);
+  if (
+    decision.kind === "no_trade" ||
+    decision.kind === "data_problem" ||
+    noTradeReasons.length > 0 ||
+    signal.is_stale ||
+    !signal.trigger_level
+  ) {
+    return null;
+  }
+
+  if (signal.status === "triggered") {
+    return {
+      signal,
+      state: "at_trigger",
+      label: "Am Trigger",
+      action: "Gespeicherten Trigger-Kontext manuell pruefen. Keine automatische Order.",
+    };
+  }
+  if (signal.status === "armed") {
+    return {
+      signal,
+      state: "near_trigger",
+      label: "Nah dran",
+      action: "Trigger-Level, 4H-Kontext und Risikoplan manuell gegenpruefen.",
+    };
+  }
+  if (signal.status === "watchlist") {
+    return {
+      signal,
+      state: "planned",
+      label: "Trigger geplant",
+      action: "Beobachten, aber auf sauberere Bestaetigung warten.",
+    };
+  }
+  return null;
+}
+
+function triggerRadarPriority(state: TriggerRadarState) {
+  return {
+    at_trigger: 0,
+    near_trigger: 1,
+    planned: 2,
+    not_available: 3,
+  }[state];
 }
 
 function rankSignals(signals: Signal[]) {
