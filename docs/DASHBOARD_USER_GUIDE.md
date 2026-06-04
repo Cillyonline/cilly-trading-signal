@@ -240,7 +240,8 @@ Bulk workflow:
 2. Choose one or more TradingView-compatible CSV files.
 3. Review the filename preview for detected symbol, exchange, and timeframe.
 4. Submit the import manually.
-5. Review Import Readiness by symbol for usable `1W`, `1D`, and `4H` coverage.
+5. Review Import Readiness by symbol as a planning view across saved usable imports
+   and the current filename preview.
 6. Click `Vollstaendige Symbole analysieren` only when you intentionally want to
    batch-analyze complete symbols.
 7. Read skipped-symbol reasons and Ampel results before technical metrics.
@@ -257,7 +258,9 @@ Error interpretation:
 
 - Failed files do not make other files successful or failed automatically; inspect
   the per-file result list.
-- Missing timeframes make symbols incomplete and skipped by Analyze-All.
+- Missing saved/imported timeframes make symbols incomplete and skipped by Analyze-All.
+- A filename preview can make a symbol look planned-complete before submit; do not
+  treat it as usable data until the import result is saved and valid.
 - Failed, skipped, zero-candle, stale, partial, or unknown data should be treated
   conservatively and not as actionable.
 - Do not upload private broker exports, account history, fills, balances, cookies,

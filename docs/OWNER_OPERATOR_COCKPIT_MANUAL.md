@@ -153,8 +153,9 @@ Operator checks:
   `GETTEX_ABEA, 1W.csv`; `240` is interpreted as `4H`.
 - The current import action still uses the manually selected Watchlist symbol and
   Timeframe. The filename preview is a safety check, not automatic remapping.
-- Use Import Readiness to confirm each symbol has usable `1W`, `1D`, and `4H`
-  series before batch analysis.
+- Use Import Readiness as a planning view across saved usable imports and the
+  current filename preview. Before batch analysis, confirm the files were actually
+  submitted and the saved import results are usable for `1W`, `1D`, and `4H`.
 - Use `Vollstaendige Symbole analysieren` only when you want to explicitly analyze
   all complete imported symbols. Incomplete symbols must stay skipped with a visible
   missing-timeframe reason.

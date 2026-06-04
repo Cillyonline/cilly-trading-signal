@@ -68,8 +68,9 @@ For CSV imports:
   `AAPL_1D.csv`; `240` is treated as `4H`.
 - Treat the filename preview as a guardrail only. The actual import still follows
   the manually selected Watchlist symbol and Timeframe.
-- Use Import Readiness to group usable stored data by symbol. A symbol is complete
-  only when `1W`, `1D`, and `4H` are present with usable non-failed data.
+- Use Import Readiness as a planning view that combines saved usable imports with
+  the current filename preview. Do not treat preview-only readiness as analyzed or
+  proven data; confirm saved import results before relying on Analyze-All.
 - Use Analyze-All only by explicit click. It should analyze complete symbols,
   skip incomplete symbols with missing-timeframe reasons, and show Ampel/radar
   decisions per symbol.

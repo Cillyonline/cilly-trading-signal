@@ -88,8 +88,8 @@ CSV import smoke notes:
 - Filename preview should recognize examples such as `BATS_AAPL_1D.csv`,
   `BATS_AAPL_240.csv`, `GETTEX_ABEA, 1W.csv`, and `AAPL_1D.csv`.
 - `240` must be interpreted as `4H`.
-- Import Readiness should mark complete symbols only when usable `1W`, `1D`, and
-  `4H` data are present.
+- Import Readiness may include the current filename preview before submit. Smoke
+  evidence should confirm saved import results before treating a symbol as complete.
 - Analyze-All must require an explicit click, skip incomplete symbols, and show
   per-symbol Ampel/radar outcomes.
 - Do not use private broker data, account exports, fills, balances, cookies,
