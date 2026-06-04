@@ -64,6 +64,8 @@ Done:
   preview including `240 = 4H`, Import Readiness by symbol, and an explicit
   Analyze-All action for complete imported symbols.
 - v3.9 review is recorded in `docs/reviews/v3-9-low-friction-csv-workflow-review.md`.
+- v4.0 Trigger Radar started with stored-candle trigger proximity, a Signals-page
+  Trigger Radar, and explicit docs that trigger/alert states mean review, not trade execution.
 
 Partial:
 

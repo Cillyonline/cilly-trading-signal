@@ -85,6 +85,35 @@ States:
 This state may help rank manual review attention, but it does not create alerts,
 orders, broker actions, or buy/sell instructions.
 
+## Trigger Radar And Alert Interpretation Policy
+
+Trigger Radar is a review-prioritization layer for stored signals. It helps the
+operator decide what to inspect first; it does not change the strategy score, does
+not relax No-Trade rules, and does not authorize an entry.
+
+Trigger status interpretation:
+
+- `Trigger geplant`: a stored watchlist signal has a trigger level, but confirmation
+  is still incomplete. Wait for cleaner setup/trigger context.
+- `Nah dran`: a stored armed signal is ready for manual trigger review. The operator
+  still checks 4H structure, candle close, freshness, risk plan, and external chart
+  context before doing anything outside the app.
+- `Am Trigger`: a stored signal status indicates trigger context was reached or
+  recorded. This is a review event, not a buy instruction.
+- `not_available`, `Kein Trade`, `Datenproblem`, stale data, missing trigger level,
+  and explicit No-Trade reasons must not be promoted into trigger candidates.
+
+Alert interpretation:
+
+- An alarm means `review this stored context`, never `buy`, `sell`, `enter`, or
+  `place an order`.
+- 4H close confirmation is still required for trigger interpretation; price touch
+  alone is only a pre-alert/review cue.
+- Alert delivery success only means the notification was recorded or delivered. It
+  does not validate the setup, execution, risk, or profitability.
+- No alert path may create broker orders, automatic trades, position sizing, or
+  account actions.
+
 ## Signal Freshness
 
 MVP-Signale basieren auf gespeicherten Analysen aus TradingView CSV-Daten oder
