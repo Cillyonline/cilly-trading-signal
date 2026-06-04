@@ -200,7 +200,11 @@ function SignalDetail({
   const reasoning = toTextList(signal.reasoning);
   const riskFlags = toTextList(signal.risk_flags);
   const noTradeReasons = toTextList(signal.no_trade_reasons);
-  const decision = buildSignalDecision(signal);
+  const decision = buildSignalDecision({
+    ...signal,
+    risk_flags: riskFlags,
+    no_trade_reasons: noTradeReasons,
+  });
 
   return (
     <section className="grid gap-6">
