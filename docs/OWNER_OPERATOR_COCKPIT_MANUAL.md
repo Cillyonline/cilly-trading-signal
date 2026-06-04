@@ -147,18 +147,25 @@ Operator checks:
 - Use sample CSV fixtures for smoke/evidence runs.
 - Confirm timeframe and symbol match the intended sample symbol.
 - For bulk imports, select all intended CSV files together, then review the filename
-  preview before submitting.
+  mapping table before submitting.
 - Supported TradingView-style filename patterns include exchange-prefixed names such
   as `BATS_AAPL_1D.csv`, `BATS_AAPL_240.csv`, and comma/space variants such as
   `GETTEX_ABEA, 1W.csv`; `240` is interpreted as `4H`.
-- The current import action still uses the manually selected Watchlist symbol and
-  Timeframe. The filename preview is a safety check, not automatic remapping.
+- The CSV mapping table starts from filename detection but must be reviewed by the
+  operator. Correct every row where symbol or timeframe is ambiguous before import.
 - Use Import Readiness as a planning view across saved usable imports and the
-  current filename preview. Before batch analysis, confirm the files were actually
+  current mapping preview. Before batch analysis, confirm the files were actually
   submitted and the saved import results are usable for `1W`, `1D`, and `4H`.
+- For a 12-file batch, use four symbols times three timeframes: `1W`, `1D`, and
+  `240`/`4H`. Example: `BATS_AAPL_1W.csv`, `BATS_AAPL_1D.csv`,
+  `BATS_AAPL_240.csv` plus the same set for three other public/sample symbols.
+- Treat a blocked mapping row as a stop point. Do not import until each row is mapped
+  to the intended Watchlist symbol and Timeframe.
 - Use `Vollstaendige Symbole analysieren` only when you want to explicitly analyze
   all complete imported symbols. Incomplete symbols must stay skipped with a visible
   missing-timeframe reason.
+- Use the batch summary filters to scan outcomes, but keep `Alle` as the default
+  safety view so skipped, failed, and waiting states remain visible.
 - Read the Ampel decision before reading technical backend metrics.
 - Treat conservative `No Setup` or `No Trade` as valid output.
 - Confirm analysis does not create trades or orders.
@@ -170,6 +177,7 @@ Stop if:
 - Data source, timeframe, or symbol is wrong.
 - Import creates unexpected private data exposure.
 - Filename preview is unclear or conflicts with the manually selected symbol/timeframe.
+- CSV mapping is unclear, blocked, or would require guessing the symbol/timeframe.
 - Readiness marks required timeframes as missing and the workflow would require
   guessing or overriding that blocker.
 - Analysis copy implies guaranteed outcome, profitability, or trading instruction.
