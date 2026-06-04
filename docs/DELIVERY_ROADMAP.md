@@ -60,10 +60,15 @@ Done:
 - v3.8 Decision Clarity Radar began adding German Ampel decision labels for
   `Paper-Kandidat`, `Beobachten`, `Kein Trade`, and `Datenproblem` so operators
   can interpret stored signal reviews before reading technical backend fields.
+- v3.9 Low-Friction CSV Workflow added bulk CSV import, TradingView filename
+  preview including `240 = 4H`, Import Readiness by symbol, and an explicit
+  Analyze-All action for complete imported symbols.
 
 Partial:
 
-- CSV import is hardened for upload size, candle count, and timeframe consistency, and remains the supported manual baseline/fallback.
+- CSV import is hardened for upload size, candle count, timeframe consistency,
+  filename-preview guardrails, bulk upload, readiness grouping, and explicit
+  complete-symbol analysis; it remains the supported manual baseline/fallback.
 - Screener CSV import is implemented as a candidate prefiltering workflow with filters, bulk review actions, pagination, and explicit Watchlist conversion; mobile density and richer candidate prioritization remain future usability work.
 - Manual provider sync currently targets Daily/EOD data first; `4H`/intraday provider support remains unresolved and not promised.
 - Dashboard, journal, and performance views include useful MVP-level summaries, risk warnings, and journal analytics, but are not full institutional analytics modules.

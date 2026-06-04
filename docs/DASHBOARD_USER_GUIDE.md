@@ -229,6 +229,40 @@ Use it to open:
 - Performance: review historical documented R and active risk.
 - Review Batches: collect paper/historical calibration evidence.
 
+## CSV Import Workflow
+
+Use `/import` for stored OHLCV data. CSV remains a supported manual baseline and
+fallback; it is not a live data feed and does not place orders.
+
+Bulk workflow:
+
+1. Select the intended Watchlist symbol and Timeframe.
+2. Choose one or more TradingView-compatible CSV files.
+3. Review the filename preview for detected symbol, exchange, and timeframe.
+4. Submit the import manually.
+5. Review Import Readiness by symbol for usable `1W`, `1D`, and `4H` coverage.
+6. Click `Vollstaendige Symbole analysieren` only when you intentionally want to
+   batch-analyze complete symbols.
+7. Read skipped-symbol reasons and Ampel results before technical metrics.
+
+Filename rules:
+
+- Examples: `BATS_AAPL_1D.csv`, `BATS_AAPL_240.csv`, `GETTEX_ABEA, 1W.csv`,
+  `AAPL_1D.csv`.
+- `1W` maps to weekly, `1D` maps to daily, and `240` or `4H` maps to four-hour.
+- The preview helps catch mistakes, but import still follows the manually selected
+  symbol and timeframe for that submission.
+
+Error interpretation:
+
+- Failed files do not make other files successful or failed automatically; inspect
+  the per-file result list.
+- Missing timeframes make symbols incomplete and skipped by Analyze-All.
+- Failed, skipped, zero-candle, stale, partial, or unknown data should be treated
+  conservatively and not as actionable.
+- Do not upload private broker exports, account history, fills, balances, cookies,
+  secrets, personal notes, or production data for evidence.
+
 ## Signal Radar Decisions
 
 The Signal Radar and Import analysis use a German traffic-light layer above the

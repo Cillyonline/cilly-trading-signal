@@ -75,11 +75,25 @@ provider payloads, screenshots, or private trading data.
 3. Open the web app and log in with the local admin credentials.
 4. Create or verify a watchlist item for sample/paper data.
 5. Import TradingView-compatible CSV data for `1W`, `1D`, and `4H`.
-6. Run analysis and review generated signal cards.
-7. Review signal detail, stale wording, manual status actions, review notes, and review history.
-8. Create a manual trade log from paper/sample values only.
-9. Add trade events, close the trade, and add a journal review.
-10. Verify dashboard, performance, settings, alerts, and safety wording remain decision-support only.
+6. Review filename preview, Import Readiness, and skipped reasons for incomplete symbols.
+7. Run single or Analyze-All analysis by explicit click and review generated signal cards.
+8. Review signal detail, stale wording, manual status actions, review notes, and review history.
+9. Create a manual trade log from paper/sample values only.
+10. Add trade events, close the trade, and add a journal review.
+11. Verify dashboard, performance, settings, alerts, and safety wording remain decision-support only.
+
+CSV import smoke notes:
+
+- Bulk selection should accept multiple TradingView-compatible files.
+- Filename preview should recognize examples such as `BATS_AAPL_1D.csv`,
+  `BATS_AAPL_240.csv`, `GETTEX_ABEA, 1W.csv`, and `AAPL_1D.csv`.
+- `240` must be interpreted as `4H`.
+- Import Readiness should mark complete symbols only when usable `1W`, `1D`, and
+  `4H` data are present.
+- Analyze-All must require an explicit click, skip incomplete symbols, and show
+  per-symbol Ampel/radar outcomes.
+- Do not use private broker data, account exports, fills, balances, cookies,
+  secrets, personal notes, or production data in smoke evidence.
 
 ## Screener-To-Watchlist Smoke Checklist
 
