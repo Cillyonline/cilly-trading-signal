@@ -161,6 +161,9 @@ Operator checks:
 - Use Import Readiness as a planning view across saved usable imports and the
   current mapping preview. Before batch analysis, confirm the files were actually
   submitted and the saved import results are usable for `1W`, `1D`, and `4H`.
+- Use the CSV-Arbeitsplan to choose the next practical update: `1W` for universe
+  preparation, `1D` for active review candidates, and `4H` only for a small trigger
+  shortlist.
 - For a 12-file batch, use four symbols times three timeframes: `1W`, `1D`, and
   `240`/`4H`. Example: `BATS_AAPL_1W.csv`, `BATS_AAPL_1D.csv`,
   `BATS_AAPL_240.csv` plus the same set for three other public/sample symbols.

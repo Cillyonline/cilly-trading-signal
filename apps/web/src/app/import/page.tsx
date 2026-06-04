@@ -70,6 +70,16 @@ type ImportReadinessGroup = {
   complete: boolean;
 };
 
+type CsvWorkflowGuidanceItem = {
+  title: string;
+  timeframe: Timeframe;
+  scope: string;
+  count: number;
+  symbols: string[];
+  guidance: string;
+  className: string;
+};
+
 type BatchAnalysisPlanItem = {
   symbol: string;
   seriesId: number | null;
@@ -456,6 +466,8 @@ export default function ImportPage() {
               {fileMappings.length > 0 ? (
                 <CsvFileMappingTable items={items} mappings={fileMappings} onChange={setFileMappings} />
               ) : null}
+
+              <CsvWorkflowGuidancePanel groups={readinessGroups} />
 
               {readinessGroups.length > 0 ? <ImportReadinessPanel groups={readinessGroups} /> : null}
 
@@ -1008,6 +1020,98 @@ function ImportReadinessPanel({ groups }: { groups: ImportReadinessGroup[] }) {
       </div>
     </div>
   );
+}
+
+function CsvWorkflowGuidancePanel({ groups }: { groups: ImportReadinessGroup[] }) {
+  const guidanceItems = buildCsvWorkflowGuidance(groups);
+
+  return (
+    <div className="rounded-2xl border border-emerald-300/20 bg-emerald-300/10 p-4 text-sm text-emerald-50">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="font-medium">CSV-Arbeitsplan</p>
+          <p className="mt-1 text-emerald-100/80">
+            Nutze CSV gezielt: Wochenkontext fuer das Universum, Daily fuer aktive Kandidaten,
+            `4H` nur fuer die Trigger-Liste.
+          </p>
+        </div>
+        <span className="rounded-full border border-emerald-200/30 bg-slate-950/40 px-3 py-1 text-xs text-emerald-50">
+          CSV-first, kein Live-Feed
+        </span>
+      </div>
+
+      <div className="mt-3 grid gap-3 lg:grid-cols-3">
+        {guidanceItems.map((item) => (
+          <div key={item.title} className={`rounded-xl border p-3 ${item.className}`}>
+            <div className="flex items-center justify-between gap-2">
+              <p className="font-semibold text-slate-50">{item.title}</p>
+              <span className="rounded-full border border-current/20 px-2 py-0.5 text-xs">{item.timeframe}</span>
+            </div>
+            <p className="mt-1 text-xs text-slate-200/80">{item.scope}</p>
+            <p className="mt-3 text-2xl font-semibold text-slate-50">{item.count}</p>
+            <p className="text-xs text-slate-200/80">Symbol(e) mit Bedarf</p>
+            <p className="mt-3 text-xs text-slate-100">{item.guidance}</p>
+            {item.symbols.length > 0 ? (
+              <p className="mt-2 text-xs text-slate-200/80">Beispiele: {item.symbols.join(", ")}</p>
+            ) : null}
+          </div>
+        ))}
+      </div>
+
+      <p className="mt-3 text-xs text-emerald-100/80">
+        Diese Hinweise starten keine Analyse und erzeugen keine Alerts, Trades oder Orders. Sie helfen nur,
+        den naechsten manuellen CSV-Import zu waehlen.
+      </p>
+    </div>
+  );
+}
+
+function buildCsvWorkflowGuidance(groups: ImportReadinessGroup[]): CsvWorkflowGuidanceItem[] {
+  const missingWeekly = groups.filter((group) => group.missing.includes("1W"));
+  const missingDaily = groups.filter((group) => group.missing.includes("1D"));
+  const missingFourHour = groups.filter((group) => group.missing.includes("4H"));
+  const triggerCandidates = groups.filter(
+    (group) => group.missing.includes("4H") && (group.present.includes("1W") || group.present.includes("1D")),
+  );
+
+  return [
+    {
+      title: "Wochen-Setup",
+      timeframe: "1W",
+      scope: "Universum vorbereiten",
+      count: missingWeekly.length,
+      symbols: missingWeekly.slice(0, 4).map((group) => group.symbol),
+      guidance:
+        missingWeekly.length > 0
+          ? "Importiere 1W, wenn der grobe Kontext fehlt. Das ist eher Wochenend-/Vorbereitungsarbeit."
+          : "1W ist fuer die sichtbaren Symbole vorhanden. Pruefe als Naechstes 1D oder 4H.",
+      className: "border-sky-300/20 bg-sky-300/10",
+    },
+    {
+      title: "Tagesreview",
+      timeframe: "1D",
+      scope: "Aktive Kandidaten aktualisieren",
+      count: missingDaily.length,
+      symbols: missingDaily.slice(0, 4).map((group) => group.symbol),
+      guidance:
+        missingDaily.length > 0
+          ? "Importiere 1D fuer aktive Kandidaten nach Schluss oder vor der naechsten Review-Session."
+          : "1D ist fuer die sichtbaren Symbole vorhanden. Nutze 4H nur fuer eine kleine Trigger-Liste.",
+      className: "border-emerald-300/20 bg-emerald-300/10",
+    },
+    {
+      title: "Trigger-Fokus",
+      timeframe: "4H",
+      scope: "Nur kleine Trigger-Liste",
+      count: triggerCandidates.length || missingFourHour.length,
+      symbols: (triggerCandidates.length > 0 ? triggerCandidates : missingFourHour).slice(0, 4).map((group) => group.symbol),
+      guidance:
+        triggerCandidates.length > 0
+          ? "Importiere 4H gezielt fuer diese Symbole. Nicht das gesamte Universum intraday aktualisieren."
+          : "4H ist nur sinnvoll fuer Symbole, die nach 1W/1D-Kontext wirklich nah an der Review sind.",
+      className: "border-amber-300/20 bg-amber-300/10",
+    },
+  ];
 }
 
 function BatchAnalysisPanel({

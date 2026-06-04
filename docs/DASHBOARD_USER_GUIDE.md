@@ -244,9 +244,11 @@ Bulk workflow:
 5. Submit the import manually.
 6. Review Import Readiness by symbol as a planning view across saved usable imports
    and the current mapping preview.
-7. Click `Vollstaendige Symbole analysieren` only when you intentionally want to
+7. Use the CSV-Arbeitsplan to separate weekly universe updates, daily active-review
+   updates, and targeted `4H` trigger-list updates.
+8. Click `Vollstaendige Symbole analysieren` only when you intentionally want to
    batch-analyze complete symbols.
-8. Read skipped-symbol reasons and Ampel results before technical metrics.
+9. Read skipped-symbol reasons and Ampel results before technical metrics.
 
 Filename rules:
 
