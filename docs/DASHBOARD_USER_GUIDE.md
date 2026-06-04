@@ -236,23 +236,71 @@ fallback; it is not a live data feed and does not place orders.
 
 Bulk workflow:
 
-1. Select the intended Watchlist symbol and Timeframe.
+1. Select the default Watchlist symbol and Timeframe for context.
 2. Choose one or more TradingView-compatible CSV files.
-3. Review the filename preview for detected symbol, exchange, and timeframe.
-4. Submit the import manually.
-5. Review Import Readiness by symbol as a planning view across saved usable imports
-   and the current filename preview.
-6. Click `Vollstaendige Symbole analysieren` only when you intentionally want to
+3. Review the CSV mapping table for detected symbol, exchange, and timeframe.
+4. Correct every row that is ambiguous or mapped to the wrong Watchlist symbol or
+   Timeframe.
+5. Submit the import manually.
+6. Review Import Readiness by symbol as a planning view across saved usable imports
+   and the current mapping preview.
+7. Click `Vollstaendige Symbole analysieren` only when you intentionally want to
    batch-analyze complete symbols.
-7. Read skipped-symbol reasons and Ampel results before technical metrics.
+8. Read skipped-symbol reasons and Ampel results before technical metrics.
 
 Filename rules:
 
 - Examples: `BATS_AAPL_1D.csv`, `BATS_AAPL_240.csv`, `GETTEX_ABEA, 1W.csv`,
   `AAPL_1D.csv`.
 - `1W` maps to weekly, `1D` maps to daily, and `240` or `4H` maps to four-hour.
-- The preview helps catch mistakes, but import still follows the manually selected
-  symbol and timeframe for that submission.
+- The mapping table starts from detected filenames, but the operator must confirm or
+  correct each target Watchlist symbol and Timeframe before import.
+
+### 12-File CSV Batch Walkthrough
+
+Use this walkthrough for a complete four-symbol review batch. The filenames are
+public examples only; do not use private broker/account exports.
+
+Example file set:
+
+| Symbol | Weekly | Daily | 4H |
+| --- | --- | --- | --- |
+| `AAPL` | `BATS_AAPL_1W.csv` | `BATS_AAPL_1D.csv` | `BATS_AAPL_240.csv` |
+| `MSFT` | `BATS_MSFT_1W.csv` | `BATS_MSFT_1D.csv` | `BATS_MSFT_240.csv` |
+| `NVDA` | `BATS_NVDA_1W.csv` | `BATS_NVDA_1D.csv` | `BATS_NVDA_240.csv` |
+| `GOOG` | `BATS_GOOG_1W.csv` | `BATS_GOOG_1D.csv` | `BATS_GOOG_240.csv` |
+
+Step-by-step:
+
+1. Confirm all four symbols already exist in the Watchlist.
+2. Select all 12 CSV files in one file picker action.
+3. In `CSV-Zuordnung vor Import`, verify each row shows the intended target symbol.
+4. Confirm `1W`, `1D`, and `240 = 4H` are mapped correctly.
+5. Correct any row that says `Symbol waehlen`, `Waehlen`, `unklar`, or the wrong
+   target symbol/timeframe.
+6. Keep the import blocked until every row says `Bereit`.
+7. Click `CSV-Dateien importieren` once.
+8. Review per-file results; one failed file does not prove the other files failed or
+   succeeded incorrectly.
+9. Review Import Readiness by symbol. A symbol is complete only when saved usable
+   imports cover `1W`, `1D`, and `4H`.
+10. Click `Vollstaendige Symbole analysieren` only after the intended complete symbols
+    are visible.
+11. Use the batch summary and filters to review `Paper-Kandidat`, `Beobachten`,
+    `Kein Trade`, `Datenproblem`, skipped, failed, and waiting states.
+12. Treat skipped reasons as valid stop points, not annoyances to bypass.
+
+Common error cases:
+
+- `240` is left unmapped: select `4H` manually.
+- A file name contains an exchange or punctuation variant the app cannot parse:
+  choose the Watchlist symbol and Timeframe manually.
+- A symbol is missing from Watchlist: add the symbol intentionally first, then return
+  to import. Do not map it to a different symbol.
+- Import Readiness still shows missing timeframes after upload: confirm the saved
+  per-file import result, not only the filename preview.
+- Analyze-All skips a symbol: read the missing-timeframe reason and fix data before
+  expecting analysis.
 
 Error interpretation:
 
