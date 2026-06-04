@@ -35,13 +35,22 @@ type ImportPageError = {
   guidance: string[];
 };
 
+type BulkImportItem = {
+  fileName: string;
+  status: "success" | "failed";
+  result: CsvImportResult | null;
+  error: ImportPageError | null;
+};
+
 export default function ImportPage() {
   const authStatus = useProtectedRoute();
   const [items, setItems] = useState<WatchlistItem[]>([]);
   const [watchlistItemId, setWatchlistItemId] = useState("");
   const [timeframe, setTimeframe] = useState<Timeframe>("1D");
   const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [result, setResult] = useState<CsvImportResult | null>(null);
+  const [bulkResults, setBulkResults] = useState<BulkImportItem[]>([]);
   const [syncResult, setSyncResult] = useState<MarketDataSyncResult | null>(null);
   const [history, setHistory] = useState<ImportHistoryItem[]>([]);
   const [analysisResult, setAnalysisResult] = useState<MarketDataAnalysisResult | null>(null);
@@ -88,29 +97,51 @@ export default function ImportPage() {
     event.preventDefault();
     setError(null);
     setResult(null);
+    setBulkResults([]);
     setSyncResult(null);
     setAnalysisResult(null);
 
-    if (!watchlistItemId || !file) {
-      setError(toSimpleError("Waehle ein Symbol und eine CSV-Datei aus."));
+    const selectedFiles = files.length > 0 ? files : file ? [file] : [];
+    if (!watchlistItemId || selectedFiles.length === 0) {
+      setError(toSimpleError("Waehle ein Symbol und mindestens eine CSV-Datei aus."));
       return;
     }
 
-    const formData = new FormData();
-    formData.append("watchlist_item_id", watchlistItemId);
-    formData.append("timeframe", timeframe);
-    formData.append("file", file);
-
     setIsImporting(true);
+    const importedItems: BulkImportItem[] = [];
     try {
-      const imported = await importCsv(formData);
-      setResult(imported);
-      setHistory(await fetchImportHistory());
-    } catch (importError) {
-      if (redirectToLoginOnAuthError(importError)) {
-        return;
+      for (const selectedFile of selectedFiles) {
+        const formData = new FormData();
+        formData.append("watchlist_item_id", watchlistItemId);
+        formData.append("timeframe", timeframe);
+        formData.append("file", selectedFile);
+
+        try {
+          const imported = await importCsv(formData);
+          importedItems.push({
+            fileName: selectedFile.name,
+            status: "success",
+            result: imported,
+            error: null,
+          });
+          setResult(imported);
+        } catch (importError) {
+          if (redirectToLoginOnAuthError(importError)) {
+            return;
+          }
+          importedItems.push({
+            fileName: selectedFile.name,
+            status: "failed",
+            result: null,
+            error: toImportError(importError),
+          });
+        }
+        setBulkResults([...importedItems]);
       }
-      setError(toImportError(importError));
+      setHistory(await fetchImportHistory());
+      if (importedItems.every((item) => item.status === "failed")) {
+        setError(toSimpleError("Keine CSV-Datei konnte importiert werden. Pruefe die Fehlerliste."));
+      }
     } finally {
       setIsImporting(false);
     }
@@ -243,11 +274,25 @@ export default function ImportPage() {
                 <input
                   required
                   type="file"
+                  multiple
                   accept=".csv,text/csv"
-                  onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+                  onChange={(event) => {
+                    const selectedFiles = Array.from(event.target.files ?? []);
+                    setFiles(selectedFiles);
+                    setFile(selectedFiles[0] ?? null);
+                  }}
                   className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-400 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-slate-950 focus:border-emerald-300"
                 />
               </label>
+
+              {files.length > 0 ? (
+                <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-sm text-slate-300">
+                  <p className="font-medium text-slate-100">{files.length} Datei(en) ausgewaehlt</p>
+                  <p className="mt-1 text-slate-400">
+                    In diesem Schritt werden alle Dateien mit dem aktuell gewaehlten Symbol und Timeframe importiert.
+                  </p>
+                </div>
+              ) : null}
 
               {selectedItem ? (
                 <div className="rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-sm text-slate-300">
@@ -269,7 +314,7 @@ export default function ImportPage() {
                 type="submit"
                 className="rounded-xl bg-emerald-400 px-5 py-3 font-semibold text-slate-950 disabled:opacity-60"
               >
-                {isImporting ? "Importiere..." : "CSV importieren"}
+                {isImporting ? "Importiere..." : files.length > 1 ? "CSV-Dateien importieren" : "CSV importieren"}
               </button>
             </div>
           </form>
@@ -285,6 +330,8 @@ export default function ImportPage() {
             <div className="mt-6 overflow-hidden rounded-2xl border border-white/10">
               {isLoading ? (
                 <p className="p-5 text-sm text-slate-400">Importdaten werden geladen...</p>
+              ) : bulkResults.length > 1 ? (
+                <BulkImportResultList items={bulkResults} symbol={selectedItem?.symbol ?? "Symbol"} />
               ) : result ? (
                 <ImportResultCard
                   analysisResult={analysisResult}
@@ -495,6 +542,64 @@ function toImportResult(item: ImportHistoryItem): CsvImportResult {
     last_synced_at: item.last_synced_at,
     errors: [],
   };
+}
+
+function BulkImportResultList({ items, symbol }: { items: BulkImportItem[]; symbol: string }) {
+  const successCount = items.filter((item) => item.status === "success").length;
+  const failedCount = items.length - successCount;
+
+  return (
+    <article className="grid gap-4 p-5">
+      <div>
+        <p className="text-sm font-medium text-emerald-100">Bulk-Import abgeschlossen</p>
+        <h3 className="mt-1 text-lg font-semibold">
+          {successCount} erfolgreich, {failedCount} fehlgeschlagen
+        </h3>
+        <p className="mt-2 text-sm text-slate-400">
+          Ziel-Symbol: {symbol}. Fehler in einzelnen Dateien blockieren die anderen Importe nicht.
+        </p>
+      </div>
+
+      <div className="grid gap-3">
+        {items.map((item) => (
+          <div
+            key={item.fileName}
+            className={`rounded-2xl border p-4 ${
+              item.status === "success"
+                ? "border-emerald-300/30 bg-emerald-300/10"
+                : "border-red-300/30 bg-red-300/10"
+            }`}
+          >
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <p className="break-words text-sm font-semibold text-slate-100">{item.fileName}</p>
+              <span className="rounded-full border border-current/20 px-3 py-1 text-xs text-slate-100">
+                {item.status === "success" ? "Importiert" : "Fehler"}
+              </span>
+            </div>
+            {item.result ? (
+              <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                <Metric label="Timeframe" value={item.result.timeframe} />
+                <Metric label="Kerzen" value={item.result.candle_count.toString()} />
+                <Metric label="Freshness" value={formatLabel(item.result.freshness_status)} />
+              </div>
+            ) : null}
+            {item.error ? (
+              <div className="mt-3 text-sm text-red-100">
+                <p className="font-medium">{item.error.summary}</p>
+                <ul className="mt-2 space-y-1">
+                  {item.error.details.slice(0, 3).map((detail, index) => (
+                    <li key={`${item.fileName}-${index}`}>
+                      {detail.field ?? "CSV"}: {detail.message}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    </article>
+  );
 }
 
 function ImportResultCard({
