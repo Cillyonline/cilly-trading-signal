@@ -23,6 +23,7 @@ import type {
   MarketDataSyncStatus,
   MarketDataAnalysisResult,
   MarketDataSyncResult,
+  ProviderTimeframeCapability,
   Timeframe,
 } from "@/types/imports";
 import type { WatchlistItem } from "@/types/watchlist";
@@ -126,6 +127,7 @@ export default function ImportPage() {
     [history, detectedFiles],
   );
   const batchAnalysisPlan = useMemo(() => buildBatchAnalysisPlan(history), [history]);
+  const providerCapabilityHints = useMemo(() => buildProviderCapabilityHints(syncResult), [syncResult]);
 
   if (authStatus !== "authenticated") {
     return <ProtectedRouteLoading />;
@@ -286,7 +288,7 @@ export default function ImportPage() {
     setBatchAnalysisResults([]);
 
     if (!watchlistItemId) {
-      setError(toSimpleError("Waehle ein Symbol fuer den Provider-Sync aus."));
+      setError(toSimpleError("Waehle ein Symbol fuer die Datenaktualisierung aus."));
       return;
     }
 
@@ -299,7 +301,7 @@ export default function ImportPage() {
       if (redirectToLoginOnAuthError(syncError)) {
         return;
       }
-      setError(toSimpleError(syncError, "Provider-Sync konnte nicht gestartet werden."));
+      setError(toSimpleError(syncError, "Datenaktualisierung konnte nicht gestartet werden."));
     } finally {
       setIsSyncing(false);
     }
@@ -459,21 +461,21 @@ export default function ImportPage() {
 
         <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
           <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
-            <h2 className="text-xl font-semibold">Provider manuell synchronisieren</h2>
+            <h2 className="text-xl font-semibold">Daten aktualisieren</h2>
             <p className="mt-2 text-sm text-slate-400">
-              Fordert einen einmaligen, serverseitig geschuetzten Provider-Sync fuer das ausgewaehlte
-              Symbol und den Timeframe an. Das ist kein Live-Preis, kein Signal und keine
-              Trade-Anweisung.
+              Fordert einmalig gespeicherte Provider-Marktdaten fuer das ausgewaehlte Symbol an.
+              Das ist manuell, kein Live-Preis, kein Signal und keine Trade-Anweisung.
             </p>
             <div className="mt-5 grid gap-4 rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-sm text-slate-300">
               <div className="grid gap-3 sm:grid-cols-2">
                 <Metric label="Symbol" value={selectedItem?.symbol ?? "-"} />
                 <Metric label="Timeframe" value={timeframe} />
               </div>
+              <ProviderCapabilityHintPanel hints={providerCapabilityHints} selectedTimeframe={timeframe} />
               <p className="rounded-2xl border border-yellow-300/20 bg-yellow-300/10 p-3 text-yellow-50">
-                Wenn Provider-Sync im Backend deaktiviert oder nicht konfiguriert ist, wird der
-                Request sicher als skipped oder failed markiert. Es wird keine Analyse und kein
-                Trade automatisch erstellt.
+                Wenn der Provider deaktiviert, nicht konfiguriert oder fuer den Timeframe ungeeignet
+                ist, wird die Anfrage sicher als skipped oder failed markiert. Es wird keine Analyse,
+                kein Alert und kein Trade automatisch erstellt.
               </p>
               <button
                 disabled={isSyncing || isLoading || items.length === 0}
@@ -481,16 +483,16 @@ export default function ImportPage() {
                 type="button"
                 className="rounded-xl border border-emerald-300/40 px-5 py-3 font-semibold text-emerald-200 hover:bg-emerald-300/10 disabled:opacity-60"
               >
-                {isSyncing ? "Synchronisiere..." : "Provider-Sync anfragen"}
+                {isSyncing ? "Aktualisiere Daten..." : "Daten aktualisieren"}
               </button>
             </div>
           </section>
 
           <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
-            <h2 className="text-xl font-semibold">Provider-Sync Ergebnis</h2>
+            <h2 className="text-xl font-semibold">Aktualisierungs-Ergebnis</h2>
             <p className="mt-2 text-sm text-slate-400">
-              Pruefe Status, Freshness und Provider-Kontext, bevor du Daten fuer Analyse-Workflows
-              nutzt.
+              Pruefe Status, Freshness, Provider-Kontext und Timeframe-Capability, bevor du Daten
+              fuer Analyse-Workflows nutzt.
             </p>
             <div className="mt-6 overflow-hidden rounded-2xl border border-white/10">
               {syncResult ? <ProviderSyncResultCard result={syncResult} /> : <ProviderSyncEmptyState />}
@@ -1208,6 +1210,14 @@ function ProviderSyncResultCard({ result }: { result: MarketDataSyncResult }) {
 
       <MarketDataFreshnessNotice freshnessStatus={result.freshness_status} syncStatus={result.sync_status} />
 
+      <ProviderCapabilityHintPanel hints={result.provider_capabilities} selectedTimeframe={result.timeframe} />
+
+      {result.capability_note ? (
+        <p className="rounded-2xl border border-sky-300/20 bg-sky-300/10 p-3 text-sm text-sky-100">
+          {result.capability_note}
+        </p>
+      ) : null}
+
       {result.sync_error_message ? (
         <p className="rounded-2xl border border-yellow-300/30 bg-yellow-300/10 p-3 text-sm text-yellow-100 break-words">
           {result.sync_error_message}
@@ -1220,25 +1230,106 @@ function ProviderSyncResultCard({ result }: { result: MarketDataSyncResult }) {
 function ProviderSyncEmptyState() {
   return (
     <div className="p-8 text-center">
-      <p className="text-lg font-semibold text-slate-200">Noch kein Provider-Sync angefragt.</p>
+      <p className="text-lg font-semibold text-slate-200">Noch keine Datenaktualisierung angefragt.</p>
       <p className="mx-auto mt-2 max-w-xl text-sm text-slate-400">
-        Starte den Sync manuell. Das Ergebnis erscheint hier und in der Import-Historie.
+        Starte die Aktualisierung manuell. Das Ergebnis erscheint hier und in der Import-Historie.
       </p>
     </div>
   );
+}
+
+function ProviderCapabilityHintPanel({
+  hints,
+  selectedTimeframe,
+}: {
+  hints: ProviderTimeframeCapability[];
+  selectedTimeframe: Timeframe;
+}) {
+  const selectedHint = hints.find((hint) => hint.timeframe === selectedTimeframe);
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-3 text-sm text-slate-300">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="font-medium text-slate-100">Provider-Capability</p>
+          <p className="mt-1 text-slate-400">
+            Aktueller Provider-Pfad ist gespeicherte Marktdaten-Aktualisierung, nicht Live- oder
+            Intraday-Signalversorgung.
+          </p>
+        </div>
+        {selectedHint ? (
+          <span className={`rounded-full border px-3 py-1 text-xs ${capabilityBadgeClass(selectedHint.supported)}`}>
+            {selectedTimeframe}: {selectedHint.supported ? "unterstuetzt" : "CSV-Fallback"}
+          </span>
+        ) : null}
+      </div>
+      <div className="mt-3 grid gap-2 sm:grid-cols-3">
+        {hints.map((hint) => (
+          <div
+            key={hint.timeframe}
+            className={`rounded-xl border p-3 ${
+              hint.timeframe === selectedTimeframe ? "border-emerald-300/30 bg-emerald-300/5" : "border-white/10"
+            }`}
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-semibold text-slate-100">{hint.timeframe}</span>
+              <span className={`rounded-full border px-2 py-0.5 text-xs ${capabilityBadgeClass(hint.supported)}`}>
+                {hint.supported ? "Provider" : "CSV"}
+              </span>
+            </div>
+            <p className="mt-2 text-xs text-slate-400">{hint.reason}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function buildProviderCapabilityHints(result: MarketDataSyncResult | null) {
+  if (result?.provider_capabilities.length) {
+    return result.provider_capabilities;
+  }
+
+  return defaultProviderCapabilities();
+}
+
+function defaultProviderCapabilities(): ProviderTimeframeCapability[] {
+  return [
+    {
+      timeframe: "1W",
+      supported: false,
+      reason: "Weekly Provider-Aktualisierung ist im ersten Pfad nicht aktiv; nutze TradingView CSV.",
+    },
+    {
+      timeframe: "1D",
+      supported: true,
+      reason: "Guarded Daily/EOD-Aktualisierung ist fuer konfigurierte Symbole vorgesehen.",
+    },
+    {
+      timeframe: "4H",
+      supported: false,
+      reason: "4H/Intraday-Provider-Aktualisierung ist nicht aktiv; nutze TradingView CSV.",
+    },
+  ];
+}
+
+function capabilityBadgeClass(supported: boolean) {
+  return supported
+    ? "border-emerald-300/30 bg-emerald-300/10 text-emerald-100"
+    : "border-yellow-300/30 bg-yellow-300/10 text-yellow-100";
 }
 
 function providerSyncState(result: MarketDataSyncResult) {
   if (result.sync_status === "success") {
     return result.freshness_status === "fresh"
       ? {
-          title: "Sync gespeichert",
+          title: "Datenaktualisierung gespeichert",
           message:
             "Provider-Daten wurden gespeichert und als fresh markiert. Das ist weiterhin kein Live-Preis und startet keine Analyse automatisch.",
           className: "border-emerald-300/30 bg-emerald-300/10 text-emerald-100",
         }
       : {
-          title: "Sync gespeichert, aber Freshness pruefen",
+          title: "Datenaktualisierung gespeichert, aber Freshness pruefen",
           message:
             "Provider-Daten wurden gespeichert, sind aber nicht fresh. Nutze sie nur als Kontext und pruefe den Datenstand vor einer Analyse.",
           className: "border-yellow-300/30 bg-yellow-300/10 text-yellow-100",
@@ -1247,28 +1338,30 @@ function providerSyncState(result: MarketDataSyncResult) {
 
   if (result.sync_status === "skipped") {
     return {
-      title: "Provider-Sync uebersprungen",
+      title: "Datenaktualisierung uebersprungen",
       message:
         result.sync_error_code === "sync_disabled"
-          ? "Provider-Sync ist im Backend deaktiviert. Das ist der sichere Default und es wurden keine Provider-Daten abgerufen."
-          : "Der Sync wurde sicher uebersprungen. Pruefe die Backend-Konfiguration, falls du Provider-Daten erwartest.",
+          ? "Provider-Aktualisierung ist im Backend deaktiviert. Das ist der sichere Default und es wurden keine Provider-Daten abgerufen."
+          : "Die Aktualisierung wurde sicher uebersprungen. Pruefe die Backend-Konfiguration, falls du Provider-Daten erwartest.",
       className: "border-slate-500/30 bg-slate-800/70 text-slate-200",
     };
   }
 
   if (result.sync_status === "partial") {
     return {
-      title: "Provider-Sync teilweise nutzbar",
+      title: "Datenaktualisierung teilweise nutzbar",
       message:
-        "Der Sync hat nur einen Teilzustand geliefert. Fehlende Kerzen oder Timeframes koennen Analyse-Ergebnisse konservativ blockieren.",
+        "Die Aktualisierung hat nur einen Teilzustand geliefert. Fehlende Kerzen oder Timeframes koennen Analyse-Ergebnisse konservativ blockieren.",
       className: "border-yellow-300/30 bg-yellow-300/10 text-yellow-100",
     };
   }
 
   return {
-    title: "Provider-Sync fehlgeschlagen",
+    title: "Datenaktualisierung fehlgeschlagen",
     message:
-      "Der Sync wurde nicht als nutzbarer Datenstand gespeichert. Pruefe den Fehler-Code und behandle den Datenstand konservativ.",
+      result.sync_error_code === "unsupported_timeframe"
+        ? "Dieser Timeframe wird vom aktuellen Provider-Pfad nicht unterstuetzt. Nutze TradingView CSV als Fallback und behandle den Datenstand konservativ."
+        : "Die Aktualisierung wurde nicht als nutzbarer Datenstand gespeichert. Pruefe den Fehler-Code und behandle den Datenstand konservativ.",
     className: "border-red-300/30 bg-red-300/10 text-red-100",
   };
 }

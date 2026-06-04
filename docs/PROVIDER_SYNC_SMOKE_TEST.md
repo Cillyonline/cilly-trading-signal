@@ -9,7 +9,8 @@ profitability claim, or approval for automatic execution.
 
 ## Safety Scope
 
-- Provider sync must be triggered manually through the app UI or authenticated API.
+- Provider sync must be triggered manually through the app UI action labeled
+  `Daten aktualisieren` or through the authenticated API.
 - Provider sync must not create signals, trades, alerts, orders, or broker actions.
 - Provider sync must not run on a scheduler or background automation in this smoke.
 - API keys, provider responses, request URLs, logs, screenshots, watchlist symbols,
@@ -71,8 +72,8 @@ Manual steps:
 1. Start the stack with provider sync disabled.
 2. Open the Import page.
 3. Select the sample Watchlist item and a timeframe.
-4. Click the manual provider sync action.
-5. Review the Provider Sync result panel and Import history.
+4. Click the manual `Daten aktualisieren` action.
+5. Review the Aktualisierungs-Ergebnis panel, capability hints, and Import history.
 
 Optional API shape for local sample-only checks after authenticating through safe
 local tooling. Do not paste cookies or session headers into evidence:
@@ -115,8 +116,8 @@ Manual steps:
 1. Restart the API after setting the local or staging environment variables.
 2. Confirm API health without printing environment values.
 3. Open the Import page and select a sample Watchlist item.
-4. Request manual provider sync for `1D`.
-5. Review the Provider Sync result panel and Import history.
+4. Request manual data update for `1D` with `Daten aktualisieren`.
+5. Review the Aktualisierungs-Ergebnis panel, capability hints, and Import history.
 6. Optionally verify the resulting provider-backed series via the authenticated UI or
    sanitized API output.
 
@@ -126,6 +127,8 @@ Expected success result:
 - `source` is `provider`.
 - `freshness_status` is derived from the stored latest candle timestamp.
 - Provider metadata is populated with sanitized provider name/symbol/timeframe.
+- Provider capability hints show `1D` as supported and unsupported timeframes as
+  TradingView CSV fallback.
 - Latest candle timestamp and Import history are visible.
 - No automatic analysis, signal, trade, order, broker call, or Telegram alert is
   created.

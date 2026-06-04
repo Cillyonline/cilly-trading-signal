@@ -60,6 +60,12 @@ export type MarketDataSyncRequest = {
   timeframe: Timeframe;
 };
 
+export type ProviderTimeframeCapability = {
+  timeframe: Timeframe;
+  supported: boolean;
+  reason: string;
+};
+
 export type MarketDataSyncResult = {
   watchlist_item_id: number;
   series_id: number;
@@ -75,6 +81,8 @@ export type MarketDataSyncResult = {
   end_time: string | null;
   sync_error_code: string | null;
   sync_error_message: string | null;
+  capability_note: string;
+  provider_capabilities: ProviderTimeframeCapability[];
 };
 
 export type SignalAnalysisResult = {
