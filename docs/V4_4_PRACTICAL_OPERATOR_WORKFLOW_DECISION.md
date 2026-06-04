@@ -68,6 +68,10 @@ Planned issues:
 - #628: add an active review shortlist.
 - #629: improve Trigger Radar operator workflow.
 
+Primary operator playbook:
+
+- `docs/DAILY_WEEKLY_OPERATOR_PLAYBOOK.md`
+
 Recommended order:
 
 1. Decision record.

@@ -33,6 +33,11 @@ sell, place an order, or connect to a broker.
 
 ## Recommended Operator Flow
 
+For the v4.4 CSV-first daily and weekly routine, use
+[Daily And Weekly Operator Playbook](DAILY_WEEKLY_OPERATOR_PLAYBOOK.md) before the
+page-by-page checklist below. The playbook defines the universe, active review
+shortlist, trigger shortlist, and recommended `1W`/`1D`/`4H` update cadence.
+
 Use this order for a clean sample-only review session:
 
 1. Log in.
