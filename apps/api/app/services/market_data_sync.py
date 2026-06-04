@@ -37,6 +37,13 @@ class MarketDataSyncPlan:
 
 
 @dataclass(frozen=True)
+class ProviderTimeframeCapability:
+    timeframe: Timeframe
+    supported: bool
+    reason: str
+
+
+@dataclass(frozen=True)
 class MarketDataSyncResult:
     sync_status: MarketDataSyncStatus
     freshness_status: MarketDataFreshnessStatus
@@ -90,11 +97,12 @@ class AlphaVantageDailyProvider:
         self.transport = transport or UrllibProviderTransport()
 
     def sync(self, plan: MarketDataSyncPlan) -> MarketDataSyncResult:
-        if plan.timeframe != Timeframe.ONE_DAY:
+        unsupported_reason = unsupported_timeframe_reason(plan)
+        if unsupported_reason is not None:
             return provider_failure(
                 plan,
                 "unsupported_timeframe",
-                "Provider adapter currently supports daily data only.",
+                unsupported_reason,
             )
 
         try:
@@ -215,6 +223,53 @@ def build_market_data_sync_plan(
     )
 
 
+def provider_timeframe_capabilities(
+    provider_name: str | None,
+) -> tuple[ProviderTimeframeCapability, ...]:
+    normalized = provider_name.strip().lower() if provider_name else None
+    if normalized == "alpha_vantage":
+        return (
+            ProviderTimeframeCapability(
+                timeframe=Timeframe.ONE_WEEK,
+                supported=False,
+                reason=(
+                    "Alpha Vantage first path does not support weekly sync here; "
+                    "use CSV fallback."
+                ),
+            ),
+            ProviderTimeframeCapability(
+                timeframe=Timeframe.ONE_DAY,
+                supported=True,
+                reason="Guarded Daily/EOD sync path is supported for configured symbols.",
+            ),
+            ProviderTimeframeCapability(
+                timeframe=Timeframe.FOUR_HOURS,
+                supported=False,
+                reason=(
+                    "4H/intraday provider sync is not selected; "
+                    "use TradingView CSV fallback."
+                ),
+            ),
+        )
+
+    return tuple(
+        ProviderTimeframeCapability(
+            timeframe=timeframe,
+            supported=False,
+            reason="No configured provider capability for this timeframe.",
+        )
+        for timeframe in (Timeframe.ONE_WEEK, Timeframe.ONE_DAY, Timeframe.FOUR_HOURS)
+    )
+
+
+def unsupported_timeframe_reason(plan: MarketDataSyncPlan) -> str | None:
+    capabilities = provider_timeframe_capabilities(plan.provider_name)
+    for capability in capabilities:
+        if capability.timeframe == plan.timeframe:
+            return None if capability.supported else capability.reason
+    return "Provider capability for this timeframe is unknown."
+
+
 def sync_market_data_series(
     series: MarketDataSeries,
     plan: MarketDataSyncPlan,
@@ -235,6 +290,12 @@ def sync_market_data_series(
             error_code="sync_disabled",
             error_message="Market data provider sync is disabled.",
         )
+        apply_market_data_sync_result(series, result, completed_at)
+        return result
+
+    unsupported_reason = unsupported_timeframe_reason(plan)
+    if unsupported_reason is not None:
+        result = provider_failure(plan, "unsupported_timeframe", unsupported_reason)
         apply_market_data_sync_result(series, result, completed_at)
         return result
 
@@ -264,6 +325,12 @@ def sync_and_persist_market_data_series(
             error_code="sync_disabled",
             error_message="Market data provider sync is disabled.",
         )
+        apply_market_data_sync_result(series, result, completed_at)
+        return result
+
+    unsupported_reason = unsupported_timeframe_reason(plan)
+    if unsupported_reason is not None:
+        result = provider_failure(plan, "unsupported_timeframe", unsupported_reason)
         apply_market_data_sync_result(series, result, completed_at)
         return result
 

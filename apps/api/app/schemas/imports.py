@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.models.enums import (
     MarketDataFreshnessStatus,
@@ -55,6 +55,38 @@ class MarketDataSyncRequest(BaseModel):
     timeframe: Timeframe
 
 
+class ProviderTimeframeCapabilityRead(BaseModel):
+    timeframe: Timeframe
+    supported: bool
+    reason: str
+
+
+def default_alpha_vantage_capabilities() -> list[ProviderTimeframeCapabilityRead]:
+    return [
+        ProviderTimeframeCapabilityRead(
+            timeframe=Timeframe.ONE_WEEK,
+            supported=False,
+            reason=(
+                "Alpha Vantage first path does not support weekly sync here; "
+                "use CSV fallback."
+            ),
+        ),
+        ProviderTimeframeCapabilityRead(
+            timeframe=Timeframe.ONE_DAY,
+            supported=True,
+            reason="Guarded Daily/EOD sync path is supported for configured symbols.",
+        ),
+        ProviderTimeframeCapabilityRead(
+            timeframe=Timeframe.FOUR_HOURS,
+            supported=False,
+            reason=(
+                "4H/intraday provider sync is not selected; "
+                "use TradingView CSV fallback."
+            ),
+        ),
+    ]
+
+
 class MarketDataSyncResponse(BaseModel):
     watchlist_item_id: int
     series_id: int
@@ -70,3 +102,9 @@ class MarketDataSyncResponse(BaseModel):
     end_time: datetime | None
     sync_error_code: str | None
     sync_error_message: str | None
+    capability_note: str = (
+        "Provider sync is stored-data only. Unsupported timeframes require CSV fallback."
+    )
+    provider_capabilities: list[ProviderTimeframeCapabilityRead] = Field(
+        default_factory=default_alpha_vantage_capabilities
+    )
