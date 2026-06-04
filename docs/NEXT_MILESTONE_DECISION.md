@@ -4,20 +4,26 @@ Date: 2026-06-04
 
 ## Decision
 
-Recommended next milestone: `v4.3 - Operational Evidence Closure`.
+Recommended next milestone: `v4.4 - Provider Evaluation Decision`.
 
 Rationale: all non-secret v3.8-v4.2 radar, CSV workflow, trigger radar,
-provider-path, verification, roadmap, and private VPS Trigger Radar smoke work is
-complete. The remaining open work requires explicit provider-key approval.
+provider-path, verification, roadmap, private VPS Trigger Radar smoke, and configured
+provider Daily/EOD safe-failure smoke work is complete. The next decision is whether
+provider reliance should expand beyond guarded Daily/EOD smoke.
 
 ## v4.3 - Operational Evidence Closure
 
 Goal: close the remaining operator-run provider evidence gap without expanding
 product scope.
 
+Status: Done.
+
 Primary items:
 
-- #614: Provider Daily/EOD smoke only after explicit provider-key approval.
+- #614: Provider Daily/EOD smoke after explicit provider-key approval is recorded in
+  `docs/reviews/v4-3-provider-daily-eod-smoke.md`. The configured provider path
+  reached Alpha Vantage and failed safely with sanitized `provider_rate_limited`
+  evidence.
 
 Already closed:
 
