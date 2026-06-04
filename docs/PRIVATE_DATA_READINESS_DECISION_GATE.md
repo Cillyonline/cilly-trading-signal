@@ -68,6 +68,7 @@ Private owner/operator trading data may be reconsidered only after all of this i
 - Backup evidence avoids dump contents, restored row contents, database URLs, and secret values.
 - Incident rehearsal covers database restore and secret rotation without performing service-impacting actions unless explicitly approved by the operator. See `docs/OPERATIONAL_INCIDENT_RUNBOOK.md#private-data-incident-rehearsal`.
 - Secret rotation procedure is documented and accepted for provider keys, app secrets, database credentials, and deployment credentials.
+- Provider-key VPS operations are documented in `docs/DEPLOYMENT_RUNBOOK.md#provider-secret-and-vps-operation-checklist` and require explicit owner/operator approval before editing `.env`, restarting services, or recording smoke evidence.
 - Residual risks are listed, including local-only backup risk unless an offsite encrypted target has current restore evidence.
 - The owner/operator explicitly accepts the remaining risk and scope in an issue, PR, or decision record without exposing private data.
 
