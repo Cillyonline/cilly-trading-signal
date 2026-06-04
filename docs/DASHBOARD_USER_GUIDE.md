@@ -345,6 +345,19 @@ The shortlist does not create analysis, alerts, trades, orders, broker actions, 
 buy/sell instructions. It is only a practical worklist before reading the full Radar
 Rangliste.
 
+### Trigger Radar Workflow
+
+Trigger Radar is the daily worklist for symbols near a stored trigger level. It now
+shows the operator sequence directly:
+
+- Update `4H` CSV only for the trigger shortlist.
+- Open `Detail pruefen` and read freshness, risk flags, invalidation, and No-Trade
+  reasons.
+- Make any external decision manually outside the app.
+
+The visible Trigger Radar cards are intentionally capped so the trigger shortlist
+stays small. Additional symbols remain available in the Radar-Rangliste.
+
 ## Cockpit Snapshot
 
 The snapshot shows recent signals, active trades, and review-needed trades.

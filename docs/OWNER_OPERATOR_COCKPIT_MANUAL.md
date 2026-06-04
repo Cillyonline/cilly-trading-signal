@@ -211,6 +211,9 @@ Operator checks:
 - `Trigger geplant`, `Nah dran`, and `Am Trigger` are German review labels, not
   execution labels.
 - `Nah dran` requires manual 4H close/freshness/risk review before any external decision.
+- Trigger Radar's visible cards should stay a small daily worklist. If more symbols
+  exist, use Radar-Rangliste for context instead of expanding intraday CSV work to
+  the full universe.
 - Stale data and missing context are reviewed before acting outside the app.
 - Risk flags and quality blockers are read before considering any manual external action.
 

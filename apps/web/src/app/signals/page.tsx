@@ -253,6 +253,8 @@ function ActiveReviewCard({ item }: { item: ActiveReviewItem }) {
 function TriggerRadarSection({ isLoading, items }: { isLoading: boolean; items: TriggerRadarItem[] }) {
   const atTriggerCount = items.filter((item) => item.state === "at_trigger").length;
   const nearTriggerCount = items.filter((item) => item.state === "near_trigger").length;
+  const farCount = items.filter((item) => item.state === "far_from_trigger").length;
+  const visibleItems = items.slice(0, 6);
 
   return (
     <section className="rounded-3xl border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(20,184,166,0.16),transparent_34%),rgba(255,255,255,0.03)] p-6">
@@ -261,14 +263,30 @@ function TriggerRadarSection({ isLoading, items }: { isLoading: boolean; items: 
           <p className="text-sm font-semibold uppercase tracking-[0.22em] text-emerald-300">Trigger Radar</p>
           <h2 className="mt-2 text-xl font-semibold">Manuelle Trigger-Review priorisieren</h2>
           <p className="mt-2 max-w-3xl text-sm text-slate-400">
-            Zeigt gespeicherte Signale mit Trigger-Level und reviewbarem Status. Kein Live-Preis,
-            keine Order, kein Alert. No-Trade und Datenprobleme werden hier nicht hochgestuft.
+            Tagesarbeitsliste fuer gespeicherte Signale mit Trigger-Level. Nutze sie fuer gezielte
+            `4H` CSV-Updates und Detailpruefung. Kein Live-Preis, keine Order, kein Alert.
           </p>
         </div>
-        <div className="grid grid-cols-2 gap-2 text-sm sm:min-w-56">
+        <div className="grid grid-cols-3 gap-2 text-sm sm:min-w-72">
           <Metric label="Am Trigger" value={atTriggerCount.toString()} compact />
           <Metric label="Nah dran" value={nearTriggerCount.toString()} compact />
+          <Metric label="Weiter weg" value={farCount.toString()} compact />
         </div>
+      </div>
+
+      <div className="mt-5 grid gap-3 md:grid-cols-3">
+        <TriggerWorkflowStep
+          title="1. 4H gezielt aktualisieren"
+          text="Nur Trigger-Shortlist per TradingView CSV aktualisieren, nicht das ganze Universum."
+        />
+        <TriggerWorkflowStep
+          title="2. Detail pruefen"
+          text="Trigger-Level, Freshness, Risk Flags, Invalidation und No-Trade Gruende lesen."
+        />
+        <TriggerWorkflowStep
+          title="3. Extern entscheiden"
+          text="Jede Ausfuehrung bleibt manuell ausserhalb der App. Keine Buy/Sell-Anweisung."
+        />
       </div>
 
       <div className="mt-5 grid gap-3 lg:grid-cols-3">
@@ -282,10 +300,26 @@ function TriggerRadarSection({ isLoading, items }: { isLoading: boolean; items: 
             bleiben bewusst draussen.
           </p>
         ) : (
-          items.slice(0, 6).map((item) => <TriggerRadarCard key={item.signal.id} item={item} />)
+          visibleItems.map((item) => <TriggerRadarCard key={item.signal.id} item={item} />)
         )}
       </div>
+
+      {!isLoading && items.length > visibleItems.length ? (
+        <p className="mt-4 rounded-2xl border border-white/10 bg-slate-950/60 p-3 text-sm text-slate-400">
+          {visibleItems.length} von {items.length} Trigger-Kandidaten sichtbar. Nutze die Radar-Rangliste fuer weitere
+          Symbole, aber halte die aktive Trigger-Liste klein.
+        </p>
+      ) : null}
     </section>
+  );
+}
+
+function TriggerWorkflowStep({ text, title }: { text: string; title: string }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-sm text-slate-300">
+      <p className="font-semibold text-slate-100">{title}</p>
+      <p className="mt-2 text-xs text-slate-400">{text}</p>
+    </div>
   );
 }
 
@@ -774,7 +808,7 @@ function toTriggerRadarItem(signal: Signal): TriggerRadarItem | null {
       signal,
       state: "at_trigger",
       label: "Am Trigger",
-      action: "Gespeicherten Trigger-Kontext manuell pruefen. Keine automatische Order.",
+      action: "Jetzt 4H-Freshness, Detailkarte und Risikoplan manuell pruefen. Keine automatische Order.",
     };
   }
   if (signal.trigger_proximity_state === "near_trigger") {
@@ -782,7 +816,7 @@ function toTriggerRadarItem(signal: Signal): TriggerRadarItem | null {
       signal,
       state: "near_trigger",
       label: "Nah dran",
-      action: "Trigger-Level, 4H-Kontext und Risikoplan manuell gegenpruefen.",
+      action: "Auf der kleinen Trigger-Liste halten und 4H-CSV gezielt aktualisieren.",
     };
   }
   return {
