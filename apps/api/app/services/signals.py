@@ -1,9 +1,11 @@
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
-from app.models.enums import SignalStatus
+from app.models.enums import MarketDataStatus, ScoreClass, SignalStatus
+from app.models.market_data import MarketDataCandle, MarketDataSeries
 from app.models.signal import Signal, SignalReviewEvent
 from app.strategies.contracts import SignalEvaluationResult
 
@@ -30,6 +32,7 @@ STALE_SIGNAL_STATUSES = {
     SignalStatus.ARMED,
     SignalStatus.TRIGGERED,
 }
+NEAR_TRIGGER_DISTANCE_PCT = Decimal("0.01")
 
 
 class InvalidSignalStatusTransitionError(Exception):
@@ -56,6 +59,56 @@ def stale_signal_reason(signal: Signal) -> str | None:
     return (
         "Signal is older than 7 days based on the last saved update. "
         "Refresh with new CSV data before treating it as current."
+    )
+
+
+def signal_trigger_proximity_state(db: Session, signal: Signal) -> str:
+    if (
+        signal.status == SignalStatus.NO_SETUP
+        or signal.score_class == ScoreClass.NO_TRADE
+        or signal.no_trade_reasons
+        or is_signal_stale(signal)
+        or signal.trigger_level is None
+        or signal.timeframe_trigger is None
+    ):
+        return "not_available"
+
+    latest_candle = latest_trigger_candle(db, signal)
+    if latest_candle is None:
+        return "not_available"
+
+    if latest_candle.close >= signal.trigger_level:
+        return "at_trigger"
+    if latest_candle.high >= signal.trigger_level:
+        return "near_trigger"
+    if signal.trigger_level <= 0:
+        return "not_available"
+
+    trigger_distance = (signal.trigger_level - latest_candle.close) / signal.trigger_level
+    if Decimal("0") <= trigger_distance <= NEAR_TRIGGER_DISTANCE_PCT:
+        return "near_trigger"
+    return "far_from_trigger"
+
+
+def latest_trigger_candle(db: Session, signal: Signal) -> MarketDataCandle | None:
+    series = db.scalar(
+        select(MarketDataSeries)
+        .where(MarketDataSeries.watchlist_item_id == signal.watchlist_item_id)
+        .where(MarketDataSeries.timeframe == signal.timeframe_trigger)
+        .where(
+            MarketDataSeries.status.in_(
+                (MarketDataStatus.ANALYZED, MarketDataStatus.VALIDATED)
+            )
+        )
+        .order_by(MarketDataSeries.imported_at.desc(), MarketDataSeries.id.desc())
+    )
+    if series is None:
+        return None
+
+    return db.scalar(
+        select(MarketDataCandle)
+        .where(MarketDataCandle.series_id == series.id)
+        .order_by(MarketDataCandle.timestamp.desc(), MarketDataCandle.id.desc())
     )
 
 

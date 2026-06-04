@@ -1,5 +1,6 @@
 from collections.abc import Iterator
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 
 import pytest
 from fastapi.testclient import TestClient
@@ -11,7 +12,16 @@ from app.db.base import Base
 from app.db.session import get_db
 from app.main import create_app
 from app.models import *  # noqa: F403
-from app.models.enums import AssetClass, SignalStatus, StrategyType, UserRole
+from app.models.enums import (
+    AssetClass,
+    MarketDataSource,
+    MarketDataStatus,
+    SignalStatus,
+    StrategyType,
+    Timeframe,
+    UserRole,
+)
+from app.models.market_data import MarketDataCandle, MarketDataSeries
 from app.models.signal import Signal, SignalReviewEvent
 from app.models.trade import Trade
 from app.models.user import User
@@ -250,3 +260,67 @@ def test_signal_detail_does_not_mark_terminal_old_signal_as_stale(
     body = response.json()
     assert body["is_stale"] is False
     assert body["stale_reason"] is None
+
+
+def test_signal_reads_include_trigger_proximity_from_stored_candle(
+    client: TestClient, db_session: Session
+) -> None:
+    signal = create_signal(db_session, status=SignalStatus.ARMED)
+    signal.trigger_level = Decimal("100")
+    signal.timeframe_trigger = Timeframe.FOUR_HOURS
+    create_trigger_candle(db_session, signal.watchlist_item_id, close="99.50", high="99.75")
+    db_session.commit()
+    login(client)
+
+    list_response = client.get("/api/signals")
+    detail_response = client.get(f"/api/signals/{signal.id}")
+
+    assert list_response.status_code == 200
+    assert list_response.json()[0]["trigger_proximity_state"] == "near_trigger"
+    assert detail_response.status_code == 200
+    assert detail_response.json()["trigger_proximity_state"] == "near_trigger"
+
+
+def test_no_setup_signal_read_keeps_trigger_proximity_not_available(
+    client: TestClient, db_session: Session
+) -> None:
+    signal = create_signal(db_session, status=SignalStatus.NO_SETUP)
+    signal.trigger_level = Decimal("100")
+    signal.timeframe_trigger = Timeframe.FOUR_HOURS
+    signal.no_trade_reasons = ["required_timeframe_data_missing"]
+    create_trigger_candle(db_session, signal.watchlist_item_id, close="101", high="102")
+    db_session.commit()
+    login(client)
+
+    response = client.get(f"/api/signals/{signal.id}")
+
+    assert response.status_code == 200
+    assert response.json()["trigger_proximity_state"] == "not_available"
+
+
+def create_trigger_candle(
+    db: Session,
+    watchlist_item_id: int,
+    close: str,
+    high: str,
+) -> None:
+    series = MarketDataSeries(
+        watchlist_item_id=watchlist_item_id,
+        source=MarketDataSource.TRADINGVIEW_CSV,
+        timeframe=Timeframe.FOUR_HOURS,
+        candle_count=1,
+        status=MarketDataStatus.ANALYZED,
+    )
+    db.add(series)
+    db.flush()
+    db.add(
+        MarketDataCandle(
+            series_id=series.id,
+            timestamp=datetime.now(UTC),
+            open=Decimal(close),
+            high=Decimal(high),
+            low=Decimal("98"),
+            close=Decimal(close),
+            volume=Decimal("1000"),
+        )
+    )

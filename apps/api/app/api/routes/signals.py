@@ -16,6 +16,7 @@ from app.services.signals import (
     update_signal_status,
     STALE_SIGNAL_AFTER_DAYS,
     is_signal_stale,
+    signal_trigger_proximity_state,
     stale_signal_reason,
 )
 
@@ -26,7 +27,7 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 
 @router.get("", response_model=list[SignalRead])
 def list_items(db: DbSession, user: CurrentUser) -> list[SignalRead]:
-    return [to_signal_read(signal) for signal in list_signals(db, user.id)]
+    return [to_signal_read(db, signal) for signal in list_signals(db, user.id)]
 
 
 @router.get("/{signal_id}", response_model=SignalRead)
@@ -37,7 +38,7 @@ def get_item(signal_id: int, db: DbSession, user: CurrentUser) -> SignalRead:
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Signal not found.",
         )
-    return to_signal_read(signal)
+    return to_signal_read(db, signal)
 
 
 @router.patch("/{signal_id}/status", response_model=SignalRead)
@@ -57,7 +58,7 @@ def update_item_status(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Signal not found.",
         )
-    return to_signal_read(signal)
+    return to_signal_read(db, signal)
 
 
 @router.patch("/{signal_id}/review-note", response_model=SignalRead)
@@ -70,10 +71,10 @@ def update_item_review_note(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Signal not found.",
         )
-    return to_signal_read(signal)
+    return to_signal_read(db, signal)
 
 
-def to_signal_read(signal) -> SignalRead:
+def to_signal_read(db: Session, signal) -> SignalRead:
     return SignalRead.model_validate(
         {
             **signal.__dict__,
@@ -83,6 +84,7 @@ def to_signal_read(signal) -> SignalRead:
             "is_stale": is_signal_stale(signal),
             "stale_reason": stale_signal_reason(signal),
             "stale_after_days": STALE_SIGNAL_AFTER_DAYS,
+            "trigger_proximity_state": signal_trigger_proximity_state(db, signal),
             "quality_report": build_analysis_quality_report(signal),
             "review_events": sorted(
                 signal.review_events,
