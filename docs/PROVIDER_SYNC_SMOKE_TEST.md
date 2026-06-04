@@ -40,6 +40,15 @@ without requiring private symbols, screenshots, raw logs, or provider secrets.
 | Failure path | Fake or public sample symbol | Enabled with mocked/local failure or known unsupported mapping | `sync_status=failed` or `partial`, sanitized error code/message only. |
 | Success path | Public provider-recognized sample symbol only | Enabled with operator-owned key outside git | `sync_status=success`, provider-backed stored data visible, no automatic downstream workflow. |
 
+Capability expectations for the current first provider path:
+
+- Alpha Vantage is the guarded Daily/EOD smoke path.
+- `1D` is the only supported provider-sync timeframe in this path.
+- `1W` and `4H` must be explained as unsupported provider-sync timeframes and
+  should point the operator back to TradingView CSV fallback.
+- Unsupported timeframe responses should use sanitized `sync_error_code`, typically
+  `unsupported_timeframe`, without raw provider payloads or secrets.
+
 For local automated/API tests, prefer the mocked provider tests in
 `apps/api/tests/test_imports_api.py` and `apps/api/tests/test_market_data_sync.py`.
 Those tests validate success, skipped, failed, partial, and sanitized-error behavior
@@ -127,6 +136,9 @@ Expected safe failure results:
 - Unsupported timeframe, provider rate limit, invalid provider payload, empty provider
   response, or transport failure produces `failed` or `partial` with sanitized
   `sync_error_code` and `sync_error_message`.
+- For `4H`, the current Alpha Vantage path should fail closed with a clear
+  unsupported-timeframe message and should not call a broker, create an alert, or
+  imply live/intraday provider readiness.
 - Failure evidence must not include raw provider payloads, API keys, request URLs with
   query strings, cookies, or private trading data.
 

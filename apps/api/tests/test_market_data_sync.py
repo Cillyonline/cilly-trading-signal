@@ -24,6 +24,7 @@ from app.services.market_data_sync import (
     evaluate_market_data_freshness,
     persist_provider_sync_result,
     parse_alpha_vantage_daily_response,
+    provider_timeframe_capabilities,
     sync_market_data_series,
 )
 
@@ -78,6 +79,15 @@ def test_build_market_data_sync_plan_normalizes_provider_metadata() -> None:
     assert plan.provider_name == "alpha_vantage"
     assert plan.provider_symbol == "BTCUSDT"
     assert plan.provider_timeframe == "1D"
+
+
+def test_provider_timeframe_capabilities_explain_alpha_vantage_limits() -> None:
+    capabilities = provider_timeframe_capabilities("alpha_vantage")
+
+    by_timeframe = {capability.timeframe: capability for capability in capabilities}
+    assert by_timeframe[Timeframe.ONE_DAY].supported is True
+    assert by_timeframe[Timeframe.FOUR_HOURS].supported is False
+    assert "CSV fallback" in by_timeframe[Timeframe.FOUR_HOURS].reason
 
 
 def test_sync_skips_without_calling_provider_when_disabled() -> None:
@@ -135,6 +145,30 @@ def test_sync_applies_success_result_without_network_dependency() -> None:
     assert series.end_time == data_end_at
     assert series.last_synced_at == now
     assert series.sync_error_code is None
+
+
+def test_sync_rejects_unsupported_timeframe_before_provider_call() -> None:
+    series = make_series(timeframe=Timeframe.FOUR_HOURS)
+    provider = FakeMarketDataProvider(
+        MarketDataSyncResult(
+            sync_status=MarketDataSyncStatus.SUCCESS,
+            freshness_status=MarketDataFreshnessStatus.FRESH,
+        )
+    )
+    plan = build_market_data_sync_plan(
+        symbol="AAPL",
+        timeframe=Timeframe.FOUR_HOURS,
+        provider_sync_enabled=True,
+        provider_name="alpha_vantage",
+    )
+
+    result = sync_market_data_series(series, plan, provider)
+
+    assert provider.requests == []
+    assert result.sync_status == MarketDataSyncStatus.FAILED
+    assert result.error_code == "unsupported_timeframe"
+    assert "4H" in (result.error_message or "")
+    assert series.sync_error_code == "unsupported_timeframe"
 
 
 def test_sync_applies_failed_result_safely() -> None:
