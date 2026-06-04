@@ -62,11 +62,16 @@ Revisit paid provider evaluation only if one of these becomes true:
 
 Planned issues:
 
-- #625: record this practical operator workflow decision.
-- #626: add a daily and weekly operator playbook.
-- #627: add trigger-focused Import page guidance.
-- #628: add an active review shortlist.
-- #629: improve Trigger Radar operator workflow.
+- #625: record this practical operator workflow decision. Done.
+- #626: add a daily and weekly operator playbook. Done.
+- #627: add trigger-focused Import page guidance. Done.
+- #628: add an active review shortlist. Done.
+- #629: improve Trigger Radar operator workflow. Done.
+- #635: review v4.4 Practical Operator Workflow. Done.
+
+Review record:
+
+- `docs/reviews/v4-4-practical-operator-workflow-review.md`
 
 Primary operator playbook:
 

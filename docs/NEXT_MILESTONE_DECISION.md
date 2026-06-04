@@ -4,12 +4,12 @@ Date: 2026-06-04
 
 ## Decision
 
-Recommended next milestone: `v4.4 - Practical Operator Workflow`.
+Recommended next milestone: `v4.5 - Operator Workflow Validation`.
 
-Rationale: all non-secret v3.8-v4.2 radar, CSV workflow, trigger radar,
-provider-path, verification, roadmap, private VPS Trigger Radar smoke, and configured
-provider Daily/EOD safe-failure smoke work is complete. The owner/operator selected a
-zero-budget, CSV-first workflow with simple handling as the top priority.
+Rationale: v4.4 Practical Operator Workflow is implemented and reviewed. The next
+highest-value step is operator validation of the new `/import` CSV-Arbeitsplan,
+Active Review shortlist, and Trigger Radar workflow before adding more product
+surface area.
 
 ## v4.3 - Operational Evidence Closure
 
@@ -43,6 +43,9 @@ Done when:
 
 Goal: make daily use practical without paid provider reliance.
 
+Status: Done. Review is recorded in
+`docs/reviews/v4-4-practical-operator-workflow-review.md`.
+
 Decision:
 
 - TradingView CSV remains the operational baseline for `1W`, `1D`, and `4H`.
@@ -63,6 +66,23 @@ Planned issues:
 Decision record:
 
 - `docs/V4_4_PRACTICAL_OPERATOR_WORKFLOW_DECISION.md`
+
+## v4.5 - Operator Workflow Validation
+
+Goal: validate the practical owner/operator workflow in the browser after the v4.4
+changes.
+
+Recommended scope:
+
+- Browser smoke `/import` CSV-Arbeitsplan, Import Readiness, and Analyze-All guidance.
+- Browser smoke `/signals` Active Review shortlist and Trigger Radar worklist.
+- Record sanitized pass/fail evidence only.
+- File focused follow-up issues only for observed workflow blockers.
+
+Default if no explicit deployment approval is given:
+
+- Run local/browser validation only.
+- Do not touch VPS, secrets, `.env`, provider keys, or deployment state.
 
 ## Not Now
 
