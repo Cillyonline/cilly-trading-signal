@@ -57,6 +57,21 @@ type ImportReadinessGroup = {
   complete: boolean;
 };
 
+type BatchAnalysisPlanItem = {
+  symbol: string;
+  seriesId: number | null;
+  missing: Timeframe[];
+  skipReason: string | null;
+};
+
+type BatchAnalysisResultItem = {
+  symbol: string;
+  status: "pending" | "success" | "failed" | "skipped";
+  seriesId: number | null;
+  reason: string | null;
+  result: MarketDataAnalysisResult | null;
+};
+
 export default function ImportPage() {
   const authStatus = useProtectedRoute();
   const [items, setItems] = useState<WatchlistItem[]>([]);
@@ -69,9 +84,11 @@ export default function ImportPage() {
   const [syncResult, setSyncResult] = useState<MarketDataSyncResult | null>(null);
   const [history, setHistory] = useState<ImportHistoryItem[]>([]);
   const [analysisResult, setAnalysisResult] = useState<MarketDataAnalysisResult | null>(null);
+  const [batchAnalysisResults, setBatchAnalysisResults] = useState<BatchAnalysisResultItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isImporting, setIsImporting] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isBatchAnalyzing, setIsBatchAnalyzing] = useState(false);
   const [analyzingSeriesId, setAnalyzingSeriesId] = useState<number | null>(null);
   const [error, setError] = useState<ImportPageError | null>(null);
 
@@ -108,6 +125,7 @@ export default function ImportPage() {
     () => buildImportReadinessGroups(history, detectedFiles),
     [history, detectedFiles],
   );
+  const batchAnalysisPlan = useMemo(() => buildBatchAnalysisPlan(history), [history]);
 
   if (authStatus !== "authenticated") {
     return <ProtectedRouteLoading />;
@@ -120,6 +138,7 @@ export default function ImportPage() {
     setBulkResults([]);
     setSyncResult(null);
     setAnalysisResult(null);
+    setBatchAnalysisResults([]);
 
     const selectedFiles = files.length > 0 ? files : file ? [file] : [];
     if (!watchlistItemId || selectedFiles.length === 0) {
@@ -196,11 +215,75 @@ export default function ImportPage() {
     }
   }
 
+  async function runAnalyzeCompleteSymbols() {
+    setError(null);
+    setResult(null);
+    setAnalysisResult(null);
+    setBatchAnalysisResults([]);
+
+    const plan = buildBatchAnalysisPlan(history);
+    if (plan.length === 0) {
+      setError(toSimpleError("Keine importierten Symbole fuer eine Batch-Analyse gefunden."));
+      return;
+    }
+
+    const initialResults: BatchAnalysisResultItem[] = plan.map((item) => ({
+      symbol: item.symbol,
+      status: item.seriesId ? "pending" : "skipped",
+      seriesId: item.seriesId,
+      reason: item.skipReason,
+      result: null,
+    }));
+    setBatchAnalysisResults(initialResults);
+    setIsBatchAnalyzing(true);
+
+    try {
+      for (const item of plan) {
+        if (!item.seriesId) {
+          continue;
+        }
+
+        setAnalyzingSeriesId(item.seriesId);
+        try {
+          const analyzed = await analyzeImport(item.seriesId);
+          setBatchAnalysisResults((current) =>
+            current.map((resultItem) =>
+              resultItem.symbol === item.symbol
+                ? { ...resultItem, status: "success", reason: null, result: analyzed }
+                : resultItem,
+            ),
+          );
+        } catch (analysisError) {
+          if (redirectToLoginOnAuthError(analysisError)) {
+            return;
+          }
+          setBatchAnalysisResults((current) =>
+            current.map((resultItem) =>
+              resultItem.symbol === item.symbol
+                ? {
+                    ...resultItem,
+                    status: "failed",
+                    reason: toSimpleError(analysisError, "Analyse konnte nicht gestartet werden.").summary,
+                    result: null,
+                  }
+                : resultItem,
+            ),
+          );
+        }
+      }
+      setHistory(await fetchImportHistory());
+    } finally {
+      setAnalyzingSeriesId(null);
+      setIsBatchAnalyzing(false);
+    }
+  }
+
   async function runProviderSync() {
     setError(null);
     setResult(null);
     setSyncResult(null);
     setAnalysisResult(null);
+    setBatchAnalysisResults([]);
 
     if (!watchlistItemId) {
       setError(toSimpleError("Waehle ein Symbol fuer den Provider-Sync aus."));
@@ -413,6 +496,32 @@ export default function ImportPage() {
               {syncResult ? <ProviderSyncResultCard result={syncResult} /> : <ProviderSyncEmptyState />}
             </div>
           </section>
+        </section>
+
+        <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Vollstaendige Symbole analysieren</h2>
+              <p className="mt-2 max-w-3xl text-sm text-slate-400">
+                Startet nur nach explizitem Klick eine Analyse fuer Symbole mit nutzbaren `1W`, `1D`
+                und `4H` Daten. Unvollstaendige Symbole werden uebersprungen und bleiben No-Action.
+              </p>
+            </div>
+            <button
+              disabled={isBatchAnalyzing || isLoading || batchAnalysisPlan.length === 0}
+              onClick={() => void runAnalyzeCompleteSymbols()}
+              type="button"
+              className="rounded-xl bg-emerald-400 px-5 py-3 font-semibold text-slate-950 disabled:opacity-60"
+            >
+              {isBatchAnalyzing ? "Analysiere Symbole..." : "Vollstaendige Symbole analysieren"}
+            </button>
+          </div>
+
+          <BatchAnalysisPanel
+            isAnalyzing={isBatchAnalyzing}
+            plan={batchAnalysisPlan}
+            results={batchAnalysisResults}
+          />
         </section>
 
         <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
@@ -712,6 +821,114 @@ function ImportReadinessPanel({ groups }: { groups: ImportReadinessGroup[] }) {
   );
 }
 
+function BatchAnalysisPanel({
+  isAnalyzing,
+  plan,
+  results,
+}: {
+  isAnalyzing: boolean;
+  plan: BatchAnalysisPlanItem[];
+  results: BatchAnalysisResultItem[];
+}) {
+  if (plan.length === 0) {
+    return (
+      <div className="mt-5 rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-sm text-slate-400">
+        Noch keine importierten Symbole gefunden. Importiere zuerst Marktdaten fuer `1W`, `1D` und `4H`.
+      </div>
+    );
+  }
+
+  const completeCount = plan.filter((item) => item.seriesId).length;
+  const skippedCount = plan.length - completeCount;
+  const visibleItems = results.length > 0 ? results : plan.map(toPlannedBatchAnalysisResult);
+
+  return (
+    <div className="mt-5 grid gap-4">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Metric label="Symbole" value={plan.length.toString()} />
+        <Metric label="Analysebereit" value={completeCount.toString()} />
+        <Metric label="Uebersprungen" value={skippedCount.toString()} />
+      </div>
+
+      <div className="grid gap-3">
+        {visibleItems.map((item) => (
+          <BatchAnalysisResultCard key={item.symbol} isAnalyzing={isAnalyzing} item={item} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function BatchAnalysisResultCard({
+  isAnalyzing,
+  item,
+}: {
+  isAnalyzing: boolean;
+  item: BatchAnalysisResultItem;
+}) {
+  if (item.status === "success" && item.result) {
+    const decision = buildSignalDecision(item.result.signal);
+    return (
+      <article className={`rounded-2xl border p-4 ${signalDecisionToneClass(decision.tone)}`}>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <div className="flex flex-wrap items-center gap-3">
+              <span className={`h-4 w-4 rounded-full ${signalDecisionDotClass(decision.tone)}`} />
+              <h3 className="text-lg font-semibold text-slate-50">{item.symbol}</h3>
+              <span className="rounded-full border border-current/20 px-3 py-1 text-xs">{decision.label}</span>
+            </div>
+            <p className="mt-3 text-xl font-semibold text-slate-50">{decision.headline}</p>
+            <p className="mt-2 text-sm">{decision.action}</p>
+          </div>
+          <span className="rounded-full border border-current/20 px-3 py-1 text-xs">
+            Qualitaet: {decision.quality}
+          </span>
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          <Metric label="Score" value={`${item.result.signal.score} / ${item.result.signal.score_class.replaceAll("_", " ")}`} />
+          <Metric label="Backend Status" value={item.result.signal.status.replaceAll("_", " ")} />
+          <Metric label="R:R" value={item.result.signal.risk_reward ? `${formatNumber(item.result.signal.risk_reward)}R` : "-"} />
+        </div>
+      </article>
+    );
+  }
+
+  const toneClass =
+    item.status === "failed"
+      ? "border-red-300/30 bg-red-300/10 text-red-100"
+      : item.status === "pending" && isAnalyzing
+        ? "border-sky-300/30 bg-sky-300/10 text-sky-100"
+        : "border-yellow-300/30 bg-yellow-300/10 text-yellow-100";
+  const label =
+    item.status === "failed"
+      ? "Fehler"
+      : item.status === "pending" && isAnalyzing
+        ? "Wartet auf Analyse"
+        : item.status === "pending"
+          ? "Bereit"
+        : "Uebersprungen";
+
+  return (
+    <article className={`rounded-2xl border p-4 ${toneClass}`}>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <h3 className="text-lg font-semibold">{item.symbol}</h3>
+        <span className="rounded-full border border-current/20 px-3 py-1 text-xs">{label}</span>
+      </div>
+      <p className="mt-2 text-sm">{item.reason ?? "Analyse wurde noch nicht gestartet."}</p>
+    </article>
+  );
+}
+
+function toPlannedBatchAnalysisResult(item: BatchAnalysisPlanItem): BatchAnalysisResultItem {
+  return {
+    symbol: item.symbol,
+    status: item.seriesId ? "pending" : "skipped",
+    seriesId: item.seriesId,
+    reason: item.skipReason,
+    result: null,
+  };
+}
+
 function buildImportReadinessGroups(
   history: ImportHistoryItem[],
   detectedFiles: DetectedCsvFile[],
@@ -760,6 +977,46 @@ function isUsableImportHistoryItem(item: ImportHistoryItem) {
     item.sync_status !== "failed" &&
     item.sync_status !== "skipped"
   );
+}
+
+function buildBatchAnalysisPlan(history: ImportHistoryItem[]): BatchAnalysisPlanItem[] {
+  const grouped = new Map<string, ImportHistoryItem[]>();
+
+  for (const item of history) {
+    if (!isUsableImportHistoryItem(item)) {
+      continue;
+    }
+    const symbol = item.symbol.toUpperCase();
+    grouped.set(symbol, [...(grouped.get(symbol) ?? []), item]);
+  }
+
+  return Array.from(grouped.entries())
+    .map(([symbol, items]) => {
+      const present = new Set(items.map((item) => item.timeframe));
+      const missing = timeframes.filter((value) => !present.has(value));
+      const anchor = latestSeriesForTimeframe(items, "1D");
+      return {
+        symbol,
+        seriesId: missing.length === 0 ? anchor?.series_id ?? null : null,
+        missing,
+        skipReason:
+          missing.length > 0
+            ? `Fehlende Timeframes: ${missing.join(", ")}. Analyse wird nicht gestartet.`
+            : anchor
+              ? null
+              : "Keine nutzbare 1D-Serie als Analyse-Anker gefunden.",
+      };
+    })
+    .sort((left, right) => Number(Boolean(right.seriesId)) - Number(Boolean(left.seriesId)) || left.symbol.localeCompare(right.symbol));
+}
+
+function latestSeriesForTimeframe(items: ImportHistoryItem[], timeframe: Timeframe) {
+  return items
+    .filter((item) => item.timeframe === timeframe)
+    .toSorted((left, right) => {
+      const importedDiff = new Date(right.imported_at).getTime() - new Date(left.imported_at).getTime();
+      return importedDiff || right.series_id - left.series_id;
+    })[0];
 }
 
 function detectCsvFile(fileName: string): DetectedCsvFile {
