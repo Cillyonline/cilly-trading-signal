@@ -4,12 +4,12 @@ Date: 2026-06-04
 
 ## Decision
 
-Recommended next milestone: `v4.6 - Browser Workflow Smoke`.
+Recommended next milestone: `v4.6 - Guided Operator Workflow`.
 
 Rationale: v4.5 Operator Workflow Validation is complete with local build and
-checklist evidence. The remaining validation gap is optional authenticated browser
-smoke of `/import` and `/signals`, local by default and VPS-only after explicit
-approval.
+checklist evidence, but the cockpit still needs a stronger red thread. The next
+highest-value step is to make Dashboard, `/import`, and `/signals` guide the operator
+through the daily workflow before running another browser smoke.
 
 ## v4.3 - Operational Evidence Closure
 
@@ -91,24 +91,30 @@ Default if no explicit deployment approval is given:
 - Run local/browser validation only.
 - Do not touch VPS, secrets, `.env`, provider keys, or deployment state.
 
-## v4.6 - Browser Workflow Smoke
+## v4.6 - Guided Operator Workflow
 
-Goal: run authenticated browser validation of the v4.4/v4.5 workflow when the
-operator wants visual/runtime assurance.
+Goal: make the CSV-first cockpit easier to use by guiding the operator through the
+daily review sequence.
 
 Recommended scope:
 
-- Local browser smoke of `/import` CSV-Arbeitsplan and Import Readiness.
-- Local browser smoke of `/signals` Active Review and Trigger Radar.
-- Mobile and desktop viewport checks when feasible.
-- Sanitized pass/fail evidence only.
+- Add a Dashboard `Heute starten` workflow panel.
+- Simplify `/import` around update modes: `1W`, `1D`, and `4H`.
+- Simplify `/signals` around Active Review and Trigger Radar.
+- Move full lists, provider sync, history, filters, and diagnostics into secondary or
+  advanced hierarchy where feasible.
+- Update operator docs and record a milestone review.
+
+Decision record:
+
+- `docs/V4_6_GUIDED_OPERATOR_WORKFLOW_DECISION.md`
 
 Default boundary:
 
-- Keep validation local unless the owner/operator explicitly approves private VPS
-  deployment/update steps.
 - Do not add provider reliance, broker integration, automatic execution, or
   live/realtime claims.
+- Keep Browser Workflow Smoke as a later validation step after the guided workflow is
+  implemented.
 
 ## Not Now
 
