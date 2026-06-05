@@ -96,14 +96,27 @@ Default if no explicit deployment approval is given:
 Goal: make the CSV-first cockpit easier to use by guiding the operator through the
 daily review sequence.
 
+Status: Done. Review is recorded in
+`docs/reviews/v4-6-guided-operator-workflow-review.md`.
+
+Decision record:
+
+- `docs/V4_6_GUIDED_OPERATOR_WORKFLOW_DECISION.md`
+
+## v4.7 - Browser Workflow Smoke
+
+Goal: validate the v4.6 guided workflow changes in the browser with a focused smoke
+test.
+
 Recommended scope:
 
-- Add a Dashboard `Heute starten` workflow panel.
-- Simplify `/import` around update modes: `1W`, `1D`, and `4H`.
-- Simplify `/signals` around Active Review and Trigger Radar.
-- Move full lists, provider sync, history, filters, and diagnostics into secondary or
-  advanced hierarchy where feasible.
-- Update operator docs and record a milestone review.
+- Browser smoke `/import` CSV-Arbeitsplan placement, Provider-Sync collapse, and
+  Analyze-All behavior.
+- Browser smoke `/signals` Active Review, Trigger Radar, and collapsed
+  Radar-Rangliste.
+- Browser smoke Dashboard `Heute starten` panel and guided flow.
+- Record sanitized pass/fail evidence only.
+- File focused follow-up issues only for observed workflow blockers.
 
 Decision record:
 
@@ -113,8 +126,8 @@ Default boundary:
 
 - Do not add provider reliance, broker integration, automatic execution, or
   live/realtime claims.
-- Keep Browser Workflow Smoke as a later validation step after the guided workflow is
-  implemented.
+- Use the existing local/staging environment; no VPS or deployment changes without
+  explicit approval.
 
 ## Not Now
 
