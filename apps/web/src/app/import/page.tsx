@@ -385,6 +385,8 @@ export default function ImportPage() {
 
         {error ? <ErrorMessage message={error} /> : null}
 
+        <CsvWorkflowSection groups={readinessGroups} />
+
         <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
           <form onSubmit={submitImport} className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
             <div className="flex items-start justify-between gap-4">
@@ -467,8 +469,6 @@ export default function ImportPage() {
                 <CsvFileMappingTable items={items} mappings={fileMappings} onChange={setFileMappings} />
               ) : null}
 
-              <CsvWorkflowGuidancePanel groups={readinessGroups} />
-
               {readinessGroups.length > 0 ? <ImportReadinessPanel groups={readinessGroups} /> : null}
 
               {selectedItem ? (
@@ -524,46 +524,59 @@ export default function ImportPage() {
           </section>
         </section>
 
-        <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-          <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
-            <h2 className="text-xl font-semibold">Daten aktualisieren</h2>
-            <p className="mt-2 text-sm text-slate-400">
-              Fordert einmalig gespeicherte Provider-Marktdaten fuer das ausgewaehlte Symbol an.
-              Das ist manuell, kein Live-Preis, kein Signal und keine Trade-Anweisung.
-            </p>
-            <div className="mt-5 grid gap-4 rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-sm text-slate-300">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Metric label="Symbol" value={selectedItem?.symbol ?? "-"} />
-                <Metric label="Timeframe" value={timeframe} />
-              </div>
-              <ProviderCapabilityHintPanel hints={providerCapabilityHints} selectedTimeframe={timeframe} />
-              <p className="rounded-2xl border border-yellow-300/20 bg-yellow-300/10 p-3 text-yellow-50">
-                Wenn der Provider deaktiviert, nicht konfiguriert oder fuer den Timeframe ungeeignet
-                ist, wird die Anfrage sicher als skipped oder failed markiert. Es wird keine Analyse,
-                kein Alert und kein Trade automatisch erstellt.
+        <details className="group rounded-3xl border border-white/10 bg-white/[0.03] [&>summary:focus]:outline-none">
+          <summary className="flex cursor-pointer list-none items-center justify-between p-6">
+            <div>
+              <h2 className="text-xl font-semibold">Provider-Sync (erweitert)</h2>
+              <p className="mt-1 text-sm text-slate-400">
+                Manuelle Provider-Datenaktualisierung. Nur nutzen, wenn CSV nicht ausreicht.
               </p>
-              <button
-                disabled={isSyncing || isLoading || items.length === 0}
-                onClick={() => void runProviderSync()}
-                type="button"
-                className="rounded-xl border border-emerald-300/40 px-5 py-3 font-semibold text-emerald-200 hover:bg-emerald-300/10 disabled:opacity-60"
-              >
-                {isSyncing ? "Aktualisiere Daten..." : "Daten aktualisieren"}
-              </button>
             </div>
-          </section>
+            <span className="rounded-full border border-white/10 bg-slate-800 px-3 py-1 text-xs text-slate-300">
+              Erweitert
+            </span>
+          </summary>
+          <div className="grid gap-6 p-6 pt-0 lg:grid-cols-[0.9fr_1.1fr]">
+            <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
+              <h2 className="text-xl font-semibold">Daten aktualisieren</h2>
+              <p className="mt-2 text-sm text-slate-400">
+                Fordert einmalig gespeicherte Provider-Marktdaten fuer das ausgewaehlte Symbol an.
+                Das ist manuell, kein Live-Preis, kein Signal und keine Trade-Anweisung.
+              </p>
+              <div className="mt-5 grid gap-4 rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-sm text-slate-300">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Metric label="Symbol" value={selectedItem?.symbol ?? "-"} />
+                  <Metric label="Timeframe" value={timeframe} />
+                </div>
+                <ProviderCapabilityHintPanel hints={providerCapabilityHints} selectedTimeframe={timeframe} />
+                <p className="rounded-2xl border border-yellow-300/20 bg-yellow-300/10 p-3 text-yellow-50">
+                  Wenn der Provider deaktiviert, nicht konfiguriert oder fuer den Timeframe ungeeignet
+                  ist, wird die Anfrage sicher als skipped oder failed markiert. Es wird keine Analyse,
+                  kein Alert und kein Trade automatisch erstellt.
+                </p>
+                <button
+                  disabled={isSyncing || isLoading || items.length === 0}
+                  onClick={() => void runProviderSync()}
+                  type="button"
+                  className="rounded-xl border border-emerald-300/40 px-5 py-3 font-semibold text-emerald-200 hover:bg-emerald-300/10 disabled:opacity-60"
+                >
+                  {isSyncing ? "Aktualisiere Daten..." : "Daten aktualisieren"}
+                </button>
+              </div>
+            </section>
 
-          <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
-            <h2 className="text-xl font-semibold">Aktualisierungs-Ergebnis</h2>
-            <p className="mt-2 text-sm text-slate-400">
-              Pruefe Status, Freshness, Provider-Kontext und Timeframe-Capability, bevor du Daten
-              fuer Analyse-Workflows nutzt.
-            </p>
-            <div className="mt-6 overflow-hidden rounded-2xl border border-white/10">
-              {syncResult ? <ProviderSyncResultCard result={syncResult} /> : <ProviderSyncEmptyState />}
-            </div>
-          </section>
-        </section>
+            <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
+              <h2 className="text-xl font-semibold">Aktualisierungs-Ergebnis</h2>
+              <p className="mt-2 text-sm text-slate-400">
+                Pruefe Status, Freshness, Provider-Kontext und Timeframe-Capability, bevor du Daten
+                fuer Analyse-Workflows nutzt.
+              </p>
+              <div className="mt-6 overflow-hidden rounded-2xl border border-white/10">
+                {syncResult ? <ProviderSyncResultCard result={syncResult} /> : <ProviderSyncEmptyState />}
+              </div>
+            </section>
+          </div>
+        </details>
 
         <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -814,6 +827,27 @@ function BulkImportResultList({ items }: { items: BulkImportItem[] }) {
         ))}
       </div>
     </article>
+  );
+}
+
+function CsvWorkflowSection({ groups }: { groups: ImportReadinessGroup[] }) {
+  return (
+    <section className="rounded-3xl border border-emerald-300/20 bg-emerald-300/[0.03] p-6">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-emerald-300">CSV-Arbeitsplan</p>
+          <h2 className="mt-2 text-xl font-semibold">Update-Modus waehlen</h2>
+          <p className="mt-2 max-w-3xl text-sm text-slate-400">
+            Waehle den passenden Update-Modus vor dem CSV-Import. Das hilft, das Universum,
+            aktive Kandidaten und die Trigger-Liste getrennt zu halten.
+          </p>
+        </div>
+        <span className="rounded-full border border-emerald-200/30 bg-slate-950/40 px-3 py-1 text-xs text-emerald-50">
+          CSV-first, kein Live-Feed
+        </span>
+      </div>
+      <CsvWorkflowGuidancePanel groups={groups} />
+    </section>
   );
 }
 
