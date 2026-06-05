@@ -10,16 +10,32 @@ The dashboard is not a live trading screen, broker screen, profitability dashboa
 
 Use the dashboard in this order:
 
-1. Check data quality first.
-2. Check alert delivery issues.
-3. Review triggered or armed signals manually.
-4. Review active risk and concentration warnings before adding more exposure.
-5. Document open trades and complete journal reviews after close.
-6. Use performance only as historical documentation, not prediction.
+1. Start with `Heute starten` and follow the guided sequence.
+2. Check data quality first.
+3. Review active candidates and trigger prompts manually.
+4. Check alert delivery and trade documentation issues.
+5. Review active risk and concentration warnings before adding more exposure.
+6. Complete journal reviews after close.
+7. Use performance only as historical documentation, not prediction.
 
 If any high-risk data quality, alert, or risk warning is unclear, stop and investigate before treating any setup as reviewable.
 
 ## Dashboard Cards
+
+### Heute Starten
+
+The `Heute starten` panel is the primary Dashboard entry point. It groups the daily
+workflow into four manual steps:
+
+- `Daten pruefen`: resolve missing, stale, failed, partial, or unknown market-data
+  context before setup review.
+- `Aktive Kandidaten pruefen`: open Active Review on `/signals` for current review
+  candidates.
+- `Trigger-Liste pruefen`: open Trigger Radar for focused trigger review.
+- `Nacharbeit pruefen`: inspect alert delivery, open trades, or journal-review debt.
+
+The panel is a workflow guide only. It does not create analysis, alerts, trades,
+orders, broker actions, or buy/sell instructions.
 
 ### Watchlist Items
 

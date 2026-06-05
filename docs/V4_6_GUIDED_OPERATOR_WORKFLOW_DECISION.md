@@ -149,3 +149,8 @@ v4.6 is done when:
 - Full lists, history, provider sync, and diagnostics remain available but secondary.
 - Operator docs match the implemented flow.
 - Review confirms whether a follow-up gap issue is needed.
+
+## Implementation Notes
+
+- #644 adds `Heute starten` above the broad Dashboard status cards so the operator
+  sees the workflow order before diagnostics.
