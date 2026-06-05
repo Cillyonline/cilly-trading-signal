@@ -107,14 +107,14 @@ Avoid execution language:
 
 ## v4.6 Work Package
 
-Planned issues:
+Issues:
 
-- #643: define this guided operator workflow decision.
-- #644: add the Dashboard `Heute starten` workflow panel.
-- #645: simplify `/import` workflow hierarchy.
-- #646: simplify `/signals` workflow hierarchy.
-- #647: update operator guides for guided workflow.
-- #648: review v4.6 and decide whether a gap issue is needed.
+- #643: define this guided operator workflow decision. **Done.**
+- #644: add the Dashboard `Heute starten` workflow panel. **Done.**
+- #645: simplify `/import` workflow hierarchy. **Done.**
+- #646: simplify `/signals` workflow hierarchy. **Done.**
+- #647: update operator guides for guided workflow. **Done.**
+- #648: review v4.6 and decide whether a gap issue is needed. **Current.**
 
 Recommended order:
 
