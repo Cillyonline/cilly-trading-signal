@@ -137,48 +137,61 @@ export default function SignalsPage() {
           </div>
         ) : null}
 
-        <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <details className="group rounded-3xl border border-white/10 bg-white/[0.03] [&>summary:focus]:outline-none">
+          <summary className="flex cursor-pointer list-none items-center justify-between p-6">
             <div>
-              <h2 className="text-xl font-semibold">Radar-Rangliste</h2>
+              <h2 className="text-xl font-semibold">Radar-Rangliste (alle Signale)</h2>
               <p className="mt-1 text-sm text-slate-400">
-                Relevante Kandidaten stehen oben. No-Trade und Datenprobleme bleiben sichtbar, aber
-                werden konservativ nachrangig sortiert.
+                Vollstaendige Liste aller Signale. Relevante Kandidaten stehen oben. Nutze Active
+                Review und Trigger Radar fuer die taegliche Arbeit.
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => void loadSignals()}
-              className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:border-emerald-300/50"
-            >
-              Aktualisieren
-            </button>
-          </div>
-
-          <SignalFiltersPanel
-            filters={filters}
-            resultCount={filteredSignals.length}
-            totalCount={signals.length}
-            onChange={setFilters}
-            onReset={() => setFilters(emptyFilters)}
-          />
-
-          <div className="mt-6 overflow-hidden rounded-2xl border border-white/10">
-            {isLoading ? (
-              <p className="p-5 text-sm text-slate-400">Signale werden geladen...</p>
-            ) : signals.length === 0 ? (
-              <EmptyState />
-            ) : filteredSignals.length === 0 ? (
-              <FilteredEmptyState />
-            ) : (
-              <div className="divide-y divide-white/10">
-                {rankedSignals.map((signal) => (
-                  <SignalCard key={signal.id} signal={signal} />
-                ))}
+            <span className="rounded-full border border-white/10 bg-slate-800 px-3 py-1 text-xs text-slate-300">
+              Zweite Prioritaet
+            </span>
+          </summary>
+          <div className="p-6 pt-0">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm text-slate-400">
+                  Relevante Kandidaten stehen oben. No-Trade und Datenprobleme bleiben sichtbar, aber
+                  werden konservativ nachrangig sortiert.
+                </p>
               </div>
-            )}
+              <button
+                type="button"
+                onClick={() => void loadSignals()}
+                className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-200 hover:border-emerald-300/50"
+              >
+                Aktualisieren
+              </button>
+            </div>
+
+            <SignalFiltersPanel
+              filters={filters}
+              resultCount={filteredSignals.length}
+              totalCount={signals.length}
+              onChange={setFilters}
+              onReset={() => setFilters(emptyFilters)}
+            />
+
+            <div className="mt-6 overflow-hidden rounded-2xl border border-white/10">
+              {isLoading ? (
+                <p className="p-5 text-sm text-slate-400">Signale werden geladen...</p>
+              ) : signals.length === 0 ? (
+                <EmptyState />
+              ) : filteredSignals.length === 0 ? (
+                <FilteredEmptyState />
+              ) : (
+                <div className="divide-y divide-white/10">
+                  {rankedSignals.map((signal) => (
+                    <SignalCard key={signal.id} signal={signal} />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        </section>
+        </details>
       </section>
     </main>
   );
