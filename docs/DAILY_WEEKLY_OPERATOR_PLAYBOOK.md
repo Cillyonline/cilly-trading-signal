@@ -51,11 +51,17 @@ Use this flow once per trading day, after the daily close or before your next re
 session.
 
 1. Open the dashboard and check data quality first.
-2. Open `/import` and read the CSV-Arbeitsplan before selecting files.
-3. Refresh `1D` CSV for the active review shortlist.
+2. Open `/import` -- the CSV-Arbeitsplan is now the first section showing
+   `Wochenupdate`, `Tagesupdate`, and `Triggerupdate` modes. Read it before
+   selecting files.
+3. Refresh `1D` CSV for the active review shortlist. Provider-Sync is available
+   but collapsed under `Provider-Sync (erweitert)` -- use it only when CSV does
+   not suffice.
 4. Review Import Readiness for the refreshed symbols.
 5. Analyze complete symbols deliberately.
-6. Open `/signals` and start with the Active Review shortlist.
+6. Open `/signals` and start with the Active Review shortlist and Trigger Radar.
+   The Radar-Rangliste (full list) is collapsed by default -- expand it only
+   when you need the complete picture.
 7. Read Ampel outcomes before technical fields.
 8. Move symbols into or out of the active review shortlist based on current context.
 9. Identify the smaller trigger shortlist for any intraday `4H` review.

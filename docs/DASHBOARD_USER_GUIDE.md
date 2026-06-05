@@ -250,21 +250,32 @@ Use it to open:
 Use `/import` for stored OHLCV data. CSV remains a supported manual baseline and
 fallback; it is not a live data feed and does not place orders.
 
+The import page has been restructured for v4.6:
+
+- **CSV-Arbeitsplan** is now the first section, showing the three update modes
+  (`Wochenupdate 1W`, `Tagesupdate 1D`, `Triggerupdate 4H`) before the upload
+  form.
+- **Provider-Sync** is collapsed under `Provider-Sync (erweitert)` -- use it
+  only when CSV does not suffice.
+- **Import History** and **Analyze All** remain in their current order below the
+  upload form.
+
 Bulk workflow:
 
-1. Select the default Watchlist symbol and Timeframe for context.
-2. Choose one or more TradingView-compatible CSV files.
-3. Review the CSV mapping table for detected symbol, exchange, and timeframe.
-4. Correct every row that is ambiguous or mapped to the wrong Watchlist symbol or
+1. Open `/import` and read the CSV-Arbeitsplan first to choose the right update mode.
+2. Select the default Watchlist symbol and Timeframe for context.
+3. Choose one or more TradingView-compatible CSV files.
+4. Review the CSV mapping table for detected symbol, exchange, and timeframe.
+5. Correct every row that is ambiguous or mapped to the wrong Watchlist symbol or
    Timeframe.
-5. Submit the import manually.
-6. Review Import Readiness by symbol as a planning view across saved usable imports
+6. Submit the import manually.
+7. Review Import Readiness by symbol as a planning view across saved usable imports
    and the current mapping preview.
-7. Use the CSV-Arbeitsplan to separate weekly universe updates, daily active-review
+8. Use the CSV-Arbeitsplan to separate weekly universe updates, daily active-review
    updates, and targeted `4H` trigger-list updates.
-8. Click `Vollstaendige Symbole analysieren` only when you intentionally want to
+9. Click `Vollstaendige Symbole analysieren` only when you intentionally want to
    batch-analyze complete symbols.
-9. Read skipped-symbol reasons and Ampel results before technical metrics.
+10. Read skipped-symbol reasons and Ampel results before technical metrics.
 
 Filename rules:
 
@@ -359,7 +370,7 @@ set of current review cards from existing signal data:
 
 The shortlist does not create analysis, alerts, trades, orders, broker actions, or
 buy/sell instructions. It is only a practical worklist before reading the full Radar
-Rangliste.
+Rangliste, which is now collapsed by default under the `Radar-Rangliste` section.
 
 ### Trigger Radar Workflow
 
