@@ -119,6 +119,10 @@ Partial:
   `docs/reviews/v4-5-operator-workflow-validation-review.md`; it added the local
   validation checklist and recorded local build/checklist evidence for `/import` and
   `/signals` without VPS, secrets, provider expansion, or private data.
+- v4.6 Guided Operator Workflow is planned in
+  `docs/V4_6_GUIDED_OPERATOR_WORKFLOW_DECISION.md`; it should make Dashboard,
+  `/import`, and `/signals` follow a clearer daily operator sequence before the next
+  browser smoke.
 - Dashboard, journal, and performance views include useful MVP-level summaries, risk warnings, and journal analytics, but are not full institutional analytics modules.
 - Risk enforcement covers manual trade creation basics and portfolio/risk review warnings, not complete account-level risk management or automatic position sizing.
 - Multi-timeframe analysis still requires current stored data for required `1W`, `1D`, and `4H` timeframes; provider sync does not automatically fill unsupported timeframes or rerun analysis.
@@ -148,6 +152,8 @@ Current blockers and risks:
   when the next deployment is explicitly approved.
 - Authenticated browser smoke remains optional future validation; it is not a blocker
   for the current local workflow evidence.
+- Current UX risk: the cockpit is functionally complete but still broad. v4.6 should
+  reduce cognitive load by adding a stronger guided workflow hierarchy.
 
 ## v0.1 - Foundation
 
