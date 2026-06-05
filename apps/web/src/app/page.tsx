@@ -106,11 +106,22 @@ async function loadDashboardData(): Promise<DashboardResult> {
 type DashboardData = {
   cards: DashboardCard[];
   hasAnyData: boolean;
+  guidedSteps: GuidedWorkflowStep[];
   recentSignals: Signal[];
   openTrades: Trade[];
   reviewNeededTrades: Trade[];
   marketDataQuality: MarketDataQualitySummary;
   reviewPriorities: ReviewPriority[];
+};
+
+type GuidedWorkflowStep = {
+  order: string;
+  title: string;
+  count: string;
+  detail: string;
+  href: string;
+  action: string;
+  tone: "red" | "yellow" | "emerald" | "sky" | "slate";
 };
 
 type ScreenerReviewSummary = {
@@ -294,12 +305,89 @@ function buildDashboardData(
       },
     ],
     hasAnyData: watchlist.length > 0 || signals.length > 0 || trades.length > 0,
+    guidedSteps: buildGuidedWorkflowSteps({
+      marketDataQuality,
+      reviewSignals,
+      triggeredSignals,
+      alertIssues,
+      openTrades,
+      reviewNeededTrades,
+    }),
     recentSignals: signals.slice(0, 3),
     openTrades: openTrades.slice(0, 3),
     reviewNeededTrades: reviewNeededTrades.slice(0, 3),
     marketDataQuality,
     reviewPriorities,
   };
+}
+
+function buildGuidedWorkflowSteps({
+  alertIssues,
+  marketDataQuality,
+  openTrades,
+  reviewNeededTrades,
+  reviewSignals,
+  triggeredSignals,
+}: {
+  alertIssues: AlertEvent[];
+  marketDataQuality: MarketDataQualitySummary;
+  openTrades: Trade[];
+  reviewNeededTrades: Trade[];
+  reviewSignals: Signal[];
+  triggeredSignals: Signal[];
+}): GuidedWorkflowStep[] {
+  const followUpCount = alertIssues.length + openTrades.length + reviewNeededTrades.length;
+
+  return [
+    {
+      order: "1",
+      title: "Daten pruefen",
+      count: String(marketDataQuality.issueCount),
+      detail:
+        marketDataQuality.issueCount > 0
+          ? "Erst Datenprobleme oder fehlende CSV-Kontexte klaeren."
+          : "Keine Market-Data-Warnungen im Dashboard.",
+      href: marketDataQuality.issueCount > 0 ? "/import" : "/watchlist",
+      action: marketDataQuality.issueCount > 0 ? "Zu CSV-Update" : "Datenkontext ansehen",
+      tone: marketDataQuality.failedCount + marketDataQuality.partialCount > 0 ? "red" : marketDataQuality.issueCount > 0 ? "yellow" : "emerald",
+    },
+    {
+      order: "2",
+      title: "Aktive Kandidaten pruefen",
+      count: String(reviewSignals.length),
+      detail:
+        reviewSignals.length > 0
+          ? "Review-Kandidaten zuerst ueber Active Review lesen."
+          : "Keine armed/triggered Setups im aktuellen Dashboard.",
+      href: "/signals",
+      action: "Active Review oeffnen",
+      tone: reviewSignals.length > 0 ? "yellow" : "slate",
+    },
+    {
+      order: "3",
+      title: "Trigger-Liste pruefen",
+      count: String(triggeredSignals.length),
+      detail:
+        triggeredSignals.length > 0
+          ? "Trigger-Prompts sind manuelle Review-Prioritaeten, keine Entry-Anweisung."
+          : "Keine Trigger-Prompts mit Review-Status.",
+      href: "/signals",
+      action: "Trigger Radar oeffnen",
+      tone: triggeredSignals.length > 0 ? "sky" : "slate",
+    },
+    {
+      order: "4",
+      title: "Nacharbeit pruefen",
+      count: String(followUpCount),
+      detail:
+        followUpCount > 0
+          ? "Alerts, offene Trades oder Journal Reviews brauchen manuelle Pflege."
+          : "Keine offenen Nacharbeits-Warnungen im Dashboard.",
+      href: followUpCount > 0 && alertIssues.length > 0 ? "/alerts" : followUpCount > 0 ? "/trades" : "/performance",
+      action: followUpCount > 0 ? "Nacharbeit oeffnen" : "Risk/Performance ansehen",
+      tone: alertIssues.length > 0 ? "red" : followUpCount > 0 ? "yellow" : "emerald",
+    },
+  ];
 }
 
 function buildScreenerReviewSummary(results: ScreenerResult[]): ScreenerReviewSummary {
@@ -551,6 +639,8 @@ function buildMarketDataStatusSummaries({
 function DashboardContent({ data }: { data: DashboardData }) {
   return (
     <>
+      <TodayWorkflowPanel steps={data.guidedSteps} />
+
       <section className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
         {data.cards.map((card) => (
           <a
@@ -575,6 +665,58 @@ function DashboardContent({ data }: { data: DashboardData }) {
       </section>
     </>
   );
+}
+
+function TodayWorkflowPanel({ steps }: { steps: GuidedWorkflowStep[] }) {
+  return (
+    <section className="rounded-3xl border border-emerald-300/20 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.16),transparent_34%),rgba(255,255,255,0.04)] p-6">
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div>
+          <p className="text-sm uppercase tracking-[0.25em] text-emerald-300">Heute starten</p>
+          <h2 className="mt-2 text-2xl font-semibold">Dein roter Faden fuer die naechste Review</h2>
+          <p className="mt-2 max-w-3xl text-sm text-slate-300">
+            Arbeite von links nach rechts: erst Daten, dann aktive Kandidaten, dann Trigger,
+            danach Nacharbeit. Jede Aktion bleibt manuell und erzeugt keine Order.
+          </p>
+        </div>
+        <span className="rounded-full border border-emerald-300/30 bg-emerald-300/10 px-3 py-1 text-sm text-emerald-100">
+          Decision Support, keine Ausfuehrung
+        </span>
+      </div>
+
+      <div className="mt-5 grid gap-3 lg:grid-cols-4">
+        {steps.map((step) => (
+          <a key={step.order} className={`rounded-2xl border p-4 hover:bg-slate-900/70 ${guidedStepTone(step.tone)}`} href={step.href}>
+            <div className="flex items-center justify-between gap-3">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full border border-current/20 text-sm font-semibold">
+                {step.order}
+              </span>
+              <span className="text-2xl font-semibold text-slate-50">{step.count}</span>
+            </div>
+            <h3 className="mt-4 text-lg font-semibold text-slate-50">{step.title}</h3>
+            <p className="mt-2 text-sm opacity-80">{step.detail}</p>
+            <p className="mt-4 text-sm font-semibold text-current">{step.action}</p>
+          </a>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function guidedStepTone(tone: GuidedWorkflowStep["tone"]): string {
+  if (tone === "red") {
+    return "border-red-300/30 bg-red-300/10 text-red-100";
+  }
+  if (tone === "yellow") {
+    return "border-yellow-300/30 bg-yellow-300/10 text-yellow-100";
+  }
+  if (tone === "emerald") {
+    return "border-emerald-300/30 bg-emerald-300/10 text-emerald-100";
+  }
+  if (tone === "sky") {
+    return "border-sky-300/30 bg-sky-300/10 text-sky-100";
+  }
+  return "border-slate-400/30 bg-slate-800/70 text-slate-200";
 }
 
 function ReviewPriorityCard({ priorities }: { priorities: ReviewPriority[] }) {
