@@ -18,6 +18,7 @@ from app.schemas.imports import (
     ImportHistoryItem,
     MarketDataSyncRequest,
     MarketDataSyncResponse,
+    ProviderTimeframeCapabilityRead,
 )
 from app.services.analysis import analyze_market_data_series
 from app.services.csv_import import MAX_CSV_UPLOAD_BYTES, import_tradingview_csv
@@ -25,7 +26,9 @@ from app.services.market_data_sync import (
     AlphaVantageDailyProvider,
     MarketDataProvider,
     TwelveDataDailyProvider,
+    YahooFinanceUnofficialProvider,
     build_market_data_sync_plan,
+    provider_timeframe_capabilities,
     sync_and_persist_market_data_series,
 )
 from app.services.watchlist import get_watchlist_item
@@ -38,10 +41,13 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 def get_market_data_provider() -> MarketDataProvider | None:
     if not settings.market_data_provider_sync_enabled:
         return None
-    if settings.market_data_provider == "alpha_vantage" and settings.market_data_api_key:
+    provider_name = (settings.market_data_provider or "").strip().lower()
+    if provider_name == "alpha_vantage" and settings.market_data_api_key:
         return AlphaVantageDailyProvider(settings.market_data_api_key)
-    if settings.market_data_provider == "twelve_data" and settings.market_data_api_key:
+    if provider_name == "twelve_data" and settings.market_data_api_key:
         return TwelveDataDailyProvider(settings.market_data_api_key)
+    if provider_name == "yahoo_finance_unofficial":
+        return YahooFinanceUnofficialProvider()
     return None
 
 
@@ -209,4 +215,18 @@ def to_market_data_sync_response(series: MarketDataSeries) -> MarketDataSyncResp
         end_time=series.end_time,
         sync_error_code=series.sync_error_code,
         sync_error_message=series.sync_error_message,
+        provider_capabilities=to_provider_capability_reads(series.provider_name),
     )
+
+
+def to_provider_capability_reads(
+    provider_name: str | None,
+) -> list[ProviderTimeframeCapabilityRead]:
+    return [
+        ProviderTimeframeCapabilityRead(
+            timeframe=capability.timeframe,
+            supported=capability.supported,
+            reason=capability.reason,
+        )
+        for capability in provider_timeframe_capabilities(provider_name)
+    ]

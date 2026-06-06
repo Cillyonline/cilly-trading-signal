@@ -133,6 +133,20 @@ def test_market_data_provider_sync_allows_safe_configuration() -> None:
     assert settings.market_data_provider == "alpha_vantage"
 
 
+def test_market_data_provider_sync_allows_keyless_yahoo_finance_unofficial() -> None:
+    settings = Settings(
+        _env_file=None,
+        **SAFE_PRODUCTION_SETTINGS,
+        market_data_provider_sync_enabled=True,
+        market_data_provider="yahoo_finance_unofficial",
+        market_data_api_key=None,
+    )
+
+    assert settings.market_data_provider_sync_enabled is True
+    assert settings.market_data_provider == "yahoo_finance_unofficial"
+    assert settings.market_data_api_key is None
+
+
 @pytest.mark.parametrize(
     ("field", "value", "expected_message"),
     [

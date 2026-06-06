@@ -117,6 +117,19 @@ MARKET_DATA_PROVIDER=alpha_vantage
 MARKET_DATA_API_KEY=<redacted-real-provider-key>
 ```
 
+Keyless private zero-budget smoke shape:
+
+```dotenv
+MARKET_DATA_PROVIDER_SYNC_ENABLED=true
+MARKET_DATA_PROVIDER=yahoo_finance_unofficial
+MARKET_DATA_API_KEY=
+```
+
+The Yahoo Finance unofficial path is only a manual private-review/prototype path.
+It is not an official Yahoo API integration, not live or real-time data, not a
+licensed provider-reliance decision, and can break without notice. Keep TradingView
+CSV as the fallback and do not use this evidence as production-readiness proof.
+
 Manual steps:
 
 1. Restart the API after setting the local or staging environment variables.
@@ -133,8 +146,9 @@ Expected success result:
 - `source` is `provider`.
 - `freshness_status` is derived from the stored latest candle timestamp.
 - Provider metadata is populated with sanitized provider name/symbol/timeframe.
-- Provider capability hints show `1D` as supported and unsupported timeframes as
-  TradingView CSV fallback.
+- Provider capability hints match the configured provider. For
+  `yahoo_finance_unofficial`, `1W` and `1D` may be supported for manual stored-data
+  review while `4H` remains TradingView CSV fallback.
 - Latest candle timestamp and Import history are visible.
 - No automatic analysis, signal, trade, order, broker call, or Telegram alert is
   created.

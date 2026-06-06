@@ -305,6 +305,45 @@ def test_manual_market_data_sync_applies_mock_success(
     assert result["sync_error_code"] is None
 
 
+def test_manual_market_data_sync_returns_configured_provider_capabilities(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    watchlist_item_id = create_watchlist_item(client)
+    success_provider = FakeMarketDataProvider(
+        MarketDataSyncResult(
+            sync_status=MarketDataSyncStatus.SUCCESS,
+            freshness_status=MarketDataFreshnessStatus.FRESH,
+            provider_name="yahoo_finance_unofficial",
+            provider_symbol="AAPL",
+            provider_timeframe="1D",
+            data_end_at=datetime(2026, 5, 29, tzinfo=UTC),
+            candles=(provider_candle("2026-05-29"),),
+        )
+    )
+    monkeypatch.setattr(settings, "market_data_provider_sync_enabled", True)
+    monkeypatch.setattr(settings, "market_data_provider", "yahoo_finance_unofficial")
+    client.app.dependency_overrides[get_market_data_provider] = lambda: success_provider
+
+    try:
+        response = client.post(
+            "/api/imports/sync",
+            json={"watchlist_item_id": watchlist_item_id, "timeframe": "1D"},
+        )
+    finally:
+        client.app.dependency_overrides.pop(get_market_data_provider, None)
+
+    assert response.status_code == 200
+    result = response.json()
+    by_timeframe = {
+        capability["timeframe"]: capability for capability in result["provider_capabilities"]
+    }
+    assert result["provider_name"] == "yahoo_finance_unofficial"
+    assert by_timeframe["1D"]["supported"] is True
+    assert by_timeframe["4H"]["supported"] is False
+    assert "unofficial" in by_timeframe["1D"]["reason"]
+
+
 def test_manual_market_data_sync_applies_mock_failure(
     client: TestClient,
     monkeypatch: pytest.MonkeyPatch,
