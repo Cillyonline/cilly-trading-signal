@@ -98,10 +98,13 @@ Automatic Telegram delivery is deduplicated by `symbol + alert_type + timeframe`
 Optional values for manual market data provider sync:
 
 - `MARKET_DATA_PROVIDER_SYNC_ENABLED`: keep `false` unless provider sync has been deliberately enabled for the environment.
-- `MARKET_DATA_PROVIDER`: provider identifier. The current implemented provider path is `alpha_vantage` for guarded Daily/EOD sync.
-- `MARKET_DATA_API_KEY`: provider API key. Store only in the environment file or secret store, never in git, issues, PRs, logs, screenshots, or chat.
+- `MARKET_DATA_PROVIDER`: provider identifier. Implemented paths include
+  `alpha_vantage`, `twelve_data`, and `yahoo_finance_unofficial`.
+- `MARKET_DATA_API_KEY`: provider API key for key-based providers. Store only in
+  the environment file or secret store, never in git, issues, PRs, logs,
+  screenshots, or chat. It is not required for `yahoo_finance_unofficial`.
 
-Market data provider sync is manual and fails closed. If `MARKET_DATA_PROVIDER_SYNC_ENABLED=false`, manual sync requests return a safe skipped state. If `MARKET_DATA_PROVIDER_SYNC_ENABLED=true`, the API requires a supported `MARKET_DATA_PROVIDER` and a non-empty, non-placeholder `MARKET_DATA_API_KEY` at startup. These settings do not enable scheduling, automatic analysis, broker execution, live/realtime signals, or production readiness.
+Market data provider sync is manual and fails closed. If `MARKET_DATA_PROVIDER_SYNC_ENABLED=false`, manual sync requests return a safe skipped state. If `MARKET_DATA_PROVIDER_SYNC_ENABLED=true`, the API requires a supported `MARKET_DATA_PROVIDER`; key-based providers also require a non-empty, non-placeholder `MARKET_DATA_API_KEY` at startup. The `yahoo_finance_unofficial` provider is keyless, unofficial, suitable only for private zero-budget/manual review, and can break without notice. These settings do not enable scheduling, automatic analysis, broker execution, live/realtime signals, or production readiness.
 
 Do not commit `.env` or paste secrets into issues, PRs, logs, or screenshots.
 
@@ -114,8 +117,9 @@ or script without explicit owner/operator approval for that specific environment
 Before enabling provider sync on a VPS:
 
 - Confirm the target environment, branch or commit, and Compose project name.
-- Confirm the provider identifier and timeframe scope; the current implemented path
-  is guarded Alpha Vantage Daily/EOD only.
+- Confirm the provider identifier and timeframe scope. The
+  `yahoo_finance_unofficial` path is keyless but unofficial and private/prototype
+  only; it is not a licensed provider-reliance decision.
 - Confirm that `1W` and `4H` still use TradingView CSV fallback unless a later
   provider decision explicitly changes that scope.
 - Confirm that the operator owns the provider account/key and accepts the provider
