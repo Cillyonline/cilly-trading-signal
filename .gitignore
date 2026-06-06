@@ -38,6 +38,7 @@ venv/
 *.backup
 *.bak
 backups/
+market-data/
 postgres-data/
 
 # Docker / deployment local overrides

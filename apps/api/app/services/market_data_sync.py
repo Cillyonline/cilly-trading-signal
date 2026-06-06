@@ -23,6 +23,7 @@ FRESHNESS_WINDOWS = {
     Timeframe.FOUR_HOURS: timedelta(hours=24),
 }
 ALPHA_VANTAGE_DAILY_URL = "https://www.alphavantage.co/query"
+TWELVE_DATA_TIME_SERIES_URL = "https://api.twelvedata.com/time_series"
 
 
 @dataclass(frozen=True)
@@ -138,6 +139,58 @@ class AlphaVantageDailyProvider:
         )
 
 
+class TwelveDataDailyProvider:
+    def __init__(
+        self,
+        api_key: str,
+        *,
+        transport: "ProviderTransport | None" = None,
+    ) -> None:
+        self.api_key = api_key
+        self.transport = transport or UrllibProviderTransport()
+
+    def sync(self, plan: MarketDataSyncPlan) -> MarketDataSyncResult:
+        unsupported_reason = unsupported_timeframe_reason(plan)
+        if unsupported_reason is not None:
+            return provider_failure(
+                plan,
+                "unsupported_timeframe",
+                unsupported_reason,
+            )
+
+        try:
+            payload = self.transport.get_json(build_twelve_data_url(plan, self.api_key))
+        except ProviderTransportError:
+            return provider_failure(plan, "provider_transport_error", "Provider request failed.")
+
+        candles, error_code = parse_twelve_data_response(payload)
+        if error_code is not None:
+            return provider_failure(plan, error_code, "Provider response could not be used.")
+        if not candles:
+            return MarketDataSyncResult(
+                sync_status=MarketDataSyncStatus.PARTIAL,
+                freshness_status=MarketDataFreshnessStatus.PARTIAL,
+                provider_name=plan.provider_name,
+                provider_symbol=plan.provider_symbol,
+                provider_exchange=plan.provider_exchange,
+                provider_timeframe=plan.provider_timeframe,
+                error_code="provider_empty_response",
+                error_message="Provider returned no candles.",
+            )
+
+        latest_timestamp = max(candle.timestamp for candle in candles)
+        return MarketDataSyncResult(
+            sync_status=MarketDataSyncStatus.SUCCESS,
+            freshness_status=evaluate_timestamp_freshness(latest_timestamp, plan.timeframe),
+            provider_name=plan.provider_name,
+            provider_symbol=plan.provider_symbol,
+            provider_exchange=plan.provider_exchange,
+            provider_timeframe=plan.provider_timeframe,
+            data_end_at=latest_timestamp,
+            candles=tuple(candles),
+        )
+
+
 class ProviderTransport(Protocol):
     def get_json(self, url: str) -> object:
         pass
@@ -168,6 +221,60 @@ def build_alpha_vantage_daily_url(plan: MarketDataSyncPlan, api_key: str) -> str
         }
     )
     return f"{ALPHA_VANTAGE_DAILY_URL}?{params}"
+
+
+def build_twelve_data_url(plan: MarketDataSyncPlan, api_key: str) -> str:
+    params = urlencode(
+        {
+            "symbol": plan.provider_symbol or plan.symbol,
+            "interval": _twelve_data_interval(plan.timeframe),
+            "outputsize": "5000",
+            "apikey": api_key,
+        }
+    )
+    return f"{TWELVE_DATA_TIME_SERIES_URL}?{params}"
+
+
+def _twelve_data_interval(timeframe: Timeframe) -> str:
+    mapping = {
+        Timeframe.ONE_WEEK: "1week",
+        Timeframe.ONE_DAY: "1day",
+        Timeframe.FOUR_HOURS: "4h",
+    }
+    return mapping[timeframe]
+
+
+def parse_twelve_data_response(payload: object) -> tuple[list[ProviderCandle], str | None]:
+    if not isinstance(payload, dict):
+        return [], "provider_invalid_response"
+    if payload.get("status") == "error":
+        code = payload.get("code")
+        if code == 429:
+            return [], "provider_rate_limited"
+        return [], "provider_error"
+
+    raw_values = payload.get("values")
+    if not isinstance(raw_values, list):
+        return [], "provider_invalid_response"
+
+    candles: list[ProviderCandle] = []
+    for raw_candle in raw_values:
+        if not isinstance(raw_candle, dict):
+            return [], "provider_invalid_response"
+        try:
+            candles.append(
+                ProviderCandle(
+                    timestamp=datetime.fromisoformat(raw_candle["datetime"]).replace(tzinfo=UTC),
+                    open=_decimal_field(raw_candle, "open"),
+                    high=_decimal_field(raw_candle, "high"),
+                    low=_decimal_field(raw_candle, "low"),
+                    close=_decimal_field(raw_candle, "close"),
+                    volume=_decimal_field(raw_candle, "volume"),
+                )
+            )
+        except (InvalidOperation, KeyError, TypeError, ValueError):
+            return [], "provider_invalid_response"
+    return candles, None
 
 
 def parse_alpha_vantage_daily_response(payload: object) -> tuple[list[ProviderCandle], str | None]:
@@ -249,6 +356,25 @@ def provider_timeframe_capabilities(
                     "4H/intraday provider sync is not selected; "
                     "use TradingView CSV fallback."
                 ),
+            ),
+        )
+
+    if normalized == "twelve_data":
+        return (
+            ProviderTimeframeCapability(
+                timeframe=Timeframe.ONE_WEEK,
+                supported=True,
+                reason="Twelve Data supports weekly sync for configured symbols.",
+            ),
+            ProviderTimeframeCapability(
+                timeframe=Timeframe.ONE_DAY,
+                supported=True,
+                reason="Twelve Data supports Daily/EOD sync for configured symbols.",
+            ),
+            ProviderTimeframeCapability(
+                timeframe=Timeframe.FOUR_HOURS,
+                supported=True,
+                reason="Twelve Data supports 4H sync for configured symbols.",
             ),
         )
 

@@ -24,6 +24,7 @@ from app.services.csv_import import MAX_CSV_UPLOAD_BYTES, import_tradingview_csv
 from app.services.market_data_sync import (
     AlphaVantageDailyProvider,
     MarketDataProvider,
+    TwelveDataDailyProvider,
     build_market_data_sync_plan,
     sync_and_persist_market_data_series,
 )
@@ -39,6 +40,8 @@ def get_market_data_provider() -> MarketDataProvider | None:
         return None
     if settings.market_data_provider == "alpha_vantage" and settings.market_data_api_key:
         return AlphaVantageDailyProvider(settings.market_data_api_key)
+    if settings.market_data_provider == "twelve_data" and settings.market_data_api_key:
+        return TwelveDataDailyProvider(settings.market_data_api_key)
     return None
 
 

@@ -20,10 +20,12 @@ from app.services.market_data_sync import (
     MarketDataSyncPlan,
     MarketDataSyncResult,
     ProviderCandle,
+    TwelveDataDailyProvider,
     build_market_data_sync_plan,
     evaluate_market_data_freshness,
     persist_provider_sync_result,
     parse_alpha_vantage_daily_response,
+    parse_twelve_data_response,
     provider_timeframe_capabilities,
     sync_market_data_series,
 )
@@ -315,6 +317,115 @@ def test_alpha_vantage_parser_rejects_invalid_payload() -> None:
     assert error_code == "provider_invalid_response"
 
 
+def test_twelve_data_daily_provider_parses_success_response_without_network() -> None:
+    transport = FakeProviderTransport(twelve_data_payload("2026-05-29"))
+    provider = TwelveDataDailyProvider("test-api-key", transport=transport)
+    plan = build_market_data_sync_plan(
+        symbol="AAPL",
+        timeframe=Timeframe.ONE_DAY,
+        provider_sync_enabled=True,
+        provider_name="twelve_data",
+    )
+
+    result = provider.sync(plan)
+
+    assert len(transport.urls) == 1
+    assert "test-api-key" in transport.urls[0]
+    assert "apikey=test-api-key" in transport.urls[0]
+    assert result.sync_status == MarketDataSyncStatus.SUCCESS
+    assert result.provider_name == "twelve_data"
+    assert result.data_end_at == datetime(2026, 5, 29, tzinfo=UTC)
+    assert len(result.candles) == 1
+    assert result.candles[0].close == Decimal("105.00")
+
+
+def test_twelve_data_daily_provider_handles_rate_limit_response() -> None:
+    provider = TwelveDataDailyProvider(
+        "test-api-key",
+        transport=FakeProviderTransport({"status": "error", "code": 429, "message": "rate limit"}),
+    )
+    plan = build_market_data_sync_plan(
+        symbol="AAPL",
+        timeframe=Timeframe.ONE_DAY,
+        provider_sync_enabled=True,
+        provider_name="twelve_data",
+    )
+
+    result = provider.sync(plan)
+
+    assert result.sync_status == MarketDataSyncStatus.FAILED
+    assert result.error_code == "provider_rate_limited"
+
+
+def test_twelve_data_daily_provider_handles_api_error_response() -> None:
+    provider = TwelveDataDailyProvider(
+        "test-api-key",
+        transport=FakeProviderTransport({"status": "error", "code": 400, "message": "bad request"}),
+    )
+    plan = build_market_data_sync_plan(
+        symbol="AAPL",
+        timeframe=Timeframe.ONE_DAY,
+        provider_sync_enabled=True,
+        provider_name="twelve_data",
+    )
+
+    result = provider.sync(plan)
+
+    assert result.sync_status == MarketDataSyncStatus.FAILED
+    assert result.error_code == "provider_error"
+
+
+def test_twelve_data_parser_handles_empty_values_as_partial() -> None:
+    provider = TwelveDataDailyProvider(
+        "test-api-key",
+        transport=FakeProviderTransport({"meta": {"symbol": "AAPL"}, "values": [], "status": "ok"}),
+    )
+    plan = build_market_data_sync_plan(
+        symbol="AAPL",
+        timeframe=Timeframe.ONE_DAY,
+        provider_sync_enabled=True,
+        provider_name="twelve_data",
+    )
+
+    result = provider.sync(plan)
+
+    assert result.sync_status == MarketDataSyncStatus.PARTIAL
+    assert result.freshness_status == MarketDataFreshnessStatus.PARTIAL
+    assert result.error_code == "provider_empty_response"
+
+
+def test_twelve_data_parser_rejects_invalid_payload() -> None:
+    candles, error_code = parse_twelve_data_response(
+        {"values": [{"datetime": "2026-05-29", "open": "100"}]}
+    )
+
+    assert candles == []
+    assert error_code == "provider_invalid_response"
+
+
+def test_twelve_data_parser_rejects_non_dict_payload() -> None:
+    candles, error_code = parse_twelve_data_response(["not", "a", "dict"])
+
+    assert candles == []
+    assert error_code == "provider_invalid_response"
+
+
+def test_twelve_data_parser_rejects_missing_values_field() -> None:
+    candles, error_code = parse_twelve_data_response({"status": "ok"})
+
+    assert candles == []
+    assert error_code == "provider_invalid_response"
+
+
+def test_provider_timeframe_capabilities_explain_twelve_data_limits() -> None:
+    capabilities = provider_timeframe_capabilities("twelve_data")
+
+    by_timeframe = {capability.timeframe: capability for capability in capabilities}
+    assert by_timeframe[Timeframe.ONE_WEEK].supported is True
+    assert by_timeframe[Timeframe.ONE_DAY].supported is True
+    assert by_timeframe[Timeframe.FOUR_HOURS].supported is True
+
+
 def test_persist_provider_sync_result_replaces_provider_candles(db_session) -> None:
     series = make_series(source=MarketDataSource.PROVIDER)
     db_session.add(series)
@@ -472,6 +583,23 @@ def alpha_vantage_payload(date_text: str) -> dict[str, object]:
                 "6. volume": "1234567",
             }
         },
+    }
+
+
+def twelve_data_payload(date_text: str) -> dict[str, object]:
+    return {
+        "meta": {"symbol": "AAPL", "interval": "1day"},
+        "values": [
+            {
+                "datetime": date_text,
+                "open": "100.00",
+                "high": "110.00",
+                "low": "95.00",
+                "close": "105.00",
+                "volume": "1234567",
+            }
+        ],
+        "status": "ok",
     }
 
 
