@@ -543,6 +543,7 @@ export default function ImportPage() {
                 Fordert einmalig gespeicherte Provider-Marktdaten fuer das ausgewaehlte Symbol an.
                 Das ist manuell, kein Live-Preis, kein Signal und keine Trade-Anweisung.
               </p>
+              <ProviderSyncBeginnerGuide selectedSymbol={selectedItem?.symbol ?? null} selectedTimeframe={timeframe} />
               <div className="mt-5 grid gap-4 rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-sm text-slate-300">
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Metric label="Symbol" value={selectedItem?.symbol ?? "-"} />
@@ -648,6 +649,42 @@ export default function ImportPage() {
         </section>
       </section>
     </main>
+  );
+}
+
+function ProviderSyncBeginnerGuide({
+  selectedSymbol,
+  selectedTimeframe,
+}: {
+  selectedSymbol: string | null;
+  selectedTimeframe: Timeframe;
+}) {
+  const steps = [
+    `Waehle oben im Feld Standard-Symbol dein Symbol aus. Aktuell ausgewaehlt: ${selectedSymbol ?? "-"}.`,
+    `Waehle oben im Feld Standard-Timeframe den ersten Timeframe aus. Aktuell ausgewaehlt: ${selectedTimeframe}.`,
+    "Klicke auf Daten aktualisieren und warte auf das Aktualisierungs-Ergebnis rechts.",
+    "Pruefe nach jedem Lauf Status, Freshness, letzte Kerze und Fehler-Code. Nur success/fresh ist fuer aktuelle Analyse geeignet.",
+    "Wiederhole den Ablauf fuer 1W, 1D und 4H. Erst danach Vollstaendige Symbole analysieren starten.",
+  ];
+
+  return (
+    <div className="mt-5 rounded-2xl border border-emerald-300/20 bg-emerald-300/10 p-4 text-sm text-emerald-50">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <p className="font-semibold text-emerald-100">Schritt fuer Schritt fuer neue Nutzer</p>
+        <span className="rounded-full border border-emerald-200/30 px-3 py-1 text-xs text-emerald-100">
+          Twelve Data
+        </span>
+      </div>
+      <ol className="mt-3 list-decimal space-y-2 pl-5 text-emerald-50/90">
+        {steps.map((step) => (
+          <li key={step}>{step}</li>
+        ))}
+      </ol>
+      <p className="mt-3 rounded-xl border border-white/10 bg-slate-950/40 p-3 text-xs text-emerald-50/80">
+        Wichtig: Provider-Sync speichert nur Marktdaten. Er startet keine Analyse automatisch, erzeugt
+        kein Signal, keinen Alert, keinen Trade und ist kein Live-Preis.
+      </p>
+    </div>
   );
 }
 
