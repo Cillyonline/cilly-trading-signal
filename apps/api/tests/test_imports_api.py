@@ -314,7 +314,7 @@ def test_manual_market_data_sync_returns_configured_provider_capabilities(
         MarketDataSyncResult(
             sync_status=MarketDataSyncStatus.SUCCESS,
             freshness_status=MarketDataFreshnessStatus.FRESH,
-            provider_name="yahoo_finance_unofficial",
+            provider_name="twelve_data",
             provider_symbol="AAPL",
             provider_timeframe="1D",
             data_end_at=datetime(2026, 5, 29, tzinfo=UTC),
@@ -322,7 +322,7 @@ def test_manual_market_data_sync_returns_configured_provider_capabilities(
         )
     )
     monkeypatch.setattr(settings, "market_data_provider_sync_enabled", True)
-    monkeypatch.setattr(settings, "market_data_provider", "yahoo_finance_unofficial")
+    monkeypatch.setattr(settings, "market_data_provider", "twelve_data")
     client.app.dependency_overrides[get_market_data_provider] = lambda: success_provider
 
     try:
@@ -338,10 +338,11 @@ def test_manual_market_data_sync_returns_configured_provider_capabilities(
     by_timeframe = {
         capability["timeframe"]: capability for capability in result["provider_capabilities"]
     }
-    assert result["provider_name"] == "yahoo_finance_unofficial"
+    assert result["provider_name"] == "twelve_data"
+    assert by_timeframe["1W"]["supported"] is True
     assert by_timeframe["1D"]["supported"] is True
-    assert by_timeframe["4H"]["supported"] is False
-    assert "unofficial" in by_timeframe["1D"]["reason"]
+    assert by_timeframe["4H"]["supported"] is True
+    assert "Twelve Data" in by_timeframe["4H"]["reason"]
 
 
 def test_manual_market_data_sync_applies_mock_failure(

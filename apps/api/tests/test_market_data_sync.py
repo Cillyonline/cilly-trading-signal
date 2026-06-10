@@ -20,14 +20,12 @@ from app.services.market_data_sync import (
     MarketDataSyncPlan,
     MarketDataSyncResult,
     ProviderCandle,
-    TwelveDataDailyProvider,
-    YahooFinanceUnofficialProvider,
+    TwelveDataProvider,
     build_market_data_sync_plan,
     evaluate_market_data_freshness,
     persist_provider_sync_result,
     parse_alpha_vantage_daily_response,
     parse_twelve_data_response,
-    parse_yahoo_finance_chart_response,
     provider_timeframe_capabilities,
     sync_market_data_series,
 )
@@ -319,12 +317,23 @@ def test_alpha_vantage_parser_rejects_invalid_payload() -> None:
     assert error_code == "provider_invalid_response"
 
 
-def test_twelve_data_daily_provider_parses_success_response_without_network() -> None:
+@pytest.mark.parametrize(
+    ("timeframe", "expected_interval"),
+    [
+        (Timeframe.ONE_WEEK, "1week"),
+        (Timeframe.ONE_DAY, "1day"),
+        (Timeframe.FOUR_HOURS, "4h"),
+    ],
+)
+def test_twelve_data_provider_parses_success_response_without_network(
+    timeframe: Timeframe,
+    expected_interval: str,
+) -> None:
     transport = FakeProviderTransport(twelve_data_payload("2026-05-29"))
-    provider = TwelveDataDailyProvider("test-api-key", transport=transport)
+    provider = TwelveDataProvider("test-api-key", transport=transport)
     plan = build_market_data_sync_plan(
         symbol="AAPL",
-        timeframe=Timeframe.ONE_DAY,
+        timeframe=timeframe,
         provider_sync_enabled=True,
         provider_name="twelve_data",
     )
@@ -334,6 +343,7 @@ def test_twelve_data_daily_provider_parses_success_response_without_network() ->
     assert len(transport.urls) == 1
     assert "test-api-key" in transport.urls[0]
     assert "apikey=test-api-key" in transport.urls[0]
+    assert f"interval={expected_interval}" in transport.urls[0]
     assert result.sync_status == MarketDataSyncStatus.SUCCESS
     assert result.provider_name == "twelve_data"
     assert result.data_end_at == datetime(2026, 5, 29, tzinfo=UTC)
@@ -341,8 +351,8 @@ def test_twelve_data_daily_provider_parses_success_response_without_network() ->
     assert result.candles[0].close == Decimal("105.00")
 
 
-def test_twelve_data_daily_provider_handles_rate_limit_response() -> None:
-    provider = TwelveDataDailyProvider(
+def test_twelve_data_provider_handles_rate_limit_response() -> None:
+    provider = TwelveDataProvider(
         "test-api-key",
         transport=FakeProviderTransport({"status": "error", "code": 429, "message": "rate limit"}),
     )
@@ -359,8 +369,8 @@ def test_twelve_data_daily_provider_handles_rate_limit_response() -> None:
     assert result.error_code == "provider_rate_limited"
 
 
-def test_twelve_data_daily_provider_handles_api_error_response() -> None:
-    provider = TwelveDataDailyProvider(
+def test_twelve_data_provider_handles_api_error_response() -> None:
+    provider = TwelveDataProvider(
         "test-api-key",
         transport=FakeProviderTransport({"status": "error", "code": 400, "message": "bad request"}),
     )
@@ -378,7 +388,7 @@ def test_twelve_data_daily_provider_handles_api_error_response() -> None:
 
 
 def test_twelve_data_parser_handles_empty_values_as_partial() -> None:
-    provider = TwelveDataDailyProvider(
+    provider = TwelveDataProvider(
         "test-api-key",
         transport=FakeProviderTransport({"meta": {"symbol": "AAPL"}, "values": [], "status": "ok"}),
     )
@@ -426,102 +436,6 @@ def test_provider_timeframe_capabilities_explain_twelve_data_limits() -> None:
     assert by_timeframe[Timeframe.ONE_WEEK].supported is True
     assert by_timeframe[Timeframe.ONE_DAY].supported is True
     assert by_timeframe[Timeframe.FOUR_HOURS].supported is True
-
-
-def test_yahoo_finance_unofficial_provider_parses_success_response_without_network() -> None:
-    transport = FakeProviderTransport(yahoo_finance_payload(1_780_012_800))
-    provider = YahooFinanceUnofficialProvider(transport=transport)
-    plan = build_market_data_sync_plan(
-        symbol="AAPL",
-        timeframe=Timeframe.ONE_DAY,
-        provider_sync_enabled=True,
-        provider_name="yahoo_finance_unofficial",
-    )
-
-    result = provider.sync(plan)
-
-    assert len(transport.urls) == 1
-    assert "apikey" not in transport.urls[0]
-    assert "query1.finance.yahoo.com" in transport.urls[0]
-    assert result.sync_status == MarketDataSyncStatus.SUCCESS
-    assert result.provider_name == "yahoo_finance_unofficial"
-    assert result.data_end_at == datetime(2026, 5, 29, tzinfo=UTC)
-    assert len(result.candles) == 1
-    assert result.candles[0].close == Decimal("105.0")
-
-
-def test_yahoo_finance_unofficial_provider_handles_chart_error() -> None:
-    provider = YahooFinanceUnofficialProvider(
-        transport=FakeProviderTransport(
-            {"chart": {"result": None, "error": {"code": "Not Found", "description": "No data"}}}
-        ),
-    )
-    plan = build_market_data_sync_plan(
-        symbol="UNKNOWN",
-        timeframe=Timeframe.ONE_DAY,
-        provider_sync_enabled=True,
-        provider_name="yahoo_finance_unofficial",
-    )
-
-    result = provider.sync(plan)
-
-    assert result.sync_status == MarketDataSyncStatus.FAILED
-    assert result.error_code == "provider_error"
-
-
-def test_yahoo_finance_unofficial_provider_rejects_unsupported_four_hour_timeframe() -> None:
-    transport = FakeProviderTransport(yahoo_finance_payload(1_780_012_800))
-    provider = YahooFinanceUnofficialProvider(transport=transport)
-    plan = build_market_data_sync_plan(
-        symbol="AAPL",
-        timeframe=Timeframe.FOUR_HOURS,
-        provider_sync_enabled=True,
-        provider_name="yahoo_finance_unofficial",
-    )
-
-    result = provider.sync(plan)
-
-    assert transport.urls == []
-    assert result.sync_status == MarketDataSyncStatus.FAILED
-    assert result.error_code == "unsupported_timeframe"
-
-
-def test_yahoo_finance_parser_skips_null_candles_and_keeps_usable_rows() -> None:
-    payload = yahoo_finance_payload(1_780_012_800)
-    result = payload["chart"]["result"][0]  # type: ignore[index]
-    result["timestamp"].append(1_780_099_200)
-    quote = result["indicators"]["quote"][0]
-    quote["open"].append(None)
-    quote["high"].append(None)
-    quote["low"].append(None)
-    quote["close"].append(None)
-    quote["volume"].append(None)
-
-    candles, error_code = parse_yahoo_finance_chart_response(payload)
-
-    assert error_code is None
-    assert len(candles) == 1
-    assert candles[0].timestamp == datetime(2026, 5, 29, tzinfo=UTC)
-
-
-def test_yahoo_finance_parser_rejects_invalid_payload() -> None:
-    candles, error_code = parse_yahoo_finance_chart_response(
-        {"chart": {"result": [{"timestamp": [1_780_012_800], "indicators": {}}]}}
-    )
-
-    assert candles == []
-    assert error_code == "provider_invalid_response"
-
-
-def test_provider_timeframe_capabilities_explain_yahoo_finance_unofficial_limits() -> None:
-    capabilities = provider_timeframe_capabilities("yahoo_finance_unofficial")
-
-    by_timeframe = {capability.timeframe: capability for capability in capabilities}
-    assert by_timeframe[Timeframe.ONE_WEEK].supported is True
-    assert by_timeframe[Timeframe.ONE_DAY].supported is True
-    assert by_timeframe[Timeframe.FOUR_HOURS].supported is False
-    assert "unofficial" in by_timeframe[Timeframe.ONE_DAY].reason
-    assert "CSV fallback" in by_timeframe[Timeframe.FOUR_HOURS].reason
 
 
 def test_persist_provider_sync_result_replaces_provider_candles(db_session) -> None:
@@ -698,30 +612,6 @@ def twelve_data_payload(date_text: str) -> dict[str, object]:
             }
         ],
         "status": "ok",
-    }
-
-
-def yahoo_finance_payload(timestamp: int) -> dict[str, object]:
-    return {
-        "chart": {
-            "result": [
-                {
-                    "timestamp": [timestamp],
-                    "indicators": {
-                        "quote": [
-                            {
-                                "open": [100.0],
-                                "high": [110.0],
-                                "low": [95.0],
-                                "close": [105.0],
-                                "volume": [1234567],
-                            }
-                        ]
-                    },
-                }
-            ],
-            "error": None,
-        }
     }
 
 

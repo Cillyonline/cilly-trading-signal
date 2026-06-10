@@ -11,8 +11,8 @@ advice, or approval for automatic execution.
 
 ## Decision Summary
 
-Status: First practical provider path selected for guarded Daily/EOD stock sync;
-broader provider reliance remains deferred.
+Status: Twelve Data selected as the clean provider path for guarded manual `1W`,
+`1D`, and `4H` stored-data sync; broader provider reliance remains guarded.
 
 Current v4.4 operator decision:
 
@@ -22,30 +22,26 @@ Current v4.4 operator decision:
 - Alpha Vantage remains an optional guarded Daily/EOD smoke path only. The configured
   smoke failed safely with `provider_rate_limited`, so it is not treated as the
   operating data backbone.
-- Paid provider evaluation is deferred until the operator accepts a non-zero budget or
-  `4H`/intraday automation becomes mandatory enough to justify provider cost,
-  licensing review, and rate-limit planning.
+- Twelve Data is the selected clean next provider path because it has an official
+  API, a testable free tier, mixed asset coverage, and documented `1W`, `1D`, and
+  intraday intervals suitable for `4H` stored-data sync.
 
 Current decision:
 
 - Keep TradingView CSV import as a supported data source.
 - Keep provider-neutral configuration, source metadata, freshness metadata, and sync
   status handling independent of any one vendor.
-- Treat Daily/EOD data as the first practical provider-backed target.
+- Treat `1W`, `1D`, and `4H` stored candles as the first practical Twelve Data
+  provider-backed target.
 - Use Alpha Vantage as the first implemented adapter path for Daily/EOD sync behind
   the provider boundary.
 - Keep Alpha Vantage as the current practical first path for US-stock Daily/EOD
   smoke and operator learning because it is already implemented and sufficient to
   validate provider plumbing, freshness states, and failure handling.
-- Allow `yahoo_finance_unofficial` as a keyless, zero-budget, manual private-review
-  provider path only. It is useful for reducing CSV friction, but it is unofficial,
-  can break without notice, and is not a production-like or licensed provider
-  reliance decision.
-- Defer a paid/production-like provider decision until provider terms, symbol
-  coverage, storage rights, rate limits, and `4H` availability are reviewed against
-  the actual watchlist size.
-- Keep `4H`/intraday provider support unresolved until provider cost, licensing, and
-  rate-limit constraints are confirmed.
+- Remove the unofficial Yahoo Finance path from the clean provider implementation.
+  Yahoo Finance is not an official API provider path for this app.
+- Keep real provider reliance guarded by Twelve Data key configuration, sanitized
+  smoke evidence, CSV fallback, and visible stale/failed/partial states.
 - Do not claim live, real-time, or trader-actionable data freshness from manual
   provider sync.
 
@@ -115,28 +111,27 @@ or create any live/realtime data claim.
 
 | Provider | US Stocks | `1D` / EOD | `4H` / Intraday | Main Strength | Main Risk | Practical v4.1 Position |
 | --- | --- | --- | --- | --- | --- | --- |
-| Twelve Data | Broad coverage depending on plan | Supported on relevant plans | Supported depending on plan and entitlement | One API surface for daily and intraday; potentially useful if `4H` becomes required. | Plan/entitlement, symbol mapping, and storage/licensing terms need confirmation. | Candidate for a later paid provider evaluation, not immediate default. |
+| Twelve Data | Broad coverage depending on plan | Supported on relevant plans | Supported depending on plan and entitlement | One API surface for weekly, daily, and intraday; useful for `1W`/`1D`/`4H` stored-data sync. | Plan/entitlement, symbol mapping, and storage/licensing terms need confirmation. | Selected clean next provider path. |
 | Tiingo | Strong US equities focus depending on plan | Strong daily/equity fit | Intraday availability depends on plan/API | Good fit for adjusted daily US-stock data and clearer equity focus. | Intraday/crypto coverage and storage terms need confirmation. | Candidate if Daily/EOD quality is prioritized over unified stock/crypto coverage. |
 | Polygon.io | Strong US market coverage on paid plans | Supported | Strong paid intraday support | High-quality US-stock/intraday path if budget and licensing fit. | Cost, entitlement complexity, and production-like licensing burden. | Candidate for later serious intraday path, not low-friction first step. |
 | EODHD | Broad EOD-oriented market coverage depending on plan | Strong EOD fit | Intraday availability depends on plan | Practical EOD-first vendor with broad symbol coverage. | Intraday details, exchange entitlements, and storage terms need review. | Candidate for Daily/EOD replacement if Alpha Vantage proves limiting. |
 | Alpha Vantage | Broad public symbols, plan-dependent reliability | Supported and already implemented | Intraday exists but rate limits and `4H` construction need caution | Already implemented; good for validating guarded provider plumbing with no new code path. | Free/low-cost rate limits, adjusted-data details, and reliability may limit scale. | Current practical first path for guarded Daily/EOD smoke only. |
-| Yahoo Finance unofficial | Broad visible coverage, symbol-format dependent | Keyless chart data path for private manual review | `4H` remains CSV fallback in this implementation | Zero-budget and low-friction for owner/operator prototyping. | Unofficial access, unclear/stale terms for broader reliance, no SLA, can break without notice. | Allowed as keyless private manual/prototype path, not provider reliance. |
+| Yahoo Finance unofficial | Broad visible coverage, symbol-format dependent | Unofficial chart data path | Not selected | Low-friction prototype path. | Unofficial access, unclear/stale terms for broader reliance, no SLA, can break without notice. | Removed from the clean provider implementation. |
 
 Recommendation:
 
-- Keep Alpha Vantage as the first practical provider path for the next controlled
-  Daily/EOD smoke because the adapter and tests already exist.
-- Do not expand provider reliance to `4H`, automated refresh, or production-like use
-  yet.
-- Keep TradingView CSV as the required fallback and the only currently reliable way
-  to fill all `1W`, `1D`, and `4H` timeframes for multi-timeframe analysis.
-- Revisit Twelve Data, Tiingo, Polygon, and EODHD only after recording watchlist size,
-  required symbols/exchanges, expected sync frequency, budget, and storage/licensing
-  acceptance.
+- Use Twelve Data as the clean provider path for guarded manual `1W`, `1D`, and `4H`
+  stored-data sync.
+- Keep TradingView CSV as the required fallback when Twelve Data plan limits,
+  entitlement, symbol mapping, or provider failures block a symbol/timeframe.
+- Do not add automated refresh, automatic signal generation, or production-like
+  provider reliance from this decision.
 
 Deferral:
 
-- No paid provider is selected in this issue.
+- Twelve Data is selected as the next implementation provider, but operational
+  reliance still depends on the owner/operator API key, entitlement, symbol coverage,
+  and sanitized smoke evidence.
 - No provider secret, API key, account ID, subscription tier, or VPS setting is added.
 - No provider is approved as live/realtime or broker/execution-ready.
 
@@ -146,10 +141,10 @@ Deferral:
 | --- | --- | --- | --- | --- | --- | --- |
 | TradingView CSV | Manual export only | Manual export only | Yes, via upload | Yes, via upload if exported manually | Already implemented; no provider key; manual and repeatable but not automated. | Keep as baseline and fallback. |
 | Alpha Vantage | Broad public-market coverage depends on plan | Limited crypto/FX coverage | Yes | Intraday exists but rate limits and adjusted-history details require review | Simple API shape; free/low-cost tiers can be restrictive; licensing must be checked before reliance. | First implemented guarded Daily/EOD adapter path. |
-| Yahoo Finance unofficial | Broad visible coverage | Some crypto symbols depending on Yahoo symbol format | Yes for stored manual chart sync | Not enabled for `4H`; use CSV fallback | Keyless and practical for zero-budget private review, but unofficial and breakable. | Guarded private/prototype sync only, not production-like reliance. |
-| Twelve Data | Stocks/ETFs/FX depending on plan | Crypto support depending on plan | Yes | Intraday support depending on plan | Broad API surface; pricing and symbol mapping need review. | Candidate if combined stock/crypto coverage is prioritized. |
+| Twelve Data | Stocks/ETFs/FX depending on plan | Crypto support depending on plan | Yes | Intraday support depending on plan | Broad API surface; pricing, entitlement, and symbol mapping need review during smoke. | Selected clean next provider path for guarded manual `1W`/`1D`/`4H` sync. |
 | Polygon.io | Strong US market coverage depending on subscription | Crypto support depending on subscription | Yes | Strong intraday support on paid tiers | Higher-quality option but cost/licensing likely higher; useful if intraday becomes required. | Candidate for later paid/intraday path, not first low-risk default. |
 | Tiingo | US equities and ETFs depending on plan | Some crypto data depending on plan | Yes | Intraday depends on plan/API | Often suitable for adjusted daily equity data; crypto/intraday needs confirmation. | Candidate for daily stock data if licensing is acceptable. |
+| Yahoo Finance unofficial | Broad visible coverage | Some crypto symbols depending on Yahoo symbol format | Unofficial only | Unofficial only | Keyless but unofficial, breakable, and not suitable as the clean provider path. | Removed/not recommended for operational provider integration. |
 | Exchange-native crypto APIs | No | Exchange-specific | Yes, via candles | Yes | Good crypto candle availability, but symbol/exchange mapping and per-exchange quirks add complexity. | Candidate for later crypto-specific integration, not first unified provider. |
 
 ## Implemented Scope
@@ -169,8 +164,8 @@ Included:
 - Authenticated manual `POST /api/imports/sync` endpoint.
 - Provider-backed candle persistence for provider series only.
 - First Alpha Vantage Daily/EOD provider adapter with mocked tests.
-- Keyless Yahoo Finance unofficial adapter for guarded private manual `1W`/`1D`
-  stored-data sync, with `4H` kept as CSV fallback.
+- Twelve Data provider adapter for guarded manual `1W`, `1D`, and `4H` stored-data
+  sync behind the existing provider boundary.
 
 Not included:
 

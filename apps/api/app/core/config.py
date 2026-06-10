@@ -25,11 +25,9 @@ UNSAFE_MARKET_DATA_VALUES = {
 SUPPORTED_MARKET_DATA_PROVIDERS = {
     "alpha_vantage",
     "twelve_data",
-    "yahoo_finance_unofficial",
     "polygon",
     "tiingo",
 }
-KEYLESS_MARKET_DATA_PROVIDERS = {"yahoo_finance_unofficial"}
 
 
 def _has_unsafe_database_credentials(database_url: str) -> bool:
@@ -134,9 +132,7 @@ class Settings(BaseSettings):
                 + ", ".join(sorted(SUPPORTED_MARKET_DATA_PROVIDERS))
                 + " before MARKET_DATA_PROVIDER_SYNC_ENABLED can be true"
             )
-        if provider not in KEYLESS_MARKET_DATA_PROVIDERS and _is_unsafe_optional_secret(
-            self.market_data_api_key, UNSAFE_MARKET_DATA_VALUES
-        ):
+        if _is_unsafe_optional_secret(self.market_data_api_key, UNSAFE_MARKET_DATA_VALUES):
             errors.append(
                 "MARKET_DATA_API_KEY must be set before "
                 "MARKET_DATA_PROVIDER_SYNC_ENABLED can be true"
