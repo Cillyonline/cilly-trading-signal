@@ -36,6 +36,42 @@ export type SignalDecision = {
   priority: number;
 };
 
+export type SignalDecisionExplanation = {
+  whatItMeans: string;
+  whatNow: string;
+};
+
+export const SIGNAL_DECISION_EXPLANATIONS: Record<SignalDecisionKind, SignalDecisionExplanation> = {
+  paper_candidate: {
+    whatItMeans:
+      "Das Setup ist stark genug fuer eine manuelle Paper-Review. Es ist keine Kaufanweisung und erzeugt keinen Trade.",
+    whatNow:
+      "Detailkarte, 4H-Schlusskurs, Freshness, Stop, R:R und Invalidation pruefen. Jede echte Ausfuehrung bleibt ausserhalb der App.",
+  },
+  observe: {
+    whatItMeans:
+      "Das Symbol ist interessant, aber ein Trigger oder eine saubere Bestaetigung fehlt noch. `trigger: missing` ist hier ein normaler Beobachten-Zustand.",
+    whatNow:
+      "Auf der Watchlist lassen, Daten gezielt aktualisieren und erst nach klarerer Bestaetigung wieder reviewen.",
+  },
+  no_trade: {
+    whatItMeans:
+      "Mindestens ein Pflichtfilter, Trend-, Struktur- oder Risikopunkt blockiert das Setup konservativ.",
+    whatNow:
+      "Nicht als Paper-Trade behandeln. Gruende lesen, spaeter mit neuen Daten erneut pruefen oder verwerfen.",
+  },
+  data_problem: {
+    whatItMeans:
+      "Daten, Timeframes, Indikatoren oder Freshness reichen nicht fuer eine belastbare Analyse.",
+    whatNow:
+      "Fehlende oder stale Daten fuer 1W, 1D und 4H korrigieren. Bis dahin bleibt das Ergebnis konservativ blockiert.",
+  },
+};
+
+export function signalDecisionExplanation(kind: SignalDecisionKind): SignalDecisionExplanation {
+  return SIGNAL_DECISION_EXPLANATIONS[kind];
+}
+
 const DATA_QUALITY_REASONS = new Set([
   "poor_data_quality",
   "required_timeframe_data_missing",

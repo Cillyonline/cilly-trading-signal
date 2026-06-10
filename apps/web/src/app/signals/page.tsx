@@ -4,9 +4,15 @@ import { useEffect, useMemo, useState } from "react";
 
 import { AuthenticatedHeaderActions } from "@/components/authenticated-header-actions";
 import { ProtectedRouteLoading, useProtectedRoute } from "@/lib/auth-guard";
-import { fetchSignals, redirectToLoginOnAuthError } from "@/lib/api";
-import { buildSignalDecision, signalDecisionDotClass, signalDecisionToneClass } from "@/lib/signal-decision";
+import { fetchSignals, fetchWatchlist, redirectToLoginOnAuthError } from "@/lib/api";
+import {
+  buildSignalDecision,
+  signalDecisionDotClass,
+  signalDecisionExplanation,
+  signalDecisionToneClass,
+} from "@/lib/signal-decision";
 import type { ScoreClass, Signal, SignalStatus, StrategyType, TriggerProximityState } from "@/types/signals";
+import type { WatchlistItem } from "@/types/watchlist";
 
 type SignalFilters = {
   symbol: string;
@@ -67,6 +73,7 @@ const statusLabel: Record<SignalStatus, string> = {
 export default function SignalsPage() {
   const authStatus = useProtectedRoute();
   const [signals, setSignals] = useState<Signal[]>([]);
+  const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [filters, setFilters] = useState<SignalFilters>(emptyFilters);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -75,7 +82,9 @@ export default function SignalsPage() {
     setIsLoading(true);
     setError(null);
     try {
-      setSignals(await fetchSignals());
+      const [loadedSignals, loadedWatchlist] = await Promise.all([fetchSignals(), fetchWatchlist()]);
+      setSignals(loadedSignals);
+      setWatchlist(loadedWatchlist);
     } catch (loadError) {
       if (redirectToLoginOnAuthError(loadError)) {
         return;
@@ -92,10 +101,12 @@ export default function SignalsPage() {
     }
   }, [authStatus]);
 
-  const summary = useMemo(() => buildSummary(signals), [signals]);
-  const activeReviewItems = useMemo(() => buildActiveReviewItems(signals), [signals]);
-  const triggerRadarItems = useMemo(() => buildTriggerRadarItems(signals), [signals]);
-  const filteredSignals = useMemo(() => filterSignals(signals, filters), [signals, filters]);
+  const activeSignals = useMemo(() => filterActiveWatchlistSignals(signals, watchlist), [signals, watchlist]);
+  const inactiveSignalCount = signals.length - activeSignals.length;
+  const summary = useMemo(() => buildSummary(activeSignals), [activeSignals]);
+  const activeReviewItems = useMemo(() => buildActiveReviewItems(activeSignals), [activeSignals]);
+  const triggerRadarItems = useMemo(() => buildTriggerRadarItems(activeSignals), [activeSignals]);
+  const filteredSignals = useMemo(() => filterSignals(activeSignals, filters), [activeSignals, filters]);
   const rankedSignals = useMemo(() => rankSignals(filteredSignals), [filteredSignals]);
 
   if (authStatus !== "authenticated") {
@@ -126,6 +137,10 @@ export default function SignalsPage() {
           <SummaryCard label="Kein Trade" value={summary.noTrade.toString()} tone="red" />
           <SummaryCard label="Datenproblem" value={summary.dataProblem.toString()} tone="gray" />
         </section>
+
+        <SignalStateGuide />
+
+        {inactiveSignalCount > 0 ? <InactiveSignalsNotice count={inactiveSignalCount} /> : null}
 
         <ActiveReviewShortlistSection items={activeReviewItems} isLoading={isLoading} />
 
@@ -170,7 +185,7 @@ export default function SignalsPage() {
             <SignalFiltersPanel
               filters={filters}
               resultCount={filteredSignals.length}
-              totalCount={signals.length}
+              totalCount={activeSignals.length}
               onChange={setFilters}
               onReset={() => setFilters(emptyFilters)}
             />
@@ -178,7 +193,7 @@ export default function SignalsPage() {
             <div className="mt-6 overflow-hidden rounded-2xl border border-white/10">
               {isLoading ? (
                 <p className="p-5 text-sm text-slate-400">Signale werden geladen...</p>
-              ) : signals.length === 0 ? (
+              ) : activeSignals.length === 0 ? (
                 <EmptyState />
               ) : filteredSignals.length === 0 ? (
                 <FilteredEmptyState />
@@ -536,11 +551,68 @@ function SummaryCard({
   );
 }
 
+function SignalStateGuide() {
+  const states = [
+    { kind: "paper_candidate", label: "Paper-Kandidat", tone: "green" },
+    { kind: "observe", label: "Beobachten", tone: "yellow" },
+    { kind: "no_trade", label: "Kein Trade", tone: "red" },
+    { kind: "data_problem", label: "Datenproblem", tone: "gray" },
+  ] as const;
+
+  return (
+    <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
+      <p className="text-sm font-semibold uppercase tracking-[0.22em] text-sky-300">Status verstehen</p>
+      <h2 className="mt-2 text-xl font-semibold">Was die Radar-Farben bedeuten</h2>
+      <p className="mt-2 max-w-3xl text-sm text-slate-400">
+        Die Labels priorisieren manuelle Review-Arbeit. Sie sind keine Kauf-/Verkaufsanweisung,
+        keine Order und kein automatischer Trade.
+      </p>
+      <div className="mt-5 grid gap-3 lg:grid-cols-4">
+        {states.map((state) => {
+          const explanation = signalDecisionExplanation(state.kind);
+          return (
+            <article key={state.kind} className={`rounded-2xl border p-4 ${stateGuideTone(state.tone)}`}>
+              <p className="font-semibold text-slate-50">{state.label}</p>
+              <p className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] opacity-75">Was bedeutet das?</p>
+              <p className="mt-1 text-sm opacity-90">{explanation.whatItMeans}</p>
+              <p className="mt-3 text-xs font-semibold uppercase tracking-[0.16em] opacity-75">Was jetzt?</p>
+              <p className="mt-1 text-sm opacity-90">{explanation.whatNow}</p>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function InactiveSignalsNotice({ count }: { count: number }) {
+  return (
+    <section className="rounded-2xl border border-slate-400/20 bg-slate-800/60 p-4 text-sm text-slate-300">
+      {count} Signal(e) gehoeren zu inaktiven Watchlist-Symbolen und werden nicht als aktive Review-Arbeit
+      angezeigt. Historische Signale bleiben im Backend erhalten; Reaktivierung erfolgt bewusst ueber die Watchlist.
+    </section>
+  );
+}
+
+function stateGuideTone(tone: "green" | "yellow" | "red" | "gray") {
+  if (tone === "green") {
+    return "border-emerald-300/30 bg-emerald-300/10 text-emerald-100";
+  }
+  if (tone === "yellow") {
+    return "border-yellow-300/30 bg-yellow-300/10 text-yellow-100";
+  }
+  if (tone === "red") {
+    return "border-red-300/30 bg-red-300/10 text-red-100";
+  }
+  return "border-slate-400/30 bg-slate-400/10 text-slate-100";
+}
+
 function SignalCard({ signal }: { signal: Signal }) {
   const reasoning = toTextList(signal.reasoning);
   const riskFlags = toTextList(signal.risk_flags);
   const noTradeReasons = toTextList(signal.no_trade_reasons);
   const decision = buildSignalDecision(signal);
+  const explanation = signalDecisionExplanation(decision.kind);
 
   return (
     <article className="grid gap-4 p-4 sm:p-5 lg:grid-cols-[1fr_0.82fr]">
@@ -568,6 +640,10 @@ function SignalCard({ signal }: { signal: Signal }) {
           </div>
           <p className="mt-3 text-lg font-semibold text-slate-50">{decision.headline}</p>
           <p className="mt-2 text-sm">{decision.action}</p>
+          <div className="mt-4 grid gap-3 lg:grid-cols-2">
+            <DecisionExplanationBox title="Was bedeutet das?" text={explanation.whatItMeans} />
+            <DecisionExplanationBox title="Was jetzt?" text={explanation.whatNow} />
+          </div>
         </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -633,6 +709,15 @@ function SignalCard({ signal }: { signal: Signal }) {
         <SignalContextDisclosure title="Risk Flags" items={riskFlags} empty="Keine Risk Flags gespeichert." tone="orange" />
       </div>
     </article>
+  );
+}
+
+function DecisionExplanationBox({ text, title }: { text: string; title: string }) {
+  return (
+    <div className="rounded-xl border border-current/15 bg-slate-950/30 p-3 text-sm">
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] opacity-75">{title}</p>
+      <p className="mt-2 opacity-90">{text}</p>
+    </div>
   );
 }
 
@@ -708,6 +793,15 @@ function FilteredEmptyState() {
   );
 }
 
+function filterActiveWatchlistSignals(signals: Signal[], watchlist: WatchlistItem[]) {
+  if (watchlist.length === 0) {
+    return signals;
+  }
+
+  const activeIds = new Set(watchlist.filter((item) => item.is_active).map((item) => item.id));
+  return signals.filter((signal) => activeIds.has(signal.watchlist_item_id));
+}
+
 function buildSummary(signals: Signal[]) {
   const decisions = signals.map((signal) => buildSignalDecision(signal));
   return {
@@ -770,8 +864,8 @@ function toActiveReviewItem(signal: Signal): ActiveReviewItem | null {
     return {
       signal,
       label: "Beobachten",
-      reason: "Interessant, aber noch kein klarer Paper-Kandidat.",
-      action: "Auf der aktiven Review-Liste lassen und nach neuer 1D/4H-CSV erneut pruefen.",
+      reason: "Interessant, aber noch kein klarer Trigger oder Paper-Kandidat.",
+      action: "Auf der aktiven Review-Liste lassen. `trigger: missing` ist normal; nach neuer 1D/4H-CSV erneut pruefen.",
       priority: 3,
       tone: "yellow",
     };
