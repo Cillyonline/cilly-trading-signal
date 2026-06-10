@@ -71,6 +71,7 @@ export type MarketDataSyncResult = {
   series_id: number;
   source: MarketDataSource;
   timeframe: Timeframe;
+  candle_count: number;
   provider_name: string | null;
   provider_symbol: string | null;
   provider_exchange: string | null;

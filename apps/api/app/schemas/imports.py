@@ -92,6 +92,7 @@ class MarketDataSyncResponse(BaseModel):
     series_id: int
     source: MarketDataSource
     timeframe: Timeframe
+    candle_count: int
     provider_name: str | None
     provider_symbol: str | None
     provider_exchange: str | None
