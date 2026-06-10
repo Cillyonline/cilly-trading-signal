@@ -179,13 +179,10 @@ function hasBlockingDataProblem(
   if (noTradeReasons.some((reason) => DATA_QUALITY_REASONS.has(reason))) {
     return true;
   }
-  if (riskFlags.some((flag) => flag.includes("missing") || flag.includes("stale") || flag.includes("failed"))) {
-    return true;
-  }
   return input.quality_report.some(
     (check) =>
-      (check.key === "data_quality" || check.key === "risk_plan") &&
-      (check.status === "blocked" || check.status === "missing"),
+      check.key === "data_quality" &&
+      check.status === "blocked",
   );
 }
 
