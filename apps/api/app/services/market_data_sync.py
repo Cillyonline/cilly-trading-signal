@@ -24,7 +24,6 @@ FRESHNESS_WINDOWS = {
 }
 ALPHA_VANTAGE_DAILY_URL = "https://www.alphavantage.co/query"
 TWELVE_DATA_TIME_SERIES_URL = "https://api.twelvedata.com/time_series"
-YAHOO_FINANCE_CHART_URL = "https://query1.finance.yahoo.com/v8/finance/chart"
 
 
 @dataclass(frozen=True)
@@ -140,7 +139,7 @@ class AlphaVantageDailyProvider:
         )
 
 
-class TwelveDataDailyProvider:
+class TwelveDataProvider:
     def __init__(
         self,
         api_key: str,
@@ -165,56 +164,6 @@ class TwelveDataDailyProvider:
             return provider_failure(plan, "provider_transport_error", "Provider request failed.")
 
         candles, error_code = parse_twelve_data_response(payload)
-        if error_code is not None:
-            return provider_failure(plan, error_code, "Provider response could not be used.")
-        if not candles:
-            return MarketDataSyncResult(
-                sync_status=MarketDataSyncStatus.PARTIAL,
-                freshness_status=MarketDataFreshnessStatus.PARTIAL,
-                provider_name=plan.provider_name,
-                provider_symbol=plan.provider_symbol,
-                provider_exchange=plan.provider_exchange,
-                provider_timeframe=plan.provider_timeframe,
-                error_code="provider_empty_response",
-                error_message="Provider returned no candles.",
-            )
-
-        latest_timestamp = max(candle.timestamp for candle in candles)
-        return MarketDataSyncResult(
-            sync_status=MarketDataSyncStatus.SUCCESS,
-            freshness_status=evaluate_timestamp_freshness(latest_timestamp, plan.timeframe),
-            provider_name=plan.provider_name,
-            provider_symbol=plan.provider_symbol,
-            provider_exchange=plan.provider_exchange,
-            provider_timeframe=plan.provider_timeframe,
-            data_end_at=latest_timestamp,
-            candles=tuple(candles),
-        )
-
-
-class YahooFinanceUnofficialProvider:
-    def __init__(
-        self,
-        *,
-        transport: "ProviderTransport | None" = None,
-    ) -> None:
-        self.transport = transport or UrllibProviderTransport()
-
-    def sync(self, plan: MarketDataSyncPlan) -> MarketDataSyncResult:
-        unsupported_reason = unsupported_timeframe_reason(plan)
-        if unsupported_reason is not None:
-            return provider_failure(
-                plan,
-                "unsupported_timeframe",
-                unsupported_reason,
-            )
-
-        try:
-            payload = self.transport.get_json(build_yahoo_finance_chart_url(plan))
-        except ProviderTransportError:
-            return provider_failure(plan, "provider_transport_error", "Provider request failed.")
-
-        candles, error_code = parse_yahoo_finance_chart_response(payload)
         if error_code is not None:
             return provider_failure(plan, error_code, "Provider response could not be used.")
         if not candles:
@@ -286,40 +235,11 @@ def build_twelve_data_url(plan: MarketDataSyncPlan, api_key: str) -> str:
     return f"{TWELVE_DATA_TIME_SERIES_URL}?{params}"
 
 
-def build_yahoo_finance_chart_url(plan: MarketDataSyncPlan) -> str:
-    symbol = plan.provider_symbol or plan.symbol
-    params = urlencode(
-        {
-            "interval": _yahoo_finance_interval(plan.timeframe),
-            "range": _yahoo_finance_range(plan.timeframe),
-            "includePrePost": "false",
-            "events": "div,splits",
-        }
-    )
-    return f"{YAHOO_FINANCE_CHART_URL}/{symbol}?{params}"
-
-
 def _twelve_data_interval(timeframe: Timeframe) -> str:
     mapping = {
         Timeframe.ONE_WEEK: "1week",
         Timeframe.ONE_DAY: "1day",
         Timeframe.FOUR_HOURS: "4h",
-    }
-    return mapping[timeframe]
-
-
-def _yahoo_finance_interval(timeframe: Timeframe) -> str:
-    mapping = {
-        Timeframe.ONE_WEEK: "1wk",
-        Timeframe.ONE_DAY: "1d",
-    }
-    return mapping[timeframe]
-
-
-def _yahoo_finance_range(timeframe: Timeframe) -> str:
-    mapping = {
-        Timeframe.ONE_WEEK: "5y",
-        Timeframe.ONE_DAY: "1y",
     }
     return mapping[timeframe]
 
@@ -353,75 +273,6 @@ def parse_twelve_data_response(payload: object) -> tuple[list[ProviderCandle], s
                 )
             )
         except (InvalidOperation, KeyError, TypeError, ValueError):
-            return [], "provider_invalid_response"
-    return candles, None
-
-
-def parse_yahoo_finance_chart_response(payload: object) -> tuple[list[ProviderCandle], str | None]:
-    if not isinstance(payload, dict):
-        return [], "provider_invalid_response"
-
-    chart = payload.get("chart")
-    if not isinstance(chart, dict):
-        return [], "provider_invalid_response"
-    if chart.get("error") is not None:
-        return [], "provider_error"
-
-    results = chart.get("result")
-    if not isinstance(results, list) or not results:
-        return [], "provider_invalid_response"
-
-    result = results[0]
-    if not isinstance(result, dict):
-        return [], "provider_invalid_response"
-
-    timestamps = result.get("timestamp")
-    indicators = result.get("indicators")
-    if not isinstance(timestamps, list) or not isinstance(indicators, dict):
-        return [], "provider_invalid_response"
-
-    quotes = indicators.get("quote")
-    if not isinstance(quotes, list) or not quotes or not isinstance(quotes[0], dict):
-        return [], "provider_invalid_response"
-
-    quote = quotes[0]
-    opens = _yahoo_number_list(quote, "open")
-    highs = _yahoo_number_list(quote, "high")
-    lows = _yahoo_number_list(quote, "low")
-    closes = _yahoo_number_list(quote, "close")
-    volumes = _yahoo_number_list(quote, "volume")
-    if any(series is None for series in (opens, highs, lows, closes, volumes)):
-        return [], "provider_invalid_response"
-    if not all(
-        len(series) == len(timestamps)
-        for series in (opens, highs, lows, closes, volumes)
-        if series is not None
-    ):
-        return [], "provider_invalid_response"
-
-    candles: list[ProviderCandle] = []
-    for index, raw_timestamp in enumerate(timestamps):
-        try:
-            raw_values = (
-                opens[index],
-                highs[index],
-                lows[index],
-                closes[index],
-                volumes[index],
-            )
-            if raw_timestamp is None or any(value is None for value in raw_values):
-                continue
-            candles.append(
-                ProviderCandle(
-                    timestamp=datetime.fromtimestamp(int(raw_timestamp), UTC),
-                    open=Decimal(str(raw_values[0])),
-                    high=Decimal(str(raw_values[1])),
-                    low=Decimal(str(raw_values[2])),
-                    close=Decimal(str(raw_values[3])),
-                    volume=Decimal(str(raw_values[4])),
-                )
-            )
-        except (InvalidOperation, TypeError, ValueError):
             return [], "provider_invalid_response"
     return candles, None
 
@@ -524,34 +375,6 @@ def provider_timeframe_capabilities(
                 timeframe=Timeframe.FOUR_HOURS,
                 supported=True,
                 reason="Twelve Data supports 4H sync for configured symbols.",
-            ),
-        )
-
-    if normalized == "yahoo_finance_unofficial":
-        return (
-            ProviderTimeframeCapability(
-                timeframe=Timeframe.ONE_WEEK,
-                supported=True,
-                reason=(
-                    "Yahoo Finance unofficial chart data can refresh weekly stored candles "
-                    "for private manual review; use CSV fallback if unavailable."
-                ),
-            ),
-            ProviderTimeframeCapability(
-                timeframe=Timeframe.ONE_DAY,
-                supported=True,
-                reason=(
-                    "Yahoo Finance unofficial chart data can refresh Daily/EOD stored candles "
-                    "without an API key for private manual review."
-                ),
-            ),
-            ProviderTimeframeCapability(
-                timeframe=Timeframe.FOUR_HOURS,
-                supported=False,
-                reason=(
-                    "4H provider sync is not enabled for the unofficial Yahoo path; "
-                    "use TradingView CSV fallback."
-                ),
             ),
         )
 
@@ -779,13 +602,6 @@ def _decimal_field(payload: dict[object, object], key: str) -> Decimal:
     if not isinstance(value, str | int | float | Decimal):
         raise TypeError
     return Decimal(str(value))
-
-
-def _yahoo_number_list(payload: dict[object, object], key: str) -> list[object] | None:
-    value = payload.get(key)
-    if not isinstance(value, list):
-        return None
-    return value
 
 
 def provider_failure(

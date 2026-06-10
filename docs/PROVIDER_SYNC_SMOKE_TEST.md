@@ -113,29 +113,20 @@ Configuration shape:
 
 ```dotenv
 MARKET_DATA_PROVIDER_SYNC_ENABLED=true
-MARKET_DATA_PROVIDER=alpha_vantage
+MARKET_DATA_PROVIDER=twelve_data
 MARKET_DATA_API_KEY=<redacted-real-provider-key>
 ```
 
-Keyless private zero-budget smoke shape:
-
-```dotenv
-MARKET_DATA_PROVIDER_SYNC_ENABLED=true
-MARKET_DATA_PROVIDER=yahoo_finance_unofficial
-MARKET_DATA_API_KEY=
-```
-
-The Yahoo Finance unofficial path is only a manual private-review/prototype path.
-It is not an official Yahoo API integration, not live or real-time data, not a
-licensed provider-reliance decision, and can break without notice. Keep TradingView
-CSV as the fallback and do not use this evidence as production-readiness proof.
+The clean provider path uses Twelve Data with an operator-owned API key. Keep
+TradingView CSV as the fallback and do not use this evidence as production-readiness
+proof.
 
 Manual steps:
 
 1. Restart the API after setting the local or staging environment variables.
 2. Confirm API health without printing environment values.
 3. Open the Import page and select a sample Watchlist item.
-4. Request manual data update for `1D` with `Daten aktualisieren`.
+4. Request manual data update for `1W`, `1D`, and `4H` with `Daten aktualisieren`.
 5. Review the Aktualisierungs-Ergebnis panel, capability hints, and Import history.
 6. Optionally verify the resulting provider-backed series via the authenticated UI or
    sanitized API output.
@@ -146,9 +137,8 @@ Expected success result:
 - `source` is `provider`.
 - `freshness_status` is derived from the stored latest candle timestamp.
 - Provider metadata is populated with sanitized provider name/symbol/timeframe.
-- Provider capability hints match the configured provider. For
-  `yahoo_finance_unofficial`, `1W` and `1D` may be supported for manual stored-data
-  review while `4H` remains TradingView CSV fallback.
+- Provider capability hints match the configured provider. For `twelve_data`, `1W`,
+  `1D`, and `4H` are supported for manual stored-data review.
 - Latest candle timestamp and Import history are visible.
 - No automatic analysis, signal, trade, order, broker call, or Telegram alert is
   created.
@@ -159,9 +149,8 @@ Expected safe failure results:
 - Unsupported timeframe, provider rate limit, invalid provider payload, empty provider
   response, or transport failure produces `failed` or `partial` with sanitized
   `sync_error_code` and `sync_error_message`.
-- For `4H`, the current Alpha Vantage path should fail closed with a clear
-  unsupported-timeframe message and should not call a broker, create an alert, or
-  imply live/intraday provider readiness.
+- If Twelve Data plan limits, entitlements, symbol mapping, rate limits, or provider
+  payload shape block a timeframe, the result should stay sanitized and conservative.
 - Failure evidence must not include raw provider payloads, API keys, request URLs with
   query strings, cookies, or private trading data.
 
