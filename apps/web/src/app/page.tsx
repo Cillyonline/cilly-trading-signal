@@ -183,6 +183,7 @@ function buildDashboardData(
   screenerResults: ScreenerResult[],
 ): DashboardData {
   const openTrades = trades.filter((trade) => trade.status !== "closed" && trade.status !== "reviewed");
+  const activeWatchlist = watchlist.filter((item) => item.is_active);
   const reviewNeededTrades = trades.filter((trade) => trade.review_status === "needs_review");
   const reviewSignals = signals.filter((signal) => signal.status === "armed" || signal.status === "triggered");
   const triggeredSignals = signals.filter((signal) => signal.status === "triggered");
@@ -192,7 +193,7 @@ function buildDashboardData(
   const openRisk = performance.open_portfolio_risk;
   const concentration = openRisk.asset_concentration;
   const correlationProxies = openRisk.correlation_proxies;
-  const marketDataQuality = buildMarketDataQuality(watchlist);
+  const marketDataQuality = buildMarketDataQuality(activeWatchlist);
   const screenerSummary = buildScreenerReviewSummary(screenerResults);
   const reviewPriorities = buildReviewPriorities({
     marketDataQuality,
@@ -208,8 +209,8 @@ function buildDashboardData(
     cards: [
       {
         label: "Watchlist Items",
-        value: String(watchlist.length),
-        detail: watchlist.length === 0 ? "Noch keine Symbole" : "Aktive Analyse-Basis",
+        value: String(activeWatchlist.length),
+        detail: activeWatchlist.length === 0 ? "Noch keine aktiven Symbole" : "Aktive Analyse-Basis",
         href: "/watchlist",
         tone: "border-blue-400/40",
       },
@@ -304,8 +305,9 @@ function buildDashboardData(
         tone: "border-orange-300/40",
       },
     ],
-    hasAnyData: watchlist.length > 0 || signals.length > 0 || trades.length > 0,
+    hasAnyData: activeWatchlist.length > 0 || signals.length > 0 || trades.length > 0,
     guidedSteps: buildGuidedWorkflowSteps({
+      activeWatchlistCount: activeWatchlist.length,
       marketDataQuality,
       reviewSignals,
       triggeredSignals,
@@ -322,6 +324,7 @@ function buildDashboardData(
 }
 
 function buildGuidedWorkflowSteps({
+  activeWatchlistCount,
   alertIssues,
   marketDataQuality,
   openTrades,
@@ -329,6 +332,7 @@ function buildGuidedWorkflowSteps({
   reviewSignals,
   triggeredSignals,
 }: {
+  activeWatchlistCount: number;
   alertIssues: AlertEvent[];
   marketDataQuality: MarketDataQualitySummary;
   openTrades: Trade[];
@@ -337,6 +341,47 @@ function buildGuidedWorkflowSteps({
   triggeredSignals: Signal[];
 }): GuidedWorkflowStep[] {
   const followUpCount = alertIssues.length + openTrades.length + reviewNeededTrades.length;
+
+  if (activeWatchlistCount === 0) {
+    return [
+      {
+        order: "1",
+        title: "Erstes Symbol anlegen",
+        count: "0",
+        detail: "Starte in der Watchlist mit einem aktiven Stock- oder Crypto-Symbol.",
+        href: "/watchlist",
+        action: "Watchlist oeffnen",
+        tone: "yellow",
+      },
+      {
+        order: "2",
+        title: "Daten bereitstellen",
+        count: "1W/1D/4H",
+        detail: "Nach dem Symbol CSV-Daten importieren oder bewusst Provider-Sync pruefen.",
+        href: "/import",
+        action: "Import vorbereiten",
+        tone: "slate",
+      },
+      {
+        order: "3",
+        title: "Analyse starten",
+        count: "manuell",
+        detail: "Erst nach Datenpruefung Analyse bewusst starten. Keine automatische Ausfuehrung.",
+        href: "/import",
+        action: "Workflow ansehen",
+        tone: "slate",
+      },
+      {
+        order: "4",
+        title: "Signale verstehen",
+        count: "Review",
+        detail: "Paper-Kandidat, Beobachten, Kein Trade und Datenproblem sind Review-Zustaende.",
+        href: "/signals",
+        action: "Status-Hilfe oeffnen",
+        tone: "slate",
+      },
+    ];
+  }
 
   return [
     {

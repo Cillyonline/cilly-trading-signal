@@ -13,7 +13,12 @@ import {
   redirectToLoginOnAuthError,
   syncMarketData,
 } from "@/lib/api";
-import { buildSignalDecision, signalDecisionDotClass, signalDecisionToneClass } from "@/lib/signal-decision";
+import {
+  buildSignalDecision,
+  signalDecisionDotClass,
+  signalDecisionExplanation,
+  signalDecisionToneClass,
+} from "@/lib/signal-decision";
 import type {
   CsvImportError,
   CsvImportResult,
@@ -68,6 +73,24 @@ type ImportReadinessGroup = {
   present: Timeframe[];
   missing: Timeframe[];
   complete: boolean;
+};
+
+type TimeframeReadiness = {
+  timeframe: Timeframe;
+  status: "ready" | "missing" | "stale" | "failed" | "partial" | "unknown" | "insufficient";
+  candleCount: number | null;
+  freshnessStatus: MarketDataFreshnessStatus | null;
+  source: MarketDataSource | null;
+  providerName: string | null;
+  latestCandle: string | null;
+};
+
+type SymbolDataReadiness = {
+  symbol: string;
+  isActive: boolean;
+  timeframes: TimeframeReadiness[];
+  ready: boolean;
+  nextAction: string;
 };
 
 type CsvWorkflowGuidanceItem = {
@@ -141,7 +164,12 @@ export default function ImportPage() {
       const [loadedItems, loadedHistory] = await Promise.all([fetchWatchlist(), fetchImportHistory()]);
       setItems(loadedItems);
       setHistory(loadedHistory);
-      setWatchlistItemId((current) => current || loadedItems[0]?.id.toString() || "");
+      setWatchlistItemId((current) => {
+        const activeItems = loadedItems.filter((item) => item.is_active);
+        return activeItems.some((item) => item.id.toString() === current)
+          ? current
+          : activeItems[0]?.id.toString() || "";
+      });
     } catch (loadError) {
       if (redirectToLoginOnAuthError(loadError)) {
         return;
@@ -162,12 +190,14 @@ export default function ImportPage() {
     () => items.find((item) => item.id.toString() === watchlistItemId) ?? null,
     [items, watchlistItemId],
   );
+  const activeItems = useMemo(() => items.filter((item) => item.is_active), [items]);
   const detectedFiles = useMemo(() => files.map((selectedFile) => detectCsvFile(selectedFile.name)), [files]);
-  const mappedFiles = useMemo(() => buildMappedDetectedFiles(fileMappings, items), [fileMappings, items]);
+  const mappedFiles = useMemo(() => buildMappedDetectedFiles(fileMappings, activeItems), [fileMappings, activeItems]);
   const readinessGroups = useMemo(
     () => buildImportReadinessGroups(history, mappedFiles.length > 0 ? mappedFiles : detectedFiles),
     [history, mappedFiles, detectedFiles],
   );
+  const dataReadiness = useMemo(() => buildSymbolDataReadiness(activeItems, history), [activeItems, history]);
   const mappingHasInvalidRows = useMemo(
     () => fileMappings.some((mapping) => !mapping.watchlistItemId || !mapping.timeframe),
     [fileMappings],
@@ -391,7 +421,8 @@ export default function ImportPage() {
 
         {error ? <ErrorMessage message={error} /> : null}
 
-        <CsvWorkflowSection groups={readinessGroups} />
+        <CsvWorkflowSection activeCount={activeItems.length} groups={readinessGroups} />
+        <SymbolDataReadinessSection items={dataReadiness} isLoading={isLoading} />
 
         <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
           <form onSubmit={submitImport} className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
@@ -421,7 +452,7 @@ export default function ImportPage() {
                   onChange={(event) => setWatchlistItemId(event.target.value)}
                   className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-emerald-300 disabled:opacity-60"
                 >
-                  {items.map((item) => (
+                  {activeItems.map((item) => (
                     <option key={item.id} value={item.id}>
                       {item.symbol} {item.name ? `- ${item.name}` : ""}
                     </option>
@@ -455,7 +486,7 @@ export default function ImportPage() {
                     const selectedFiles = Array.from(event.target.files ?? []);
                     setFiles(selectedFiles);
                     setFile(selectedFiles[0] ?? null);
-                    setFileMappings(buildCsvFileMappings(selectedFiles, items));
+                    setFileMappings(buildCsvFileMappings(selectedFiles, activeItems));
                     setResultSymbol(null);
                   }}
                   className="rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-400 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-slate-950 focus:border-emerald-300"
@@ -472,7 +503,7 @@ export default function ImportPage() {
               ) : null}
 
               {fileMappings.length > 0 ? (
-                <CsvFileMappingTable items={items} mappings={fileMappings} onChange={setFileMappings} />
+                <CsvFileMappingTable items={activeItems} mappings={fileMappings} onChange={setFileMappings} />
               ) : null}
 
               {readinessGroups.length > 0 ? <ImportReadinessPanel groups={readinessGroups} /> : null}
@@ -486,14 +517,14 @@ export default function ImportPage() {
                 </div>
               ) : null}
 
-              {items.length === 0 && !isLoading ? (
+              {activeItems.length === 0 && !isLoading ? (
                 <div className="rounded-2xl border border-yellow-300/30 bg-yellow-300/10 p-4 text-sm text-yellow-100">
-                  Noch keine Watchlist-Symbole vorhanden. Lege zuerst ein Symbol in der Watchlist an.
+                  Keine aktiven Watchlist-Symbole vorhanden. Lege zuerst ein Symbol an oder reaktiviere es in der Watchlist.
                 </div>
               ) : null}
 
               <button
-                disabled={isImporting || isLoading || items.length === 0 || mappingHasInvalidRows}
+                disabled={isImporting || isLoading || activeItems.length === 0 || mappingHasInvalidRows}
                 type="submit"
                 className="rounded-xl bg-emerald-400 px-5 py-3 font-semibold text-slate-950 disabled:opacity-60"
               >
@@ -562,7 +593,7 @@ export default function ImportPage() {
                   kein Alert und kein Trade automatisch erstellt.
                 </p>
                 <button
-                  disabled={isSyncing || isLoading || items.length === 0}
+                  disabled={isSyncing || isLoading || activeItems.length === 0}
                   onClick={() => void runProviderSync()}
                   type="button"
                   className="rounded-xl border border-emerald-300/40 px-5 py-3 font-semibold text-emerald-200 hover:bg-emerald-300/10 disabled:opacity-60"
@@ -875,7 +906,7 @@ function BulkImportResultList({ items }: { items: BulkImportItem[] }) {
   );
 }
 
-function CsvWorkflowSection({ groups }: { groups: ImportReadinessGroup[] }) {
+function CsvWorkflowSection({ activeCount, groups }: { activeCount: number; groups: ImportReadinessGroup[] }) {
   return (
     <section className="rounded-3xl border border-emerald-300/20 bg-emerald-300/[0.03] p-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -885,6 +916,7 @@ function CsvWorkflowSection({ groups }: { groups: ImportReadinessGroup[] }) {
           <p className="mt-2 max-w-3xl text-sm text-slate-400">
             Waehle den passenden Update-Modus vor dem CSV-Import. Das hilft, das Universum,
             aktive Kandidaten und die Trigger-Liste getrennt zu halten.
+            {activeCount === 0 ? " Starte zuerst in der Watchlist mit einem aktiven Symbol." : ""}
           </p>
         </div>
         <span className="rounded-full border border-emerald-200/30 bg-slate-950/40 px-3 py-1 text-xs text-emerald-50">
@@ -894,6 +926,89 @@ function CsvWorkflowSection({ groups }: { groups: ImportReadinessGroup[] }) {
       <CsvWorkflowGuidancePanel groups={groups} />
     </section>
   );
+}
+
+function SymbolDataReadinessSection({
+  isLoading,
+  items,
+}: {
+  isLoading: boolean;
+  items: SymbolDataReadiness[];
+}) {
+  return (
+    <section className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-sky-300">Data Hygiene</p>
+          <h2 className="mt-2 text-xl font-semibold">Readiness je aktivem Symbol</h2>
+          <p className="mt-2 max-w-3xl text-sm text-slate-400">
+            Kompakte Read-only Sicht auf `1W`, `1D` und `4H`. Sie nutzt bestehende Import-/Sync-Historie,
+            startet keine Analyse und erzeugt keine Trades, Alerts oder Orders.
+          </p>
+        </div>
+        <span className="rounded-full border border-white/10 bg-slate-800 px-3 py-1 text-xs text-slate-300">
+          {items.filter((item) => item.ready).length}/{items.length} analysebereit
+        </span>
+      </div>
+
+      <div className="mt-5 grid gap-3">
+        {isLoading ? (
+          <p className="rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-sm text-slate-400">
+            Datenhygiene wird geladen...
+          </p>
+        ) : items.length === 0 ? (
+          <p className="rounded-2xl border border-yellow-300/30 bg-yellow-300/10 p-4 text-sm text-yellow-100">
+            Keine aktiven Symbole. Naechster Schritt: Watchlist oeffnen und ein Symbol aktiv anlegen.
+          </p>
+        ) : (
+          items.map((item) => <SymbolDataReadinessCard key={item.symbol} item={item} />)
+        )}
+      </div>
+    </section>
+  );
+}
+
+function SymbolDataReadinessCard({ item }: { item: SymbolDataReadiness }) {
+  return (
+    <article className={`rounded-2xl border p-4 ${item.ready ? "border-emerald-300/30 bg-emerald-300/5" : "border-yellow-300/30 bg-yellow-300/10"}`}>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h3 className="text-lg font-semibold text-slate-50">{item.symbol}</h3>
+          <p className="mt-1 text-sm text-slate-400">{item.nextAction}</p>
+        </div>
+        <span className={`rounded-full border px-3 py-1 text-xs ${item.ready ? "border-emerald-300/30 text-emerald-100" : "border-yellow-300/30 text-yellow-100"}`}>
+          {item.ready ? "Analysebereit" : "Daten pruefen"}
+        </span>
+      </div>
+      <div className="mt-4 grid gap-3 lg:grid-cols-3">
+        {item.timeframes.map((timeframe) => (
+          <div key={`${item.symbol}-${timeframe.timeframe}`} className={`rounded-xl border p-3 text-sm ${readinessStatusClass(timeframe.status)}`}>
+            <div className="flex items-center justify-between gap-2">
+              <p className="font-semibold text-slate-50">{timeframe.timeframe}</p>
+              <span className="rounded-full border border-current/20 px-2 py-0.5 text-xs">{formatLabel(timeframe.status)}</span>
+            </div>
+            <div className="mt-3 grid gap-2 text-xs opacity-90">
+              <span>Kerzen: {timeframe.candleCount ?? "-"}</span>
+              <span>Freshness: {timeframe.freshnessStatus ? formatLabel(timeframe.freshnessStatus) : "missing"}</span>
+              <span>Source: {timeframe.source ? formatMarketDataSource(timeframe.source) : "-"}</span>
+              <span>Provider: {timeframe.providerName ?? "-"}</span>
+              <span>Letzte Kerze: {formatDateTime(timeframe.latestCandle)}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function readinessStatusClass(status: TimeframeReadiness["status"]) {
+  if (status === "ready") {
+    return "border-emerald-300/20 bg-emerald-300/10 text-emerald-100";
+  }
+  if (status === "failed" || status === "insufficient") {
+    return "border-red-300/30 bg-red-300/10 text-red-100";
+  }
+  return "border-yellow-300/30 bg-yellow-300/10 text-yellow-100";
 }
 
 function CsvFileMappingTable({
@@ -1287,6 +1402,7 @@ function BatchAnalysisResultCard({
 }) {
   if (item.status === "success" && item.result) {
     const decision = buildSignalDecision(item.result.signal);
+    const explanation = signalDecisionExplanation(decision.kind);
     const diagnosis = buildAnalysisDiagnosis(item.result);
     return (
       <article className={`rounded-2xl border p-4 ${signalDecisionToneClass(decision.tone)}`}>
@@ -1299,6 +1415,10 @@ function BatchAnalysisResultCard({
             </div>
             <p className="mt-3 text-xl font-semibold text-slate-50">{decision.headline}</p>
             <p className="mt-2 text-sm">{decision.action}</p>
+            <div className="mt-4 grid gap-3 lg:grid-cols-2">
+              <PlainLanguageBox title="Was bedeutet das?" text={explanation.whatItMeans} />
+              <PlainLanguageBox title="Was jetzt?" text={explanation.whatNow} />
+            </div>
           </div>
           <span className="rounded-full border border-current/20 px-3 py-1 text-xs">
             Qualitaet: {decision.quality}
@@ -1339,6 +1459,15 @@ function BatchAnalysisResultCard({
       </div>
       <p className="mt-2 text-sm">{item.reason ?? "Analyse wurde noch nicht gestartet."}</p>
     </article>
+  );
+}
+
+function PlainLanguageBox({ text, title }: { text: string; title: string }) {
+  return (
+    <div className="rounded-xl border border-current/15 bg-slate-950/30 p-3 text-sm">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] opacity-80">{title}</p>
+      <p className="mt-2 opacity-90">{text}</p>
+    </div>
   );
 }
 
@@ -1588,6 +1717,91 @@ function buildImportReadinessGroups(
       };
     })
     .sort((left, right) => Number(right.complete) - Number(left.complete) || left.symbol.localeCompare(right.symbol));
+}
+
+function buildSymbolDataReadiness(items: WatchlistItem[], history: ImportHistoryItem[]): SymbolDataReadiness[] {
+  const latestBySymbolAndTimeframe = new Map<string, ImportHistoryItem>();
+
+  for (const item of history) {
+    const key = `${item.symbol.toUpperCase()}-${item.timeframe}`;
+    const current = latestBySymbolAndTimeframe.get(key);
+    if (!current || new Date(item.imported_at).getTime() > new Date(current.imported_at).getTime()) {
+      latestBySymbolAndTimeframe.set(key, item);
+    }
+  }
+
+  return items
+    .map((item) => {
+      const symbol = item.symbol.toUpperCase();
+      const readiness = timeframes.map((timeframe) => {
+        const latest = latestBySymbolAndTimeframe.get(`${symbol}-${timeframe}`) ?? null;
+        return toTimeframeReadiness(timeframe, latest);
+      });
+      const ready = readiness.every((timeframe) => timeframe.status === "ready");
+      return {
+        symbol,
+        isActive: item.is_active,
+        timeframes: readiness,
+        ready,
+        nextAction: nextReadinessAction(readiness),
+      };
+    })
+    .sort((left, right) => Number(right.ready) - Number(left.ready) || left.symbol.localeCompare(right.symbol));
+}
+
+function toTimeframeReadiness(timeframe: Timeframe, item: ImportHistoryItem | null): TimeframeReadiness {
+  if (!item) {
+    return {
+      timeframe,
+      status: "missing",
+      candleCount: null,
+      freshnessStatus: null,
+      source: null,
+      providerName: null,
+      latestCandle: null,
+    };
+  }
+
+  const status = timeframeReadinessStatus(item);
+  return {
+    timeframe,
+    status,
+    candleCount: item.candle_count,
+    freshnessStatus: item.freshness_status,
+    source: item.source,
+    providerName: item.provider_name,
+    latestCandle: item.end_time,
+  };
+}
+
+function timeframeReadinessStatus(item: ImportHistoryItem): TimeframeReadiness["status"] {
+  if (item.status === "failed" || item.sync_status === "failed" || item.sync_status === "skipped") {
+    return "failed";
+  }
+  if (item.candle_count < 200) {
+    return "insufficient";
+  }
+  if (item.freshness_status === "fresh") {
+    return "ready";
+  }
+  return item.freshness_status;
+}
+
+function nextReadinessAction(timeframesReadiness: TimeframeReadiness[]) {
+  const blocked = timeframesReadiness.find((item) => item.status !== "ready");
+  if (!blocked) {
+    return "1W, 1D und 4H sind vorhanden und fresh genug. Analyse kann bewusst manuell gestartet werden.";
+  }
+  if (blocked.status === "missing") {
+    return `${blocked.timeframe} fehlt. Naechster Schritt: CSV importieren oder geeigneten Provider-Pfad manuell nutzen.`;
+  }
+  if (blocked.status === "insufficient") {
+    return `${blocked.timeframe} hat zu wenig Kerzen. Mehr Historie importieren, bevor Analyse gestartet wird.`;
+  }
+  if (blocked.status === "failed") {
+    return `${blocked.timeframe} ist failed/skipped. Fehler pruefen und Daten neu importieren.`;
+  }
+  return `${blocked.timeframe} ist ${formatLabel(blocked.status)}. Daten vor Analyse aktualisieren oder konservativ blockiert lassen.`;
 }
 
 function isUsableImportHistoryItem(item: ImportHistoryItem) {
@@ -1988,6 +2202,7 @@ function providerSyncState(result: MarketDataSyncResult) {
 function AnalysisResultCard({ result }: { result: MarketDataAnalysisResult }) {
   const signal = result.signal;
   const decision = buildSignalDecision(signal);
+  const explanation = signalDecisionExplanation(decision.kind);
   const reasons = decision.reasons;
   const technicalReasons = signal.reasoning.slice(0, 3);
   const flags = signal.risk_flags.slice(0, 4);
@@ -2018,6 +2233,18 @@ function AnalysisResultCard({ result }: { result: MarketDataAnalysisResult }) {
 
         <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_0.9fr]">
           <div className="rounded-xl border border-current/15 bg-slate-950/30 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] opacity-80">Was bedeutet das?</p>
+            <p className="mt-3 text-sm">{explanation.whatItMeans}</p>
+          </div>
+          <div className="rounded-xl border border-current/15 bg-slate-950/30 p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] opacity-80">Was jetzt?</p>
+            <p className="mt-3 text-sm">{explanation.whatNow}</p>
+            <p className="mt-2 text-xs opacity-75">Keine automatische Order. Echte Ausfuehrung bleibt manuell.</p>
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_0.9fr]">
+          <div className="rounded-xl border border-current/15 bg-slate-950/30 p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] opacity-80">Warum?</p>
             <ul className="mt-3 space-y-2 text-sm">
               {reasons.map((reason) => (
@@ -2026,9 +2253,9 @@ function AnalysisResultCard({ result }: { result: MarketDataAnalysisResult }) {
             </ul>
           </div>
           <div className="rounded-xl border border-current/15 bg-slate-950/30 p-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] opacity-80">Was jetzt?</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] opacity-80">Backend-Hinweis</p>
             <p className="mt-3 text-sm">{decision.action}</p>
-            <p className="mt-2 text-xs opacity-75">Keine automatische Order. Echte Ausfuehrung bleibt manuell.</p>
+            <p className="mt-2 text-xs opacity-75">Pruefhinweis, keine Buy/Sell-Anweisung.</p>
           </div>
         </div>
       </div>
