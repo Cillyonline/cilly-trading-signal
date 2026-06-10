@@ -95,6 +95,12 @@ type BatchAnalysisResultItem = {
   result: MarketDataAnalysisResult | null;
 };
 
+type AnalysisDiagnosis = {
+  riskFlags: string[];
+  noTradeReasons: string[];
+  qualityIssues: MarketDataAnalysisResult["signal"]["quality_report"];
+};
+
 type BatchAnalysisFilter =
   | "all"
   | "paper"
@@ -665,6 +671,7 @@ function ProviderSyncBeginnerGuide({
     "Klicke auf Daten aktualisieren und warte auf das Aktualisierungs-Ergebnis rechts.",
     "Pruefe nach jedem Lauf Status, Freshness, letzte Kerze und Fehler-Code. Nur success/fresh ist fuer aktuelle Analyse geeignet.",
     "Wiederhole den Ablauf fuer 1W, 1D und 4H. Erst danach Vollstaendige Symbole analysieren starten.",
+    "Wenn weniger als 200 Kerzen oder wichtige Indikatoren fehlen, bleibt die Analyse konservativ bei Datenproblem.",
   ];
 
   return (
@@ -682,7 +689,8 @@ function ProviderSyncBeginnerGuide({
       </ol>
       <p className="mt-3 rounded-xl border border-white/10 bg-slate-950/40 p-3 text-xs text-emerald-50/80">
         Wichtig: Provider-Sync speichert nur Marktdaten. Er startet keine Analyse automatisch, erzeugt
-        kein Signal, keinen Alert, keinen Trade und ist kein Live-Preis.
+        kein Signal, keinen Alert, keinen Trade und ist kein Live-Preis. Fuer eine saubere Analyse
+        braucht jeder benoetigte Timeframe ausreichend Historie fuer Indikatoren wie EMA200.
       </p>
     </div>
   );
@@ -1279,6 +1287,7 @@ function BatchAnalysisResultCard({
 }) {
   if (item.status === "success" && item.result) {
     const decision = buildSignalDecision(item.result.signal);
+    const diagnosis = buildAnalysisDiagnosis(item.result);
     return (
       <article className={`rounded-2xl border p-4 ${signalDecisionToneClass(decision.tone)}`}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -1295,11 +1304,14 @@ function BatchAnalysisResultCard({
             Qualitaet: {decision.quality}
           </span>
         </div>
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <Metric label="Score" value={`${item.result.signal.score} / ${item.result.signal.score_class.replaceAll("_", " ")}`} />
           <Metric label="Backend Status" value={item.result.signal.status.replaceAll("_", " ")} />
           <Metric label="R:R" value={item.result.signal.risk_reward ? `${formatNumber(item.result.signal.risk_reward)}R` : "-"} />
+          <Metric label="Kerzen" value={item.result.candle_count.toString()} />
+          <Metric label="Snapshots" value={item.result.indicator_snapshot_count.toString()} />
         </div>
+        {decision.kind === "data_problem" ? <AnalysisDiagnosisPanel diagnosis={diagnosis} /> : null}
       </article>
     );
   }
@@ -1328,6 +1340,119 @@ function BatchAnalysisResultCard({
       <p className="mt-2 text-sm">{item.reason ?? "Analyse wurde noch nicht gestartet."}</p>
     </article>
   );
+}
+
+function AnalysisDiagnosisPanel({ diagnosis }: { diagnosis: AnalysisDiagnosis }) {
+  const hasDetails =
+    diagnosis.riskFlags.length > 0 ||
+    diagnosis.noTradeReasons.length > 0 ||
+    diagnosis.qualityIssues.length > 0;
+
+  return (
+    <div className="mt-4 rounded-2xl border border-slate-300/20 bg-slate-950/50 p-4 text-sm text-slate-200">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="font-semibold text-slate-50">Datenproblem-Diagnose</p>
+          <p className="mt-1 text-slate-400">
+            Diese Werte kommen direkt aus der Analyse und erklaeren, warum kein Trade erzeugt wird.
+          </p>
+        </div>
+        <span className="rounded-full border border-slate-300/20 px-3 py-1 text-xs text-slate-200">
+          Safety-Blocker
+        </span>
+      </div>
+
+      {hasDetails ? (
+        <div className="mt-4 grid gap-3 lg:grid-cols-3">
+          <DiagnosticBadgeList
+            empty="Keine Risk Flags"
+            items={diagnosis.riskFlags}
+            title="Risk Flags"
+          />
+          <DiagnosticBadgeList
+            empty="Keine No-Trade-Gruende"
+            items={diagnosis.noTradeReasons}
+            title="No-Trade-Gruende"
+          />
+          <QualityIssueList checks={diagnosis.qualityIssues} />
+        </div>
+      ) : (
+        <p className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3 text-slate-400">
+          Keine Detailursache in der Analyse-Antwort enthalten. Pruefe den Einzelimport oder starte
+          die Analyse erneut.
+        </p>
+      )}
+
+      <p className="mt-3 text-xs text-slate-500">
+        Typische Ursache nach Provider-Sync: weniger als 200 Kerzen in einem Timeframe oder fehlende
+        Indikatoren wie EMA200.
+      </p>
+    </div>
+  );
+}
+
+function DiagnosticBadgeList({
+  empty,
+  items,
+  title,
+}: {
+  empty: string;
+  items: string[];
+  title: string;
+}) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{title}</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {items.length > 0 ? (
+          items.map((item) => (
+            <span key={item} className="rounded-full bg-slate-700/80 px-3 py-1 text-xs text-slate-100">
+              {formatDiagnosticToken(item)}
+            </span>
+          ))
+        ) : (
+          <span className="rounded-full bg-emerald-300/10 px-3 py-1 text-xs text-emerald-100">
+            {empty}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function QualityIssueList({ checks }: { checks: MarketDataAnalysisResult["signal"]["quality_report"] }) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Quality Checks</p>
+      {checks.length > 0 ? (
+        <div className="mt-3 grid gap-2">
+          {checks.map((check) => (
+            <div key={check.key} className="rounded-lg border border-white/10 bg-slate-950/50 p-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-medium text-slate-100">{check.label}</span>
+                <span className={`rounded-full px-2 py-0.5 text-xs ${qualityStatusClass(check.status)}`}>
+                  {formatLabel(check.status)}
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-slate-400">{check.detail}</p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-3 text-sm text-slate-500">Keine blockierten oder warnenden Checks.</p>
+      )}
+    </div>
+  );
+}
+
+function buildAnalysisDiagnosis(result: MarketDataAnalysisResult): AnalysisDiagnosis {
+  return {
+    riskFlags: result.signal.risk_flags,
+    noTradeReasons: result.signal.no_trade_reasons,
+    qualityIssues: result.signal.quality_report.filter((check) =>
+      ["blocked", "warning", "missing"].includes(check.status),
+    ),
+  };
 }
 
 function toPlannedBatchAnalysisResult(item: BatchAnalysisPlanItem): BatchAnalysisResultItem {
@@ -1695,6 +1820,7 @@ function ProviderSyncResultCard({ result }: { result: MarketDataSyncResult }) {
         <Metric label="Provider Symbol" value={result.provider_symbol ?? "-"} />
         <Metric label="Provider Timeframe" value={result.provider_timeframe ?? result.timeframe} />
         <Metric label="Letzte Kerze" value={formatDateTime(result.end_time)} />
+        <Metric label="Kerzen" value={result.candle_count.toString()} />
         <Metric label="Letzter Sync" value={formatDateTime(result.last_synced_at)} />
         <Metric label="Exchange" value={result.provider_exchange ?? "-"} />
         <Metric label="Fehler-Code" value={result.sync_error_code ?? "-"} />
@@ -2111,6 +2237,20 @@ function formatSyncDetail(item: ImportHistoryItem) {
 
 function formatLabel(value: string) {
   return value.replaceAll("_", " ");
+}
+
+function formatDiagnosticToken(value: string) {
+  return value.replaceAll("_", " ");
+}
+
+function qualityStatusClass(status: string) {
+  if (status === "blocked" || status === "missing") {
+    return "bg-red-300/10 text-red-100";
+  }
+  if (status === "warning") {
+    return "bg-yellow-300/10 text-yellow-100";
+  }
+  return "bg-emerald-300/10 text-emerald-100";
 }
 
 function formatDateTime(value: string | null) {

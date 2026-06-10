@@ -202,6 +202,7 @@ def to_market_data_sync_response(series: MarketDataSeries) -> MarketDataSyncResp
         series_id=series.id,
         source=series.source,
         timeframe=series.timeframe,
+        candle_count=series.candle_count,
         provider_name=series.provider_name,
         provider_symbol=series.provider_symbol,
         provider_exchange=series.provider_exchange,

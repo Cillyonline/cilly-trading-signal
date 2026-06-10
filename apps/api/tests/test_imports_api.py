@@ -263,6 +263,7 @@ def test_manual_market_data_sync_skips_when_provider_disabled(client: TestClient
     result = response.json()
     assert result["watchlist_item_id"] == watchlist_item_id
     assert result["source"] == "provider"
+    assert result["candle_count"] == 0
     assert result["sync_status"] == "skipped"
     assert result["sync_error_code"] == "sync_disabled"
     assert "api" not in (result["sync_error_message"] or "").lower()
@@ -300,6 +301,7 @@ def test_manual_market_data_sync_applies_mock_success(
     result = response.json()
     assert result["sync_status"] == "success"
     assert result["freshness_status"] == "fresh"
+    assert result["candle_count"] == 1
     assert result["provider_name"] == "alpha_vantage"
     assert result["provider_symbol"] == "AAPL"
     assert result["sync_error_code"] is None
@@ -339,6 +341,7 @@ def test_manual_market_data_sync_returns_configured_provider_capabilities(
         capability["timeframe"]: capability for capability in result["provider_capabilities"]
     }
     assert result["provider_name"] == "twelve_data"
+    assert result["candle_count"] == 1
     assert by_timeframe["1W"]["supported"] is True
     assert by_timeframe["1D"]["supported"] is True
     assert by_timeframe["4H"]["supported"] is True
