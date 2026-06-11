@@ -76,6 +76,17 @@ Falls `uv` fehlt:
 winget install astral-sh.uv
 ```
 
+Danach ein neues Terminal oeffnen und pruefen:
+
+```powershell
+uv --version
+```
+
+Wenn `uv` danach weiterhin nicht gefunden wird, liegt in der Regel ein lokales
+PATH-/Shell-Problem vor. Die API-Qualitaetschecks setzen `uv` voraus und sollten
+nicht durch andere lokale Kommandos ersetzt werden, wenn das Ergebnis mit CI
+vergleichbar sein soll.
+
 ### MVP Smoke Runner
 
 Fuer den dokumentierten MVP Smoke Test gibt es einen Runner, der Preflight-Checks,
@@ -166,6 +177,11 @@ cd apps/api
 uv run --no-project --with ruff ruff check --select E,F,UP,B .
 uv run --no-project --with pytest --with "fastapi[standard]" --with pydantic-settings --with sqlalchemy --with "psycopg[binary]" pytest
 ```
+
+Diese Backend-Kommandos entsprechen der erwarteten lokalen Verifikationsform fuer
+API-Aenderungen. Wenn sie lokal wegen fehlendem `uv`, falscher Python-Version oder
+nicht erreichbarer Datenbank nicht laufen, den Blocker im PR dokumentieren und die
+CI-Ergebnisse abwarten; die Checks nicht stillschweigend weglassen.
 
 ## Dokumente
 
