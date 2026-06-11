@@ -34,8 +34,9 @@ schema depend on one vendor.
 
 Implemented provider fields:
 
-- `provider_name`: symbolic provider identifier, for example `alpha_vantage`,
-  `twelve_data`, `polygon`, or `tiingo`.
+- `provider_name`: symbolic provider identifier. Implemented active runtime values
+  are `twelve_data` and `alpha_vantage`; other providers remain future candidates
+  until a separate adapter and provider decision are added.
 - `provider_symbol`: provider-specific symbol used for the request.
 - `provider_exchange`: optional provider-specific exchange or venue code.
 - `provider_timeframe`: provider-specific timeframe/granularity.

@@ -33,11 +33,10 @@ Current decision:
   status handling independent of any one vendor.
 - Treat `1W`, `1D`, and `4H` stored candles as the first practical Twelve Data
   provider-backed target.
-- Use Alpha Vantage as the first implemented adapter path for Daily/EOD sync behind
-  the provider boundary.
-- Keep Alpha Vantage as the current practical first path for US-stock Daily/EOD
-  smoke and operator learning because it is already implemented and sufficient to
-  validate provider plumbing, freshness states, and failure handling.
+- Use Twelve Data as the selected clean implemented provider path for guarded
+  manual `1W`, `1D`, and `4H` stored-data sync.
+- Keep Alpha Vantage as an optional legacy Daily/EOD smoke path for provider
+  plumbing and failure-path checks; it is not the selected clean operating path.
 - Remove the unofficial Yahoo Finance path from the clean provider implementation.
   Yahoo Finance is not an official API provider path for this app.
 - Keep real provider reliance guarded by Twelve Data key configuration, sanitized
