@@ -9,16 +9,34 @@ Sanitized browser smoke evidence must follow
 
 ## Current Decision
 
-Status: Keep post-deploy browser smoke manual for now.
+Status: Use a local/manual dry-run runner first; do not add required CI browser
+smoke yet.
 
-Date: 2026-06-01.
+Date: 2026-06-11.
 
 Rationale:
 
 - The existing smoke runner already automates local preflight, stack startup, migrations, and API health checks.
 - The browser clickthrough currently validates safety wording, manual-action boundaries, and visual workflow context that a brittle script could miss.
 - Private staging checks may require operator credentials, cookies, or environment-specific state; automating them now would increase secret-handling risk.
-- No browser automation harness is currently present in the repo, and adding one would require dependency, CI, and evidence-handling decisions beyond this follow-up.
+- A required CI browser job would add dependency cost, runtime, sample-state setup,
+  and flakiness before the dry-run contract has been proven locally.
+- A local/manual dry-run can improve repeatability while preserving explicit
+  operator control and sanitized evidence boundaries.
+
+## CI Versus Manual Runner Decision
+
+Recommended execution model for v5.2:
+
+| Option | Decision | Reason |
+| --- | --- | --- |
+| Required CI browser smoke | Do not add now. | It would add browser dependencies, longer PR runtime, sample-data setup, and flake risk before the route contract is stable. CI also must not require secrets, cookies, private data, or operator credentials. |
+| Optional CI evaluation workflow | Defer. | A non-required workflow may be useful later, but only after the local dry-run produces stable sanitized evidence and sample-only setup is clear. |
+| Local/manual dry-run runner | Recommended first step. | It can be invoked explicitly by the operator against local sample data, avoid stored secrets, and print only sanitized pass/fail evidence. |
+| Private-staging dry run | Approval-gated only. | It must require explicit operator approval for the exact target and commit and must stop on any private-data exposure. |
+
+Follow-up implementation: #682 should add the safe dry-run implementation under
+this manual/local-first model. Do not make it a required CI gate in v5.2.
 
 ## What Automation Could Be Worth Later
 
@@ -134,4 +152,9 @@ Continue using:
 
 ## Final Evaluation Statement
 
-Automated post-deploy browser smoke is useful enough to reconsider later, but not worth implementing now. The current safe path remains operator-run, sample/paper-only browser evidence with sanitized pass/fail recording and explicit approval for any VPS service-impacting action.
+Automated browser smoke is useful enough to implement as an explicit local/manual
+dry run first. Required CI browser smoke is deferred until the dry-run route
+contract, sample data, runtime, dependency impact, and flake profile are proven.
+The safe path remains operator-run, sample/paper-only browser evidence with
+sanitized pass/fail recording and explicit approval for any private-staging or
+VPS-impacting action.
