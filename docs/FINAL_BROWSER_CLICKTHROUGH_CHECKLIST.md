@@ -8,6 +8,10 @@ Automation has been evaluated and intentionally deferred for now. See
 `docs/POST_DEPLOY_BROWSER_SMOKE_AUTOMATION_EVALUATION.md`, including the safe
 dry-run browser smoke contract for any future opt-in script.
 
+Use `docs/BROWSER_SMOKE_EVIDENCE_FORMAT.md` for the canonical sanitized evidence
+fields and forbidden evidence rules for manual and future automated browser smoke
+runs.
+
 This checklist is not a production-readiness statement, broker-readiness statement, real-money readiness claim, profitability claim, strategy-validation claim, trading advice, or approval for automatic execution.
 
 ## Safety And Evidence Rules
@@ -85,6 +89,10 @@ Run the same checklist at a narrow phone viewport when feasible. At minimum, spo
 Known mobile follow-up gaps may still exist, but safety wording and manual-review boundaries must remain visible.
 
 ## Evidence Template
+
+Use `docs/BROWSER_SMOKE_EVIDENCE_FORMAT.md` as the canonical evidence policy.
+The compact template below is acceptable for this 20-step checklist when all
+forbidden evidence fields remain `no`.
 
 ```markdown
 ## Browser Clickthrough Evidence
