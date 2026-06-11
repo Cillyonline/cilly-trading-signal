@@ -10,6 +10,9 @@ This checklist is not trading advice, a live/realtime market-data claim,
 production-readiness evidence, broker-readiness evidence, strategy-validation
 evidence, profitability evidence, or approval for automatic execution.
 
+Use `docs/BROWSER_SMOKE_EVIDENCE_FORMAT.md` for the canonical sanitized evidence
+fields and forbidden evidence rules.
+
 ## Default Scope
 
 Run locally first; VPS is optional after explicit approval.
@@ -108,7 +111,8 @@ No profitability or strategy-validation claim: PASS | FAIL | BLOCKED
 
 ## Evidence Record
 
-Record only sanitized evidence:
+Record only sanitized evidence. For the canonical field list and forbidden
+evidence policy, use `docs/BROWSER_SMOKE_EVIDENCE_FORMAT.md`.
 
 | Check | Result | Notes |
 |-------|--------|-------|

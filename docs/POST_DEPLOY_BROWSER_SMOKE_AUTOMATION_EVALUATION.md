@@ -4,6 +4,9 @@
 
 This document evaluates whether a lightweight automated post-deploy browser smoke script is useful for private staging. It does not implement automation, approve production-like exposure, approve private-data use, create a monitoring service, or replace the operator-run browser checklist.
 
+Sanitized browser smoke evidence must follow
+`docs/BROWSER_SMOKE_EVIDENCE_FORMAT.md`.
+
 ## Current Decision
 
 Status: Keep post-deploy browser smoke manual for now.
@@ -49,6 +52,7 @@ If this is implemented later, require a new issue and PR that documents:
 - Operator approval boundary for any VPS service-impacting action.
 - Local-only and private-staging modes kept separate.
 - Evidence template aligned with `docs/PRIVATE_DATA_EVIDENCE_HANDLING.md`.
+- Browser smoke evidence format aligned with `docs/BROWSER_SMOKE_EVIDENCE_FORMAT.md`.
 
 ## Safe Dry-Run Browser Smoke Contract
 
