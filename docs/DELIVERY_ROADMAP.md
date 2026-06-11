@@ -77,7 +77,10 @@ Partial:
   compact batch review, filters, and explicit complete-symbol analysis; it remains
   the supported manual baseline/fallback.
 - Screener CSV import is implemented as a candidate prefiltering workflow with filters, bulk review actions, pagination, and explicit Watchlist conversion; mobile density and richer candidate prioritization remain future usability work.
-- Manual provider sync currently targets Daily/EOD data first; `4H`/intraday provider support remains unresolved and not promised.
+- Manual provider sync remains guarded, manual, and disabled by default. Twelve Data
+  is now the selected clean provider path for stored `1W`, `1D`, and `4H` sync, but
+  operational reliance still requires provider configuration hardening, sanitized
+  smoke evidence, entitlement review, CSV fallback, and no live/realtime claim.
 - v4.1 provider-path decision keeps Alpha Vantage as the practical first guarded
   Daily/EOD smoke path and defers a paid/provider-reliance decision until coverage,
   licensing, rate limits, storage rights, and watchlist size are reviewed.
@@ -124,6 +127,15 @@ Partial:
   `Heute starten` panel, restructured `/import` around the CSV-Arbeitsplan,
   restructured `/signals` around Active Review and Trigger Radar, and collapsed
   provider-sync and full-list sections into secondary hierarchy.
+- v4.7 Browser Workflow Smoke is complete and reviewed in
+  `docs/reviews/v4-7-vps-browser-workflow-smoke.md`; private VPS browser checks
+  passed for Dashboard `Heute starten`, `/import` CSV-Arbeitsplan and collapsed
+  Provider-Sync, `/signals` Active Review/Trigger Radar hierarchy, and safety
+  wording.
+- v4.8 Guided First Run & Data Hygiene is complete and reviewed in
+  `docs/reviews/v4-8-guided-first-run-data-hygiene-review.md`; it improved
+  first-run guidance, asset-addition help, symbol-level data hygiene visibility,
+  safe cleanup actions, and plain-language signal result explanations.
 - Dashboard, journal, and performance views include useful MVP-level summaries, risk warnings, and journal analytics, but are not full institutional analytics modules.
 - Risk enforcement covers manual trade creation basics and portfolio/risk review warnings, not complete account-level risk management or automatic position sizing.
 - Multi-timeframe analysis still requires current stored data for required `1W`, `1D`, and `4H` timeframes; provider sync does not automatically fill unsupported timeframes or rerun analysis.
@@ -146,17 +158,17 @@ Current blockers and risks:
 - Private VPS staging is accepted for controlled owner/operator use only after documented operations hardening; production-like or public use remains blocked until a separate operational readiness decision addresses data-handling readiness, offsite backups, security review, and monitoring expectations.
 - Deployment readiness is currently gated by `docs/DEPLOYMENT_READINESS_DECISION_GATE_V2.md`: local review and private owner/operator staging are conditionally allowed; production-like exposure remains No Go.
 - MVP release posture is tracked in `docs/MVP_RELEASE_CHECKLIST.md`; it separates Done, Partial, Missing, Blocked, and Not Included areas without claiming production readiness.
-- Provider reliance beyond guarded Daily/EOD smoke remains intentionally deferred
-  until coverage, rate limits, licensing, storage rights, and watchlist scale are
-  accepted explicitly.
+- Provider reliance beyond guarded manual stored-data sync remains intentionally
+  deferred until Twelve Data coverage, rate limits, licensing, storage rights,
+  watchlist scale, and sanitized smoke evidence are accepted explicitly.
 - Future operator validation should use a separate browser-smoke or VPS-smoke issue
   when the next deployment is explicitly approved.
-- Authenticated browser smoke remains optional future validation; it is not a blocker
-  for the current local workflow evidence.
-- The v4.6 guided workflow hierarchy reduces cognitive load by making the daily
-  operator sequence clearer. Dashboard shows `Heute starten`, `/import` places the
-  CSV-Arbeitsplan first, and `/signals` prioritises Active Review and Trigger Radar
-  over the full list.
+- Authenticated browser smoke remains optional future automation; v4.7 recorded
+  manual private VPS browser evidence, and v5.2 will evaluate safe sample-only
+  automation under the dry-run contract.
+- The v4.6-v4.8 guided workflow work reduces cognitive load by making the daily
+  operator sequence clearer, improving first-run guidance, and making data hygiene
+  and signal outcomes easier to interpret.
 
 ## v0.1 - Foundation
 
@@ -642,37 +654,24 @@ Done when:
 
 ## Next Candidate Increment
 
-Recommended next planning candidate after v3.3: choose between production-like
-readiness hardening and another signal-quality calibration pack. Prefer
-production-like readiness only if the owner wants to move beyond private
-owner/operator staging; otherwise continue with focused paper calibration and
-golden-case coverage.
+Recommended active sequence after v4.8:
 
-Completed v3.0/v3.1 validation evidence:
-
-- Review follow-up disposition workflow polish: `#506`.
-- Mobile Screener candidate review polish: `#507`.
-- Mobile Trade Detail workflow grouping polish: `#508`.
-- Owner/operator cockpit validation checklist: `#516`.
-- Local and operator browser validation evidence: `#514`, `#515`.
-- VPS update and browser smoke evidence: `#520`.
+1. `v4.9 - Roadmap Rebaseline & Tracker Hygiene`: close the documentation and
+   tracker gap after v4.7/v4.8.
+2. `v5.0 - Twelve Data Provider Readiness`: keep Twelve Data as the selected clean
+   manual provider path, harden provider configuration, update docs/tests, and
+   record sanitized provider-smoke evidence when explicitly approved.
+3. `v5.1 - Local Verification Reliability`: make local `uv`, Python 3.12, Ruff,
+   pytest, and migration-smoke verification reproducible and aligned with CI.
+4. `v5.2 - Safe Browser Smoke Automation`: evaluate and implement sample-only
+   browser smoke automation under the documented dry-run contract.
 
 Deferred candidates:
 
-- Data-context handoff UI changes, pending a sample browser walkthrough that
-  confirms the friction in the app rather than only in documentation.
-- Browser smoke automation, pending a separate implementation issue under the
-  safe dry-run contract and dependency review.
-
-Alternative next increments after v3.2:
-
-- Production-like readiness hardening, if the owner wants to move beyond private
-  owner/operator staging.
-- Safe browser smoke automation under the documented dry-run contract.
-- Data-context handoff UI improvements, if a fresh browser walkthrough confirms
-  the friction in the app.
-- Provider/intraday data expansion after cost, license, rate-limit, and safety
-  review.
+- Production-like readiness hardening, only if the owner wants to move beyond
+  private owner/operator staging and accepts the required gate evidence.
+- Data-context handoff UI changes, if fresh operator review confirms remaining
+  friction.
 - Additional paper calibration and golden-case coverage before strategy-rule
   changes.
 
