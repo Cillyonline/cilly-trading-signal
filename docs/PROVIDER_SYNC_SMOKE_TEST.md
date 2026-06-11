@@ -43,12 +43,13 @@ without requiring private symbols, screenshots, raw logs, or provider secrets.
 | Failure path | Fake or public sample symbol | Enabled with mocked/local failure or known unsupported mapping | `sync_status=failed` or `partial`, sanitized error code/message only. |
 | Success path | Public provider-recognized sample symbol only | Enabled with operator-owned key outside git | `sync_status=success`, provider-backed stored data visible, no automatic downstream workflow. |
 
-Capability expectations for the current first provider path:
+Capability expectations for implemented provider paths:
 
-- Alpha Vantage is the guarded Daily/EOD smoke path.
-- `1D` is the only supported provider-sync timeframe in this path.
-- `1W` and `4H` must be explained as unsupported provider-sync timeframes and
-  should point the operator back to TradingView CSV fallback.
+- Twelve Data is the selected clean provider path for guarded manual `1W`, `1D`,
+  and `4H` stored-data sync when an operator-owned key is configured outside git.
+- Alpha Vantage remains an optional legacy Daily/EOD smoke path only.
+- Unsupported provider/timeframe combinations must point the operator back to the
+  TradingView CSV fallback.
 - Unsupported timeframe responses should use sanitized `sync_error_code`, typically
   `unsupported_timeframe`, without raw provider payloads or secrets.
 
@@ -178,8 +179,8 @@ Environment: local | private staging
 Branch or commit:
 Provider sync disabled check: PASS | FAIL | NOT RUN
 Configured provider check: PASS | FAIL | NOT RUN
-Provider identifier: alpha_vantage | not configured | redacted
-Timeframe tested: 1D | other
+Provider identifier: twelve_data | alpha_vantage | not configured | redacted
+Timeframe tested: 1W | 1D | 4H | other
 Sample symbol scope: fake sample | public provider-recognized | redacted
 Observed sync_status: success | skipped | failed | partial
 Observed freshness_status: fresh | stale | unknown | failed | partial
