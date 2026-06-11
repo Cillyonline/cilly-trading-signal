@@ -168,6 +168,11 @@ Planned issues:
 - #674: confirm completed v4.6 and v4.8 milestones are closed.
 - #675: record v4.8 guided first-run completion.
 
+Tracker hygiene snapshot, 2026-06-11:
+
+- `v4.6 - Guided Operator Workflow`: closed, 0 open issues, 6 closed issues.
+- `v4.8 - Guided First Run & Data Hygiene`: closed, 0 open issues, 5 closed issues.
+
 Done when:
 
 - Roadmap docs no longer present completed v4.7/v4.8 work as pending.
