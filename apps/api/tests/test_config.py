@@ -147,6 +147,24 @@ def test_market_data_provider_sync_allows_twelve_data_with_api_key() -> None:
     assert settings.market_data_api_key == "strong-provider-api-key"
 
 
+@pytest.mark.parametrize("provider", ["polygon", "tiingo"])
+def test_market_data_provider_sync_rejects_future_candidate_providers(
+    provider: str,
+) -> None:
+    payload = SAFE_PRODUCTION_SETTINGS | {
+        "market_data_provider_sync_enabled": True,
+        "market_data_provider": provider,
+        "market_data_api_key": "strong-provider-api-key",
+    }
+
+    with pytest.raises(ValueError, match="MARKET_DATA_PROVIDER") as error:
+        Settings(_env_file=None, **payload)
+
+    assert "alpha_vantage" in str(error.value)
+    assert "twelve_data" in str(error.value)
+    assert provider not in str(error.value)
+
+
 def test_market_data_provider_sync_rejects_twelve_data_without_api_key() -> None:
     payload = SAFE_PRODUCTION_SETTINGS | {
         "market_data_provider_sync_enabled": True,
