@@ -195,12 +195,15 @@ Backend:
 ```powershell
 cd apps/api
 uv run --no-project --with ruff ruff check --select E,F,UP,B .
+uv run --no-project --with alembic --with pydantic-settings --with sqlalchemy --with "psycopg[binary]" alembic upgrade head
 uv run --no-project --with pytest --with "fastapi[standard]" --with pydantic-settings --with sqlalchemy --with "psycopg[binary]" pytest
 ```
 
 Diese Backend-Kommandos entsprechen der erwarteten lokalen Verifikationsform fuer
-API-Aenderungen. Wenn sie lokal wegen fehlendem `uv`, falscher Python-Version oder
-nicht erreichbarer Datenbank nicht laufen, den Blocker im PR dokumentieren und die
+API-Aenderungen: Ruff, Alembic-Migration-Smoke und pytest. Der Alembic-Schritt
+erwartet wie CI eine erreichbare PostgreSQL-Datenbank ueber `DATABASE_URL`. Wenn
+die Kommandos lokal wegen fehlendem `uv`, falscher Python-Version oder nicht
+erreichbarer Datenbank nicht laufen, den Blocker im PR dokumentieren und die
 CI-Ergebnisse abwarten; die Checks nicht stillschweigend weglassen.
 
 ## Dokumente

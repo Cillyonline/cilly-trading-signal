@@ -77,6 +77,7 @@ Backend verification:
 ```powershell
 cd apps/api
 uv run --no-project --with ruff ruff check --select E,F,UP,B .
+uv run --no-project --with alembic --with pydantic-settings --with sqlalchemy --with "psycopg[binary]" alembic upgrade head
 uv run --no-project --with pytest --with "fastapi[standard]" --with pydantic-settings --with sqlalchemy --with "psycopg[binary]" pytest
 ```
 
@@ -92,7 +93,7 @@ docker compose -f infra/docker-compose.yml down
 ## Verification Expectations
 
 - For frontend changes, run `npm run build` in `apps/web` when feasible.
-- For backend changes, run Ruff and pytest in `apps/api` when feasible.
+- For backend changes, run Ruff, Alembic migration smoke, and pytest in `apps/api` when feasible.
 - For infra or integration changes, prefer the Docker Compose smoke test when feasible.
 - If a check cannot be run, state the reason and the residual risk clearly.
 - For UI changes, consider desktop and mobile behavior.

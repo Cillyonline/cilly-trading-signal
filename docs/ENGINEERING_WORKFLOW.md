@@ -75,6 +75,17 @@ Before merge:
 - Tests must be added or a test gap must be documented.
 - Trading logic must be checked against `docs/STRATEGY_AND_ALERTS.md` when relevant.
 
+## Local Verification
+
+Local verification should mirror CI where feasible. Backend API changes should run
+Ruff, Alembic migration smoke, and pytest from `apps/api` using the documented
+`uv run --no-project` commands in `README.md`. The migration smoke requires a
+reachable PostgreSQL database through `DATABASE_URL`.
+
+If local verification cannot run because `uv`, Python 3.12, or PostgreSQL is not
+available, document the exact blocker in the PR instead of weakening or omitting
+the check silently.
+
 ## Security Scan Workflow
 
 The `Security Scans` GitHub Actions workflow provides dependency and container vulnerability visibility on pull requests, pushes to `main`, a weekly schedule, and manual dispatch.
