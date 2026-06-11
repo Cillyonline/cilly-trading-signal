@@ -87,6 +87,26 @@ PATH-/Shell-Problem vor. Die API-Qualitaetschecks setzen `uv` voraus und sollten
 nicht durch andere lokale Kommandos ersetzt werden, wenn das Ergebnis mit CI
 vergleichbar sein soll.
 
+Windows-Troubleshooting fuer Python 3.12 und `uv`:
+
+```powershell
+python --version
+py -3.12 --version
+uv --version
+Get-Command uv
+```
+
+- Wenn `python --version` Python 3.13 oder neuer zeigt, fuer API-Arbeit Python
+  3.12 installieren oder Docker Compose verwenden.
+- Wenn `py -3.12 --version` fehlschlaegt, ist Python 3.12 nicht ueber den
+  Windows Python Launcher verfuegbar; Python 3.12 installieren und ein neues
+  Terminal oeffnen.
+- Wenn `uv --version` oder `Get-Command uv` fehlschlaegt, `uv` installieren,
+  ein neues Terminal oeffnen und den PATH pruefen. Erst danach die Backend-
+  Checks erneut ausfuehren.
+- Wenn lokale Tooling-Probleme bestehen bleiben, den genauen Fehler im PR
+  dokumentieren und CI als Referenz verwenden.
+
 ### MVP Smoke Runner
 
 Fuer den dokumentierten MVP Smoke Test gibt es einen Runner, der Preflight-Checks,
