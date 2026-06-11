@@ -51,6 +51,16 @@ separate production-like deployment gate.
 Use `docs/FINAL_BROWSER_CLICKTHROUGH_CHECKLIST.md` to record the visual browser
 workflow after the runner succeeds.
 
+For a narrow local route dry-run before the manual browser clickthrough, use:
+
+```powershell
+.\scripts\browser_smoke_dry_run.ps1 -CommitSha <branch-or-sha>
+```
+
+The dry-run prints sanitized pass/fail Markdown only. It does not read cookies,
+browser storage, `.env`, provider keys, private data, raw logs, raw responses, or
+screenshots, and it does not replace the manual browser checklist.
+
 This script is release-validation tooling, not a production deployment claim.
 
 Optional sanitized evidence formatting:

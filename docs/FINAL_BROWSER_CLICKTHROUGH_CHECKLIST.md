@@ -94,6 +94,17 @@ Use `docs/BROWSER_SMOKE_EVIDENCE_FORMAT.md` as the canonical evidence policy.
 The compact template below is acceptable for this 20-step checklist when all
 forbidden evidence fields remain `no`.
 
+Optional local route dry-run before the manual clickthrough:
+
+```powershell
+.\scripts\browser_smoke_dry_run.ps1 -CommitSha <branch-or-sha>
+```
+
+The dry-run checks only route availability for `/login`, `/`, `/import`, and
+`/signals`. It does not replace the full manual visual workflow, does not capture
+screenshots, and does not prove production, live/realtime, broker, profitability,
+strategy-validation, trading-advice, or automatic-execution readiness.
+
 ```markdown
 ## Browser Clickthrough Evidence
 

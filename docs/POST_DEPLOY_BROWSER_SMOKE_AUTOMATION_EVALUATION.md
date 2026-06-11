@@ -74,9 +74,27 @@ If this is implemented later, require a new issue and PR that documents:
 
 ## Safe Dry-Run Browser Smoke Contract
 
-This contract is preparation only. It does not add Playwright, browser
-automation, CI jobs, VPS actions, credential handling, or service-impacting
-behavior.
+This contract is implemented as an explicit PowerShell HTTP dry-run helper in
+`scripts/browser_smoke_dry_run.ps1`. It does not add Playwright, browser
+dependencies, CI jobs, VPS actions, credential handling, screenshots, browser
+storage access, or service-impacting behavior.
+
+Local sample run:
+
+```powershell
+.\scripts\browser_smoke_dry_run.ps1 -CommitSha <branch-or-sha>
+```
+
+Private-staging dry run requires explicit operator approval for the exact target
+and commit:
+
+```powershell
+.\scripts\browser_smoke_dry_run.ps1 `
+  -Mode private-staging-dry-run `
+  -TargetBaseUrl https://example.invalid `
+  -ApprovedPrivateStaging `
+  -CommitSha <branch-or-sha>
+```
 
 Modes:
 
@@ -147,6 +165,7 @@ Private-staging rules:
 Continue using:
 
 - `scripts/smoke_test.ps1` for local stack startup, migrations, and API health.
+- `scripts/browser_smoke_dry_run.ps1` for explicit local/manual route dry runs.
 - `docs/FINAL_BROWSER_CLICKTHROUGH_CHECKLIST.md` for the full 20-step browser workflow.
 - `docs/DEPLOYMENT_RUNBOOK.md#post-deploy-checks` for compact private-staging post-deploy route checks.
 
