@@ -25,8 +25,6 @@ UNSAFE_MARKET_DATA_VALUES = {
 SUPPORTED_MARKET_DATA_PROVIDERS = {
     "alpha_vantage",
     "twelve_data",
-    "polygon",
-    "tiingo",
 }
 
 
