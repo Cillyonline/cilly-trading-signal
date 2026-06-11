@@ -1,15 +1,16 @@
 # Next Milestone Decision
 
-Date: 2026-06-04
+Date: 2026-06-11
 
 ## Decision
 
-Recommended next milestone: `v4.6 - Guided Operator Workflow`.
+Recommended next milestone: `v4.9 - Roadmap Rebaseline & Tracker Hygiene`.
 
-Rationale: v4.5 Operator Workflow Validation is complete with local build and
-checklist evidence, but the cockpit still needs a stronger red thread. The next
-highest-value step is to make Dashboard, `/import`, and `/signals` guide the operator
-through the daily workflow before running another browser smoke.
+Rationale: v4.6 Guided Operator Workflow, v4.7 Browser Workflow Smoke, and v4.8
+Guided First Run & Data Hygiene are complete. The next highest-value step is to
+rebaseline the roadmap and tracker before starting the next implementation
+milestones: Twelve Data provider readiness, local verification reliability, and
+safe browser smoke automation.
 
 ## v4.3 - Operational Evidence Closure
 
@@ -108,7 +109,10 @@ Decision record:
 Goal: validate the v4.6 guided workflow changes in the browser with a focused smoke
 test.
 
-Recommended scope:
+Status: Done. VPS browser smoke evidence is recorded in
+`docs/reviews/v4-7-vps-browser-workflow-smoke.md`.
+
+Scope completed:
 
 - Browser smoke `/import` CSV-Arbeitsplan placement, Provider-Sync collapse, and
   Analyze-All behavior.
@@ -128,6 +132,97 @@ Default boundary:
   live/realtime claims.
 - Use the existing local/staging environment; no VPS or deployment changes without
   explicit approval.
+
+## v4.8 - Guided First Run & Data Hygiene
+
+Goal: make the app easier for a new operator by guiding first-run setup, asset
+addition, data readiness, safe cleanup, and result interpretation.
+
+Status: Done. Completion review is recorded in
+`docs/reviews/v4-8-guided-first-run-data-hygiene-review.md`.
+
+Completed issues:
+
+- #667: add guided first-run workflow across Watchlist, Import, and Signals.
+- #668: add beginner help panels for adding assets cleanly.
+- #669: add data hygiene overview for each symbol.
+- #670: add safe cleanup actions for watchlist data.
+- #671: add plain-language explanations for signal result states.
+
+Boundary:
+
+- No trading logic, broker behavior, provider automation, scheduler, automatic
+  execution, live/realtime claim, profitability claim, or production-readiness
+  claim was introduced.
+
+## v4.9 - Roadmap Rebaseline & Tracker Hygiene
+
+Goal: align roadmap docs and tracker state after v4.7/v4.8 before starting the
+next implementation work.
+
+Status: Current.
+
+Planned issues:
+
+- #673: rebaseline roadmap after v4.7 and v4.8.
+- #674: confirm completed v4.6 and v4.8 milestones are closed.
+- #675: record v4.8 guided first-run completion.
+
+Done when:
+
+- Roadmap docs no longer present completed v4.7/v4.8 work as pending.
+- Completed milestones are closed in the tracker.
+- The next implementation milestones are explicit.
+
+## v5.0 - Twelve Data Provider Readiness
+
+Goal: consolidate Twelve Data as the selected clean manual provider path and
+harden provider configuration before relying on provider-backed stored data.
+
+Status: Planned.
+
+Planned issues:
+
+- #676: limit configurable market data providers to implemented adapters.
+- #677: clarify Twelve Data as selected clean provider path.
+- #678: cover unsupported provider configuration behavior.
+- #679: record Twelve Data provider smoke checklist result.
+
+Boundary:
+
+- No scheduler, broker integration, automatic execution, live/realtime claim,
+  profitability claim, or production-readiness claim.
+
+## v5.1 - Local Verification Reliability
+
+Goal: make local backend/frontend verification reproducible and aligned with CI.
+
+Status: Planned.
+
+Planned issues:
+
+- #680: document `uv` setup and backend verification path.
+- #681: add Python 3.12 and `uv` troubleshooting for Windows.
+- #684: align local backend commands with CI expectations.
+
+## v5.2 - Safe Browser Smoke Automation
+
+Goal: evaluate and implement safe sample-only browser smoke automation under the
+documented dry-run contract.
+
+Status: Planned.
+
+Planned issues:
+
+- #682: add safe browser smoke dry-run implementation.
+- #683: evaluate browser smoke CI versus manual runner.
+- #685: record browser smoke evidence format.
+
+Boundary:
+
+- No VPS secret automation, provider-key automation, private-data use, broker
+  integration, automatic execution, live/realtime claim, or production-readiness
+  claim.
 
 ## Not Now
 

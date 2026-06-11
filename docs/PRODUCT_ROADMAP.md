@@ -163,6 +163,10 @@ Der aktuelle Stand ist ein kontrolliertes Owner/Operator-Review-Cockpit, kein pr
 - v3.8-v4.2 Radar-/Import-/Provider-Refinement: deutsche Ampel-Entscheidungen,
   Trigger Radar auf gespeicherten Daten, 12-Dateien-CSV-Walkthrough, Provider-
   Capability-Matrix und Paid-Provider-Evaluationsgate sind dokumentiert.
+- v4.4-v4.8 Operator-Workflow-Politur: praktische CSV-first Tages-/Wochenablaeufe,
+  Active Review, Trigger Radar, Dashboard `Heute starten`, Browser-Smoke-Evidence,
+  First-Run-Fuehrung, Datenhygiene-Uebersicht, sichere Cleanup-Aktionen und
+  einfachere Signal-Erklaerungen sind umgesetzt bzw. dokumentiert.
 
 Weiterhin nicht enthalten:
 
@@ -172,8 +176,8 @@ Weiterhin nicht enthalten:
 - Automatische Marktaktualisierung oder scheduler-driven Analyse.
 - 4H/intraday Provider-Reliance ohne separate Provider-, Lizenz-, Kosten- und
   Rate-Limit-Entscheidung.
-- VPS Trigger-Radar-Smoke nach dem naechsten Deployment und real-key Provider-Smoke
-  ohne explizite Owner/Operator-Freigabe.
+- Neue VPS-/Provider-Smokes ohne explizite Owner/Operator-Freigabe und ohne
+  redigierte Evidence-Vorgaben.
 - Backtesting-/Profitabilitaetsvalidierung.
 - Multi-User, Rollenmodell, Registrierung, Billing oder Support-Prozesse.
 - Routine-Nutzung privater Trading-Daten ohne separaten Private-Data Gate.
