@@ -56,7 +56,7 @@ session.
    selecting files.
 3. Refresh `1D` CSV for the active review shortlist. Provider-Sync is available
    but collapsed under `Provider-Sync (erweitert)` -- use it only when CSV does
-   not suffice.
+   not suffice and the symbol/timeframe is within the tested provider scope.
 4. Review Import Readiness for the refreshed symbols.
 5. Analyze complete symbols deliberately.
 6. Open `/signals` and start with the Active Review shortlist and Trigger Radar.
@@ -72,6 +72,10 @@ Operator interpretation:
 - `Beobachten` means keep watching, not trade now.
 - `Kein Trade` is a valid outcome and should not be forced into a setup.
 - `Datenproblem` means fix data first or ignore the symbol for this cycle.
+- Provider success means stored candle data was refreshed for that symbol/timeframe;
+  it does not prove live/realtime freshness or broad watchlist coverage.
+- Provider failure, partial coverage, entitlement, rate-limit, invalid-symbol, or
+  unclear mapping means use CSV fallback or skip the symbol for the cycle.
 
 ## Trigger Shortlist Review
 
@@ -109,6 +113,8 @@ small and practical.
 - Refresh `4H` more often only when you are actively monitoring.
 - Do not expand crypto updates into a full-universe intraday refresh loop.
 - Treat stale, missing, failed, partial, and unknown data as blockers.
+- Treat crypto provider symbols and venues as mapping-sensitive until separately
+  verified; CSV remains the fallback for unclear provider coverage.
 
 ## What To Do When Time Is Limited
 
@@ -150,6 +156,10 @@ Never record:
 - Private Watchlist symbols when the operator considers them sensitive.
 - Broker exports, account balances, fills, order IDs, or account screenshots.
 - Private journal notes or personal identifiers.
+
+Provider evidence may record only public/redacted symbol category, timeframe,
+environment class, status enums, sanitized error category, and follow-up issue
+links.
 
 ## Escalation Rules
 
