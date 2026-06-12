@@ -217,11 +217,11 @@ Konsequenz: Tech Architecture und Implementierung folgen diesen Vorgaben.
 
 ## 21. Manueller Provider-Sync Vor Automatischer Marktaktualisierung
 
-Status: entschieden, v5.0 aktualisiert
+Status: entschieden, v5.3 aktualisiert
 
 Entscheidung: Provider-gestuetzte Marktdaten werden zuerst als manueller, disabled-by-default Sync umgesetzt. Twelve Data ist der ausgewaehlte saubere Provider-Pfad fuer guarded manual `1W`, `1D` und `4H` Stored-Data-Sync hinter einer provider-neutralen Boundary. Alpha Vantage bleibt ein optionaler Legacy-Daily/EOD-Smoke-Pfad. Tiingo, Polygon oder EODHD bleiben spaetere Kandidaten und sind keine aktive Runtime-Konfiguration.
 
-Begruendung: Manuelle Syncs sind pruefbar, testbar und sicherer als Scheduler. Twelve Data hat einen offiziellen API-Pfad fuer die benoetigten gespeicherten `1W`/`1D`/`4H` Timeframes. Breitere Watchlists, Speicherung, Lizenz, Entitlements und Rate Limits bleiben provider- und planabhaengig und brauchen redigierte Smoke-Evidence vor operativer Reliance.
+Begruendung: Manuelle Syncs sind pruefbar, testbar und sicherer als Scheduler. Twelve Data hat einen offiziellen API-Pfad fuer die benoetigten gespeicherten `1W`/`1D`/`4H` Timeframes. Lokale v5.3-Smoke-Evidence bestaetigt guarded manual Stored-Data-Sync fuer `1W`, `1D` und `4H`. Breitere Watchlists, Speicherung, Lizenz, Entitlements, Symbolabdeckung, Rate Limits und production-like Umgebungen bleiben provider- und planabhaengig und brauchen eigene redigierte Evidence vor operativer Reliance.
 
 Konsequenz: TradingView CSV bleibt Baseline und Fallback, insbesondere fuer `1W`/`1D`/`4H` Vollstaendigkeit. Provider-Daten werden mit Source/Freshness/Sync-Metadaten gespeichert und konservativ bewertet. Es gibt keinen Live-/Realtime-Claim, keine automatische Analyse nach Sync, keine Broker-Anbindung und keine automatische Orderausfuehrung. Secrets, Provider-Accounts und VPS-Konfiguration bleiben ausserhalb dieser Entscheidung.
 

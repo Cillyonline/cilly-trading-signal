@@ -122,6 +122,10 @@ The clean provider path uses Twelve Data with an operator-owned API key. Keep
 TradingView CSV as the fallback and do not use this evidence as production-readiness
 proof.
 
+Latest local configured-provider evidence is recorded in
+`docs/reviews/v5-3-twelve-data-provider-smoke.md`. Repeat this checklist for any
+new environment, provider plan, symbol universe, or broader reliance decision.
+
 Manual steps:
 
 1. Restart the API after setting the local or staging environment variables.

@@ -113,7 +113,7 @@ or create any live/realtime data claim.
 
 | Provider | US Stocks | `1D` / EOD | `4H` / Intraday | Main Strength | Main Risk | Practical v4.1 Position |
 | --- | --- | --- | --- | --- | --- | --- |
-| Twelve Data | Broad coverage depending on plan | Supported on relevant plans | Supported depending on plan and entitlement | One API surface for weekly, daily, and intraday; useful for `1W`/`1D`/`4H` stored-data sync. | Plan/entitlement, symbol mapping, and storage/licensing terms need confirmation. | Selected clean next provider path. |
+| Twelve Data | Broad coverage depending on plan | Supported on relevant plans | Supported depending on plan and entitlement | One API surface for weekly, daily, and intraday; useful for `1W`/`1D`/`4H` stored-data sync. | Plan/entitlement, symbol mapping, rate limits, and storage/licensing terms still need broader review. | Selected implemented clean provider path; local v5.3 smoke passed for guarded manual `1W`/`1D`/`4H`. |
 | Tiingo | Strong US equities focus depending on plan | Strong daily/equity fit | Intraday availability depends on plan/API | Good fit for adjusted daily US-stock data and clearer equity focus. | Intraday/crypto coverage and storage terms need confirmation. | Candidate if Daily/EOD quality is prioritized over unified stock/crypto coverage. |
 | Polygon.io | Strong US market coverage on paid plans | Supported | Strong paid intraday support | High-quality US-stock/intraday path if budget and licensing fit. | Cost, entitlement complexity, and production-like licensing burden. | Candidate for later serious intraday path, not low-friction first step. |
 | EODHD | Broad EOD-oriented market coverage depending on plan | Strong EOD fit | Intraday availability depends on plan | Practical EOD-first vendor with broad symbol coverage. | Intraday details, exchange entitlements, and storage terms need review. | Candidate for Daily/EOD replacement if Alpha Vantage proves limiting. |
@@ -144,7 +144,7 @@ Deferral:
 | --- | --- | --- | --- | --- | --- | --- |
 | TradingView CSV | Manual export only | Manual export only | Yes, via upload | Yes, via upload if exported manually | Already implemented; no provider key; manual and repeatable but not automated. | Keep as baseline and fallback. |
 | Alpha Vantage | Broad public-market coverage depends on plan | Limited crypto/FX coverage | Yes | Intraday exists but rate limits and adjusted-history details require review | Simple API shape; free/low-cost tiers can be restrictive; licensing must be checked before reliance. | First implemented guarded Daily/EOD adapter path. |
-| Twelve Data | Stocks/ETFs/FX depending on plan | Crypto support depending on plan | Yes | Intraday support depending on plan | Broad API surface; pricing, entitlement, and symbol mapping need review during smoke. | Selected clean next provider path for guarded manual `1W`/`1D`/`4H` sync. |
+| Twelve Data | Stocks/ETFs/FX depending on plan | Crypto support depending on plan | Yes | Intraday support depending on plan | Broad API surface; pricing, entitlement, symbol mapping, rate limits, and storage rights still need broader reliance review. | Selected implemented clean provider path; local v5.3 smoke passed for guarded manual `1W`/`1D`/`4H` sync. |
 | Polygon.io | Strong US market coverage depending on subscription | Crypto support depending on subscription | Yes | Strong intraday support on paid tiers | Higher-quality option but cost/licensing likely higher; useful if intraday becomes required. | Candidate for later paid/intraday path, not first low-risk default. |
 | Tiingo | US equities and ETFs depending on plan | Some crypto data depending on plan | Yes | Intraday depends on plan/API | Often suitable for adjusted daily equity data; crypto/intraday needs confirmation. | Candidate for daily stock data if licensing is acceptable. |
 | Yahoo Finance unofficial | Broad visible coverage | Some crypto symbols depending on Yahoo symbol format | Unofficial only | Unofficial only | Keyless but unofficial, breakable, and not suitable as the clean provider path. | Removed/not recommended for operational provider integration. |
@@ -281,7 +281,9 @@ Required before configuring a real key:
 - Startup guard behavior for missing, placeholder, or unsupported provider config.
 - Rollback plan: disable provider sync, restart with approval, and verify skipped
   manual data update.
-- Sanitized smoke evidence plan using `docs/PROVIDER_SYNC_SMOKE_TEST.md`.
+- Sanitized smoke evidence plan using `docs/PROVIDER_SYNC_SMOKE_TEST.md`. Local
+  v5.3 Twelve Data evidence exists for guarded manual `1W`/`1D`/`4H`; broader
+  environments or reliance still require their own approval and evidence.
 
 Forbidden evidence:
 
