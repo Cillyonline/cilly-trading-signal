@@ -204,7 +204,9 @@ Expected safe failure results:
 
 ## Evidence Template
 
-Record only sanitized evidence:
+Record only sanitized evidence. For future provider-smoke, private-staging, or
+broader provider-reliance decisions, use
+`docs/PROVIDER_OPERATIONAL_EVIDENCE_FORMAT.md` as the required evidence format.
 
 ```text
 Date:
