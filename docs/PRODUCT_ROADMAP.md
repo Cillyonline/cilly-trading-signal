@@ -137,8 +137,9 @@ Der aktuelle Stand ist ein kontrolliertes Owner/Operator-Review-Cockpit, kein pr
 - TradingView OHLCV CSV Import als manuelle Baseline mit Bulk-Import,
   Dateinamen-Erkennung, pro-Datei-Zuordnung, Readiness nach Symbol,
   Analyze-All fuer vollstaendige Symbole und Batch-Ergebnisfiltern.
-- Guarded manual Daily/EOD provider sync mit Source/Freshness-Kontext,
-  Timeframe-Capability-Hinweisen, disabled-by-default.
+- Guarded manual Provider-Sync mit Source/Freshness-Kontext,
+  Timeframe-Capability-Hinweisen, disabled-by-default und lokal smoke-getestetem
+  Twelve-Data-Pfad fuer gespeicherte `1W`, `1D` und `4H` Daten.
 - Deterministische Multi-Timeframe-Analyse mit erklaerbaren Long-only Setups.
 - Benchmark-Kontext fuer gespeicherte Daily-Kontexte (`SPY`/`QQQ`, `BTC`/`ETH`).
 - Explainable Signal Review mit Reasoning, Risk Flags, No-Trade-Gruenden, Next Action und stale Signal Visibility.
@@ -155,8 +156,9 @@ Der aktuelle Stand ist ein kontrolliertes Owner/Operator-Review-Cockpit, kein pr
 - Mobile Review Verbesserungen fuer Signals, Review Batches, Screener-Kandidaten
   und Trade Detail Workflows plus installierbare PWA-Manifest-Baseline.
 - Operational Readiness Docs: Monitoring Checklist, Health Details, Backup Restore Drill, Security Scan Workflow und Incident Runbook.
-- Safe-Automation-Prep: dokumentierter Dry-run Browser-Smoke-Contract und
-  nicht-invasiver lokaler Smoke-Evidence-Formatter.
+- Safe-Automation-Prep: dokumentierter Dry-run Browser-Smoke-Contract,
+  kanonisches Browser-Smoke-Evidence-Format, nicht-invasiver lokaler
+  Smoke-Evidence-Formatter und opt-in lokaler Browser-Route-Dry-Run.
 - v3.1 Owner/Operator Validation Evidence: lokale Docker-/Browser-Validation,
   Operator-Checkliste, private VPS-Aktualisierung und Browser-Smoke sind
   dokumentiert fuer kontrollierte Owner/Operator-Nutzung.
@@ -167,6 +169,11 @@ Der aktuelle Stand ist ein kontrolliertes Owner/Operator-Review-Cockpit, kein pr
   Active Review, Trigger Radar, Dashboard `Heute starten`, Browser-Smoke-Evidence,
   First-Run-Fuehrung, Datenhygiene-Uebersicht, sichere Cleanup-Aktionen und
   einfachere Signal-Erklaerungen sind umgesetzt bzw. dokumentiert.
+- v5.0-v5.3 Provider-/Verifikations-/Smoke-Rebaseline: Twelve Data ist als sauberer
+  implementierter Provider-Pfad fuer guarded manual stored-data sync bestaetigt,
+  lokale Verifikationsdocs sind CI-nah, Browser-Smoke-Dry-Run ist verfuegbar und
+  lokaler operator-run Twelve-Data-Smoke fuer `1W`, `1D`, `4H` ist sanitized
+  dokumentiert.
 
 Weiterhin nicht enthalten:
 
@@ -174,8 +181,8 @@ Weiterhin nicht enthalten:
 - Broker-/Exchange-Integration, Account Sync oder automatische Orders.
 - Live-/Realtime-Marktdatenversprechen.
 - Automatische Marktaktualisierung oder scheduler-driven Analyse.
-- 4H/intraday Provider-Reliance ohne separate Provider-, Lizenz-, Kosten- und
-  Rate-Limit-Entscheidung.
+- Breite 4H/intraday Provider-Reliance ohne separate Provider-, Lizenz-, Kosten-,
+  Entitlement-, Symbolabdeckungs- und Rate-Limit-Entscheidung.
 - Neue VPS-/Provider-Smokes ohne explizite Owner/Operator-Freigabe und ohne
   redigierte Evidence-Vorgaben.
 - Backtesting-/Profitabilitaetsvalidierung.
