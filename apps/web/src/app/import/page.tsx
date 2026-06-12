@@ -2010,6 +2010,7 @@ function ImportHistoryCard({
 
 function ProviderSyncResultCard({ result }: { result: MarketDataSyncResult }) {
   const state = providerSyncState(result);
+  const recoverySteps = providerSyncRecoverySteps(result);
 
   return (
     <article className="grid gap-5 p-5">
@@ -2055,6 +2056,17 @@ function ProviderSyncResultCard({ result }: { result: MarketDataSyncResult }) {
         <p className="rounded-2xl border border-yellow-300/30 bg-yellow-300/10 p-3 text-sm text-yellow-100 break-words">
           {result.sync_error_message}
         </p>
+      ) : null}
+
+      {recoverySteps.length > 0 ? (
+        <div className="rounded-2xl border border-yellow-300/30 bg-yellow-300/10 p-4 text-sm text-yellow-50">
+          <p className="font-semibold">Naechste manuelle Schritte</p>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            {recoverySteps.map((step) => (
+              <li key={step}>{step}</li>
+            ))}
+          </ul>
+        </div>
       ) : null}
     </article>
   );
@@ -2130,8 +2142,8 @@ function defaultProviderCapabilities(): ProviderTimeframeCapability[] {
   return [
     {
       timeframe: "1W",
-      supported: false,
-      reason: "Weekly Provider-Aktualisierung ist im ersten Pfad nicht aktiv; nutze TradingView CSV.",
+      supported: true,
+      reason: "Guarded Weekly-Aktualisierung ist fuer konfigurierte Provider-Symbole vorgesehen.",
     },
     {
       timeframe: "1D",
@@ -2140,8 +2152,8 @@ function defaultProviderCapabilities(): ProviderTimeframeCapability[] {
     },
     {
       timeframe: "4H",
-      supported: false,
-      reason: "4H/Intraday-Provider-Aktualisierung ist nicht aktiv; nutze TradingView CSV.",
+      supported: true,
+      reason: "Guarded 4H-Aktualisierung ist fuer konfigurierte Provider-Symbole vorgesehen.",
     },
   ];
 }
@@ -2174,8 +2186,8 @@ function providerSyncState(result: MarketDataSyncResult) {
       title: "Datenaktualisierung uebersprungen",
       message:
         result.sync_error_code === "sync_disabled"
-          ? "Provider-Aktualisierung ist im Backend deaktiviert. Das ist der sichere Default und es wurden keine Provider-Daten abgerufen."
-          : "Die Aktualisierung wurde sicher uebersprungen. Pruefe die Backend-Konfiguration, falls du Provider-Daten erwartest.",
+          ? "Provider-Aktualisierung ist im Backend deaktiviert. Das ist der sichere Default; nutze TradingView CSV, wenn du Daten fuer den Review-Zyklus brauchst."
+          : "Die Aktualisierung wurde sicher uebersprungen. Pruefe die Backend-Konfiguration oder nutze TradingView CSV, falls du Provider-Daten erwartet hast.",
       className: "border-slate-500/30 bg-slate-800/70 text-slate-200",
     };
   }
@@ -2184,7 +2196,7 @@ function providerSyncState(result: MarketDataSyncResult) {
     return {
       title: "Datenaktualisierung teilweise nutzbar",
       message:
-        "Die Aktualisierung hat nur einen Teilzustand geliefert. Fehlende Kerzen oder Timeframes koennen Analyse-Ergebnisse konservativ blockieren.",
+        "Die Aktualisierung hat nur einen Teilzustand geliefert. Nutze TradingView CSV fuer fehlende Kerzen oder Timeframes, bevor du Analyse-Workflows startest.",
       className: "border-yellow-300/30 bg-yellow-300/10 text-yellow-100",
     };
   }
@@ -2194,9 +2206,53 @@ function providerSyncState(result: MarketDataSyncResult) {
     message:
       result.sync_error_code === "unsupported_timeframe"
         ? "Dieser Timeframe wird vom aktuellen Provider-Pfad nicht unterstuetzt. Nutze TradingView CSV als Fallback und behandle den Datenstand konservativ."
-        : "Die Aktualisierung wurde nicht als nutzbarer Datenstand gespeichert. Pruefe den Fehler-Code und behandle den Datenstand konservativ.",
+        : "Die Aktualisierung wurde nicht als nutzbarer Datenstand gespeichert. Nutze TradingView CSV als Fallback und dokumentiere nur sanitisierten Status.",
     className: "border-red-300/30 bg-red-300/10 text-red-100",
   };
+}
+
+function providerSyncRecoverySteps(result: MarketDataSyncResult) {
+  if (result.sync_status === "success") {
+    return [];
+  }
+
+  if (result.sync_status === "partial") {
+    return [
+      "Importiere fehlende oder unvollstaendige Kerzen per TradingView CSV.",
+      "Starte Analyse erst manuell, wenn `1W`, `1D` und `4H` plausibel und vollstaendig sind.",
+      "Es wurden keine Alerts, Trades oder Broker-Aktionen automatisch erstellt.",
+    ];
+  }
+
+  if (result.sync_status === "skipped") {
+    return [
+      "Wenn Provider-Sync bewusst deaktiviert ist, bleibe beim TradingView CSV-Fallback.",
+      "Wenn Provider-Sync erwartet wurde, pruefe Konfiguration ausserhalb von Evidence-Kanaelen.",
+      "Es wurden keine Analyse, Alerts oder Trades automatisch gestartet.",
+    ];
+  }
+
+  if (result.sync_error_code === "provider_rate_limited") {
+    return [
+      "Warte oder reduziere den manuellen Sync-Umfang, bevor du es erneut versuchst.",
+      "Nutze TradingView CSV fuer den aktuellen Review-Zyklus, wenn Daten jetzt gebraucht werden.",
+      "Dokumentiere nur Status, Symbol, Timeframe und Fehler-Code; keine Keys oder Raw Payloads.",
+    ];
+  }
+
+  if (result.sync_error_code === "provider_symbol_or_entitlement") {
+    return [
+      "Pruefe Symbol-Mapping, Asset-Coverage und Entitlement ausserhalb von Evidence-Kanaelen.",
+      "Nutze TradingView CSV, wenn Coverage oder Berechtigung unklar bleibt.",
+      "Behandle den Datenstand als nicht actionable und starte keine Analyse daraus.",
+    ];
+  }
+
+  return [
+    "Nutze TradingView CSV als sicheren Fallback fuer diesen Review-Zyklus.",
+    "Pruefe Fehler-Code und Provider-Capability, ohne URLs, Keys oder Raw Payloads zu dokumentieren.",
+    "Es wurden keine Analyse, Alerts, Trades oder Broker-Aktionen automatisch erstellt.",
+  ];
 }
 
 function AnalysisResultCard({ result }: { result: MarketDataAnalysisResult }) {
