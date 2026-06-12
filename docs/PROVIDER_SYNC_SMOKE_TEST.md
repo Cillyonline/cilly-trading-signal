@@ -53,6 +53,29 @@ Capability expectations for implemented provider paths:
 - Unsupported timeframe responses should use sanitized `sync_error_code`, typically
   `unsupported_timeframe`, without raw provider payloads or secrets.
 
+## Twelve Data Symbol And Asset Scope
+
+Use provider-recognized public symbols for configured Twelve Data checks. The v5.3
+local smoke used a public stock sample and proves only that the guarded manual
+stored-data path worked for that tested symbol and environment.
+
+Safe operator assumptions:
+
+- Prefer widely recognized public stock or ETF symbols for provider-smoke checks.
+- Treat crypto, exchange-specific stock listings, regional suffixes, ADRs,
+  delisted symbols, and thinly traded assets as mapping-sensitive until separately
+  tested.
+- Do not use private watchlist symbols, broker exports, account data, or private
+  notes as provider-smoke evidence.
+- If Twelve Data returns unsupported, empty, partial, invalid-symbol, entitlement,
+  rate-limit, or unclear results for a symbol/timeframe, fall back to TradingView
+  CSV for the review cycle.
+- Do not infer broad watchlist coverage from one successful public-symbol smoke.
+
+Broader reliance on Twelve Data still requires a separate decision covering asset
+classes, exchanges, symbol mapping, plan entitlements, rate limits, storage rights,
+and production-like environment evidence.
+
 For local automated/API tests, prefer the mocked provider tests in
 `apps/api/tests/test_imports_api.py` and `apps/api/tests/test_market_data_sync.py`.
 Those tests validate success, skipped, failed, partial, and sanitized-error behavior

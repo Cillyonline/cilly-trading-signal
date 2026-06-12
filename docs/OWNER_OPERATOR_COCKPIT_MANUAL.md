@@ -146,6 +146,9 @@ Purpose:
 - Run analysis deliberately from stored data.
 - Use bulk CSV import as the low-friction fallback when provider sync is unavailable,
   disabled, stale, partial, or unsupported for the needed timeframe.
+- Use Twelve Data provider sync only for symbols/timeframes that are clearly within
+  the tested operator scope. If symbol mapping, exchange, crypto venue, entitlement,
+  rate limit, or coverage is unclear, use TradingView CSV for that review cycle.
 
 Operator checks:
 
@@ -179,10 +182,14 @@ Operator checks:
 - Confirm analysis does not create trades or orders.
 - Confirm CSV files contain public/synthetic OHLCV only, not broker exports, account
   balances, fills, private notes, or personal identifiers.
+- Treat a successful provider sync as stored-data context only. It is not a live or
+  realtime quote, a recommendation, or proof that the broader watchlist is covered.
 
 Stop if:
 
 - Data source, timeframe, or symbol is wrong.
+- Provider sync returns failed, partial, skipped, unsupported, or unclear coverage
+  and no current CSV fallback is available.
 - Import creates unexpected private data exposure.
 - Filename preview is unclear or conflicts with the manually selected symbol/timeframe.
 - CSV mapping is unclear, blocked, or would require guessing the symbol/timeframe.
