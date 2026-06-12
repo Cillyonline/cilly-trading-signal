@@ -654,24 +654,36 @@ Done when:
 
 ## Next Candidate Increment
 
-Recommended active sequence after v4.8:
+Completed sequence after v4.8:
 
-1. `v4.9 - Roadmap Rebaseline & Tracker Hygiene`: close the documentation and
-   tracker gap after v4.7/v4.8.
-2. `v5.0 - Twelve Data Provider Readiness`: keep Twelve Data as the selected clean
-   manual provider path, harden provider configuration, update docs/tests, and
-   record sanitized provider-smoke evidence when explicitly approved.
-3. `v5.1 - Local Verification Reliability`: make local `uv`, Python 3.12, Ruff,
-   pytest, and migration-smoke verification reproducible and aligned with CI.
-4. `v5.2 - Safe Browser Smoke Automation`: evaluate and implement sample-only
-   browser smoke automation under the documented dry-run contract.
+1. `v4.9 - Roadmap Rebaseline & Tracker Hygiene`: documentation and tracker state
+   were rebaselined after v4.7/v4.8.
+2. `v5.0 - Twelve Data Provider Readiness`: Twelve Data was kept as the selected
+   clean manual provider path, provider configuration was hardened, and smoke
+   evidence was recorded as blocked until explicit key approval.
+3. `v5.1 - Local Verification Reliability`: local `uv`, Python 3.12, Ruff,
+   pytest, and migration-smoke verification docs were aligned with CI.
+4. `v5.2 - Safe Browser Smoke Automation`: sample-only browser smoke evidence
+   format, execution-model decision, and opt-in local dry-run helper were added.
+5. `v5.3 - Operator Provider Smoke`: local operator-run Twelve Data configured-
+   provider smoke passed for guarded manual `1W`, `1D`, and `4H` stored-data sync.
+
+Recommended active sequence after v5.3:
+
+1. `v5.4 - Roadmap Rebaseline After Provider Smoke`: update roadmap, product, and
+   provider docs after v5.0-v5.3 completion.
+2. `v5.5 - Provider Operational Hardening`: clarify operator-facing provider
+   limits, entitlement/rate-limit failure wording, symbol-scope guidance, fallback
+   instructions, and evidence expectations without adding automation.
+3. `v5.6 - Operator Data Refresh Workflow`: consider manual CSV/provider refresh
+   workflow polish only after v5.5 defines safe provider boundaries.
 
 Deferred candidates:
 
 - Production-like readiness hardening, only if the owner wants to move beyond
   private owner/operator staging and accepts the required gate evidence.
-- Data-context handoff UI changes, if fresh operator review confirms remaining
-  friction.
+- Data-context handoff UI changes, if fresh operator/provider review confirms
+  remaining friction.
 - Additional paper calibration and golden-case coverage before strategy-rule
   changes.
 
