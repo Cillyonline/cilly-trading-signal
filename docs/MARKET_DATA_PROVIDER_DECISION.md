@@ -11,8 +11,9 @@ advice, or approval for automatic execution.
 
 ## Decision Summary
 
-Status: Twelve Data selected as the clean provider path for guarded manual `1W`,
-`1D`, and `4H` stored-data sync; broader provider reliance remains guarded.
+Status: Twelve Data selected and locally smoke-tested as the clean provider path
+for guarded manual `1W`, `1D`, and `4H` stored-data sync; broader provider
+reliance remains guarded.
 
 Current v4.4 operator decision:
 
@@ -40,7 +41,9 @@ Current decision:
 - Remove the unofficial Yahoo Finance path from the clean provider implementation.
   Yahoo Finance is not an official API provider path for this app.
 - Keep real provider reliance guarded by Twelve Data key configuration, sanitized
-  smoke evidence, CSV fallback, and visible stale/failed/partial states.
+  smoke evidence, CSV fallback, and visible stale/failed/partial states. The
+  local v5.3 configured-provider smoke passed for `1W`, `1D`, and `4H`; it is
+  not production, live/realtime, broker, or strategy-validation evidence.
 - Do not claim live, real-time, or trader-actionable data freshness from manual
   provider sync.
 
@@ -128,9 +131,10 @@ Recommendation:
 
 Deferral:
 
-- Twelve Data is selected as the next implementation provider, but operational
-  reliance still depends on the owner/operator API key, entitlement, symbol coverage,
-  and sanitized smoke evidence.
+- Twelve Data has local sanitized configured-provider smoke evidence for guarded
+  manual `1W`, `1D`, and `4H` stored-data sync, but broader operational reliance
+  still depends on licensing, entitlement, symbol coverage, rate-limit behavior,
+  and production-like environment review.
 - No provider secret, API key, account ID, subscription tier, or VPS setting is added.
 - No provider is approved as live/realtime or broker/execution-ready.
 
