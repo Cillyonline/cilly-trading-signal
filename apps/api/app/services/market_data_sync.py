@@ -109,11 +109,11 @@ class AlphaVantageDailyProvider:
         try:
             payload = self.transport.get_json(build_alpha_vantage_daily_url(plan, self.api_key))
         except ProviderTransportError:
-            return provider_failure(plan, "provider_transport_error", "Provider request failed.")
+            return provider_failure(plan, "provider_transport_error")
 
         candles, error_code = parse_alpha_vantage_daily_response(payload)
         if error_code is not None:
-            return provider_failure(plan, error_code, "Provider response could not be used.")
+            return provider_failure(plan, error_code)
         if not candles:
             return MarketDataSyncResult(
                 sync_status=MarketDataSyncStatus.PARTIAL,
@@ -123,7 +123,7 @@ class AlphaVantageDailyProvider:
                 provider_exchange=plan.provider_exchange,
                 provider_timeframe=plan.provider_timeframe,
                 error_code="provider_empty_response",
-                error_message="Provider returned no candles.",
+                error_message=provider_failure_message("provider_empty_response"),
             )
 
         latest_timestamp = max(candle.timestamp for candle in candles)
@@ -161,11 +161,11 @@ class TwelveDataProvider:
         try:
             payload = self.transport.get_json(build_twelve_data_url(plan, self.api_key))
         except ProviderTransportError:
-            return provider_failure(plan, "provider_transport_error", "Provider request failed.")
+            return provider_failure(plan, "provider_transport_error")
 
         candles, error_code = parse_twelve_data_response(payload)
         if error_code is not None:
-            return provider_failure(plan, error_code, "Provider response could not be used.")
+            return provider_failure(plan, error_code)
         if not candles:
             return MarketDataSyncResult(
                 sync_status=MarketDataSyncStatus.PARTIAL,
@@ -175,7 +175,7 @@ class TwelveDataProvider:
                 provider_exchange=plan.provider_exchange,
                 provider_timeframe=plan.provider_timeframe,
                 error_code="provider_empty_response",
-                error_message="Provider returned no candles.",
+                error_message=provider_failure_message("provider_empty_response"),
             )
 
         latest_timestamp = max(candle.timestamp for candle in candles)
@@ -251,6 +251,8 @@ def parse_twelve_data_response(payload: object) -> tuple[list[ProviderCandle], s
         code = payload.get("code")
         if code == 429:
             return [], "provider_rate_limited"
+        if code in {400, 404}:
+            return [], "provider_symbol_or_entitlement"
         return [], "provider_error"
 
     raw_values = payload.get("values")
@@ -492,7 +494,7 @@ def persist_provider_sync_result(
                 provider_exchange=result.provider_exchange,
                 provider_timeframe=result.provider_timeframe,
                 error_code="provider_empty_response",
-                error_message="Provider returned no candles.",
+                error_message=provider_failure_message("provider_empty_response"),
             )
         elif duplicate_count != len(result.candles):
             result = MarketDataSyncResult(
@@ -503,7 +505,7 @@ def persist_provider_sync_result(
                 provider_exchange=result.provider_exchange,
                 provider_timeframe=result.provider_timeframe,
                 error_code="duplicate_provider_candles",
-                error_message="Provider returned duplicate candle timestamps.",
+                error_message=provider_failure_message("duplicate_provider_candles"),
             )
         else:
             persist_provider_candles(db, series, result.candles)
@@ -607,7 +609,7 @@ def _decimal_field(payload: dict[object, object], key: str) -> Decimal:
 def provider_failure(
     plan: MarketDataSyncPlan,
     error_code: str,
-    message: str,
+    message: str | None = None,
 ) -> MarketDataSyncResult:
     return MarketDataSyncResult(
         sync_status=MarketDataSyncStatus.FAILED,
@@ -617,5 +619,46 @@ def provider_failure(
         provider_exchange=plan.provider_exchange,
         provider_timeframe=plan.provider_timeframe,
         error_code=error_code,
-        error_message=message,
+        error_message=message or provider_failure_message(error_code),
+    )
+
+
+def provider_failure_message(error_code: str) -> str:
+    messages = {
+        "unsupported_timeframe": (
+            "Provider sync does not support this timeframe here. Use TradingView CSV "
+            "fallback for this review cycle."
+        ),
+        "provider_transport_error": (
+            "Provider request could not be completed. Retry later, reduce scope, or use "
+            "TradingView CSV fallback."
+        ),
+        "provider_rate_limited": (
+            "Provider rate limit was reached. Wait, reduce the sync scope, or use "
+            "TradingView CSV fallback."
+        ),
+        "provider_symbol_or_entitlement": (
+            "Provider rejected the symbol, timeframe, or entitlement. Verify provider "
+            "coverage outside evidence channels or use TradingView CSV fallback."
+        ),
+        "provider_invalid_response": (
+            "Provider response could not be used safely. Use TradingView CSV fallback "
+            "and record only sanitized status evidence."
+        ),
+        "provider_empty_response": (
+            "Provider returned no usable candles. Verify symbol coverage or use "
+            "TradingView CSV fallback."
+        ),
+        "duplicate_provider_candles": (
+            "Provider returned duplicate candle timestamps. Use TradingView CSV "
+            "fallback until the provider result is reviewed."
+        ),
+        "provider_error": (
+            "Provider rejected the request. Verify configuration and coverage outside "
+            "evidence channels or use TradingView CSV fallback."
+        ),
+    }
+    return messages.get(
+        error_code,
+        "Provider sync failed. Use TradingView CSV fallback and record only sanitized status evidence.",
     )
