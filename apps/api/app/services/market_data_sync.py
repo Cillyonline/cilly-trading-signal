@@ -660,5 +660,6 @@ def provider_failure_message(error_code: str) -> str:
     }
     return messages.get(
         error_code,
-        "Provider sync failed. Use TradingView CSV fallback and record only sanitized status evidence.",
+        "Provider sync failed. Use TradingView CSV fallback and record only "
+        "sanitized status evidence.",
     )
