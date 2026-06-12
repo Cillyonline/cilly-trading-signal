@@ -26,6 +26,7 @@ from app.services.market_data_sync import (
     persist_provider_sync_result,
     parse_alpha_vantage_daily_response,
     parse_twelve_data_response,
+    provider_failure_message,
     provider_timeframe_capabilities,
     sync_market_data_series,
 )
@@ -391,6 +392,28 @@ def test_twelve_data_provider_handles_api_error_response() -> None:
     assert result.error_code == "provider_symbol_or_entitlement"
     assert "entitlement" in (result.error_message or "").lower()
     assert "bad request" not in (result.error_message or "").lower()
+
+
+@pytest.mark.parametrize(
+    "error_code",
+    [
+        "provider_transport_error",
+        "provider_rate_limited",
+        "provider_symbol_or_entitlement",
+        "provider_invalid_response",
+        "provider_empty_response",
+    ],
+)
+def test_provider_failure_messages_are_sanitized_and_operator_actionable(
+    error_code: str,
+) -> None:
+    message = provider_failure_message(error_code)
+
+    assert "CSV fallback" in message
+    assert "test-api-key" not in message
+    assert "apikey" not in message.lower()
+    assert "http" not in message.lower()
+    assert "bad request" not in message.lower()
 
 
 def test_twelve_data_parser_handles_empty_values_as_partial() -> None:

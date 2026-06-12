@@ -14,7 +14,10 @@ from app.api.routes.imports import get_market_data_provider
 from app.core.config import settings
 from app.main import create_app
 from app.models import *  # noqa: F403
+from app.models.alert import Alert, NotificationLog
 from app.models.enums import MarketDataFreshnessStatus, MarketDataSyncStatus
+from app.models.signal import Signal
+from app.models.trade import Trade
 from app.services.market_data_sync import MarketDataSyncResult, ProviderCandle
 
 
@@ -37,6 +40,7 @@ def client() -> Iterator[TestClient]:
 
     app = create_app()
     app.dependency_overrides[get_db] = override_get_db
+    app.state.testing_session_local = TestingSessionLocal
 
     test_client = TestClient(app)
     login(test_client)
@@ -305,6 +309,44 @@ def test_manual_market_data_sync_applies_mock_success(
     assert result["provider_name"] == "alpha_vantage"
     assert result["provider_symbol"] == "AAPL"
     assert result["sync_error_code"] is None
+
+
+def test_manual_market_data_sync_does_not_create_downstream_records(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    watchlist_item_id = create_watchlist_item(client)
+    success_provider = FakeMarketDataProvider(
+        MarketDataSyncResult(
+            sync_status=MarketDataSyncStatus.SUCCESS,
+            freshness_status=MarketDataFreshnessStatus.FRESH,
+            provider_name="twelve_data",
+            provider_symbol="AAPL",
+            provider_timeframe="1D",
+            data_end_at=datetime(2026, 5, 29, tzinfo=UTC),
+            candles=(provider_candle("2026-05-29"),),
+        )
+    )
+    monkeypatch.setattr(settings, "market_data_provider_sync_enabled", True)
+    monkeypatch.setattr(settings, "market_data_provider", "twelve_data")
+    client.app.dependency_overrides[get_market_data_provider] = lambda: success_provider
+
+    try:
+        response = client.post(
+            "/api/imports/sync",
+            json={"watchlist_item_id": watchlist_item_id, "timeframe": "1D"},
+        )
+    finally:
+        client.app.dependency_overrides.pop(get_market_data_provider, None)
+
+    assert response.status_code == 200
+    assert response.json()["sync_status"] == "success"
+
+    with client.app.state.testing_session_local() as db:
+        assert db.query(Signal).count() == 0
+        assert db.query(Trade).count() == 0
+        assert db.query(Alert).count() == 0
+        assert db.query(NotificationLog).count() == 0
 
 
 def test_manual_market_data_sync_returns_configured_provider_capabilities(
