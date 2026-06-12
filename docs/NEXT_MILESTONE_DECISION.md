@@ -1,16 +1,25 @@
 # Next Milestone Decision
 
-Date: 2026-06-11
+Date: 2026-06-12
 
 ## Decision
 
-Recommended next milestone: `v4.9 - Roadmap Rebaseline & Tracker Hygiene`.
+Recommended next milestone: `v5.4 - Roadmap Rebaseline After Provider Smoke`.
 
-Rationale: v4.6 Guided Operator Workflow, v4.7 Browser Workflow Smoke, and v4.8
-Guided First Run & Data Hygiene are complete. The next highest-value step is to
-rebaseline the roadmap and tracker before starting the next implementation
-milestones: Twelve Data provider readiness, local verification reliability, and
-safe browser smoke automation.
+Rationale: v4.9 through v5.3 are complete and closed. Twelve Data now has local
+operator-run configured-provider smoke evidence for guarded manual `1W`, `1D`,
+and `4H` stored-data sync. The next highest-value step is to rebaseline roadmap
+docs and tracker state before choosing the next implementation milestone.
+
+Recommended implementation sequence after v5.4:
+
+1. `v5.5 - Provider Operational Hardening`: plan and harden operator-facing
+   provider limits, entitlement/rate-limit handling, symbol-scope guidance, and
+   fallback wording without scheduler-driven sync or production-like reliance.
+2. `v5.6 - Operator Data Refresh Workflow`: improve the manual provider/CSV
+   refresh flow only if v5.5 confirms clear, safe scope.
+3. `v5.7 - Review Calibration Follow-up`: add deterministic review/golden-case
+   coverage only if fresh operator evidence shows signal-quality gaps.
 
 ## v4.3 - Operational Evidence Closure
 
@@ -160,9 +169,10 @@ Boundary:
 Goal: align roadmap docs and tracker state after v4.7/v4.8 before starting the
 next implementation work.
 
-Status: Current.
+Status: Done. Review is recorded in
+`docs/reviews/v4-9-roadmap-rebaseline-tracker-hygiene-review.md`.
 
-Planned issues:
+Completed issues:
 
 - #673: rebaseline roadmap after v4.7 and v4.8.
 - #674: confirm completed v4.6 and v4.8 milestones are closed.
@@ -173,7 +183,7 @@ Tracker hygiene snapshot, 2026-06-11:
 - `v4.6 - Guided Operator Workflow`: closed, 0 open issues, 6 closed issues.
 - `v4.8 - Guided First Run & Data Hygiene`: closed, 0 open issues, 5 closed issues.
 
-Done when:
+Completion criteria:
 
 - Roadmap docs no longer present completed v4.7/v4.8 work as pending.
 - Completed milestones are closed in the tracker.
@@ -184,14 +194,16 @@ Done when:
 Goal: consolidate Twelve Data as the selected clean manual provider path and
 harden provider configuration before relying on provider-backed stored data.
 
-Status: Planned.
+Status: Done. Review is recorded in
+`docs/reviews/v5-0-twelve-data-provider-readiness-review.md`.
 
-Planned issues:
+Completed issues:
 
 - #676: limit configurable market data providers to implemented adapters.
 - #677: clarify Twelve Data as selected clean provider path.
 - #678: cover unsupported provider configuration behavior.
-- #679: record Twelve Data provider smoke checklist result.
+- #679: record Twelve Data provider smoke checklist result as `NOT RUN` with a
+  follow-up to run the configured provider smoke after explicit approval.
 
 Boundary:
 
@@ -202,9 +214,10 @@ Boundary:
 
 Goal: make local backend/frontend verification reproducible and aligned with CI.
 
-Status: Planned.
+Status: Done. Review is recorded in
+`docs/reviews/v5-1-local-verification-reliability-review.md`.
 
-Planned issues:
+Completed issues:
 
 - #680: document `uv` setup and backend verification path.
 - #681: add Python 3.12 and `uv` troubleshooting for Windows.
@@ -215,9 +228,10 @@ Planned issues:
 Goal: evaluate and implement safe sample-only browser smoke automation under the
 documented dry-run contract.
 
-Status: Planned.
+Status: Done. Review is recorded in
+`docs/reviews/v5-2-safe-browser-smoke-automation-review.md`.
 
-Planned issues:
+Completed issues:
 
 - #682: add safe browser smoke dry-run implementation.
 - #683: evaluate browser smoke CI versus manual runner.
@@ -228,6 +242,72 @@ Boundary:
 - No VPS secret automation, provider-key automation, private-data use, broker
   integration, automatic execution, live/realtime claim, or production-readiness
   claim.
+
+## v5.3 - Operator Provider Smoke
+
+Goal: run the configured Twelve Data provider smoke after explicit key/setup
+approval and record sanitized evidence.
+
+Status: Done. Review is recorded in
+`docs/reviews/v5-3-operator-provider-smoke-review.md`.
+
+Completed issues:
+
+- #695: run configured Twelve Data provider smoke after explicit approval.
+- #709: review v5.3 operator provider smoke.
+
+Outcome:
+
+- Local Docker Compose smoke passed for Twelve Data `1W`, `1D`, and `4H` guarded
+  manual stored-data sync.
+- Evidence is recorded in `docs/reviews/v5-3-twelve-data-provider-smoke.md`.
+- A follow-up `1D` sync did not create automatic signals, trades, or alerts.
+- TradingView CSV remains the fallback.
+
+Boundary:
+
+- The smoke is local operator evidence only. It is not production-readiness,
+  live/realtime, broker-readiness, profitability, strategy-validation, trading
+  advice, or approval for automatic execution.
+
+## v5.4 - Roadmap Rebaseline After Provider Smoke
+
+Goal: align roadmap docs, product status, provider docs, and tracker state after
+v5.0-v5.3 completion.
+
+Status: Current.
+
+Planned issues:
+
+- #711: rebaseline next milestone decision after v5.3.
+- #712: update delivery and product roadmap status after v5.3.
+- #713: align provider docs with v5.3 smoke status.
+- #714: review v5.4 roadmap rebaseline after provider smoke.
+
+Done when:
+
+- Roadmap docs no longer present v4.9-v5.3 work as pending.
+- Provider docs consistently state local Twelve Data smoke status and remaining
+  reliance boundaries.
+- Tracker state is aligned and v5.4 is reviewed/closed.
+
+## Next Implementation Candidates
+
+Recommended candidate after v5.4:
+
+- `v5.5 - Provider Operational Hardening`: clarify and harden the operator-facing
+  provider path after local Twelve Data smoke. Likely scope includes symbol/asset
+  guidance, entitlement/rate-limit failure wording, fallback instructions, and
+  evidence requirements. It must not add scheduler-driven sync, automatic
+  analysis, broker integration, automatic execution, live/realtime claims, or
+  production-readiness claims.
+
+Deferred candidates:
+
+- Data-refresh workflow polish if operator use shows friction after v5.5 planning.
+- Additional deterministic review calibration if fresh paper/operator evidence
+  identifies signal-quality gaps.
+- Production-like readiness hardening only after a separate explicit gate.
 
 ## Not Now
 
