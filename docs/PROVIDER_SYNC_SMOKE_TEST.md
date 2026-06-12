@@ -177,6 +177,12 @@ Expected safe failure results:
 - Unsupported timeframe, provider rate limit, invalid provider payload, empty provider
   response, or transport failure produces `failed` or `partial` with sanitized
   `sync_error_code` and `sync_error_message`.
+- Common recovery categories should stay operator-safe: `provider_rate_limited`
+  means wait/reduce scope or use CSV fallback; `provider_symbol_or_entitlement`
+  means verify symbol, timeframe, coverage, or plan entitlement outside evidence
+  channels; `provider_transport_error`, `provider_invalid_response`, and
+  `provider_empty_response` mean use CSV fallback until the provider result is
+  understood.
 - If Twelve Data plan limits, entitlements, symbol mapping, rate limits, or provider
   payload shape block a timeframe, the result should stay sanitized and conservative.
 - Failure evidence must not include raw provider payloads, API keys, request URLs with

@@ -287,6 +287,7 @@ def test_alpha_vantage_daily_provider_handles_rate_limit_response() -> None:
     assert result.sync_status == MarketDataSyncStatus.FAILED
     assert result.error_code == "provider_rate_limited"
     assert "test-api-key" not in (result.error_message or "")
+    assert "CSV fallback" in (result.error_message or "")
 
 
 def test_alpha_vantage_parser_handles_empty_series_as_partial() -> None:
@@ -306,6 +307,7 @@ def test_alpha_vantage_parser_handles_empty_series_as_partial() -> None:
     assert result.sync_status == MarketDataSyncStatus.PARTIAL
     assert result.freshness_status == MarketDataFreshnessStatus.PARTIAL
     assert result.error_code == "provider_empty_response"
+    assert "CSV fallback" in (result.error_message or "")
 
 
 def test_alpha_vantage_parser_rejects_invalid_payload() -> None:
@@ -367,6 +369,8 @@ def test_twelve_data_provider_handles_rate_limit_response() -> None:
 
     assert result.sync_status == MarketDataSyncStatus.FAILED
     assert result.error_code == "provider_rate_limited"
+    assert "rate limit" in (result.error_message or "").lower()
+    assert "test-api-key" not in (result.error_message or "")
 
 
 def test_twelve_data_provider_handles_api_error_response() -> None:
@@ -384,7 +388,9 @@ def test_twelve_data_provider_handles_api_error_response() -> None:
     result = provider.sync(plan)
 
     assert result.sync_status == MarketDataSyncStatus.FAILED
-    assert result.error_code == "provider_error"
+    assert result.error_code == "provider_symbol_or_entitlement"
+    assert "entitlement" in (result.error_message or "").lower()
+    assert "bad request" not in (result.error_message or "").lower()
 
 
 def test_twelve_data_parser_handles_empty_values_as_partial() -> None:
@@ -404,6 +410,7 @@ def test_twelve_data_parser_handles_empty_values_as_partial() -> None:
     assert result.sync_status == MarketDataSyncStatus.PARTIAL
     assert result.freshness_status == MarketDataFreshnessStatus.PARTIAL
     assert result.error_code == "provider_empty_response"
+    assert "CSV fallback" in (result.error_message or "")
 
 
 def test_twelve_data_parser_rejects_invalid_payload() -> None:
