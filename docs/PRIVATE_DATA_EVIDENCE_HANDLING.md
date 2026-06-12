@@ -24,6 +24,10 @@ Allowed evidence may be posted in issues, PRs, docs, and checklists when it cont
 | Incident evidence | Affected workflow, severity, health pass/fail, data-changing operations stopped yes/no, follow-up issue link. |
 | Screenshots | Sample/paper-only screenshots with no private symbols, notes, account data, cookies, tokens, devtools, or browser storage. |
 
+Provider operational evidence has a stricter standalone format in
+`docs/PROVIDER_OPERATIONAL_EVIDENCE_FORMAT.md`. Use it for future provider-smoke,
+private-staging, or broader provider-reliance decisions.
+
 ## Redacted Evidence
 
 Redacted evidence may be used only when the private value is removed before sharing:
@@ -105,6 +109,10 @@ Safe backup/restore evidence:
 - Cleanup completed: yes/no/not applicable
 - Secrets, repository credentials, dump contents, restored rows, DB URLs, private notes included: no
 ```
+
+Safe provider operational evidence is defined separately in
+`docs/PROVIDER_OPERATIONAL_EVIDENCE_FORMAT.md` because provider checks have
+additional secret, entitlement, raw-payload, and readiness-overclaim risks.
 
 ## Final Evidence Boundary
 
