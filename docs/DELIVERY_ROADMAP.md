@@ -682,13 +682,16 @@ Completed sequence after v4.8:
 7. `v5.5 - Provider Operational Hardening`: symbol scope, sanitized failure
    guidance, Import-page fallback wording, no-automation tests, and provider
    operational evidence rules were completed.
+8. `v5.6 - Operator Data Refresh Workflow`: manual CSV/provider refresh cadence,
+   Import-page next actions, CSV refresh no-automation tests, and sanitized data
+   refresh evidence rules were completed.
 
-Recommended active sequence after v5.5:
+Recommended active sequence after v5.6:
 
-1. `v5.6 - Operator Data Refresh Workflow`: clarify the manual CSV/provider
-   refresh cadence, readiness next actions, CSV fallback, sanitized refresh
-   evidence, and no-automation boundaries.
-2. `v5.7 - Review Calibration Follow-up`: add deterministic review/golden-case
+1. `v5.7 - Post-Refresh Operator Validation`: prepare sample/paper-only
+   validation checklist and evidence format for the manual refresh-to-review
+   workflow after v5.6.
+2. `v5.8 - Review Calibration Follow-up`: add deterministic review/golden-case
    coverage only if fresh operator evidence shows signal-quality gaps.
 
 Deferred candidates:

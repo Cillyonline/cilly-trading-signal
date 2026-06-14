@@ -169,12 +169,14 @@ Der aktuelle Stand ist ein kontrolliertes Owner/Operator-Review-Cockpit, kein pr
   Active Review, Trigger Radar, Dashboard `Heute starten`, Browser-Smoke-Evidence,
   First-Run-Fuehrung, Datenhygiene-Uebersicht, sichere Cleanup-Aktionen und
   einfachere Signal-Erklaerungen sind umgesetzt bzw. dokumentiert.
-- v5.0-v5.5 Provider-/Verifikations-/Smoke-/Hardening-Rebaseline: Twelve Data ist
-  als sauberer implementierter Provider-Pfad fuer guarded manual stored-data sync
-  bestaetigt, lokale Verifikationsdocs sind CI-nah, Browser-Smoke-Dry-Run ist
-  verfuegbar, lokaler operator-run Twelve-Data-Smoke fuer `1W`, `1D`, `4H` ist
-  sanitized dokumentiert, und Provider-Failure-, Symbol-Scope-, CSV-Fallback-,
-  No-Automation-Test- und Evidence-Boundaries sind gehaertet.
+- v5.0-v5.6 Provider-/Verifikations-/Smoke-/Hardening-/Refresh-Rebaseline:
+  Twelve Data ist als sauberer implementierter Provider-Pfad fuer guarded manual
+  stored-data sync bestaetigt, lokale Verifikationsdocs sind CI-nah, Browser-Smoke-
+  Dry-Run ist verfuegbar, lokaler operator-run Twelve-Data-Smoke fuer `1W`, `1D`,
+  `4H` ist sanitized dokumentiert, Provider-Failure-, Symbol-Scope-, CSV-Fallback-,
+  No-Automation-Test- und Evidence-Boundaries sind gehaertet, und der manuelle
+  Data-Refresh-Workflow hat klarere Operator-Docs, UI-Next-Actions und Evidence-
+  Regeln.
 
 Weiterhin nicht enthalten:
 
