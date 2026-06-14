@@ -4,22 +4,19 @@ Date: 2026-06-14
 
 ## Decision
 
-Recommended active milestone: `v5.6 - Operator Data Refresh Workflow`.
+Recommended active milestone: `v5.7 - Post-Refresh Operator Validation`.
 
-Rationale: v4.9 through v5.5 are complete and closed. Twelve Data remains the
-selected guarded manual provider path after local operator smoke and provider
-operational hardening. The next highest-value step is to make the owner/operator
-data refresh workflow clearer across CSV, guarded provider sync, readiness, and
-fallback handling without adding scheduler-driven sync, automatic analysis,
-broker integration, live/realtime claims, profitability claims, or production-
-readiness claims.
+Rationale: v4.9 through v5.6 are complete and closed. The manual CSV/provider
+refresh workflow is now clearer in docs, UI wording, tests, and evidence rules.
+The next highest-value step is to prepare sample/paper-only post-refresh operator
+validation before deciding whether calibration, private-data readiness, or paper-
+trade protocol work should come next.
 
-Recommended implementation sequence after v5.5:
+Recommended implementation sequence after v5.6:
 
-1. `v5.6 - Operator Data Refresh Workflow`: clarify the manual CSV/provider
-   refresh cadence, readiness next actions, CSV fallback, sanitized refresh
-   evidence, and no-automation boundaries.
-2. `v5.7 - Review Calibration Follow-up`: add deterministic review/golden-case
+1. `v5.7 - Post-Refresh Operator Validation`: define sample/paper-only validation
+   checklist and evidence format for the manual refresh-to-review workflow.
+2. `v5.8 - Review Calibration Follow-up`: add deterministic review/golden-case
    coverage only if fresh operator evidence shows signal-quality gaps.
 
 ## v4.3 - Operational Evidence Closure
@@ -334,9 +331,10 @@ Goal: make the manual owner/operator data refresh workflow clearer across CSV,
 guarded provider sync, readiness next actions, fallback handling, and sanitized
 refresh evidence.
 
-Status: Current.
+Status: Done. Review is recorded in
+`docs/reviews/v5-6-operator-data-refresh-workflow-review.md`.
 
-Planned issues:
+Completed issues:
 
 - #732: rebaseline roadmap after v5.5 provider hardening.
 - #731: define operator data refresh workflow.
@@ -345,20 +343,48 @@ Planned issues:
 - #736: define data refresh evidence format.
 - #734: review v5.6 operator data refresh workflow.
 
+Outcome:
+
+- Operator docs define daily and weekly manual refresh cadence, refresh state
+  handling, CSV fallback, and no-automation boundaries.
+- Import page readiness and freshness copy gives clearer manual next actions for
+  missing, stale, failed, partial, skipped, and unknown data states.
+- API tests cover that CSV import/refresh does not automatically create signals,
+  trades, alerts, or notification logs.
+- `docs/DATA_REFRESH_EVIDENCE_FORMAT.md` defines sanitized refresh evidence fields.
+
+Boundary:
+
+- No scheduler-driven sync, automatic refresh, automatic analysis, broker
+  integration, automatic execution, live/realtime claim, profitability claim, or
+  production-readiness claim was introduced.
+
+## v5.7 - Post-Refresh Operator Validation
+
+Goal: prepare repeatable sample/paper-only validation for the manual workflow after
+the v5.6 refresh guidance.
+
+Status: Current.
+
+Planned issues:
+
+- #744: rebaseline roadmap after v5.6 refresh workflow.
+- #746: add post-refresh operator validation checklist.
+- #745: define post-refresh validation evidence format.
+- #747: review v5.7 post-refresh operator validation.
+
 Done when:
 
-- Operator docs describe practical daily and weekly manual refresh flows.
-- `/import` next actions make missing, stale, partial, skipped, and failed refresh
-  states easier to recover from manually.
-- Refresh evidence format is sanitized and aligned with private-data, browser, and
-  provider evidence boundaries.
-- Tests either cover any newly identified refresh boundary gaps or explicitly
-  document existing coverage as sufficient.
-- v5.6 review is recorded and the milestone is closed.
+- A sample/paper-only validation checklist exists for `/import`, readiness,
+  explicit manual analysis, Signals review, and manual trade logging boundaries.
+- A sanitized validation evidence format exists and cross-links to data-refresh,
+  browser-smoke, and private-data evidence rules.
+- The review confirms whether an operator-run validation follow-up is needed.
+- v5.7 review is recorded and the milestone is closed.
 
-Recommended candidate after v5.6:
+Recommended candidate after v5.7:
 
-- `v5.7 - Review Calibration Follow-up`: add deterministic review/golden-case
+- `v5.8 - Review Calibration Follow-up`: add deterministic review/golden-case
   coverage only if fresh operator evidence shows signal-quality gaps.
 
 Deferred candidates:
