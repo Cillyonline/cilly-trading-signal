@@ -1095,6 +1095,8 @@ backup, restore, private-data, or production-like reliance by itself.
 
 For the v5.8 offsite encrypted backup configuration status, see
 `docs/reviews/v5-8-offsite-encrypted-backups.md`.
+For the v5.8 offsite restore-drill status, see
+`docs/reviews/v5-8-offsite-restore-drill.md`.
 
 Recommended default:
 
