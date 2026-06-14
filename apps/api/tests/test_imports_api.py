@@ -246,6 +246,21 @@ def test_import_csv_marks_old_daily_data_stale(client: TestClient) -> None:
     assert result["sync_status"] == "not_applicable"
 
 
+def test_import_csv_does_not_create_downstream_records(client: TestClient) -> None:
+    watchlist_item_id = create_watchlist_item(client)
+
+    response = post_csv_import(client, watchlist_item_id, valid_csv())
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "validated"
+
+    with client.app.state.testing_session_local() as db:
+        assert db.query(Signal).count() == 0
+        assert db.query(Trade).count() == 0
+        assert db.query(Alert).count() == 0
+        assert db.query(NotificationLog).count() == 0
+
+
 def test_list_imports_rejects_unauthenticated_request(client: TestClient) -> None:
     client.post("/api/auth/logout")
 
