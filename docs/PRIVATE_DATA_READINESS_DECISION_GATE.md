@@ -8,7 +8,7 @@ This document records the decision gate for using private owner/operator trading
 
 Status: No Go for routine private trading data use.
 
-Date: 2026-06-01.
+Date: 2026-06-14.
 
 Private sample/paper staging: Conditional Go when the existing local/private-staging gates remain satisfied.
 
@@ -27,6 +27,16 @@ staging only. This does not change this gate: routine private owner/operator
 trading data remains No Go until offsite/geographic backup and restore evidence,
 privacy handling, incident rehearsal, secret rotation, and explicit residual-risk
 acceptance are complete.
+
+v5.8 private-data readiness snapshot, 2026-06-14: private VPS post-refresh
+validation passed for sample/paper-only use, but private trading data remains No
+Go. Secret rotation was prepared but not performed, deploy-user routine operations
+were not re-run in v5.8, offsite encrypted backups were not configured, and the
+offsite restore drill was blocked by the missing offsite backup target. See
+`docs/reviews/v5-8-private-staging-secret-rotation.md`,
+`docs/reviews/v5-8-deploy-user-routine-operations.md`,
+`docs/reviews/v5-8-offsite-encrypted-backups.md`, and
+`docs/reviews/v5-8-offsite-restore-drill.md`.
 
 Rationale:
 
@@ -74,6 +84,8 @@ Private owner/operator trading data may be reconsidered only after all of this i
 
 Current blockers before reconsideration:
 
+- No current verified private-staging secret-rotation evidence is recorded.
+- No current v5.8 deploy-user routine-operations re-verification evidence is recorded.
 - No explicit owner/operator acceptance for routine private trading data use is recorded.
 - No current offsite/geographic encrypted backup restore evidence is recorded for
   routine private-data reliance.
