@@ -1,24 +1,25 @@
 # Next Milestone Decision
 
-Date: 2026-06-12
+Date: 2026-06-14
 
 ## Decision
 
-Recommended next milestone: `v5.4 - Roadmap Rebaseline After Provider Smoke`.
+Recommended active milestone: `v5.6 - Operator Data Refresh Workflow`.
 
-Rationale: v4.9 through v5.3 are complete and closed. Twelve Data now has local
-operator-run configured-provider smoke evidence for guarded manual `1W`, `1D`,
-and `4H` stored-data sync. The next highest-value step is to rebaseline roadmap
-docs and tracker state before choosing the next implementation milestone.
+Rationale: v4.9 through v5.5 are complete and closed. Twelve Data remains the
+selected guarded manual provider path after local operator smoke and provider
+operational hardening. The next highest-value step is to make the owner/operator
+data refresh workflow clearer across CSV, guarded provider sync, readiness, and
+fallback handling without adding scheduler-driven sync, automatic analysis,
+broker integration, live/realtime claims, profitability claims, or production-
+readiness claims.
 
-Recommended implementation sequence after v5.4:
+Recommended implementation sequence after v5.5:
 
-1. `v5.5 - Provider Operational Hardening`: plan and harden operator-facing
-   provider limits, entitlement/rate-limit handling, symbol-scope guidance, and
-   fallback wording without scheduler-driven sync or production-like reliance.
-2. `v5.6 - Operator Data Refresh Workflow`: improve the manual provider/CSV
-   refresh flow only if v5.5 confirms clear, safe scope.
-3. `v5.7 - Review Calibration Follow-up`: add deterministic review/golden-case
+1. `v5.6 - Operator Data Refresh Workflow`: clarify the manual CSV/provider
+   refresh cadence, readiness next actions, CSV fallback, sanitized refresh
+   evidence, and no-automation boundaries.
+2. `v5.7 - Review Calibration Follow-up`: add deterministic review/golden-case
    coverage only if fresh operator evidence shows signal-quality gaps.
 
 ## v4.3 - Operational Evidence Closure
@@ -275,9 +276,10 @@ Boundary:
 Goal: align roadmap docs, product status, provider docs, and tracker state after
 v5.0-v5.3 completion.
 
-Status: Current.
+Status: Done. Review is recorded in
+`docs/reviews/v5-4-roadmap-rebaseline-after-provider-smoke-review.md`.
 
-Planned issues:
+Completed issues:
 
 - #711: rebaseline next milestone decision after v5.3.
 - #712: update delivery and product roadmap status after v5.3.
@@ -291,20 +293,76 @@ Done when:
   reliance boundaries.
 - Tracker state is aligned and v5.4 is reviewed/closed.
 
-## Next Implementation Candidates
+## v5.5 - Provider Operational Hardening
 
-Recommended candidate after v5.4:
+Goal: harden the operator-facing Twelve Data provider path after local v5.3
+smoke without expanding provider automation or reliance claims.
 
-- `v5.5 - Provider Operational Hardening`: clarify and harden the operator-facing
-  provider path after local Twelve Data smoke. Likely scope includes symbol/asset
-  guidance, entitlement/rate-limit failure wording, fallback instructions, and
-  evidence requirements. It must not add scheduler-driven sync, automatic
-  analysis, broker integration, automatic execution, live/realtime claims, or
-  production-readiness claims.
+Status: Done. Review is recorded in
+`docs/reviews/v5-5-provider-operational-hardening-review.md`.
+
+Completed issues:
+
+- #719: define Twelve Data symbol and asset scope guidance.
+- #720: harden sanitized provider failure guidance.
+- #721: clarify provider sync fallback guidance on the Import page.
+- #722: define provider operational evidence format.
+- #723: cover provider sync hardening boundaries.
+- #724: review v5.5 provider operational hardening.
+
+Outcome:
+
+- Twelve Data symbol/asset scope guidance is documented for public/sample symbols,
+  mapping-sensitive assets, entitlement uncertainty, and CSV fallback.
+- API provider failures use sanitized operator-actionable messages.
+- Import page provider-sync failures, partials, skips, rate limits, and entitlement
+  outcomes point back to manual recovery and TradingView CSV fallback.
+- Tests assert manual provider sync does not automatically create signals, trades,
+  alerts, or notification logs.
+- Provider operational evidence rules explicitly forbid secrets, raw payloads,
+  request URLs, private symbols, provider account details, and readiness overclaims.
+
+Boundary:
+
+- No scheduler-driven sync, automatic refresh, automatic analysis, broker
+  integration, automatic execution, live/realtime claim, profitability claim, or
+  production-readiness claim was introduced.
+
+## v5.6 - Operator Data Refresh Workflow
+
+Goal: make the manual owner/operator data refresh workflow clearer across CSV,
+guarded provider sync, readiness next actions, fallback handling, and sanitized
+refresh evidence.
+
+Status: Current.
+
+Planned issues:
+
+- #732: rebaseline roadmap after v5.5 provider hardening.
+- #731: define operator data refresh workflow.
+- #735: clarify Import page refresh next actions.
+- #737: cover data refresh workflow boundaries.
+- #736: define data refresh evidence format.
+- #734: review v5.6 operator data refresh workflow.
+
+Done when:
+
+- Operator docs describe practical daily and weekly manual refresh flows.
+- `/import` next actions make missing, stale, partial, skipped, and failed refresh
+  states easier to recover from manually.
+- Refresh evidence format is sanitized and aligned with private-data, browser, and
+  provider evidence boundaries.
+- Tests either cover any newly identified refresh boundary gaps or explicitly
+  document existing coverage as sufficient.
+- v5.6 review is recorded and the milestone is closed.
+
+Recommended candidate after v5.6:
+
+- `v5.7 - Review Calibration Follow-up`: add deterministic review/golden-case
+  coverage only if fresh operator evidence shows signal-quality gaps.
 
 Deferred candidates:
 
-- Data-refresh workflow polish if operator use shows friction after v5.5 planning.
 - Additional deterministic review calibration if fresh paper/operator evidence
   identifies signal-quality gaps.
 - Production-like readiness hardening only after a separate explicit gate.

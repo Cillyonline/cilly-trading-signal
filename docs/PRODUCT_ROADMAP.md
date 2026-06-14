@@ -169,11 +169,12 @@ Der aktuelle Stand ist ein kontrolliertes Owner/Operator-Review-Cockpit, kein pr
   Active Review, Trigger Radar, Dashboard `Heute starten`, Browser-Smoke-Evidence,
   First-Run-Fuehrung, Datenhygiene-Uebersicht, sichere Cleanup-Aktionen und
   einfachere Signal-Erklaerungen sind umgesetzt bzw. dokumentiert.
-- v5.0-v5.3 Provider-/Verifikations-/Smoke-Rebaseline: Twelve Data ist als sauberer
-  implementierter Provider-Pfad fuer guarded manual stored-data sync bestaetigt,
-  lokale Verifikationsdocs sind CI-nah, Browser-Smoke-Dry-Run ist verfuegbar und
-  lokaler operator-run Twelve-Data-Smoke fuer `1W`, `1D`, `4H` ist sanitized
-  dokumentiert.
+- v5.0-v5.5 Provider-/Verifikations-/Smoke-/Hardening-Rebaseline: Twelve Data ist
+  als sauberer implementierter Provider-Pfad fuer guarded manual stored-data sync
+  bestaetigt, lokale Verifikationsdocs sind CI-nah, Browser-Smoke-Dry-Run ist
+  verfuegbar, lokaler operator-run Twelve-Data-Smoke fuer `1W`, `1D`, `4H` ist
+  sanitized dokumentiert, und Provider-Failure-, Symbol-Scope-, CSV-Fallback-,
+  No-Automation-Test- und Evidence-Boundaries sind gehaertet.
 
 Weiterhin nicht enthalten:
 
@@ -183,6 +184,8 @@ Weiterhin nicht enthalten:
 - Automatische Marktaktualisierung oder scheduler-driven Analyse.
 - Breite 4H/intraday Provider-Reliance ohne separate Provider-, Lizenz-, Kosten-,
   Entitlement-, Symbolabdeckungs- und Rate-Limit-Entscheidung.
+- Automatisierter Daten-Refresh, Scheduler, Auto-Sync oder automatische Analyse
+  nach CSV-/Provider-Refresh.
 - Neue VPS-/Provider-Smokes ohne explizite Owner/Operator-Freigabe und ohne
   redigierte Evidence-Vorgaben.
 - Backtesting-/Profitabilitaetsvalidierung.

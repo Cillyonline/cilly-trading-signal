@@ -78,9 +78,11 @@ Partial:
   the supported manual baseline/fallback.
 - Screener CSV import is implemented as a candidate prefiltering workflow with filters, bulk review actions, pagination, and explicit Watchlist conversion; mobile density and richer candidate prioritization remain future usability work.
 - Manual provider sync remains guarded, manual, and disabled by default. Twelve Data
-  is now the selected clean provider path for stored `1W`, `1D`, and `4H` sync, but
-  operational reliance still requires provider configuration hardening, sanitized
-  smoke evidence, entitlement review, CSV fallback, and no live/realtime claim.
+  is now the selected clean provider path for stored `1W`, `1D`, and `4H` sync,
+  with local operator smoke evidence and hardened operator-facing failure,
+  fallback, symbol-scope, and evidence rules. Broader reliance still requires
+  separate asset-scope, entitlement, rate-limit, licensing, storage-rights, and
+  production-like environment review.
 - v4.1 provider-path decision keeps Alpha Vantage as the practical first guarded
   Daily/EOD smoke path and defers a paid/provider-reliance decision until coverage,
   licensing, rate limits, storage rights, and watchlist size are reviewed.
@@ -136,6 +138,13 @@ Partial:
   `docs/reviews/v4-8-guided-first-run-data-hygiene-review.md`; it improved
   first-run guidance, asset-addition help, symbol-level data hygiene visibility,
   safe cleanup actions, and plain-language signal result explanations.
+- v5.0-v5.5 Provider readiness, verification reliability, provider smoke,
+  roadmap rebaseline, and provider operational hardening are complete. Twelve Data
+  is the selected clean guarded manual provider path for stored `1W`, `1D`, and
+  `4H` data after local operator smoke. Provider failures, symbol/asset scope,
+  CSV fallback guidance, no-automation tests, and operational evidence boundaries
+  are documented and reviewed in
+  `docs/reviews/v5-5-provider-operational-hardening-review.md`.
 - Dashboard, journal, and performance views include useful MVP-level summaries, risk warnings, and journal analytics, but are not full institutional analytics modules.
 - Risk enforcement covers manual trade creation basics and portfolio/risk review warnings, not complete account-level risk management or automatic position sizing.
 - Multi-timeframe analysis still requires current stored data for required `1W`, `1D`, and `4H` timeframes; provider sync does not automatically fill unsupported timeframes or rerun analysis.
@@ -160,7 +169,8 @@ Current blockers and risks:
 - MVP release posture is tracked in `docs/MVP_RELEASE_CHECKLIST.md`; it separates Done, Partial, Missing, Blocked, and Not Included areas without claiming production readiness.
 - Provider reliance beyond guarded manual stored-data sync remains intentionally
   deferred until Twelve Data coverage, rate limits, licensing, storage rights,
-  watchlist scale, and sanitized smoke evidence are accepted explicitly.
+  watchlist scale, and broader sanitized environment evidence are accepted
+  explicitly.
 - Future operator validation should use a separate browser-smoke or VPS-smoke issue
   when the next deployment is explicitly approved.
 - Authenticated browser smoke remains optional future automation; v4.7 recorded
@@ -667,23 +677,24 @@ Completed sequence after v4.8:
    format, execution-model decision, and opt-in local dry-run helper were added.
 5. `v5.3 - Operator Provider Smoke`: local operator-run Twelve Data configured-
    provider smoke passed for guarded manual `1W`, `1D`, and `4H` stored-data sync.
+6. `v5.4 - Roadmap Rebaseline After Provider Smoke`: roadmap, product, and
+   provider docs were aligned after v5.0-v5.3.
+7. `v5.5 - Provider Operational Hardening`: symbol scope, sanitized failure
+   guidance, Import-page fallback wording, no-automation tests, and provider
+   operational evidence rules were completed.
 
-Recommended active sequence after v5.3:
+Recommended active sequence after v5.5:
 
-1. `v5.4 - Roadmap Rebaseline After Provider Smoke`: update roadmap, product, and
-   provider docs after v5.0-v5.3 completion.
-2. `v5.5 - Provider Operational Hardening`: clarify operator-facing provider
-   limits, entitlement/rate-limit failure wording, symbol-scope guidance, fallback
-   instructions, and evidence expectations without adding automation.
-3. `v5.6 - Operator Data Refresh Workflow`: consider manual CSV/provider refresh
-   workflow polish only after v5.5 defines safe provider boundaries.
+1. `v5.6 - Operator Data Refresh Workflow`: clarify the manual CSV/provider
+   refresh cadence, readiness next actions, CSV fallback, sanitized refresh
+   evidence, and no-automation boundaries.
+2. `v5.7 - Review Calibration Follow-up`: add deterministic review/golden-case
+   coverage only if fresh operator evidence shows signal-quality gaps.
 
 Deferred candidates:
 
 - Production-like readiness hardening, only if the owner wants to move beyond
   private owner/operator staging and accepts the required gate evidence.
-- Data-context handoff UI changes, if fresh operator/provider review confirms
-  remaining friction.
 - Additional paper calibration and golden-case coverage before strategy-rule
   changes.
 
