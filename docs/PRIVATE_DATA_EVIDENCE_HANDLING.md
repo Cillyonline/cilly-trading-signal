@@ -28,6 +28,10 @@ Provider operational evidence has a stricter standalone format in
 `docs/PROVIDER_OPERATIONAL_EVIDENCE_FORMAT.md`. Use it for future provider-smoke,
 private-staging, or broader provider-reliance decisions.
 
+Manual data refresh evidence has a separate format in
+`docs/DATA_REFRESH_EVIDENCE_FORMAT.md`. Use it for CSV/provider refresh,
+readiness, fallback, and no-automation evidence.
+
 ## Redacted Evidence
 
 Redacted evidence may be used only when the private value is removed before sharing:
@@ -113,6 +117,10 @@ Safe backup/restore evidence:
 Safe provider operational evidence is defined separately in
 `docs/PROVIDER_OPERATIONAL_EVIDENCE_FORMAT.md` because provider checks have
 additional secret, entitlement, raw-payload, and readiness-overclaim risks.
+
+Safe data refresh evidence is defined separately in
+`docs/DATA_REFRESH_EVIDENCE_FORMAT.md` because refresh checks can expose private
+symbols, CSV rows, provider status, and readiness-overclaim risks.
 
 ## Final Evidence Boundary
 

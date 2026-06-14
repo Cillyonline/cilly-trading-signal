@@ -215,6 +215,11 @@ Provider evidence may record only public/redacted symbol category, timeframe,
 environment class, status enums, sanitized error category, and follow-up issue
 links.
 
+For manual CSV/provider refresh evidence, use
+`docs/DATA_REFRESH_EVIDENCE_FORMAT.md`. It defines the allowed sanitized fields
+for refresh scope, source path, readiness state, fallback decision, and downstream
+no-automation checks.
+
 ## Escalation Rules
 
 Create a follow-up issue when:
