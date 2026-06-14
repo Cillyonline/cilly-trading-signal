@@ -969,6 +969,8 @@ function SymbolDataReadinessSection({
 }
 
 function SymbolDataReadinessCard({ item }: { item: SymbolDataReadiness }) {
+  const blockedTimeframe = item.timeframes.find((timeframe) => timeframe.status !== "ready") ?? null;
+
   return (
     <article className={`rounded-2xl border p-4 ${item.ready ? "border-emerald-300/30 bg-emerald-300/5" : "border-yellow-300/30 bg-yellow-300/10"}`}>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -997,6 +999,16 @@ function SymbolDataReadinessCard({ item }: { item: SymbolDataReadiness }) {
           </div>
         ))}
       </div>
+      {blockedTimeframe ? (
+        <p className="mt-4 rounded-xl border border-yellow-300/30 bg-slate-950/50 p-3 text-xs text-yellow-50">
+          {readinessManualNextStep(blockedTimeframe)}
+        </p>
+      ) : (
+        <p className="mt-4 rounded-xl border border-emerald-300/20 bg-emerald-300/5 p-3 text-xs text-emerald-100">
+          Analyse bleibt ein bewusster manueller Klick. Readiness erzeugt keine Signale,
+          Trades, Alerts, Orders oder Broker-Aktionen automatisch.
+        </p>
+      )}
     </article>
   );
 }
@@ -1172,7 +1184,8 @@ function ImportReadinessPanel({ groups }: { groups: ImportReadinessGroup[] }) {
       <p className="font-medium text-slate-100">Import-Readiness nach Symbol</p>
       <p className="mt-1 text-slate-400">
         Fuer eine vollstaendige Analyse werden `1W`, `1D` und `4H` benoetigt. Diese Uebersicht nutzt
-        gespeicherte Importe und die aktuelle Dateivorschau.
+        gespeicherte Importe und die aktuelle Dateivorschau. Fehlende oder unklare Timeframes zuerst per
+        CSV oder bewusstem Provider-Sync fixen; Analyse startet nicht automatisch.
       </p>
       <div className="mt-3 grid gap-2">
         {groups.map((group) => (
@@ -1205,9 +1218,14 @@ function ImportReadinessPanel({ groups }: { groups: ImportReadinessGroup[] }) {
               ))}
             </div>
             {group.missing.length > 0 ? (
-              <p className="mt-2 text-xs text-yellow-100">Fehlt: {group.missing.join(", ")}</p>
+              <p className="mt-2 text-xs text-yellow-100">
+                Fehlt: {group.missing.join(", ")}. Naechster Schritt: CSV-Fallback importieren
+                oder einen klar passenden Provider-Pfad manuell nutzen.
+              </p>
             ) : (
-              <p className="mt-2 text-xs text-emerald-100">Vollstaendig fuer Analyse vorbereitet.</p>
+              <p className="mt-2 text-xs text-emerald-100">
+                Vollstaendig fuer Analyse vorbereitet; Analyse bleibt ein separater manueller Schritt.
+              </p>
             )}
           </div>
         ))}
@@ -1793,15 +1811,34 @@ function nextReadinessAction(timeframesReadiness: TimeframeReadiness[]) {
     return "1W, 1D und 4H sind vorhanden und fresh genug. Analyse kann bewusst manuell gestartet werden.";
   }
   if (blocked.status === "missing") {
-    return `${blocked.timeframe} fehlt. Naechster Schritt: CSV importieren oder geeigneten Provider-Pfad manuell nutzen.`;
+    return `${blocked.timeframe} fehlt. Naechster Schritt: CSV-Fallback importieren oder klar geeigneten Provider-Pfad manuell nutzen.`;
   }
   if (blocked.status === "insufficient") {
-    return `${blocked.timeframe} hat zu wenig Kerzen. Mehr Historie importieren, bevor Analyse gestartet wird.`;
+    return `${blocked.timeframe} hat zu wenig Kerzen. Mehr CSV-Historie importieren, bevor Analyse gestartet wird.`;
   }
   if (blocked.status === "failed") {
-    return `${blocked.timeframe} ist failed/skipped. Fehler pruefen und Daten neu importieren.`;
+    return `${blocked.timeframe} ist failed/skipped. Fehler pruefen, CSV-Fallback nutzen oder Symbol fuer diesen Zyklus ueberspringen.`;
   }
   return `${blocked.timeframe} ist ${formatLabel(blocked.status)}. Daten vor Analyse aktualisieren oder konservativ blockiert lassen.`;
+}
+
+function readinessManualNextStep(timeframe: TimeframeReadiness) {
+  if (timeframe.status === "missing") {
+    return `${timeframe.timeframe}: Importiere CSV oder nutze Provider-Sync nur bei klarer Coverage. Ohne Daten bleibt Analyse blockiert.`;
+  }
+  if (timeframe.status === "insufficient") {
+    return `${timeframe.timeframe}: Importiere mehr Historie per CSV. Zu wenige Kerzen sind kein Setup-Kontext.`;
+  }
+  if (timeframe.status === "failed") {
+    return `${timeframe.timeframe}: Nutze CSV-Fallback oder ueberspringe das Symbol. Failed/skipped Provider-Status ist keine Coverage-Evidence.`;
+  }
+  if (timeframe.status === "partial") {
+    return `${timeframe.timeframe}: Ergaenze fehlende Kerzen per CSV. Partial Daten koennen Analyse konservativ blockieren.`;
+  }
+  if (timeframe.status === "stale") {
+    return `${timeframe.timeframe}: Aktualisiere die Daten vor der Analyse. Stale Daten nicht als aktuellen Trigger interpretieren.`;
+  }
+  return `${timeframe.timeframe}: Freshness ist unknown. Erst Datenquelle pruefen oder CSV-Fallback nutzen.`;
 }
 
 function isUsableImportHistoryItem(item: ImportHistoryItem) {
@@ -2468,19 +2505,19 @@ function MarketDataFreshnessNotice({
   if (freshnessStatus === "fresh") {
     return (
       <p className="rounded-2xl border border-emerald-300/20 bg-emerald-300/5 p-3 text-sm text-emerald-100">
-        Daten sind als fresh markiert, aber nicht live oder realtime. Ausfuehrung bleibt manuell.
+        Daten sind als fresh markiert, aber nicht live oder realtime. Analyse und Ausfuehrung bleiben manuell.
       </p>
     );
   }
 
   const message =
     freshnessStatus === "stale"
-      ? "Daten sind stale. Nicht als aktuelles Setup oder Trigger interpretieren."
+      ? "Daten sind stale. Vor Analyse aktualisieren oder Symbol fuer diesen Zyklus ueberspringen."
       : freshnessStatus === "failed" || syncStatus === "failed"
-        ? "Letzter Sync/Import-Status ist failed. Analyse nur als Fehlerkontext verwenden."
+        ? "Letzter Sync/Import-Status ist failed. CSV-Fallback nutzen oder konservativ blockiert lassen."
         : freshnessStatus === "partial" || syncStatus === "partial"
-          ? "Daten sind partial. Fehlende Kerzen oder Timeframes koennen die Analyse blockieren."
-          : "Freshness ist unknown. Behandle diese Daten konservativ und nicht als actionable.";
+          ? "Daten sind partial. Fehlende Kerzen oder Timeframes per CSV ergaenzen, bevor Analyse gestartet wird."
+          : "Freshness ist unknown. Datenquelle pruefen, CSV-Fallback nutzen oder nicht analysieren.";
 
   return (
     <p className="rounded-2xl border border-yellow-300/30 bg-yellow-300/10 p-3 text-sm text-yellow-100">
