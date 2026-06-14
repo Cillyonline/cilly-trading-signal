@@ -1093,6 +1093,9 @@ For the offsite backup and restore acceptance checklist, see
 required evidence and operator-required actions; it does not execute or approve
 backup, restore, private-data, or production-like reliance by itself.
 
+For the v5.8 offsite encrypted backup configuration status, see
+`docs/reviews/v5-8-offsite-encrypted-backups.md`.
+
 Recommended default:
 
 - Use `restic` for client-side encrypted backups.
