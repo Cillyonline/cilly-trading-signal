@@ -16,8 +16,9 @@ Recommended implementation sequence after the v5.7 VPS validation:
 
 1. Keep `v5.8 - Review Calibration Follow-up` deferred unless fresh sample/paper
    operator evidence shows concrete signal-quality or review-calibration gaps.
-2. Prefer a separate private-data/operations-readiness gate before using private
-   trading data or relying on the VPS more broadly.
+2. Private-data/operations-readiness has started as `v5.8 - Private Data &
+   Operations Readiness`. The current decision is No-Go for private trading data;
+   see `docs/PRIVATE_DATA_READINESS_DECISION_GATE.md`.
 
 ## v4.3 - Operational Evidence Closure
 
