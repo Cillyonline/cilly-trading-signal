@@ -238,3 +238,6 @@ sensitive context.
 The non-root deploy-user path is not considered applied until the operator records
 sanitized VPS evidence showing SSH login, Docker Compose access, app health checks,
 unrelated project preservation, and root emergency access preservation.
+
+For the v5.8 re-verification procedure and current evidence status, see
+`docs/reviews/v5-8-deploy-user-routine-operations.md`.
