@@ -4,20 +4,20 @@ Date: 2026-06-14
 
 ## Decision
 
-Recommended active milestone: `v5.7 - Post-Refresh Operator Validation`.
+Recommended active milestone: none.
 
-Rationale: v4.9 through v5.6 are complete and closed. The manual CSV/provider
-refresh workflow is now clearer in docs, UI wording, tests, and evidence rules.
-The next highest-value step is to prepare sample/paper-only post-refresh operator
-validation before deciding whether calibration, private-data readiness, or paper-
-trade protocol work should come next.
+Rationale: v4.9 through v5.7 are complete and closed. The manual CSV/provider
+refresh workflow is now clearer in docs, UI wording, tests, evidence rules, and a
+private VPS sample/paper-only post-refresh validation pass. No signal-quality or
+review-calibration gap was found in that validation, so `v5.8 - Review Calibration
+Follow-up` remains deferred.
 
-Recommended implementation sequence after v5.6:
+Recommended implementation sequence after the v5.7 VPS validation:
 
-1. `v5.7 - Post-Refresh Operator Validation`: define sample/paper-only validation
-   checklist and evidence format for the manual refresh-to-review workflow.
-2. `v5.8 - Review Calibration Follow-up`: add deterministic review/golden-case
-   coverage only if fresh operator evidence shows signal-quality gaps.
+1. Keep `v5.8 - Review Calibration Follow-up` deferred unless fresh sample/paper
+   operator evidence shows concrete signal-quality or review-calibration gaps.
+2. Prefer a separate private-data/operations-readiness gate before using private
+   trading data or relying on the VPS more broadly.
 
 ## v4.3 - Operational Evidence Closure
 
@@ -364,7 +364,10 @@ Boundary:
 Goal: prepare repeatable sample/paper-only validation for the manual workflow after
 the v5.6 refresh guidance.
 
-Status: Current.
+Status: Done. Review is recorded in
+`docs/reviews/v5-7-post-refresh-operator-validation-review.md`; private VPS
+post-refresh validation evidence is recorded in
+`docs/reviews/v5-7-vps-post-refresh-validation-evidence.md`.
 
 Planned issues:
 
@@ -382,10 +385,12 @@ Done when:
 - The review confirms whether an operator-run validation follow-up is needed.
 - v5.7 review is recorded and the milestone is closed.
 
-Recommended candidate after v5.7:
+Decision after v5.7 VPS validation:
 
-- `v5.8 - Review Calibration Follow-up`: add deterministic review/golden-case
-  coverage only if fresh operator evidence shows signal-quality gaps.
+- Do not start `v5.8 - Review Calibration Follow-up` now; the private VPS
+  sample/paper-only validation passed and did not identify signal-quality gaps.
+- Prefer a separate private-data/operations-readiness gate before any private
+  trading-data usage or broader VPS reliance.
 
 Deferred candidates:
 
