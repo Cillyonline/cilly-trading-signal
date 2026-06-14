@@ -39,6 +39,8 @@ page-by-page checklist below. The playbook defines the universe, active review
 shortlist, trigger shortlist, and recommended `1W`/`1D`/`4H` update cadence.
 Use [Data Refresh Evidence Format](DATA_REFRESH_EVIDENCE_FORMAT.md) when a local
 or approved private-staging refresh check needs sanitized evidence.
+Use [Post-Refresh Operator Validation Checklist](POST_REFRESH_OPERATOR_VALIDATION_CHECKLIST.md)
+for sample/paper-only validation after refresh workflow changes.
 
 Use this order for a clean sample-only review session:
 
