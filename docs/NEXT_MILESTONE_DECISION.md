@@ -399,6 +399,34 @@ Deferred candidates:
   identifies signal-quality gaps.
 - Production-like readiness hardening only after a separate explicit gate.
 
+## v5.8 - Private Data & Operations Readiness
+
+Goal: prepare private-staging operations for possible private trading data use
+through secret rotation, deploy-user routine operations, offsite encrypted backups,
+restore-drill evidence, and a private-data readiness decision gate.
+
+Status: Open / blocked. Review is recorded in
+`docs/reviews/v5-8-private-data-operations-readiness-review.md`.
+
+Current decision:
+
+- Private trading data remains No-Go; see
+  `docs/PRIVATE_DATA_READINESS_DECISION_GATE.md`.
+- #754, #755, #756, and #757 remain open blockers.
+- Do not close v5.8 until the blocked server/operator evidence is completed or
+  explicitly descoped in a later owner/operator decision.
+
+Completed or recorded:
+
+- #754: secret-rotation procedure/evidence template recorded; actual rotation not
+  verified.
+- #755: deploy-user re-verification procedure/evidence template recorded; fresh
+  check not run.
+- #756: offsite encrypted backup status recorded as blocked/not configured.
+- #757: offsite restore-drill status recorded as blocked by #756.
+- #758: private-data readiness decision recorded as No-Go.
+- #759: milestone review recorded; no duplicate follow-up issues needed.
+
 ## Not Now
 
 - Broker integration.
