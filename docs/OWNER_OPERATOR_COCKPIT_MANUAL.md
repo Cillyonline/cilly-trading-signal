@@ -167,6 +167,11 @@ Operator checks:
 - Use the CSV-Arbeitsplan to choose the next practical update: `1W` for universe
   preparation, `1D` for active review candidates, and `4H` only for a small trigger
   shortlist.
+- Treat data refresh as a manual lifecycle: choose scope, refresh only the needed
+  timeframe, review source/freshness/sync status, fix or skip blockers, then start
+  analysis only by explicit action.
+- Prefer CSV for broad refreshes and for any unclear provider coverage, mapping,
+  entitlement, rate-limit, partial, skipped, failed, or stale result.
 - For a 12-file batch, use four symbols times three timeframes: `1W`, `1D`, and
   `240`/`4H`. Example: `BATS_AAPL_1W.csv`, `BATS_AAPL_1D.csv`,
   `BATS_AAPL_240.csv` plus the same set for three other public/sample symbols.
@@ -184,12 +189,16 @@ Operator checks:
   balances, fills, private notes, or personal identifiers.
 - Treat a successful provider sync as stored-data context only. It is not a live or
   realtime quote, a recommendation, or proof that the broader watchlist is covered.
+- Confirm refresh does not create analysis, signals, trades, alerts, orders, broker
+  actions, position sizing, or executions automatically.
 
 Stop if:
 
 - Data source, timeframe, or symbol is wrong.
 - Provider sync returns failed, partial, skipped, unsupported, or unclear coverage
   and no current CSV fallback is available.
+- A refresh result is treated as permission to analyze, trade, size, alert, or route
+  orders automatically.
 - Import creates unexpected private data exposure.
 - Filename preview is unclear or conflicts with the manually selected symbol/timeframe.
 - CSV mapping is unclear, blocked, or would require guessing the symbol/timeframe.

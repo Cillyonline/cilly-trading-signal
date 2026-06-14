@@ -45,6 +45,20 @@ Stop points:
 - Required timeframes are missing and would require guessing.
 - The workflow starts treating the full universe as something to refresh intraday.
 
+Weekly refresh decision rules:
+
+- Prefer TradingView CSV for broad `1W` and `1D` universe refreshes because it is
+  the manual baseline and fallback.
+- Use guarded provider sync only for a public or clearly mapped symbol/timeframe
+  when CSV is unavailable or too slow for the current review cycle.
+- If provider sync returns `failed`, `partial`, `skipped`, unsupported, entitlement,
+  rate-limit, empty, invalid, or unclear mapping state, do not infer coverage. Use
+  CSV fallback or exclude the symbol from this cycle.
+- Do not start analysis until Import Readiness shows the required `1W`, `1D`, and
+  `4H` data context is present and plausible for the symbols being reviewed.
+- A weekly refresh never creates analysis, signals, trades, alerts, orders, broker
+  actions, or position sizing automatically.
+
 ## Daily Review
 
 Use this flow once per trading day, after the daily close or before your next review
@@ -76,6 +90,19 @@ Operator interpretation:
   it does not prove live/realtime freshness or broad watchlist coverage.
 - Provider failure, partial coverage, entitlement, rate-limit, invalid-symbol, or
   unclear mapping means use CSV fallback or skip the symbol for the cycle.
+
+Daily refresh decision rules:
+
+- Refresh `1D` only for the active review shortlist unless a weekly reset is being
+  performed.
+- Refresh `4H` only for the current trigger shortlist and only when the next manual
+  review depends on fresh trigger context.
+- Use CSV first when provider coverage, exchange mapping, crypto venue, entitlement,
+  rate limit, or provider payload quality is uncertain.
+- Treat `missing`, `stale`, `partial`, `failed`, `skipped`, and `unknown` states as
+  blockers until fixed by CSV/provider refresh or intentionally skipped.
+- Run analysis only by explicit operator action after data readiness is reviewed.
+- Do not expand a daily review into repeated full-universe refresh loops.
 
 ## Trigger Shortlist Review
 
@@ -137,6 +164,33 @@ If you have a longer weekly session:
 1. Refresh `1W` and `1D` for the broader universe.
 2. Clean up Watchlist and screener candidates.
 3. Rebuild active review and trigger shortlists.
+
+## Manual Refresh State Handling
+
+Use this table when deciding whether to continue, fall back to CSV, or stop for the
+cycle.
+
+| State | Meaning | Operator action |
+| --- | --- | --- |
+| Fresh CSV or provider data | Stored candles look current enough for the timeframe. | Continue to readiness review; analysis is still manual. |
+| Missing timeframe | Required `1W`, `1D`, or `4H` context is absent. | Import CSV or run guarded provider sync if the symbol/timeframe is clearly in scope. |
+| Stale data | Latest stored candle is older than the review window expects. | Refresh the relevant timeframe before analysis or skip the symbol. |
+| Provider skipped | Provider sync did not run, usually disabled or not configured. | Use CSV fallback; do not treat it as coverage evidence. |
+| Provider partial | Provider returned incomplete usable data. | Fill gaps with CSV or skip the symbol. |
+| Provider failed | Provider result was not usable. | Use CSV fallback and record only sanitized error category if evidence is needed. |
+| Unsupported or entitlement-limited | Provider cannot serve that symbol/timeframe/plan safely. | Verify outside evidence channels or use CSV fallback. |
+
+Refresh sequence for each symbol:
+
+1. Decide the review scope: universe, active review shortlist, or trigger shortlist.
+2. Select the minimum required timeframe refresh for that scope.
+3. Import CSV or run guarded provider sync manually.
+4. Review source, freshness, sync status, candle count, and Import Readiness.
+5. Fix missing/stale/partial/failed states or skip the symbol for the cycle.
+6. Start analysis only after the operator explicitly chooses to do so.
+
+No refresh state should create analysis, signals, trades, alerts, orders, broker
+actions, position sizing, or executions automatically.
 
 ## Evidence And Privacy Rules
 
