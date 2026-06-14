@@ -32,6 +32,10 @@ Manual data refresh evidence has a separate format in
 `docs/DATA_REFRESH_EVIDENCE_FORMAT.md`. Use it for CSV/provider refresh,
 readiness, fallback, and no-automation evidence.
 
+Post-refresh validation evidence has a separate format in
+`docs/POST_REFRESH_VALIDATION_EVIDENCE_FORMAT.md`. Use it for sample/paper-only
+operator validation after refresh workflow changes.
+
 ## Redacted Evidence
 
 Redacted evidence may be used only when the private value is removed before sharing:
@@ -121,6 +125,11 @@ additional secret, entitlement, raw-payload, and readiness-overclaim risks.
 Safe data refresh evidence is defined separately in
 `docs/DATA_REFRESH_EVIDENCE_FORMAT.md` because refresh checks can expose private
 symbols, CSV rows, provider status, and readiness-overclaim risks.
+
+Safe post-refresh validation evidence is defined separately in
+`docs/POST_REFRESH_VALIDATION_EVIDENCE_FORMAT.md` because browser validation can
+expose private route state, screenshots, cookies, symbols, and workflow readiness
+overclaims.
 
 ## Final Evidence Boundary
 

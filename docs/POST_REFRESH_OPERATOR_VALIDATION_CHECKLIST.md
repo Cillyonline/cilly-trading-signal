@@ -24,9 +24,8 @@ trading advice, live/realtime data claim, or approval for automatic execution.
   actions, position sizing, or executions automatically unless an explicit manual
   operator action is required and performed.
 
-Use `docs/POST_REFRESH_VALIDATION_EVIDENCE_FORMAT.md` when recording evidence
-after that format exists. Until then, use `docs/DATA_REFRESH_EVIDENCE_FORMAT.md`
-and `docs/BROWSER_SMOKE_EVIDENCE_FORMAT.md` together.
+Use `docs/POST_REFRESH_VALIDATION_EVIDENCE_FORMAT.md` when recording evidence for
+this checklist.
 
 ## Preconditions
 
@@ -109,6 +108,7 @@ Create a focused follow-up issue if:
 
 - `docs/OWNER_OPERATOR_COCKPIT_MANUAL.md`
 - `docs/DAILY_WEEKLY_OPERATOR_PLAYBOOK.md`
+- `docs/POST_REFRESH_VALIDATION_EVIDENCE_FORMAT.md`
 - `docs/DATA_REFRESH_EVIDENCE_FORMAT.md`
 - `docs/BROWSER_SMOKE_EVIDENCE_FORMAT.md`
 - `docs/PRIVATE_DATA_EVIDENCE_HANDLING.md`
