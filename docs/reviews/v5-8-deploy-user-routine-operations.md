@@ -1,6 +1,6 @@
 # v5.8 Deploy-User Routine Operations Evidence
 
-Date: 2026-06-14
+Date: 2026-06-15
 
 ## Scope
 
@@ -19,9 +19,9 @@ evidence that `cillydeploy` could SSH with the operator key, authenticate to
 GitHub with the read-only deploy key, run Git fetch/pull, and run Docker Compose
 status checks without broad passwordless sudo.
 
-The 2026-06-14 post-refresh VPS validation was performed as `root`, so v5.8 still
-needs a current deploy-user re-verification before treating routine operations as
-fresh readiness evidence.
+The 2026-06-14 post-refresh VPS validation was performed as `root`. The
+2026-06-15 re-verification below confirms the deploy user can perform routine
+status, Git, Compose, and health checks without broad passwordless sudo.
 
 ## Re-Verification Procedure
 
@@ -63,23 +63,24 @@ Expected results:
 
 ## Sanitized Evidence
 
-- Date/time UTC: not run in v5.8
+- Date/time UTC: 2026-06-15
 - Operator or role: owner/operator
 - Environment class: private staging
 - Target domain: `trading.cillyonline.de`
 - Deploy user: `cillydeploy`
 - Checkout path: `/srv/apps/cilly-trading-signal`
-- SSH login as deploy user: not run in v5.8
-- Git fetch/pull as deploy user: not run in v5.8
-- `docker` group membership: not run in v5.8
-- Broad passwordless sudo absent or narrowly justified: not run in v5.8
-- Compose status without `sudo`: not run in v5.8
-- Existing unrelated `staging` project unaffected: not run in v5.8
-- HTTPS API health as part of deploy-user check: not run in v5.8
-- HTTPS web health as part of deploy-user check: not run in v5.8
+- SSH login as deploy user: pass
+- Git fetch/pull as deploy user: pass; checkout fast-forwarded to `105b6222263e02126cc8ce0eba09f444f4310ccf`
+- `docker` group membership: pass; `groups` includes `docker`
+- Broad passwordless sudo absent or narrowly justified: pass; `sudo -n true` required a password and returned `NO_BROAD_PASSWORDLESS_SUDO`
+- Compose status without `sudo`: pass
+- Existing unrelated `staging` project unaffected: pass; visible as separate `running(1)` Compose project
+- HTTPS API health as part of deploy-user check: pass; returned `status=ok` and `environment=staging`
+- HTTPS web health as part of deploy-user check: pass; returned HTTP 200
 - Root emergency access preserved: not changed by this issue
-- Failed or blocked steps: owner/operator deploy-user re-verification not yet run
-- Follow-up issues or PRs: required if v5.8 review needs a fresh pass result
+- Running Compose project config path: currently listed as `/root/repos/cilly-trading-signal/infra/docker-compose.yml` because the active stack was last started from the root checkout
+- Failed or blocked steps: none for routine status/health re-verification
+- Follow-up issues or PRs: consider a later deploy-user-only restart if the owner/operator wants the active Compose project metadata to point at `/srv/apps/cilly-trading-signal`
 - Secrets, SSH key material, `.env` values, database URLs, cookies, tokens, raw
   logs, private symbols, broker data, screenshots with sensitive data, or private
   trading records included: no
@@ -89,9 +90,13 @@ Expected results:
 
 ## Current Status
 
-Status: blocked / not re-run in v5.8.
+Status: pass for deploy-user routine status/health re-verification.
 
-The safe re-verification procedure is documented. Do not use this file as fresh
-private-data readiness pass evidence until an owner/operator runs the deploy-user
-checks and updates the sanitized evidence fields from `not run in v5.8` to concrete
-pass/fail values.
+The owner/operator verified SSH login, Git fetch/pull, Docker group membership,
+absence of broad passwordless sudo, Compose status, HTTPS API health, HTTPS web
+health, and unrelated-project separation as `cillydeploy`.
+
+The active Compose project still reports the root checkout path because the stack
+was previously started from `/root/repos/cilly-trading-signal`. That does not block
+routine status/health checks, but a future deploy-user-only restart can align the
+active Compose metadata with `/srv/apps/cilly-trading-signal` if desired.
