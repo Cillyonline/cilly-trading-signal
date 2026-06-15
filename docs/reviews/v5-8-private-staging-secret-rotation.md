@@ -31,10 +31,10 @@ secret value.
 
 | Secret category | Expected action | Status | Sanitized notes |
 | --- | --- | --- | --- |
-| `ADMIN_INITIAL_PASSWORD` | Rotate and store in password manager. | pending | Required before stronger private-staging reliance. |
-| `SECRET_KEY` | Rotate if previously exposed; expect old sessions to become invalid. | pending | Required if session secret exposure is possible. |
-| `TRADINGVIEW_WEBHOOK_SECRET` | Rotate if webhook examples, URLs, screenshots, or logs may have exposed it. | pending | Required before relying on webhook path. |
-| `POSTGRES_PASSWORD` and `DATABASE_URL` | Rotate together only with a controlled database password change. | pending | Requires careful operator execution; do not print DB URL. |
+| `ADMIN_INITIAL_PASSWORD` | Rotate and store in password manager. | pass | Rotated by owner/operator and verified through login. |
+| `SECRET_KEY` | Rotate if previously exposed; expect old sessions to become invalid. | pass | Rotated by owner/operator. |
+| `TRADINGVIEW_WEBHOOK_SECRET` | Rotate if webhook examples, URLs, screenshots, or logs may have exposed it. | pass | Rotated by owner/operator. |
+| `POSTGRES_PASSWORD` and `DATABASE_URL` | Rotate together only with a controlled database password change. | deferred | Deferred intentionally to avoid database-password risk during stage-1 rotation. |
 | Optional provider credentials | Rotate only if enabled or exposed. | not applicable | Provider smoke is out of scope for this issue. |
 | Optional Telegram credentials | Rotate only if enabled or exposed. | not applicable | Telegram routing is out of scope for this issue. |
 
@@ -57,26 +57,26 @@ stored them in a password manager.
 
 ## Sanitized Evidence
 
-- Date/time UTC: pending
+- Date/time UTC: 2026-06-15
 - Operator or role: owner/operator
 - Environment class: private staging
 - Target domain: `trading.cillyonline.de`
-- Branch or commit SHA: pending
-- `.env` exists and remains untracked: pending
-- Unsafe placeholder check: pending
-- Required variable presence check: pending
-- Secret categories rotated: pending
-- Secret categories explicitly deferred: pending
-- `cilly-trading-signal` Compose project restarted: pending
-- Existing unrelated `staging` project unaffected: pending
-- Alembic migration status: pending
-- Internal API health: pending
-- HTTPS API health: pending
-- HTTPS web health: pending
-- Manual login after rotation: pending
-- Logout/protected-route behavior after rotation: pending
-- Failed or blocked steps: pending
-- Follow-up issues or PRs: pending
+- Branch or commit SHA: `e696cbe` or later `main` on VPS after fast-forward
+- `.env` exists and remains untracked: pass
+- Unsafe placeholder check: pass; no known unsafe placeholders found
+- Required variable presence check: pass for `ADMIN_INITIAL_PASSWORD`, `SECRET_KEY`, and `TRADINGVIEW_WEBHOOK_SECRET`
+- Secret categories rotated: `ADMIN_INITIAL_PASSWORD`, `SECRET_KEY`, `TRADINGVIEW_WEBHOOK_SECRET`
+- Secret categories explicitly deferred: `POSTGRES_PASSWORD` and `DATABASE_URL`
+- `cilly-trading-signal` Compose project restarted: pass
+- Existing unrelated `staging` project unaffected: pass; still listed as separate `running(1)` Compose project
+- Alembic migration status: pass
+- Internal API health: pass
+- HTTPS API health: pass
+- HTTPS web health: pass
+- Manual login after rotation: pass
+- Logout/protected-route behavior after rotation: pass
+- Failed or blocked steps: none for stage-1 rotation
+- Follow-up issues or PRs: database password rotation remains deferred until explicitly needed
 - Secrets, `.env` values, database URLs, provider keys, request URLs, raw logs,
   cookies, local storage, backup credentials, private symbols, broker data,
   screenshots with sensitive data, or private trading records included: no
@@ -86,11 +86,12 @@ stored them in a password manager.
 
 ## Current Status
 
-Status: pending operator rotation.
+Status: pass for stage-1 private-staging secret rotation.
 
-The repository now contains the safe procedure and evidence structure. The actual
-secret rotation must be performed by the owner/operator on the VPS using secret
-values from a password manager or another approved private channel.
+The owner/operator rotated `ADMIN_INITIAL_PASSWORD`, `SECRET_KEY`, and
+`TRADINGVIEW_WEBHOOK_SECRET` on the VPS using private secret values stored outside
+GitHub, docs, and chat.
 
-Do not close issue #754 as passed until the sanitized evidence fields above are
-updated from `pending` to concrete pass/deferred values after the rotation.
+`POSTGRES_PASSWORD` and `DATABASE_URL` remain intentionally deferred because
+database-password rotation requires a separate controlled database role update and
+is higher risk than stage-1 app secret rotation.
