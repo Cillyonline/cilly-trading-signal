@@ -368,6 +368,10 @@ function TradeSummary({ trade }: { trade: TradeDetail }) {
 }
 
 function ManagementBoundaryCard({ trade }: { trade: TradeDetail }) {
+  const openChecklist = trade.status === "closed"
+    ? ["Close ist dokumentiert.", "Journal Review vervollstaendigen.", "Performance nur als Paper-/Lernhistorie lesen."]
+    : ["Nur Paper-Management-Event dokumentieren.", "Stop/Target-Aenderungen vorher ausserhalb der App entscheiden.", "Close erst nach bewusstem manuellen Exit loggen."];
+
   return (
     <section className="rounded-3xl border border-sky-300/20 bg-sky-300/[0.06] p-5 sm:p-6">
       <h2 className="text-xl font-semibold text-sky-50">Manual Management Boundary</h2>
@@ -379,6 +383,14 @@ function ManagementBoundaryCard({ trade }: { trade: TradeDetail }) {
         <WorkflowPill label="1 Manage" text="Events und Anpassungen loggen" />
         <WorkflowPill label="2 Close" text="Externen Exit dokumentieren" />
         <WorkflowPill label="3 Journal" text="Nach Close Prozess reviewen" />
+      </div>
+      <div className="mt-4 rounded-2xl border border-sky-200/20 bg-slate-950/40 p-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-100">Aktuelle manuelle Checkliste</p>
+        <ul className="mt-3 grid gap-2 text-sm text-sky-50/85">
+          {openChecklist.map((item) => (
+            <li key={item}>- {item}</li>
+          ))}
+        </ul>
       </div>
     </section>
   );
@@ -435,7 +447,8 @@ function JournalReviewCard({
     <form onSubmit={onSubmit} className="rounded-3xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
       <StepHeading step="3 Journal" title="Journal Review erfassen" />
       <p className="mt-2 text-sm text-slate-400">
-        Reflektiert Prozess, Disziplin und Lernpunkte im R-Kontext. Keine Trade-Empfehlung.
+        Reflektiert Prozess, Disziplin und Lernpunkte im R-Kontext. Keine Trade-Empfehlung,
+        keine Strategievalidierung und keine privaten Broker- oder Accountdaten.
       </p>
 
       <div className="mt-6 grid gap-4">
@@ -534,6 +547,10 @@ function JournalReviewSummary({ journalEntry }: { journalEntry: JournalEntry }) 
     <section className="rounded-3xl border border-emerald-300/20 bg-emerald-300/5 p-5 sm:p-6">
       <StepHeading step="3 Journal" title="Journal Review" />
       <p className="mt-2 text-sm text-slate-400">Erfasst am {formatDateTime(journalEntry.reviewed_at)}</p>
+      <p className="mt-2 rounded-2xl border border-emerald-200/20 bg-slate-950/30 p-3 text-xs text-emerald-50/80">
+        Dieses Journal dokumentiert Paper-Prozessqualitaet. Es ist keine Profitabilitaets-
+        oder Strategievalidierung und enthaelt keine Broker-/Account-Evidence.
+      </p>
 
       <div className="mt-5 grid grid-cols-2 gap-2 sm:gap-3">
         <Metric label="Setup Rules" value={formatBoolean(journalEntry.setup_rule_followed)} />
@@ -595,7 +612,7 @@ function JournalTextArea({
         value={value}
         onChange={(event) => onChange(event.target.value)}
         className="min-h-24 rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-emerald-300"
-        placeholder="Prozessbezogene Beobachtung festhalten"
+        placeholder="Prozessbezogene Paper-Beobachtung festhalten, keine privaten Account- oder Orderdaten"
       />
     </label>
   );
@@ -642,7 +659,8 @@ function CloseTradeCard({
     <form onSubmit={onSubmit} className="rounded-3xl border border-red-300/30 bg-red-300/[0.05] p-5 sm:p-6">
       <StepHeading step="2 Close" title="Trade manuell schliessen" />
       <p className="mt-2 text-sm text-red-100/80">
-        Finaler Close-Log fuer eine bereits extern ausgefuehrte Entscheidung. Keine Orderausfuehrung.
+        Finaler Close-Log fuer eine bereits manuell entschiedene Paper-Situation. Keine Orderausfuehrung,
+        keine Broker-Aktion und kein automatischer Trade-Status ausserhalb dieses Dokumentationsdatensatzes.
       </p>
 
       <div className="mt-6 grid gap-4">
