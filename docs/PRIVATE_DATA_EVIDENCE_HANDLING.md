@@ -36,6 +36,11 @@ Post-refresh validation evidence has a separate format in
 `docs/POST_REFRESH_VALIDATION_EVIDENCE_FORMAT.md`. Use it for sample/paper-only
 operator validation after refresh workflow changes.
 
+Paper-performance evidence has a separate format in
+`docs/PAPER_PERFORMANCE_EVIDENCE_FORMAT.md`. Use it for sanitized `/performance`
+reviews, R-multiple summaries, journal-quality summaries, and performance export
+boundary checks.
+
 ## Redacted Evidence
 
 Redacted evidence may be used only when the private value is removed before sharing:
@@ -130,6 +135,11 @@ Safe post-refresh validation evidence is defined separately in
 `docs/POST_REFRESH_VALIDATION_EVIDENCE_FORMAT.md` because browser validation can
 expose private route state, screenshots, cookies, symbols, and workflow readiness
 overclaims.
+
+Safe paper-performance evidence is defined separately in
+`docs/PAPER_PERFORMANCE_EVIDENCE_FORMAT.md` because performance reviews can expose
+private R sequences, win/loss counts, strategy grouping, journal quality, active
+risk, and profitability or strategy-validation overclaims.
 
 ## Final Evidence Boundary
 

@@ -67,8 +67,9 @@ export default function PerformancePage() {
               <p className="text-sm uppercase tracking-[0.24em] text-emerald-300 sm:tracking-[0.35em]">Performance</p>
               <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Dokumentierte Closed Trades in R</h1>
               <p className="mt-3 max-w-2xl text-slate-300">
-                Kompakte Auswertung manuell dokumentierter Trade-Abschluesse. Die Werte beschreiben
-                historische R-Multiples und sind keine Prognose fuer zukuenftige Ergebnisse.
+                Kompakte Auswertung manuell dokumentierter Paper-Trade-Abschluesse. Die Werte
+                beschreiben historische R-Multiples als Lern- und Prozessnotizen, nicht als
+                Profitabilitaetsnachweis, Strategievalidierung oder Prognose fuer zukuenftige Ergebnisse.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-4 text-sm">
@@ -77,7 +78,7 @@ export default function PerformancePage() {
                 onClick={() => void handleExport()}
                 type="button"
               >
-                CSV exportieren
+                Paper CSV exportieren
               </button>
               <AuthenticatedHeaderActions links={[{ href: "/trades", label: "Trades" }]} />
             </div>
@@ -87,6 +88,7 @@ export default function PerformancePage() {
         {exportError ? <ErrorState message={exportError} /> : null}
         {error ? <ErrorState message={error} /> : null}
         {!summary && !error ? <LoadingState /> : null}
+        <PaperPerformanceBoundary />
         {summary ? <OpenPortfolioRiskOverview risk={summary.open_portfolio_risk} /> : null}
         {summary?.closed_trade_count === 0 ? <EmptyState /> : null}
         {summary && summary.closed_trade_count > 0 ? (
@@ -99,6 +101,34 @@ export default function PerformancePage() {
         ) : null}
       </section>
     </main>
+  );
+}
+
+function PaperPerformanceBoundary() {
+  return (
+    <section className="rounded-3xl border border-amber-300/25 bg-amber-300/[0.06] p-5 sm:p-6">
+      <p className="text-sm uppercase tracking-[0.24em] text-amber-200">Paper Evidence Boundary</p>
+      <h2 className="mt-2 text-2xl font-semibold text-amber-50">Performance ist Dokumentation, kein Nachweis</h2>
+      <p className="mt-3 max-w-4xl text-sm text-amber-50/85">
+        Diese Ansicht hilft, manuelle Paper-Ergebnisse in R-Multiples und Journal-Qualitaet zu reviewen.
+        Geteilte Evidence darf nur sample-, synthetic- oder paper-only Daten enthalten und keine privaten
+        Performance-Records, Broker-/Accountdaten, Roh-Exports oder Profitabilitaetsclaims zeigen.
+      </p>
+      <div className="mt-4 grid gap-3 md:grid-cols-3">
+        <BoundaryPill label="Erlaubt" text="Sanitisierte Counts, R-Felder als present/redacted, Route und Checkstatus" />
+        <BoundaryPill label="Nicht erlaubt" text="Private R-Sequenzen, Accountwerte, Brokerdaten, Screenshots mit privaten Trades" />
+        <BoundaryPill label="Interpretation" text="Historische Paper-Dokumentation, keine Strategie- oder Real-Money-Freigabe" />
+      </div>
+    </section>
+  );
+}
+
+function BoundaryPill({ label, text }: { label: string; text: string }) {
+  return (
+    <div className="rounded-2xl border border-amber-200/20 bg-slate-950/40 p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">{label}</p>
+      <p className="mt-2 text-sm text-amber-50/85">{text}</p>
+    </div>
   );
 }
 
