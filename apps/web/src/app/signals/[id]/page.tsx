@@ -10,6 +10,7 @@ import {
   updateSignalStatus,
 } from "@/lib/api";
 import { buildSignalDecision, signalDecisionDotClass, signalDecisionToneClass } from "@/lib/signal-decision";
+import type { SignalDecision } from "@/lib/signal-decision";
 import type { Signal, SignalReviewEvent, SignalStatus } from "@/types/signals";
 
 const statusTone: Record<SignalStatus, string> = {
@@ -262,6 +263,8 @@ function SignalDetail({
         </div>
       </article>
 
+      <PaperTradeHandoff decision={decision} signal={signal} />
+
       {signal.is_stale ? <StaleSignalBanner signal={signal} /> : null}
 
       <SignalMobileSummary noTradeReasons={noTradeReasons} riskFlags={riskFlags} signal={signal} />
@@ -386,6 +389,93 @@ function SignalDetail({
       </article>
     </section>
   );
+}
+
+function PaperTradeHandoff({ decision, signal }: { decision: SignalDecision; signal: Signal }) {
+  const handoff = paperTradeHandoffCopy(decision, signal);
+
+  return (
+    <article className={`rounded-3xl border p-6 ${handoff.className}`}>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] opacity-80">Paper Trade Handoff</p>
+          <h3 className="mt-2 text-xl font-semibold text-slate-50">{handoff.title}</h3>
+          <p className="mt-3 max-w-3xl text-sm text-slate-100/85">{handoff.description}</p>
+        </div>
+        {handoff.allowTradeLink ? (
+          <a
+            href="/trades"
+            className="rounded-xl border border-current/30 px-4 py-3 text-center text-sm font-semibold text-slate-50 hover:bg-white/10"
+          >
+            Paper Trade manuell erfassen
+          </a>
+        ) : (
+          <span className="rounded-xl border border-current/20 px-4 py-3 text-sm text-slate-100/75">
+            Kein Trade-Logging-Schritt
+          </span>
+        )}
+      </div>
+      <ol className="mt-5 grid gap-3 text-sm text-slate-100/85 md:grid-cols-3">
+        {handoff.steps.map((step) => (
+          <li key={step} className="rounded-2xl border border-current/15 bg-slate-950/30 p-4">
+            {step}
+          </li>
+        ))}
+      </ol>
+      <p className="mt-4 rounded-2xl border border-current/15 bg-slate-950/30 p-4 text-xs text-slate-100/70">
+        Dieser Handoff erzeugt keinen Trade, keine Order, keine Positionsgroesse und keine Broker-Aktion.
+        Ein Paper Trade entsteht nur, wenn du ihn auf der Trade-Seite bewusst manuell erfasst.
+      </p>
+    </article>
+  );
+}
+
+function paperTradeHandoffCopy(decision: SignalDecision, signal: Signal) {
+  if (decision.kind === "paper_candidate") {
+    return {
+      allowTradeLink: true,
+      className: "border-emerald-300/30 bg-emerald-300/10 text-emerald-100",
+      title: "Bereit fuer manuelle Paper-Trade-Pruefung",
+      description:
+        "Pruefe Entry-Zone, Stop, Ziele, R:R, Invalidation und aktuelle Daten noch einmal. Wenn alles passt, kannst du den Paper Trade separat manuell erfassen.",
+      steps: [
+        `Signal #${signal.id} und ${signal.symbol} als Referenz merken.`,
+        "Entry, Stop und Ziel gegen die Setup-Daten pruefen.",
+        "Nur bei bewusster Entscheidung zur Trade-Seite wechseln.",
+      ],
+    };
+  }
+
+  if (decision.kind === "observe") {
+    return {
+      allowTradeLink: false,
+      className: "border-yellow-300/30 bg-yellow-300/10 text-yellow-100",
+      title: "Noch beobachten, nicht loggen",
+      description:
+        "Das Setup ist noch nicht stark genug fuer Paper-Trade-Logging. Lass es auf der Review-Liste, aktualisiere Daten gezielt und pruefe spaeter erneut.",
+      steps: ["Trigger oder Bestaetigung abwarten.", "Freshness und Timeframes bei Bedarf aktualisieren.", "Keinen Paper Trade aus diesem Zustand ableiten."],
+    };
+  }
+
+  if (decision.kind === "data_problem") {
+    return {
+      allowTradeLink: false,
+      className: "border-slate-400/30 bg-slate-400/10 text-slate-100",
+      title: "Datenproblem zuerst klaeren",
+      description:
+        "Die Datenbasis reicht nicht fuer einen belastbaren Paper-Workflow. Korrigiere fehlende oder veraltete Timeframes, bevor du erneut reviewst.",
+      steps: ["Fehlende 1W/1D/4H-Daten pruefen.", "CSV- oder freigegebenen Provider-Pfad manuell nutzen.", "Bis dahin keinen Paper Trade erfassen."],
+    };
+  }
+
+  return {
+    allowTradeLink: false,
+    className: "border-red-300/30 bg-red-300/10 text-red-100",
+    title: "Kein Paper Trade aus diesem Signal",
+    description:
+      "Mindestens ein No-Trade-Grund oder Risikofilter blockiert das Setup. Nutze die Gruende fuer Review/Lernen, nicht fuer Trade-Logging.",
+    steps: ["No-Trade-Gruende lesen.", "Review Note bei Bedarf ergaenzen.", "Signal verwerfen oder spaeter mit neuen Daten pruefen."],
+  };
 }
 
 function QualityReportCard({ checks }: { checks: Signal["quality_report"] }) {
