@@ -1,24 +1,24 @@
 # Next Milestone Decision
 
-Date: 2026-06-14
+Date: 2026-06-15
 
 ## Decision
 
-Recommended active milestone: none.
+Recommended active milestone: `v5.9 - Paper Trade Workflow`.
 
-Rationale: v4.9 through v5.7 are complete and closed. The manual CSV/provider
-refresh workflow is now clearer in docs, UI wording, tests, evidence rules, and a
-private VPS sample/paper-only post-refresh validation pass. No signal-quality or
-review-calibration gap was found in that validation, so `v5.8 - Review Calibration
-Follow-up` remains deferred.
+Rationale: v4.9 through v5.8 are complete and closed. Private trading data remains
+No-Go after v5.8, while private staging is validated for sample/paper-only use.
+The next highest-value product increment is to make the safe manual paper-trade
+workflow clearer from signal review to trade logging, management, journal, and
+performance review.
 
-Recommended implementation sequence after the v5.7 VPS validation:
+Recommended implementation sequence after v5.8:
 
-1. Keep `v5.8 - Review Calibration Follow-up` deferred unless fresh sample/paper
-   operator evidence shows concrete signal-quality or review-calibration gaps.
-2. Private-data/operations-readiness has started as `v5.8 - Private Data &
-   Operations Readiness`. The current decision is No-Go for private trading data;
-   see `docs/PRIVATE_DATA_READINESS_DECISION_GATE.md`.
+1. `v5.9 - Paper Trade Workflow`: improve the sample/paper-only manual path from
+   signal review to paper trade logging, management, journal, performance review,
+   validation, and review.
+2. Keep review calibration deferred unless fresh sample/paper operator evidence
+   shows concrete signal-quality or review-calibration gaps.
 
 ## v4.3 - Operational Evidence Closure
 
@@ -428,6 +428,41 @@ Completed or recorded:
 - #758: private-data readiness decision recorded as No-Go.
 - #759: milestone review recorded.
 - #768: deferred closure recorded; no duplicate follow-up issues needed.
+
+## v5.9 - Paper Trade Workflow
+
+Goal: improve the safe sample/paper-only workflow from signal review to manual
+paper trade logging, trade management, journal, performance review, validation,
+and milestone review.
+
+Status: Current.
+
+Planned issues:
+
+- #770: rebaseline roadmap for paper-trade workflow.
+- #771: clarify signal-to-paper-trade handoff.
+- #772: improve manual paper-trade logging guidance.
+- #773: improve paper-trade management and journal flow.
+- #774: clarify paper-performance evidence boundaries.
+- #775: validate sample paper-trade workflow.
+- #776: review v5.9 paper-trade workflow.
+
+Done when:
+
+- Signal detail or related review UI gives clearer manual next actions without
+  creating trades automatically.
+- Paper trade logging and management/journal guidance is clearer and remains
+  documentation-only.
+- Performance evidence boundaries explicitly avoid profitability and strategy-
+  validation claims.
+- Sample/paper-only workflow validation is recorded.
+- v5.9 review is recorded and the milestone is closed.
+
+Boundary:
+
+- No private trading data, broker integration, automatic execution, automatic trade
+  creation, live/realtime claim, profitability claim, strategy-validation claim, or
+  production-readiness claim.
 
 ## Not Now
 
