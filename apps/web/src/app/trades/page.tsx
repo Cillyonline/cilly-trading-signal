@@ -226,7 +226,8 @@ export default function TradesPage() {
               <div>
                 <h2 className="text-xl font-semibold">Trade erfassen</h2>
                 <p className="mt-2 text-sm text-slate-400">
-                  Long-only MVP: Entry muss ueber Stop liegen. Risiko wird zur Dokumentation vom Backend berechnet.
+                  Paper-/Sample-Workflow: Entry muss ueber Stop liegen. Risiko wird zur Dokumentation
+                  vom Backend berechnet; die App platziert keine Order.
                 </p>
               </div>
               <button
@@ -237,6 +238,8 @@ export default function TradesPage() {
                 Daten laden
               </button>
             </div>
+
+            <PaperTradeSafetyChecklist />
 
             <div className="mt-6 grid gap-4">
               <TradeFormSection title="1. Quelle" description="Waehle nur den Ursprung der manuellen Ausfuehrung. Es wird keine Order erstellt.">
@@ -304,7 +307,7 @@ export default function TradesPage() {
                 <ContextCard signal={selectedSignal} watchlistItem={selectedWatchlistItem} mode={form.mode} />
               </TradeFormSection>
 
-              <TradeFormSection title="2. Risk Plan" description="Pflicht: Entry, Stop und Position Size. Backend berechnet Risiko nur zur Dokumentation.">
+              <TradeFormSection title="2. Risk Plan" description="Pflicht: Entry, Stop und Position Size. Dokumentiere nur den Paper-Plan; keine automatische Positionsgroesse oder Order.">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <NumberField label="Entry Price" value={form.entry_price} onChange={(value) => setForm({ ...form, entry_price: value })} />
                   <NumberField label="Stop Loss" value={form.stop_loss} onChange={(value) => setForm({ ...form, stop_loss: value })} />
@@ -315,7 +318,7 @@ export default function TradesPage() {
                 </div>
               </TradeFormSection>
 
-              <TradeFormSection title="3. Execution Details" description="Zeitpunkt der externen manuellen Ausfuehrung. Keine Broker- oder Order-Aktion in der App.">
+              <TradeFormSection title="3. Paper Execution Details" description="Zeitpunkt der manuell dokumentierten Paper-Ausfuehrung. Keine Broker-, Konto- oder Order-Aktion in der App.">
                 <label className="grid gap-2 text-sm text-slate-300">
                   Opened At
                   <input
@@ -328,7 +331,7 @@ export default function TradesPage() {
                 </label>
               </TradeFormSection>
 
-              <TradeFormSection title="4. Notes" description="Nur prozessbezogene Dokumentation, keine private Account- oder Orderdaten eintragen.">
+              <TradeFormSection title="4. Notes" description="Nur Setup-, Risiko- und Prozessnotizen. Keine privaten Account-, Broker- oder echten Orderdaten eintragen.">
                 <label className="grid gap-2 text-sm text-slate-300">
                   Notes
                   <textarea
@@ -534,6 +537,32 @@ function TradeFilterForm({
         </button>
       </div>
     </form>
+  );
+}
+
+function PaperTradeSafetyChecklist() {
+  const items = [
+    "Nur Sample- oder Paper-Daten verwenden.",
+    "Signal/Watchlist-Kontext vorher manuell pruefen.",
+    "Entry, Stop, Ziel und Invalidation bewusst dokumentieren.",
+    "Keine echten Broker-, Konto- oder Orderdaten eintragen.",
+  ];
+
+  return (
+    <div className="mt-5 rounded-2xl border border-sky-300/20 bg-sky-300/10 p-4 text-sm text-sky-50">
+      <p className="font-semibold">Vor dem Speichern pruefen</p>
+      <ul className="mt-3 grid gap-2 md:grid-cols-2">
+        {items.map((item) => (
+          <li key={item} className="rounded-xl border border-sky-200/20 bg-slate-950/30 p-3">
+            {item}
+          </li>
+        ))}
+      </ul>
+      <p className="mt-3 text-xs text-sky-100/80">
+        Speichern erstellt nur einen Dokumentationsdatensatz. Es erzeugt keine Ausfuehrung,
+        keine Order, keine Broker-Aktion und keine Performance- oder Strategievalidierung.
+      </p>
+    </div>
   );
 }
 
