@@ -685,14 +685,20 @@ Completed sequence after v4.8:
 8. `v5.6 - Operator Data Refresh Workflow`: manual CSV/provider refresh cadence,
    Import-page next actions, CSV refresh no-automation tests, and sanitized data
    refresh evidence rules were completed.
+9. `v5.7 - Post-Refresh Operator Validation`: sample/paper-only post-refresh
+   validation checklist, evidence format, and private VPS validation evidence were
+   recorded.
+10. `v5.8 - Private Data & Operations Readiness`: stage-1 secret rotation and
+    deploy-user checks passed; offsite backup/restore were deferred; private
+    trading data remains No-Go.
 
-Recommended active sequence after v5.6:
+Recommended active sequence after v5.8:
 
-1. `v5.7 - Post-Refresh Operator Validation`: prepare sample/paper-only
-   validation checklist and evidence format for the manual refresh-to-review
-   workflow after v5.6.
-2. `v5.8 - Review Calibration Follow-up`: add deterministic review/golden-case
-   coverage only if fresh operator evidence shows signal-quality gaps.
+1. `v5.9 - Paper Trade Workflow`: improve the safe manual sample/paper path from
+   signal review to paper trade logging, management, journal, performance review,
+   validation, and milestone review.
+2. Review calibration follow-up remains deferred unless fresh sample/paper evidence
+   shows concrete signal-quality gaps.
 
 Deferred candidates:
 
