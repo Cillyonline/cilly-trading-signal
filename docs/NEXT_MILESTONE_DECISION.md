@@ -435,9 +435,11 @@ Goal: improve the safe sample/paper-only workflow from signal review to manual
 paper trade logging, trade management, journal, performance review, validation,
 and milestone review.
 
-Status: Current.
+Status: Done. The v5.9 review is recorded in
+`docs/reviews/v5-9-paper-trade-workflow-review.md`, and the milestone is ready to
+close after #776 merges.
 
-Planned issues:
+Completed issues:
 
 - #770: rebaseline roadmap for paper-trade workflow.
 - #771: clarify signal-to-paper-trade handoff.
