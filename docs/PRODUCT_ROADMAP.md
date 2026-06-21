@@ -185,9 +185,12 @@ Der aktuelle Stand ist ein kontrolliertes Owner/Operator-Review-Cockpit, kein pr
   Review zu Paper Trade Logging, Management, Journal und Performance Review ist
   mit private-staging Validation dokumentiert, ohne Broker, automatische Trades
   oder Profitabilitaets-/Strategievalidierungsclaims.
-- v6.0 Staging Operations Rebaseline: aktueller Fokus ist Roadmap-Rebaseline,
-  sanitized DB-Credential-Recovery-Evidence, ein wiederholbarer Staging-Deploy-
-  und Migration-Recovery-Runbook sowie ein Private-Staging-Operations-Review.
+- v6.0 Staging Operations Rebaseline: Roadmap-Rebaseline, sanitized DB-
+  Credential-Recovery-Evidence, ein wiederholbarer Staging-Deploy- und Migration-
+  Recovery-Runbook sowie ein Private-Staging-Operations-Review sind abgeschlossen.
+- v6.1 Backup & Restore Decision Gate: aktueller Fokus ist die Entscheidung, ob
+  Offsite-Backup und Restore-Drill weiter deferred bleiben oder als naechster
+  expliziter Operations-Gate umgesetzt werden.
 
 Weiterhin nicht enthalten:
 

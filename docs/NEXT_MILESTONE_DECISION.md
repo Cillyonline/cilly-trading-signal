@@ -4,24 +4,22 @@ Date: 2026-06-21
 
 ## Decision
 
-Recommended active milestone: `v6.0 - Staging Operations Rebaseline & Runbook Hygiene`.
+Recommended active milestone: `v6.1 - Backup & Restore Decision Gate`.
 
-Rationale: v4.9 through v5.9 are complete and closed. Private trading data remains
-No-Go after v5.8, while private staging is validated for sample/paper-only use.
-The v5.9 private-staging update also exposed staging-operations hygiene gaps around
-repository path, Compose project naming, and database credential recovery. The next
-highest-value increment is to rebaseline the roadmap, record sanitized recovery
-evidence, and make staging deploy/migration recovery repeatable before expanding
-product scope or private-data reliance.
+Rationale: v4.9 through v6.0 are complete and closed. Private trading data remains
+No-Go after v5.8, while private staging is validated for sample/paper-only use and
+now has documented deploy/migration recovery guidance. Offsite encrypted backup and
+restore drill remain deferred from v5.8. The next highest-value increment is a
+deliberate backup/restore decision gate before broader staging reliance or any
+private-data readiness discussion.
 
-Recommended implementation sequence after v5.9:
+Recommended implementation sequence after v6.0:
 
-1. `v6.0 - Staging Operations Rebaseline & Runbook Hygiene`: rebaseline roadmap
-   docs, record sanitized database credential recovery evidence, add a staging
-   deploy/migration recovery runbook, review private-staging operations posture,
-   and close the milestone.
-2. Keep backup/restore implementation deferred unless the v6.0 posture review or
-   owner/operator decision makes it the next explicit gate.
+1. `v6.1 - Backup & Restore Decision Gate`: rebaseline roadmap docs, decide
+   whether encrypted offsite backup and restore drill remain deferred or become
+   the next explicit operations gate, record the outcome, and close the milestone.
+2. If backup/restore becomes the next gate, create separate scoped implementation
+   issues before performing any backup repository, secret, or restore operation.
 3. Keep review calibration deferred unless fresh sample/paper operator evidence
    shows concrete signal-quality or review-calibration gaps.
 
@@ -476,9 +474,8 @@ Goal: rebaseline roadmap docs after v5.9, record sanitized private-staging datab
 credential recovery evidence, document repeatable staging deploy and migration
 recovery, review private-staging operations posture, and close the milestone.
 
-Status: Done. The v6.0 review is recorded in
-`docs/reviews/v6-0-staging-operations-rebaseline-review.md`, and the milestone is
-ready to close after #788 merges.
+Status: Done and closed. The v6.0 review is recorded in
+`docs/reviews/v6-0-staging-operations-rebaseline-review.md`.
 
 Completed issues:
 
@@ -506,6 +503,40 @@ Boundary:
   broker integration, automatic execution, automatic trade creation, live/realtime
   claim, profitability claim, strategy-validation claim, secret publication, or
   destructive database-volume operation.
+
+## v6.1 - Backup & Restore Decision Gate
+
+Goal: decide whether encrypted offsite backup and restore drill remain deferred or
+become the next explicit operations gate before broader staging reliance or any
+private-data readiness discussion.
+
+Status: Current.
+
+Planned issues:
+
+- #794: rebaseline roadmap after v6.0 closure.
+- #795: decide backup and restore path.
+- #796: record backup restore decision outcome.
+- #797: review v6.1 backup restore decision gate.
+
+Done when:
+
+- Roadmap docs no longer present v6.0 as the active next milestone.
+- A backup/restore decision document explicitly chooses deferred, backup-only next,
+  or backup-plus-restore next.
+- The decision outcome is recorded without secrets, `.env` values, backup repository
+  details, database dumps, private data, or readiness overclaims.
+- If implementation is selected, follow-up issues are created before milestone
+  review and before any backup repository, secret, or restore operation.
+- v6.1 review is recorded and the milestone is closed.
+
+Boundary:
+
+- No backup or restore implementation in the decision issues, no private trading
+  data approval, no production-readiness claim, no backup repository details, no
+  secrets, no broker integration, no automatic execution, no automatic trade
+  creation, no live/realtime claim, no profitability claim, and no strategy-
+  validation claim.
 
 ## Not Now
 

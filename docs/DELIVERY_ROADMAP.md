@@ -694,15 +694,18 @@ Completed sequence after v4.8:
 11. `v5.9 - Paper Trade Workflow`: signal-to-paper handoff, manual trade logging,
     management/journal guidance, paper-performance evidence boundaries, private-
     staging sample/paper validation, and milestone review were completed.
+12. `v6.0 - Staging Operations Rebaseline & Runbook Hygiene`: roadmap docs were
+    rebaselined, DB credential recovery evidence was sanitized, a staging deploy
+    and migration recovery runbook was added, and private-staging operations posture
+    was reviewed.
 
-Recommended active sequence after v5.9:
+Recommended active sequence after v6.0:
 
-1. `v6.0 - Staging Operations Rebaseline & Runbook Hygiene`: rebaseline roadmap
-   docs, record sanitized private-staging database credential recovery evidence,
-   add a repeatable staging deploy/migration recovery runbook, review operations
-   posture, and close the milestone.
-2. Backup/restore implementation remains deferred unless the v6.0 operations
-   posture review or owner/operator decision makes it the next explicit gate.
+1. `v6.1 - Backup & Restore Decision Gate`: decide whether encrypted offsite
+   backup and restore drill remain deferred or become the next explicit operations
+   gate, record the outcome, and close the milestone.
+2. If backup/restore becomes the next gate, create separate scoped implementation
+   issues before performing any backup repository, secret, or restore operation.
 3. Review calibration follow-up remains deferred unless fresh sample/paper evidence
    shows concrete signal-quality gaps.
 
