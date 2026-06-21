@@ -476,9 +476,11 @@ Goal: rebaseline roadmap docs after v5.9, record sanitized private-staging datab
 credential recovery evidence, document repeatable staging deploy and migration
 recovery, review private-staging operations posture, and close the milestone.
 
-Status: Current.
+Status: Done. The v6.0 review is recorded in
+`docs/reviews/v6-0-staging-operations-rebaseline-review.md`, and the milestone is
+ready to close after #788 merges.
 
-Planned issues:
+Completed issues:
 
 - #784: rebaseline roadmap after v5.9 closure.
 - #785: record staging database credential recovery.
