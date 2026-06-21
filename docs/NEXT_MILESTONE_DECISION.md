@@ -516,7 +516,7 @@ Planned issues:
 
 - #794: rebaseline roadmap after v6.0 closure.
 - #795: decide backup and restore path.
-- #796: record backup restore decision outcome.
+- #796: record backup restore decision outcome as deferred.
 - #797: review v6.1 backup restore decision gate.
 
 Done when:
