@@ -691,13 +691,19 @@ Completed sequence after v4.8:
 10. `v5.8 - Private Data & Operations Readiness`: stage-1 secret rotation and
     deploy-user checks passed; offsite backup/restore were deferred; private
     trading data remains No-Go.
+11. `v5.9 - Paper Trade Workflow`: signal-to-paper handoff, manual trade logging,
+    management/journal guidance, paper-performance evidence boundaries, private-
+    staging sample/paper validation, and milestone review were completed.
 
-Recommended active sequence after v5.8:
+Recommended active sequence after v5.9:
 
-1. `v5.9 - Paper Trade Workflow`: improve the safe manual sample/paper path from
-   signal review to paper trade logging, management, journal, performance review,
-   validation, and milestone review.
-2. Review calibration follow-up remains deferred unless fresh sample/paper evidence
+1. `v6.0 - Staging Operations Rebaseline & Runbook Hygiene`: rebaseline roadmap
+   docs, record sanitized private-staging database credential recovery evidence,
+   add a repeatable staging deploy/migration recovery runbook, review operations
+   posture, and close the milestone.
+2. Backup/restore implementation remains deferred unless the v6.0 operations
+   posture review or owner/operator decision makes it the next explicit gate.
+3. Review calibration follow-up remains deferred unless fresh sample/paper evidence
    shows concrete signal-quality gaps.
 
 Deferred candidates:
