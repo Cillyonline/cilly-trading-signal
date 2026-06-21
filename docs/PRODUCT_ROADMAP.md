@@ -181,10 +181,13 @@ Der aktuelle Stand ist ein kontrolliertes Owner/Operator-Review-Cockpit, kein pr
   Validation ist lokal/private-staging dokumentiert, Stage-1 Secrets und Deploy-
   User sind verifiziert, Offsite-Backup/Restore sind bewusst deferred, und private
   Trading-Daten bleiben No-Go.
-- v5.9 Paper-Trade Workflow: naechster aktiver Fokus ist der sichere manuelle
-  Sample-/Paper-Pfad von Signal Review zu Paper Trade Logging, Management,
-  Journal und Performance Review ohne Broker, automatische Trades oder
-  Profitabilitaets-/Strategievalidierungsclaims.
+- v5.9 Paper-Trade Workflow: der sichere manuelle Sample-/Paper-Pfad von Signal
+  Review zu Paper Trade Logging, Management, Journal und Performance Review ist
+  mit private-staging Validation dokumentiert, ohne Broker, automatische Trades
+  oder Profitabilitaets-/Strategievalidierungsclaims.
+- v6.0 Staging Operations Rebaseline: aktueller Fokus ist Roadmap-Rebaseline,
+  sanitized DB-Credential-Recovery-Evidence, ein wiederholbarer Staging-Deploy-
+  und Migration-Recovery-Runbook sowie ein Private-Staging-Operations-Review.
 
 Weiterhin nicht enthalten:
 

@@ -1,23 +1,28 @@
 # Next Milestone Decision
 
-Date: 2026-06-15
+Date: 2026-06-21
 
 ## Decision
 
-Recommended active milestone: `v5.9 - Paper Trade Workflow`.
+Recommended active milestone: `v6.0 - Staging Operations Rebaseline & Runbook Hygiene`.
 
-Rationale: v4.9 through v5.8 are complete and closed. Private trading data remains
+Rationale: v4.9 through v5.9 are complete and closed. Private trading data remains
 No-Go after v5.8, while private staging is validated for sample/paper-only use.
-The next highest-value product increment is to make the safe manual paper-trade
-workflow clearer from signal review to trade logging, management, journal, and
-performance review.
+The v5.9 private-staging update also exposed staging-operations hygiene gaps around
+repository path, Compose project naming, and database credential recovery. The next
+highest-value increment is to rebaseline the roadmap, record sanitized recovery
+evidence, and make staging deploy/migration recovery repeatable before expanding
+product scope or private-data reliance.
 
-Recommended implementation sequence after v5.8:
+Recommended implementation sequence after v5.9:
 
-1. `v5.9 - Paper Trade Workflow`: improve the sample/paper-only manual path from
-   signal review to paper trade logging, management, journal, performance review,
-   validation, and review.
-2. Keep review calibration deferred unless fresh sample/paper operator evidence
+1. `v6.0 - Staging Operations Rebaseline & Runbook Hygiene`: rebaseline roadmap
+   docs, record sanitized database credential recovery evidence, add a staging
+   deploy/migration recovery runbook, review private-staging operations posture,
+   and close the milestone.
+2. Keep backup/restore implementation deferred unless the v6.0 posture review or
+   owner/operator decision makes it the next explicit gate.
+3. Keep review calibration deferred unless fresh sample/paper operator evidence
    shows concrete signal-quality or review-calibration gaps.
 
 ## v4.3 - Operational Evidence Closure
@@ -435,9 +440,8 @@ Goal: improve the safe sample/paper-only workflow from signal review to manual
 paper trade logging, trade management, journal, performance review, validation,
 and milestone review.
 
-Status: Done. The v5.9 review is recorded in
-`docs/reviews/v5-9-paper-trade-workflow-review.md`, and the milestone is ready to
-close after #776 merges.
+Status: Done and closed. The v5.9 review is recorded in
+`docs/reviews/v5-9-paper-trade-workflow-review.md`.
 
 Completed issues:
 
@@ -465,6 +469,41 @@ Boundary:
 - No private trading data, broker integration, automatic execution, automatic trade
   creation, live/realtime claim, profitability claim, strategy-validation claim, or
   production-readiness claim.
+
+## v6.0 - Staging Operations Rebaseline & Runbook Hygiene
+
+Goal: rebaseline roadmap docs after v5.9, record sanitized private-staging database
+credential recovery evidence, document repeatable staging deploy and migration
+recovery, review private-staging operations posture, and close the milestone.
+
+Status: Current.
+
+Planned issues:
+
+- #784: rebaseline roadmap after v5.9 closure.
+- #785: record staging database credential recovery.
+- #786: add staging deploy and migration recovery runbook.
+- #787: review private-staging operations posture after v5.9.
+- #788: review v6.0 staging operations rebaseline.
+
+Done when:
+
+- Roadmap docs no longer present v5.9 as the active next milestone.
+- Sanitized DB credential recovery evidence is recorded without secrets, `.env`
+  values, raw logs, database dumps, or private data.
+- Staging deploy and migration recovery runbook clearly documents safe checks,
+  correct repository path, correct Compose project name, mistaken-stack cleanup,
+  Alembic, API health, web load, and credential-mismatch triage boundaries.
+- Private-staging operations posture is reviewed, and any concrete blockers are
+  captured as follow-up issues.
+- v6.0 review is recorded and the milestone is closed.
+
+Boundary:
+
+- No private trading data approval, production-readiness claim, public exposure,
+  broker integration, automatic execution, automatic trade creation, live/realtime
+  claim, profitability claim, strategy-validation claim, secret publication, or
+  destructive database-volume operation.
 
 ## Not Now
 
