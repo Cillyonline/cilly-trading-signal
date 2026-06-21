@@ -698,14 +698,17 @@ Completed sequence after v4.8:
     rebaselined, DB credential recovery evidence was sanitized, a staging deploy
     and migration recovery runbook was added, and private-staging operations posture
     was reviewed.
+13. `v6.1 - Backup & Restore Decision Gate`: backup/restore was reviewed and kept
+    deferred for the current sample/paper-only private-staging scope; no backup
+    repository, credentials, Restic command, or restore drill was run.
 
-Recommended active sequence after v6.0:
+Recommended active sequence after v6.1:
 
-1. `v6.1 - Backup & Restore Decision Gate`: decide whether encrypted offsite
-   backup and restore drill remain deferred or become the next explicit operations
-   gate, record the outcome, and close the milestone.
-2. If backup/restore becomes the next gate, create separate scoped implementation
-   issues before performing any backup repository, secret, or restore operation.
+1. `v6.2 - Roadmap Rebaseline & Next Increment Selection`: rebaseline roadmap docs,
+   compare safe next-increment candidates, select the next milestone, and prepare
+   scoped follow-up issues if appropriate.
+2. Backup/restore implementation remains deferred unless the owner/operator
+   explicitly reopens it as a separate operations gate.
 3. Review calibration follow-up remains deferred unless fresh sample/paper evidence
    shows concrete signal-quality gaps.
 

@@ -188,9 +188,14 @@ Der aktuelle Stand ist ein kontrolliertes Owner/Operator-Review-Cockpit, kein pr
 - v6.0 Staging Operations Rebaseline: Roadmap-Rebaseline, sanitized DB-
   Credential-Recovery-Evidence, ein wiederholbarer Staging-Deploy- und Migration-
   Recovery-Runbook sowie ein Private-Staging-Operations-Review sind abgeschlossen.
-- v6.1 Backup & Restore Decision Gate: aktueller Fokus ist die Entscheidung, ob
-  Offsite-Backup und Restore-Drill weiter deferred bleiben oder als naechster
-  expliziter Operations-Gate umgesetzt werden.
+- v6.1 Backup & Restore Decision Gate: Offsite-Backup und Restore-Drill bleiben
+  fuer den aktuellen Sample-/Paper-Only Private-Staging-Scope bewusst deferred;
+  es wurden keine Backup-Repositories, Credentials, Restic-Kommandos oder Restore-
+  Drills ausgefuehrt.
+- v6.2 Roadmap Rebaseline & Next Increment Selection: aktueller Fokus ist die
+  Auswahl des naechsten kleinen, sicheren Implementation-Increments ohne Private-
+  Data-, Production-, Broker-, Automation-, Profitability- oder Strategy-
+  Validation-Ausweitung.
 
 Weiterhin nicht enthalten:
 
