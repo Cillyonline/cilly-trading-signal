@@ -510,9 +510,11 @@ Goal: decide whether encrypted offsite backup and restore drill remain deferred 
 become the next explicit operations gate before broader staging reliance or any
 private-data readiness discussion.
 
-Status: Current.
+Status: Done. The v6.1 review is recorded in
+`docs/reviews/v6-1-backup-restore-decision-gate-review.md`, and the milestone is
+ready to close after #797 merges.
 
-Planned issues:
+Completed issues:
 
 - #794: rebaseline roadmap after v6.0 closure.
 - #795: decide backup and restore path.
