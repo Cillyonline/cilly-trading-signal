@@ -4,22 +4,23 @@ Date: 2026-06-21
 
 ## Decision
 
-Recommended active milestone: `v6.1 - Backup & Restore Decision Gate`.
+Recommended active milestone: `v6.2 - Roadmap Rebaseline & Next Increment Selection`.
 
-Rationale: v4.9 through v6.0 are complete and closed. Private trading data remains
-No-Go after v5.8, while private staging is validated for sample/paper-only use and
-now has documented deploy/migration recovery guidance. Offsite encrypted backup and
-restore drill remain deferred from v5.8. The next highest-value increment is a
-deliberate backup/restore decision gate before broader staging reliance or any
-private-data readiness discussion.
+Rationale: v4.9 through v6.1 are complete and closed. Private trading data remains
+No-Go after v5.8, private staging is validated for sample/paper-only use, and
+deploy/migration recovery is documented. v6.1 confirmed that offsite encrypted
+backup and restore drill remain deferred. The next highest-value increment is to
+select a small safe implementation milestone without expanding private-data,
+backup/restore, production-readiness, broker, automation, profitability, or
+strategy-validation scope.
 
-Recommended implementation sequence after v6.0:
+Recommended implementation sequence after v6.1:
 
-1. `v6.1 - Backup & Restore Decision Gate`: rebaseline roadmap docs, decide
-   whether encrypted offsite backup and restore drill remain deferred or become
-   the next explicit operations gate, record the outcome, and close the milestone.
-2. If backup/restore becomes the next gate, create separate scoped implementation
-   issues before performing any backup repository, secret, or restore operation.
+1. `v6.2 - Roadmap Rebaseline & Next Increment Selection`: rebaseline roadmap docs,
+   compare next-increment candidates, select the next milestone, create scoped
+   follow-up milestone/issues if appropriate, and close the milestone.
+2. Keep backup/restore implementation deferred unless the owner/operator explicitly
+   reopens it as a separate operations gate.
 3. Keep review calibration deferred unless fresh sample/paper operator evidence
    shows concrete signal-quality or review-calibration gaps.
 
@@ -510,9 +511,8 @@ Goal: decide whether encrypted offsite backup and restore drill remain deferred 
 become the next explicit operations gate before broader staging reliance or any
 private-data readiness discussion.
 
-Status: Done. The v6.1 review is recorded in
-`docs/reviews/v6-1-backup-restore-decision-gate-review.md`, and the milestone is
-ready to close after #797 merges.
+Status: Done and closed. The v6.1 review is recorded in
+`docs/reviews/v6-1-backup-restore-decision-gate-review.md`.
 
 Completed issues:
 
@@ -538,6 +538,36 @@ Boundary:
   data approval, no production-readiness claim, no backup repository details, no
   secrets, no broker integration, no automatic execution, no automatic trade
   creation, no live/realtime claim, no profitability claim, and no strategy-
+  validation claim.
+
+## v6.2 - Roadmap Rebaseline & Next Increment Selection
+
+Goal: rebaseline roadmap docs after v6.1 backup/restore deferral, decide the next
+implementation increment, and prepare the following milestone if the selected path
+is clear and scoped.
+
+Status: Current.
+
+Planned issues:
+
+- #802: rebaseline roadmap after v6.1 closure.
+- #803: decide next increment after backup restore deferral.
+- #804: review v6.2 roadmap and next increment selection.
+
+Done when:
+
+- Roadmap docs no longer present v6.1 as the active next milestone.
+- A next-increment decision document compares safe candidates and selects one
+  recommended next milestone or explicitly defers selection.
+- Any required next milestone/issues are created, or their creation is deliberately
+  deferred with rationale.
+- v6.2 review is recorded and the milestone is closed.
+
+Boundary:
+
+- No private trading data approval, backup/restore implementation, production-
+  readiness claim, public exposure, broker integration, automatic execution,
+  automatic trade creation, live/realtime claim, profitability claim, or strategy-
   validation claim.
 
 ## Not Now
