@@ -630,7 +630,7 @@ Goal: make sample/paper-only browser validation repeatable after the v6.3 workfl
 polish by defining and, if feasible, running a seeded authenticated browser-smoke
 path with sanitized evidence.
 
-Status: Current.
+Status: Closure-ready after #820 merges.
 
 Planned issues:
 
@@ -638,6 +638,14 @@ Planned issues:
 - #819: define seeded sample browser smoke path.
 - #822: run seeded sample paper workflow browser smoke.
 - #820: review v6.4 seeded browser smoke reliability.
+
+Decision outcome:
+
+- The seeded sample/paper browser-smoke path is documented in
+  `docs/SEEDED_SAMPLE_BROWSER_SMOKE_PATH.md`.
+- The execution attempt is recorded as blocked, not pass, in
+  `docs/reviews/v6-4-seeded-browser-smoke-evidence.md`.
+- Review record: `docs/reviews/v6-4-seeded-browser-smoke-reliability-review.md`.
 
 Done when:
 
