@@ -546,7 +546,7 @@ Goal: rebaseline roadmap docs after v6.1 backup/restore deferral, decide the nex
 implementation increment, and prepare the following milestone if the selected path
 is clear and scoped.
 
-Status: Current.
+Status: Closure-ready after #804 merges.
 
 Planned issues:
 
@@ -560,6 +560,7 @@ Decision outcome:
   milestone.
 - Decision record: `docs/V6_2_NEXT_INCREMENT_DECISION.md`.
 - Follow-up milestone #75 and issues #806 through #811 were created for v6.3.
+- Review record: `docs/reviews/v6-2-roadmap-next-increment-review.md`.
 
 Done when:
 
