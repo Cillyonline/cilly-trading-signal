@@ -415,7 +415,17 @@ function PaperTradeHandoff({ decision, signal }: { decision: SignalDecision; sig
           </span>
         )}
       </div>
-      <ol className="mt-5 grid gap-3 text-sm text-slate-100/85 md:grid-cols-3">
+      <div className="mt-5 grid gap-3 md:grid-cols-2">
+        <div className="rounded-2xl border border-current/15 bg-slate-950/30 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] opacity-80">Naechster Review-Schritt</p>
+          <p className="mt-2 text-sm text-slate-100/85">{handoff.reviewAction}</p>
+        </div>
+        <div className="rounded-2xl border border-current/15 bg-slate-950/30 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] opacity-80">Paper-Logging-Regel</p>
+          <p className="mt-2 text-sm text-slate-100/85">{handoff.loggingRule}</p>
+        </div>
+      </div>
+      <ol className="mt-4 grid gap-3 text-sm text-slate-100/85 md:grid-cols-3">
         {handoff.steps.map((step) => (
           <li key={step} className="rounded-2xl border border-current/15 bg-slate-950/30 p-4">
             {step}
@@ -437,7 +447,11 @@ function paperTradeHandoffCopy(decision: SignalDecision, signal: Signal) {
       className: "border-emerald-300/30 bg-emerald-300/10 text-emerald-100",
       title: "Bereit fuer manuelle Paper-Trade-Pruefung",
       description:
-        "Pruefe Entry-Zone, Stop, Ziele, R:R, Invalidation und aktuelle Daten noch einmal. Wenn alles passt, kannst du den Paper Trade separat manuell erfassen.",
+        "Pruefe Entry-Zone, Stop, Ziele, R:R, Invalidation und aktuelle Daten noch einmal. Nur wenn der Plan danach weiterhin bewusst passt, dokumentierst du ihn separat als Paper Trade.",
+      reviewAction:
+        "Entscheide zuerst ausserhalb der App, ob Entry, Stop, Ziel, Invalidation und Datenlage wirklich zusammenpassen.",
+      loggingRule:
+        "Erst nach dieser manuellen Entscheidung zur Trade-Seite wechseln; dieser Signal-Handoff erstellt nichts automatisch.",
       steps: [
         `Signal #${signal.id} und ${signal.symbol} als Referenz merken.`,
         "Entry, Stop und Ziel gegen die Setup-Daten pruefen.",
@@ -452,7 +466,11 @@ function paperTradeHandoffCopy(decision: SignalDecision, signal: Signal) {
       className: "border-yellow-300/30 bg-yellow-300/10 text-yellow-100",
       title: "Noch beobachten, nicht loggen",
       description:
-        "Das Setup ist noch nicht stark genug fuer Paper-Trade-Logging. Lass es auf der Review-Liste, aktualisiere Daten gezielt und pruefe spaeter erneut.",
+        "Das Setup ist noch nicht stark genug fuer Paper-Trade-Logging. Beobachten ist ein gueltiges Ergebnis: lass es auf der Review-Liste, aktualisiere Daten gezielt und pruefe spaeter erneut.",
+      reviewAction:
+        "Halte den Review offen und warte auf Trigger, Bestaetigung oder frischere Timeframes.",
+      loggingRule:
+        "Aus einem Beobachten-Zustand wird kein Paper Trade abgeleitet; logge erst nach einer neuen manuellen Pruefung.",
       steps: ["Trigger oder Bestaetigung abwarten.", "Freshness und Timeframes bei Bedarf aktualisieren.", "Keinen Paper Trade aus diesem Zustand ableiten."],
     };
   }
@@ -463,7 +481,11 @@ function paperTradeHandoffCopy(decision: SignalDecision, signal: Signal) {
       className: "border-slate-400/30 bg-slate-400/10 text-slate-100",
       title: "Datenproblem zuerst klaeren",
       description:
-        "Die Datenbasis reicht nicht fuer einen belastbaren Paper-Workflow. Korrigiere fehlende oder veraltete Timeframes, bevor du erneut reviewst.",
+        "Die Datenbasis reicht nicht fuer einen belastbaren Paper-Workflow. Ein Datenproblem ist ein Stop-Signal fuer Paper-Logging, bis fehlende oder veraltete Timeframes geklaert sind.",
+      reviewAction:
+        "Klaere zuerst Datenquelle, Freshness und benoetigte 1W/1D/4H-Timeframes, danach neu reviewen.",
+      loggingRule:
+        "Bei unklarer Datenbasis keinen Paper Trade erfassen; erst Daten bereinigen, dann erneut entscheiden.",
       steps: ["Fehlende 1W/1D/4H-Daten pruefen.", "CSV- oder freigegebenen Provider-Pfad manuell nutzen.", "Bis dahin keinen Paper Trade erfassen."],
     };
   }
@@ -473,7 +495,11 @@ function paperTradeHandoffCopy(decision: SignalDecision, signal: Signal) {
     className: "border-red-300/30 bg-red-300/10 text-red-100",
     title: "Kein Paper Trade aus diesem Signal",
     description:
-      "Mindestens ein No-Trade-Grund oder Risikofilter blockiert das Setup. Nutze die Gruende fuer Review/Lernen, nicht fuer Trade-Logging.",
+      "Mindestens ein No-Trade-Grund oder Risikofilter blockiert das Setup. No Trade ist ein vollwertiges Review-Ergebnis: nutze die Gruende fuer Review/Lernen, nicht fuer Trade-Logging.",
+    reviewAction:
+      "Dokumentiere bei Bedarf den Review-Grund und akzeptiere den No-Trade-Zustand, statt einen schwachen Trade zu erzwingen.",
+    loggingRule:
+      "Aus No Trade, invalidiert oder riskant wird kein Paper Trade geloggt; nur ein spaeteres neues Review kann das aendern.",
     steps: ["No-Trade-Gruende lesen.", "Review Note bei Bedarf ergaenzen.", "Signal verwerfen oder spaeter mit neuen Daten pruefen."],
   };
 }
