@@ -199,6 +199,11 @@ Der aktuelle Stand ist ein kontrolliertes Owner/Operator-Review-Cockpit, kein pr
   Next-Action-Fuehrung fuer Signal Review, manuelles Paper-Trade-Logging,
   Management/Journal und Paper-Performance Review, ohne Private-Data-, Production-,
   Broker-, Automation-, Profitability- oder Strategy-Validation-Ausweitung.
+- v6.4 Seeded Browser Smoke Reliability: aktueller Fokus ist ein wiederholbarer
+  seeded Sample-/Paper-Only Browser-Smoke fuer die polierten Workflows. Die v6.3-
+  Validation-Luecke wird geschlossen oder explizit blockiert dokumentiert, ohne
+  Private-Data-, Provider-, VPS-, Backup-/Restore-, Production-, Broker-,
+  Automation-, Profitability- oder Strategy-Validation-Ausweitung.
 
 Weiterhin nicht enthalten:
 

@@ -4,21 +4,23 @@ Date: 2026-06-24
 
 ## Decision
 
-Recommended active milestone: `v6.3 - Paper Workflow Usage Polish`.
+Recommended active milestone: `v6.4 - Seeded Browser Smoke Reliability`.
 
-Rationale: v4.9 through v6.2 are complete and closed. Private trading data remains
+Rationale: v4.9 through v6.3 are complete and closed. Private trading data remains
 No-Go after v5.8, private staging is validated for sample/paper-only use,
 deploy/migration recovery is documented, and v6.1 confirmed that offsite encrypted
-backup and restore drill remain deferred. v6.2 selected the next small safe
-implementation increment: polish the existing sample/paper-only manual workflow
-without expanding private-data, backup/restore, production-readiness, broker,
-automation, profitability, or strategy-validation scope.
+backup and restore drill remain deferred. v6.3 polished the existing sample/paper-
+only workflow and recorded an explicit validation gap: no seeded authenticated
+browser smoke was run. The next safest increment is to make that sample/paper-only
+browser validation path repeatable without expanding private-data, backup/restore,
+production-readiness, broker, automation, profitability, or strategy-validation
+scope.
 
-Recommended implementation sequence after v6.2:
+Recommended implementation sequence after v6.3:
 
-1. `v6.3 - Paper Workflow Usage Polish`: rebaseline roadmap docs, polish signal,
-   trade, management, and paper-performance next-action guidance, validate the
-   sample/paper-only workflow, and close the milestone.
+1. `v6.4 - Seeded Browser Smoke Reliability`: rebaseline roadmap docs, define a
+   seeded sample/paper browser-smoke path, run it when feasible, record sanitized
+   evidence, and close the milestone.
 2. Keep backup/restore implementation deferred unless the owner/operator explicitly
    reopens it as a separate operations gate.
 3. Keep review calibration deferred unless fresh sample/paper operator evidence
@@ -586,7 +588,8 @@ manual paper trade logging, trade management/journal guidance, and paper-perform
 review without expanding trading, operations, provider, private-data, or production
 scope.
 
-Status: Closure-ready after #810 merges.
+Status: Done and closed. The v6.3 review is recorded in
+`docs/reviews/v6-3-paper-workflow-usage-polish-review.md`.
 
 Planned issues:
 
@@ -617,6 +620,38 @@ Boundary:
 
 - No private trading data approval, backup/restore implementation, provider smoke,
   VPS change, production-readiness claim, public exposure, broker integration,
+  automatic execution, automatic trade creation, automatic position sizing, live/
+  realtime claim, profitability claim, strategy-validation claim, or trading-rule
+  change.
+
+## v6.4 - Seeded Browser Smoke Reliability
+
+Goal: make sample/paper-only browser validation repeatable after the v6.3 workflow
+polish by defining and, if feasible, running a seeded authenticated browser-smoke
+path with sanitized evidence.
+
+Status: Current.
+
+Planned issues:
+
+- #821: rebaseline roadmap for seeded browser smoke.
+- #819: define seeded sample browser smoke path.
+- #822: run seeded sample paper workflow browser smoke.
+- #820: review v6.4 seeded browser smoke reliability.
+
+Done when:
+
+- Roadmap docs identify v6.4 as the active milestone.
+- A seeded sample/paper browser-smoke path is documented with route coverage,
+  evidence rules, cleanup rules, and safety boundaries.
+- Seeded browser-smoke evidence is recorded, or a blocker is explicitly documented
+  without calling the validation pass.
+- v6.4 review is recorded and the milestone is closed.
+
+Boundary:
+
+- No private trading data approval, provider smoke, VPS change, backup/restore
+  implementation, production-readiness claim, public exposure, broker integration,
   automatic execution, automatic trade creation, automatic position sizing, live/
   realtime claim, profitability claim, strategy-validation claim, or trading-rule
   change.
