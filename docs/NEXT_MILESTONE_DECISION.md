@@ -554,6 +554,13 @@ Planned issues:
 - #803: decide next increment after backup restore deferral.
 - #804: review v6.2 roadmap and next increment selection.
 
+Decision outcome:
+
+- #803 selected `v6.3 - Paper Workflow Usage Polish` as the next implementation
+  milestone.
+- Decision record: `docs/V6_2_NEXT_INCREMENT_DECISION.md`.
+- Follow-up milestone #75 and issues #806 through #811 were created for v6.3.
+
 Done when:
 
 - Roadmap docs no longer present v6.1 as the active next milestone.
