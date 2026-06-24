@@ -1,24 +1,24 @@
 # Next Milestone Decision
 
-Date: 2026-06-21
+Date: 2026-06-24
 
 ## Decision
 
-Recommended active milestone: `v6.2 - Roadmap Rebaseline & Next Increment Selection`.
+Recommended active milestone: `v6.3 - Paper Workflow Usage Polish`.
 
-Rationale: v4.9 through v6.1 are complete and closed. Private trading data remains
-No-Go after v5.8, private staging is validated for sample/paper-only use, and
-deploy/migration recovery is documented. v6.1 confirmed that offsite encrypted
-backup and restore drill remain deferred. The next highest-value increment is to
-select a small safe implementation milestone without expanding private-data,
-backup/restore, production-readiness, broker, automation, profitability, or
-strategy-validation scope.
+Rationale: v4.9 through v6.2 are complete and closed. Private trading data remains
+No-Go after v5.8, private staging is validated for sample/paper-only use,
+deploy/migration recovery is documented, and v6.1 confirmed that offsite encrypted
+backup and restore drill remain deferred. v6.2 selected the next small safe
+implementation increment: polish the existing sample/paper-only manual workflow
+without expanding private-data, backup/restore, production-readiness, broker,
+automation, profitability, or strategy-validation scope.
 
-Recommended implementation sequence after v6.1:
+Recommended implementation sequence after v6.2:
 
-1. `v6.2 - Roadmap Rebaseline & Next Increment Selection`: rebaseline roadmap docs,
-   compare next-increment candidates, select the next milestone, create scoped
-   follow-up milestone/issues if appropriate, and close the milestone.
+1. `v6.3 - Paper Workflow Usage Polish`: rebaseline roadmap docs, polish signal,
+   trade, management, and paper-performance next-action guidance, validate the
+   sample/paper-only workflow, and close the milestone.
 2. Keep backup/restore implementation deferred unless the owner/operator explicitly
    reopens it as a separate operations gate.
 3. Keep review calibration deferred unless fresh sample/paper operator evidence
@@ -546,7 +546,8 @@ Goal: rebaseline roadmap docs after v6.1 backup/restore deferral, decide the nex
 implementation increment, and prepare the following milestone if the selected path
 is clear and scoped.
 
-Status: Closure-ready after #804 merges.
+Status: Done and closed. The v6.2 review is recorded in
+`docs/reviews/v6-2-roadmap-next-increment-review.md`.
 
 Planned issues:
 
@@ -577,6 +578,40 @@ Boundary:
   readiness claim, public exposure, broker integration, automatic execution,
   automatic trade creation, live/realtime claim, profitability claim, or strategy-
   validation claim.
+
+## v6.3 - Paper Workflow Usage Polish
+
+Goal: improve daily sample/paper-only workflow clarity across signal review,
+manual paper trade logging, trade management/journal guidance, and paper-performance
+review without expanding trading, operations, provider, private-data, or production
+scope.
+
+Status: Current.
+
+Planned issues:
+
+- #811: rebaseline roadmap for paper workflow polish.
+- #808: polish signal paper workflow next actions.
+- #807: polish manual paper trade logging and management.
+- #809: polish paper performance review guidance.
+- #806: validate polished sample paper workflow.
+- #810: review v6.3 paper workflow usage polish.
+
+Done when:
+
+- Roadmap docs identify v6.3 as the active implementation milestone.
+- Signal, trade, management, and paper-performance guidance are clearer for manual
+  sample/paper-only use.
+- Sample/paper-only workflow validation is recorded with sanitized evidence.
+- v6.3 review is recorded and the milestone is closed.
+
+Boundary:
+
+- No private trading data approval, backup/restore implementation, provider smoke,
+  VPS change, production-readiness claim, public exposure, broker integration,
+  automatic execution, automatic trade creation, automatic position sizing, live/
+  realtime claim, profitability claim, strategy-validation claim, or trading-rule
+  change.
 
 ## Not Now
 

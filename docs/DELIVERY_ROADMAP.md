@@ -701,12 +701,15 @@ Completed sequence after v4.8:
 13. `v6.1 - Backup & Restore Decision Gate`: backup/restore was reviewed and kept
     deferred for the current sample/paper-only private-staging scope; no backup
     repository, credentials, Restic command, or restore drill was run.
+14. `v6.2 - Roadmap Rebaseline & Next Increment Selection`: roadmap docs were
+    rebaselined, the next increment was selected, and milestone #75 with issues
+    #806 through #811 was created for v6.3.
 
-Recommended active sequence after v6.1:
+Recommended active sequence after v6.2:
 
-1. `v6.2 - Roadmap Rebaseline & Next Increment Selection`: rebaseline roadmap docs,
-   compare safe next-increment candidates, select the next milestone, and prepare
-   scoped follow-up issues if appropriate.
+1. `v6.3 - Paper Workflow Usage Polish`: improve sample/paper-only next-action
+   clarity across signal review, manual paper trade logging, trade management, and
+   paper-performance review, then validate and review the milestone.
 2. Backup/restore implementation remains deferred unless the owner/operator
    explicitly reopens it as a separate operations gate.
 3. Review calibration follow-up remains deferred unless fresh sample/paper evidence
