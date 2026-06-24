@@ -193,9 +193,12 @@ Der aktuelle Stand ist ein kontrolliertes Owner/Operator-Review-Cockpit, kein pr
   es wurden keine Backup-Repositories, Credentials, Restic-Kommandos oder Restore-
   Drills ausgefuehrt.
 - v6.2 Roadmap Rebaseline & Next Increment Selection: aktueller Fokus ist die
-  Auswahl des naechsten kleinen, sicheren Implementation-Increments ohne Private-
-  Data-, Production-, Broker-, Automation-, Profitability- oder Strategy-
-  Validation-Ausweitung.
+  Auswahl des naechsten kleinen, sicheren Implementation-Increments; v6.3 Paper
+  Workflow Usage Polish wurde als naechster Scope gewaehlt.
+- v6.3 Paper Workflow Usage Polish: aktueller Fokus ist klarere Sample-/Paper-Only
+  Next-Action-Fuehrung fuer Signal Review, manuelles Paper-Trade-Logging,
+  Management/Journal und Paper-Performance Review, ohne Private-Data-, Production-,
+  Broker-, Automation-, Profitability- oder Strategy-Validation-Ausweitung.
 
 Weiterhin nicht enthalten:
 
