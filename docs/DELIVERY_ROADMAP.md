@@ -704,12 +704,14 @@ Completed sequence after v4.8:
 14. `v6.2 - Roadmap Rebaseline & Next Increment Selection`: roadmap docs were
     rebaselined, the next increment was selected, and milestone #75 with issues
     #806 through #811 was created for v6.3.
+15. `v6.3 - Paper Workflow Usage Polish`: signal, trade, management, journal, and
+    paper-performance guidance were polished for sample/paper-only manual use;
+    validation evidence recorded a seeded browser-smoke gap and created v6.4.
 
-Recommended active sequence after v6.2:
+Recommended active sequence after v6.3:
 
-1. `v6.3 - Paper Workflow Usage Polish`: improve sample/paper-only next-action
-   clarity across signal review, manual paper trade logging, trade management, and
-   paper-performance review, then validate and review the milestone.
+1. `v6.4 - Seeded Browser Smoke Reliability`: define and run, if feasible, a
+   repeatable seeded sample/paper-only browser-smoke path for the polished workflow.
 2. Backup/restore implementation remains deferred unless the owner/operator
    explicitly reopens it as a separate operations gate.
 3. Review calibration follow-up remains deferred unless fresh sample/paper evidence
