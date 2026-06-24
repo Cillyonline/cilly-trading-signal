@@ -119,6 +119,16 @@ function PaperPerformanceBoundary() {
         <BoundaryPill label="Nicht erlaubt" text="Private R-Sequenzen, Accountwerte, Brokerdaten, Screenshots mit privaten Trades" />
         <BoundaryPill label="Interpretation" text="Historische Paper-Dokumentation, keine Strategie- oder Real-Money-Freigabe" />
       </div>
+      <div className="mt-4 grid gap-3 text-sm text-amber-50/85 md:grid-cols-2">
+        <div className="rounded-2xl border border-amber-200/20 bg-slate-950/40 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">So lesen</p>
+          <p className="mt-2">Nutze R-Werte und Journal-Scores als Rueckblick auf Prozessqualitaet und Disziplin, nicht als Erwartungswert fuer den naechsten Trade.</p>
+        </div>
+        <div className="rounded-2xl border border-amber-200/20 bg-slate-950/40 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Vor Export</p>
+          <p className="mt-2">CSV nur fuer sample-, synthetic-, fake- oder paper-only Evidence verwenden; private Reihen, Notizen und Resultate nicht teilen.</p>
+        </div>
+      </div>
     </section>
   );
 }
@@ -146,7 +156,8 @@ function EmptyState() {
       <h2 className="text-2xl font-semibold">Noch keine geschlossenen Trades</h2>
       <p className="mt-3 max-w-2xl text-slate-400">
         Die Summary wird sichtbar, sobald manuell dokumentierte Trades geschlossen wurden. Offene
-        Trades bleiben aus diesen Metriken ausgeschlossen.
+        Trades bleiben aus diesen Metriken ausgeschlossen. Ein leerer Zustand ist ein gueltiges
+        Ergebnis und kein Problem fuer den Paper-Workflow.
       </p>
       <a
         className="mt-6 inline-flex rounded-xl bg-emerald-400 px-5 py-3 font-semibold text-slate-950"
@@ -179,6 +190,10 @@ function JournalAnalyticsPanel({ analytics }: { analytics: JournalAnalytics }) {
           <p className="text-sm uppercase tracking-[0.3em] text-violet-200">Journal Quality</p>
           <h2 className="mt-2 text-2xl font-semibold">Process Review Analytics</h2>
           <p className="mt-2 max-w-3xl text-sm text-slate-300">{analytics.small_sample_notice}</p>
+          <p className="mt-2 max-w-3xl text-xs text-violet-100/70">
+            Journal-Werte zeigen nur dokumentierte Prozess- und Disziplinbeobachtungen. Sie sind
+            keine Strategiequalitaet, kein Profitabilitaetsbeleg und keine Prognose.
+          </p>
         </div>
         <span className="rounded-full border border-violet-200/30 px-4 py-2 text-sm text-violet-100">
           {analytics.reviewed_trade_count} reviewed / {analytics.missing_review_count} missing
@@ -200,6 +215,7 @@ function JournalAnalyticsPanel({ analytics }: { analytics: JournalAnalytics }) {
         <h3 className="font-semibold text-slate-100">By Strategy</h3>
         <p className="mt-2 text-sm text-slate-400">
           Strategy breakdown appears from {analytics.min_strategy_sample_size} reviewed journal records.
+          Auch dann bleibt es Paper-Prozessdokumentation, keine Strategievalidierung.
         </p>
         {analytics.by_strategy.length > 0 ? (
           <div className="mt-4 grid gap-3 lg:grid-cols-2">

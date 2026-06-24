@@ -36,6 +36,7 @@ Allowed evidence may include only sanitized facts:
 | Closed trade count | `0`, a sample count, or `present/redacted` for private contexts. |
 | R-multiple fields | `visible`, `not visible`, `present/redacted`; do not paste private sequences. |
 | Journal analytics | `visible`, `not visible`, `present/redacted`; do not paste private notes. |
+| Interpretation guidance | `present`, `missing`, or `needs follow-up`; must frame results as historical paper/process documentation only. |
 | Export check | `not run`, `pass`, `fail`, or `skipped with reason`; do not attach private CSV output. |
 | Boundary copy | `present`, `missing`, or `needs follow-up`. |
 | Result | `pass`, `fail`, or `skipped`. |
@@ -59,6 +60,7 @@ Never include:
 - Closed trade count evidence: 0 / sample count / present-redacted
 - R-multiple summary evidence: visible / not visible / present-redacted
 - Journal analytics evidence: visible / not visible / present-redacted
+- Interpretation guidance present: yes / no
 - Export check: not run / pass / fail / skipped with reason
 - Boundary copy present: yes / no
 - Result: pass / fail / skipped
