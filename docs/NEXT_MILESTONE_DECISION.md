@@ -586,7 +586,7 @@ manual paper trade logging, trade management/journal guidance, and paper-perform
 review without expanding trading, operations, provider, private-data, or production
 scope.
 
-Status: Current.
+Status: Closure-ready after #810 merges.
 
 Planned issues:
 
@@ -596,6 +596,14 @@ Planned issues:
 - #809: polish paper performance review guidance.
 - #806: validate polished sample paper workflow.
 - #810: review v6.3 paper workflow usage polish.
+
+Decision outcome:
+
+- v6.3 completed the scoped sample/paper-only workflow polish.
+- Validation record: `docs/reviews/v6-3-polished-paper-workflow-validation.md`.
+- Review record: `docs/reviews/v6-3-paper-workflow-usage-polish-review.md`.
+- Follow-up milestone #76 and issues #819 through #822 were created for seeded
+  browser smoke reliability.
 
 Done when:
 
