@@ -241,6 +241,12 @@ export default function TradesPage() {
 
             <PaperTradeSafetyChecklist />
 
+            <div className="mt-5 grid gap-3 rounded-2xl border border-emerald-300/20 bg-emerald-300/[0.06] p-4 text-sm text-emerald-50 md:grid-cols-3">
+              <GuidanceStep label="1 Entscheiden" text="Signal, Setup und Risiko ausserhalb der App bewusst pruefen." />
+              <GuidanceStep label="2 Dokumentieren" text="Nur den bereits entschiedenen Paper-Plan mit Entry, Stop und Size erfassen." />
+              <GuidanceStep label="3 Reviewen" text="Management, Close und Journal spaeter manuell nachtragen." />
+            </div>
+
             <div className="mt-6 grid gap-4">
               <TradeFormSection title="1. Quelle" description="Waehle nur den Ursprung der manuellen Ausfuehrung. Es wird keine Order erstellt.">
                 <label className="grid gap-2 text-sm text-slate-300">
@@ -562,6 +568,15 @@ function PaperTradeSafetyChecklist() {
         Speichern erstellt nur einen Dokumentationsdatensatz. Es erzeugt keine Ausfuehrung,
         keine Order, keine Broker-Aktion und keine Performance- oder Strategievalidierung.
       </p>
+    </div>
+  );
+}
+
+function GuidanceStep({ label, text }: { label: string; text: string }) {
+  return (
+    <div className="rounded-xl border border-emerald-200/20 bg-slate-950/30 p-3">
+      <p className="text-xs font-semibold uppercase tracking-wide text-emerald-100">{label}</p>
+      <p className="mt-1 text-emerald-50/80">{text}</p>
     </div>
   );
 }

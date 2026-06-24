@@ -380,9 +380,19 @@ function ManagementBoundaryCard({ trade }: { trade: TradeDetail }) {
         Alle Aktionen unten dokumentieren externe manuelle Entscheidungen. Keine Broker-Verbindung, keine Orderausfuehrung.
       </p>
       <div className="mt-4 grid gap-2 text-xs text-sky-50 sm:grid-cols-3">
-        <WorkflowPill label="1 Manage" text="Events und Anpassungen loggen" />
-        <WorkflowPill label="2 Close" text="Externen Exit dokumentieren" />
-        <WorkflowPill label="3 Journal" text="Nach Close Prozess reviewen" />
+        <WorkflowPill label="1 Manage" text="Nur bereits entschiedene Paper-Events dokumentieren" />
+        <WorkflowPill label="2 Close" text="Externen manuellen Exit nachtraeglich loggen" />
+        <WorkflowPill label="3 Journal" text="Nach Close Prozess und Disziplin reviewen" />
+      </div>
+      <div className="mt-4 grid gap-3 text-sm text-sky-50/85 md:grid-cols-2">
+        <div className="rounded-2xl border border-sky-200/20 bg-slate-950/40 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-100">Vor jedem Log</p>
+          <p className="mt-2">Entscheidung zuerst manuell treffen; die App dokumentiert nur den Paper-Verlauf.</p>
+        </div>
+        <div className="rounded-2xl border border-sky-200/20 bg-slate-950/40 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-100">Nicht eintragen</p>
+          <p className="mt-2">Keine privaten Broker-, Account-, Order-, Fill- oder echten Kontodaten erfassen.</p>
+        </div>
       </div>
       <div className="mt-4 rounded-2xl border border-sky-200/20 bg-slate-950/40 p-4">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-100">Aktuelle manuelle Checkliste</p>
@@ -780,7 +790,8 @@ function EventFormCard({
     <form onSubmit={onSubmit} className="rounded-3xl border border-emerald-300/20 bg-emerald-300/[0.04] p-5 sm:p-6">
       <StepHeading step="1 Manage" title="Management Event loggen" />
       <p className="mt-2 text-sm text-emerald-100/80">
-        Routine-Dokumentation fuer Notes, Stop- oder Target-Updates. Keine Broker-Aktion.
+        Routine-Dokumentation fuer Notes, Stop- oder Target-Updates. Erst manuell entscheiden,
+        dann hier als Paper-Ereignis nachtragen. Keine Broker-Aktion.
       </p>
 
       <div className="mt-6 grid gap-4">
@@ -846,7 +857,7 @@ function EventFormCard({
             value={form.notes}
             onChange={(event) => onChange({ ...form, notes: event.target.value })}
             className="min-h-28 rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-slate-100 outline-none focus:border-emerald-300"
-            placeholder="Was wurde manuell dokumentiert?"
+            placeholder="Welche manuelle Paper-Entscheidung wurde dokumentiert? Keine privaten Broker-, Account- oder Orderdaten."
           />
         </label>
 
