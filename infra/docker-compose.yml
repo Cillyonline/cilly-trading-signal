@@ -54,8 +54,16 @@ services:
     depends_on:
       - web
       - api
+    networks:
+      - default
+      - proxy
 
 volumes:
   postgres-data:
   caddy-data:
   caddy-config:
+
+networks:
+  proxy:
+    external: true
+    name: cilly-proxy
