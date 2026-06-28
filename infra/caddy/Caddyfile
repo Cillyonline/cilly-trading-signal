@@ -9,3 +9,8 @@
     reverse_proxy web:3000
   }
 }
+
+n8n.cillyonline.de {
+  encode gzip
+  reverse_proxy n8n:5678
+}
