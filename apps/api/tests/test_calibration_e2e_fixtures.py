@@ -106,7 +106,7 @@ def test_e2e_stale_required_trigger_timeframe_blocks_review() -> None:
         assert quality["data_quality"] == "blocked"
 
 
-def test_e2e_stock_stale_benchmark_context_warns_and_caps() -> None:
+def test_e2e_stock_stale_benchmark_context_blocks_review() -> None:
     with make_session() as db:
         candidate = create_watchlist_item(db, "NVDA", AssetClass.STOCK)
         create_series_with_data(db, candidate, Timeframe.ONE_WEEK, Decimal("120"))
@@ -125,11 +125,12 @@ def test_e2e_stock_stale_benchmark_context_warns_and_caps() -> None:
         result = evaluate_from_series(db, daily)
         quality = quality_statuses(result)
 
-        assert result.status == SignalStatus.ARMED
-        assert result.score_class == ScoreClass.B_SETUP
+        assert result.status == SignalStatus.NO_SETUP
+        assert result.score_class == ScoreClass.NO_TRADE
         assert "stock_benchmark_context_stale" in result.risk_flags
         assert quality["market_regime"] == "warning"
-        assert quality["data_quality"] == "warning"
+        assert quality["data_quality"] == "blocked"
+        assert "required_market_data_not_fresh" in result.no_trade_reasons
 
 
 def test_e2e_stock_mixed_regime_and_underperformance_blocks() -> None:
@@ -269,7 +270,12 @@ def create_series_with_data(
     first_close: Decimal | None = None,
 ) -> MarketDataSeries:
     series = create_series(db, watchlist_item, timeframe, candle_count, freshness_status)
-    start = datetime(2024, 1, 1, tzinfo=UTC)
+    interval = {
+        Timeframe.ONE_WEEK: timedelta(days=7),
+        Timeframe.ONE_DAY: timedelta(days=1),
+        Timeframe.FOUR_HOURS: timedelta(hours=4),
+    }[timeframe]
+    start = datetime.now(UTC) - interval * candle_count - timedelta(minutes=5)
     if first_close is None:
         first_close = (
             latest_close + Decimal(candle_count - 1)
@@ -294,7 +300,7 @@ def create_series_with_data(
         add_candle_and_snapshot(
             db,
             series,
-            timestamp=start + timedelta(days=index),
+            timestamp=start + interval * index,
             close=close,
             high=close + Decimal("2"),
             low=close - Decimal("2"),
@@ -316,7 +322,12 @@ def create_series_with_base_breakout(
 ) -> MarketDataSeries:
     candle_count = 201
     series = create_series(db, watchlist_item, timeframe, candle_count, freshness_status)
-    start = datetime(2024, 1, 1, tzinfo=UTC)
+    interval = {
+        Timeframe.ONE_WEEK: timedelta(days=7),
+        Timeframe.ONE_DAY: timedelta(days=1),
+        Timeframe.FOUR_HOURS: timedelta(hours=4),
+    }[timeframe]
+    start = datetime.now(UTC) - interval * candle_count - timedelta(minutes=5)
     for index in range(candle_count):
         if index >= candle_count - 21 and index < candle_count - 1:
             close = Decimal("105")
@@ -333,7 +344,7 @@ def create_series_with_base_breakout(
         add_candle_and_snapshot(
             db,
             series,
-            timestamp=start + timedelta(days=index),
+            timestamp=start + interval * index,
             close=close,
             high=high,
             low=low,

@@ -189,3 +189,49 @@ as fresh data.
 The freshness model exists to make market-data provenance and age explicit for both
 CSV and provider-backed stored data. It should reduce the risk of old or incomplete
 data being mistaken for current, trader-actionable information.
+
+
+## Candle Time Contract (Issue #829)
+
+Candle timestamps represent interval starts stored as UTC instants. Provider
+responses must supply an IANA timezone (`exchange_timezone` for Twelve Data,
+`5. Time Zone` for Alpha Vantage). Twelve Data's explicit `Digital Currency`
+type may use UTC when no exchange timezone is supplied. Naive provider times
+are localized before conversion; ambiguous/nonexistent local times and unknown
+zones reject the response with a sanitized `provider_invalid_response` error.
+Explicit numeric offsets retain their original instant.
+
+`market_data_series.timestamp_timezone` records the source interval timezone.
+Migration `20260911_0011` leaves existing rows null deliberately: old provider
+UTC labels cannot be reliably repaired without the original metadata. Re-sync
+provider series after migration before analysis. Existing TradingView CSV data
+uses its established normalized UTC timestamp contract; no provider zone is
+inferred from a ticker or filename. Unknown sources are blocked.
+
+Manual analysis captures one UTC evaluation instant. Instrument, weekly, daily,
+4H and benchmark data all exclude candles whose interval has not ended at that
+instant. Four-hour bars end after four elapsed hours; day/week bars end one/seven
+calendar days after their start in the source timezone, including DST changes.
+The completion boundary is inclusive. This is a conservative interval rule,
+not an exchange-session/holiday calendar: a shortened equity session bar may
+become eligible later than its actual close. CSV day/week intervals are evaluated
+in UTC and do not claim local exchange-session precision. Provider publication
+latency and historical data revisions are not modeled by this cutoff.
+
+Freshness is rechecked against the latest eligible candle at evaluation time;
+a stored `fresh` flag cannot keep old data fresh. Failed/partial syncs and unknown
+provider timezones block review. Invalid existing benchmark data also blocks
+review; missing benchmark symbols retain the existing explicit missing-context
+policy. The stored freshness field is not rewritten by this check.
+
+Provider candle replacement deletes associated indicator snapshots. Analysis
+filters snapshots to eligible candle timestamps and recomputes missing coverage.
+The internal `as_of` argument is for deterministic evaluation/testing, not a new
+historical API or point-in-time backtest: dataset versioning and historical
+availability timestamps remain outside this slice.
+
+Windows requires the `tzdata` runtime dependency for IANA zones. When running the
+README's `uv run --no-project --with ... pytest` command on Windows, add
+`--with tzdata`, because `--no-project` deliberately ignores project dependencies.
+No provider key, live request, broker action, scheduler or automatic order is
+needed for the offline regression tests.

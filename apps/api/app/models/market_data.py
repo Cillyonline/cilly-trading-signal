@@ -31,6 +31,7 @@ class MarketDataSeries(Base):
     provider_symbol: Mapped[str | None] = mapped_column(String(64))
     provider_exchange: Mapped[str | None] = mapped_column(String(64))
     provider_timeframe: Mapped[str | None] = mapped_column(String(32))
+    timestamp_timezone: Mapped[str | None] = mapped_column(String(64))
     timeframe: Mapped[Timeframe] = mapped_column(enum_values(Timeframe))
     imported_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()

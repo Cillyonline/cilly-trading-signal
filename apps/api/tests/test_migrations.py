@@ -128,3 +128,49 @@ def test_alembic_migrations_apply_cleanly_to_sqlite(tmp_path: Path) -> None:
 
     assert "freshness_status" in columns
     assert "sync_status" in columns
+
+
+def test_timezone_migration_preserves_legacy_rows_and_downgrades(tmp_path: Path) -> None:
+    engine = create_engine(f"sqlite:///{(tmp_path / 'timezone.db').as_posix()}")
+    spec = util.spec_from_file_location(
+        "timezone_migration", "alembic/versions/20260911_0011_market_data_timezone.py"
+    )
+    assert spec is not None and spec.loader is not None
+    migration = util.module_from_spec(spec)
+    original = sys.modules.get("alembic")
+    fake = ModuleType("alembic")
+    fake.op = SimpleNamespace()
+    sys.modules["alembic"] = fake
+    try:
+        spec.loader.exec_module(migration)
+    finally:
+        if original is None:
+            del sys.modules["alembic"]
+        else:
+            sys.modules["alembic"] = original
+    try:
+        with engine.begin() as connection:
+            connection.execute(text("CREATE TABLE market_data_series (id INTEGER PRIMARY KEY)"))
+            connection.execute(text("INSERT INTO market_data_series VALUES (7)"))
+
+            def add_column(table_name, column):
+                column_sql = CreateColumn(column).compile(dialect=connection.dialect)
+                connection.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {column_sql}"))
+
+            migration.op = SimpleNamespace(
+                add_column=add_column,
+                drop_column=lambda table, column: connection.execute(
+                    text(f"ALTER TABLE {table} DROP COLUMN {column}")
+                ),
+            )
+            migration.upgrade()
+            assert connection.execute(text(
+                "SELECT id, timestamp_timezone FROM market_data_series"
+            )).one() == (7, None)
+            migration.downgrade()
+            assert connection.execute(text("SELECT id FROM market_data_series")).scalar() == 7
+            assert {c["name"] for c in inspect(connection).get_columns("market_data_series")} == {
+                "id"
+            }
+    finally:
+        engine.dispose()

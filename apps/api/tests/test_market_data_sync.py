@@ -614,7 +614,7 @@ def make_series(
 
 def alpha_vantage_payload(date_text: str) -> dict[str, object]:
     return {
-        "Meta Data": {"2. Symbol": "AAPL"},
+        "Meta Data": {"2. Symbol": "AAPL", "5. Time Zone": "UTC"},
         "Time Series (Daily)": {
             date_text: {
                 "1. open": "100.00",
@@ -630,7 +630,7 @@ def alpha_vantage_payload(date_text: str) -> dict[str, object]:
 
 def twelve_data_payload(date_text: str) -> dict[str, object]:
     return {
-        "meta": {"symbol": "AAPL", "interval": "1day"},
+        "meta": {"symbol": "AAPL", "interval": "1day", "exchange_timezone": "UTC"},
         "values": [
             {
                 "datetime": date_text,
@@ -655,3 +655,36 @@ def provider_candle(date_text: str, close: str) -> ProviderCandle:
         close=value,
         volume=Decimal("1000"),
     )
+
+
+def test_provider_resync_persists_timezone_and_invalidates_snapshots(db_session) -> None:
+    from app.models.market_data import IndicatorSnapshot
+
+    series = make_series(source=MarketDataSource.PROVIDER)
+    db_session.add(series)
+    db_session.flush()
+    db_session.add(IndicatorSnapshot(
+        series_id=series.id, timestamp=datetime(2026, 5, 29, tzinfo=UTC),
+        ema200=Decimal("999"),
+    ))
+    db_session.flush()
+    result = MarketDataSyncResult(
+        sync_status=MarketDataSyncStatus.SUCCESS,
+        freshness_status=MarketDataFreshnessStatus.FRESH,
+        provider_name="twelve_data", timestamp_timezone="America/New_York",
+        candles=(provider_candle("2026-05-29", "100"),),
+    )
+    persist_provider_sync_result(db_session, series, result, datetime(2026, 5, 30, tzinfo=UTC))
+    db_session.flush()
+    db_session.expire(series)
+    assert series.timestamp_timezone == "America/New_York"
+    assert db_session.query(IndicatorSnapshot).count() == 0
+
+
+def test_future_timestamp_is_not_fresh() -> None:
+    from app.services.market_data_sync import evaluate_timestamp_freshness
+
+    now = datetime(2026, 5, 29, tzinfo=UTC)
+    assert evaluate_timestamp_freshness(
+        now + timedelta(hours=1), Timeframe.FOUR_HOURS, now
+    ) == MarketDataFreshnessStatus.UNKNOWN
