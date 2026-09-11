@@ -547,7 +547,12 @@ def create_series_with_data(
     db.add(series)
     db.flush()
 
-    start = datetime(2024, 1, 1, tzinfo=UTC)
+    interval = {
+        Timeframe.ONE_WEEK: timedelta(days=7),
+        Timeframe.ONE_DAY: timedelta(days=1),
+        Timeframe.FOUR_HOURS: timedelta(hours=4),
+    }[timeframe]
+    start = datetime.now(UTC) - interval * candle_count - timedelta(minutes=5)
     if first_close is None:
         first_close = (
             latest_close + Decimal(candle_count - 1)
@@ -569,7 +574,7 @@ def create_series_with_data(
         else:
             ema50 = close - Decimal("5")
             ema200 = close - Decimal("20")
-        timestamp = start + timedelta(days=index)
+        timestamp = start + interval * index
         db.add(
             MarketDataCandle(
                 series_id=series.id,
@@ -622,9 +627,14 @@ def create_series_with_base_breakout(
     db.add(series)
     db.flush()
 
-    start = datetime(2024, 1, 1, tzinfo=UTC)
+    interval = {
+        Timeframe.ONE_WEEK: timedelta(days=7),
+        Timeframe.ONE_DAY: timedelta(days=1),
+        Timeframe.FOUR_HOURS: timedelta(hours=4),
+    }[timeframe]
+    start = datetime.now(UTC) - interval * candle_count - timedelta(minutes=5)
     for index in range(candle_count):
-        timestamp = start + timedelta(days=index)
+        timestamp = start + interval * index
         if index >= candle_count - 21 and index < candle_count - 1:
             close = Decimal("105")
             high = Decimal("110")
@@ -683,3 +693,65 @@ def load_series_snapshots(db: Session, series: MarketDataSeries) -> list[Indicat
         .order_by(IndicatorSnapshot.timestamp)
         .all()
     )
+
+
+def test_analysis_ignores_incomplete_and_future_source_and_benchmark_candles() -> None:
+    from app.services.market_context import load_benchmark_contexts
+
+    with make_session() as db:
+        item = create_watchlist_item(db)
+        weekly = create_series_with_data(db, item, Timeframe.ONE_WEEK, Decimal("120"))
+        daily = create_series_with_data(db, item, Timeframe.ONE_DAY, Decimal("100"))
+        trigger = create_series_with_data(db, item, Timeframe.FOUR_HOURS, Decimal("103"))
+        benchmark = create_watchlist_item(db, "SPY")
+        benchmark_series = create_series_with_data(db, benchmark, Timeframe.ONE_DAY, Decimal("350"))
+        cutoff = datetime.now(UTC)
+        for series in (daily, weekly, trigger, benchmark_series):
+            for timestamp in (cutoff - timedelta(hours=1), cutoff + timedelta(days=1)):
+                db.add(MarketDataCandle(
+                    series_id=series.id, timestamp=timestamp, open=Decimal("999"),
+                    high=Decimal("1000"), low=Decimal("1"), close=Decimal("1"),
+                    volume=Decimal("1000000"),
+                ))
+        db.flush()
+        payload = build_signal_engine_input(
+            db, daily, load_series_candles(db, daily), load_series_snapshots(db, daily),
+            as_of=cutoff,
+        )
+        assert payload.trend_pullback is not None
+        assert payload.trend_pullback.daily.close == Decimal("100")
+        assert payload.trend_pullback.trigger.close == Decimal("103")
+        assert payload.fallback_input.weekly_indicators.close == Decimal("120")
+        contexts = load_benchmark_contexts(db, daily, ("SPY",), as_of=cutoff)
+        assert contexts[0].regime.value == "bullish"
+        assert contexts[0].freshness_status == MarketDataFreshnessStatus.FRESH
+
+
+def test_cached_fresh_status_cannot_prevent_aging_at_evaluation_time() -> None:
+    with make_session() as db:
+        item = create_watchlist_item(db)
+        create_series_with_data(db, item, Timeframe.ONE_WEEK, Decimal("120"))
+        daily = create_series_with_data(db, item, Timeframe.ONE_DAY, Decimal("100"))
+        create_series_with_data(db, item, Timeframe.FOUR_HOURS, Decimal("103"))
+        payload = build_signal_engine_input(
+            db, daily, load_series_candles(db, daily), load_series_snapshots(db, daily),
+            as_of=datetime.now(UTC) + timedelta(days=4),
+        )
+        assert daily.freshness_status == MarketDataFreshnessStatus.FRESH
+        assert "market_data_stale_1D" in payload.fallback_input.data_quality_flags
+        assert evaluate_mvp_signal_engine(payload).status == SignalStatus.NO_SETUP
+
+
+def test_legacy_provider_timezone_blocks_signal_until_resync() -> None:
+    with make_session() as db:
+        item = create_watchlist_item(db)
+        create_series_with_data(db, item, Timeframe.ONE_WEEK, Decimal("120"))
+        daily = create_series_with_data(db, item, Timeframe.ONE_DAY, Decimal("100"))
+        create_series_with_data(db, item, Timeframe.FOUR_HOURS, Decimal("103"))
+        daily.source = MarketDataSource.PROVIDER
+        daily.timestamp_timezone = None
+        payload = build_signal_engine_input(
+            db, daily, load_series_candles(db, daily), load_series_snapshots(db, daily),
+        )
+        assert "market_data_timezone_unknown_1D" in payload.fallback_input.data_quality_flags
+        assert evaluate_mvp_signal_engine(payload).status == SignalStatus.NO_SETUP

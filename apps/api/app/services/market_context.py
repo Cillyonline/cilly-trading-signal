@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from dataclasses import dataclass
 from decimal import Decimal
 
@@ -9,11 +10,14 @@ from app.models.enums import (
     Bias,
     MarketDataFreshnessStatus,
     MarketDataStatus,
+    MarketDataSyncStatus,
     Timeframe,
 )
 from app.models.market_data import IndicatorSnapshot, MarketDataCandle, MarketDataSeries
 from app.models.watchlist import WatchlistItem
 from app.services.indicators import calculate_indicator_snapshots, indicator_input_from_model
+from app.services.candle_time import as_utc, completed_candles
+from app.services.market_data_sync import evaluate_timestamp_freshness
 
 STOCK_BENCHMARK_SYMBOLS = ("SPY", "QQQ")
 CRYPTO_BENCHMARK_GROUPS = {
@@ -64,11 +68,13 @@ def assess_market_context(
     db: Session,
     source_series: MarketDataSeries,
     candidate_daily_candles: list[MarketDataCandle],
+    *, as_of: datetime | None = None,
 ) -> MarketContextAssessment:
+    as_of = as_utc(as_of or datetime.now(UTC))
     if source_series.watchlist_item.asset_class == AssetClass.STOCK:
-        return assess_stock_context(db, source_series, candidate_daily_candles)
+        return assess_stock_context(db, source_series, candidate_daily_candles, as_of=as_of)
     if source_series.watchlist_item.asset_class == AssetClass.CRYPTO:
-        return assess_crypto_context(db, source_series, candidate_daily_candles)
+        return assess_crypto_context(db, source_series, candidate_daily_candles, as_of=as_of)
     return MarketContextAssessment(risk_flags=[], no_trade_reasons=[])
 
 
@@ -110,8 +116,10 @@ def assess_stock_context(
     db: Session,
     source_series: MarketDataSeries,
     candidate_daily_candles: list[MarketDataCandle],
+    *, as_of: datetime | None = None,
 ) -> MarketContextAssessment:
-    benchmarks = load_benchmark_contexts(db, source_series, STOCK_BENCHMARK_SYMBOLS)
+    as_of = as_utc(as_of or datetime.now(UTC))
+    benchmarks = load_benchmark_contexts(db, source_series, STOCK_BENCHMARK_SYMBOLS, as_of=as_of)
     if not benchmarks:
         return MarketContextAssessment(
             risk_flags=["stock_benchmark_context_missing"],
@@ -120,7 +128,7 @@ def assess_stock_context(
         )
 
     risk_flags = stale_context_flags(benchmarks, "stock_benchmark_context")
-    no_trade_reasons: list[str] = []
+    no_trade_reasons: list[str] = ["required_market_data_not_fresh"] if risk_flags else []
     regimes = [benchmark.regime for benchmark in benchmarks]
     if all(regime == Bias.BEARISH for regime in regimes):
         no_trade_reasons.append("stock_market_regime_bearish")
@@ -202,8 +210,10 @@ def assess_crypto_context(
     db: Session,
     source_series: MarketDataSeries,
     candidate_daily_candles: list[MarketDataCandle],
+    *, as_of: datetime | None = None,
 ) -> MarketContextAssessment:
-    benchmarks = load_benchmark_contexts(db, source_series, CRYPTO_BENCHMARK_SYMBOLS)
+    as_of = as_utc(as_of or datetime.now(UTC))
+    benchmarks = load_benchmark_contexts(db, source_series, CRYPTO_BENCHMARK_SYMBOLS, as_of=as_of)
     if not benchmarks:
         return MarketContextAssessment(
             risk_flags=["crypto_regime_context_missing"],
@@ -212,7 +222,7 @@ def assess_crypto_context(
         )
 
     risk_flags = stale_context_flags(benchmarks, "crypto_regime_context")
-    no_trade_reasons: list[str] = []
+    no_trade_reasons: list[str] = ["required_market_data_not_fresh"] if risk_flags else []
     btc_eth_regimes = [benchmark.regime for benchmark in benchmarks]
     if btc_eth_regimes and all(regime == Bias.BEARISH for regime in btc_eth_regimes):
         no_trade_reasons.append("crypto_regime_bearish")
@@ -242,7 +252,9 @@ def load_benchmark_contexts(
     db: Session,
     source_series: MarketDataSeries,
     benchmark_symbols: tuple[str, ...],
+    *, as_of: datetime | None = None,
 ) -> list[BenchmarkContext]:
+    as_of = as_utc(as_of or datetime.now(UTC))
     benchmark_lookup = {symbol.upper() for symbol in benchmark_symbols}
     rows = list(
         db.scalars(
@@ -268,13 +280,14 @@ def load_benchmark_contexts(
 
     contexts: list[BenchmarkContext] = []
     for series in latest_by_symbol.values():
-        candles = load_candles(db, series)
-        snapshots = load_snapshots(db, series)
-        if not snapshots:
+        candles = completed_candles(series, load_candles(db, series), as_of)
+        timestamps = {as_utc(candle.timestamp) for candle in candles}
+        snapshots = [s for s in load_snapshots(db, series) if as_utc(s.timestamp) in timestamps]
+        if len(snapshots) != len(candles):
             snapshots = calculate_indicator_snapshots(
                 [indicator_input_from_model(candle) for candle in candles]
             )
-        contexts.append(build_benchmark_context(series, candles, snapshots))
+        contexts.append(build_benchmark_context(series, candles, snapshots, as_of=as_of))
     return contexts
 
 
@@ -282,15 +295,24 @@ def build_benchmark_context(
     series: MarketDataSeries,
     candles: list[MarketDataCandle],
     snapshots: list[object],
+    *, as_of: datetime | None = None,
 ) -> BenchmarkContext:
+    as_of = as_utc(as_of or datetime.now(UTC))
     latest_candle = candles[-1] if candles else None
     latest_snapshot = snapshots[-1] if snapshots else None
     previous_snapshot = snapshots[-2] if len(snapshots) >= 2 else None
     regime = benchmark_regime(latest_candle, latest_snapshot, previous_snapshot)
+    freshness = series.freshness_status
+    if series.sync_status in (MarketDataSyncStatus.FAILED, MarketDataSyncStatus.PARTIAL):
+        freshness = MarketDataFreshnessStatus(series.sync_status.value)
+    elif not candles:
+        freshness = MarketDataFreshnessStatus.UNKNOWN
+    elif freshness == MarketDataFreshnessStatus.FRESH:
+        freshness = evaluate_timestamp_freshness(candles[-1].timestamp, series.timeframe, as_of)
     return BenchmarkContext(
         symbol=series.watchlist_item.symbol.upper(),
         regime=regime,
-        freshness_status=series.freshness_status,
+        freshness_status=freshness,
         percent_change=percent_change(candles),
     )
 

@@ -11,6 +11,7 @@ dependencies = [
   "pydantic-settings>=2.4.0",
   "python-jose[cryptography]>=3.3.0",
   "sqlalchemy>=2.0.34",
+  "tzdata>=2025.2; sys_platform == 'win32'",
 ]
 
 [dependency-groups]

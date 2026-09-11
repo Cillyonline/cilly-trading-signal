@@ -542,3 +542,16 @@ Signal und Trade werden getrennt, weil nicht jedes Signal gehandelt wird. TradeE
 - Signal kann 1W/1D/4H ueber Timeframe-Felder referenzieren.
 - Teilverkaeufe ueber TradeEvent speichern.
 - Performance live aus Trades berechnen, Snapshots spaeter ergaenzen.
+
+
+## Market Data Timezone Metadata (Issue #829)
+
+`MarketDataSeries.timestamp_timezone` is an optional IANA timezone (up to 64
+characters) describing provider calendar-day/week intervals. Candle timestamps
+remain normalized UTC interval starts. A successful sync updates this field;
+failed syncs do not replace a previously verified timezone. Existing provider
+rows remain null after migration and require re-sync before signal analysis.
+UTC-normalized TradingView CSV rows remain supported without this field.
+See `docs/MARKET_DATA_FRESHNESS_MODEL.md` for interval completion, DST, legacy
+handling and the common analysis cutoff. No existing prices are rewritten by
+the migration, and no new execution or strategy entities are introduced.

@@ -15,7 +15,8 @@ from app.models.enums import (
     MarketDataSyncStatus,
     Timeframe,
 )
-from app.models.market_data import MarketDataCandle, MarketDataSeries
+from app.models.market_data import IndicatorSnapshot, MarketDataCandle, MarketDataSeries
+from app.services.candle_time import normalize_provider_time
 
 FRESHNESS_WINDOWS = {
     Timeframe.ONE_WEEK: timedelta(days=14),
@@ -52,6 +53,7 @@ class MarketDataSyncResult:
     provider_symbol: str | None = None
     provider_exchange: str | None = None
     provider_timeframe: str | None = None
+    timestamp_timezone: str | None = None
     data_end_at: datetime | None = None
     candles: tuple["ProviderCandle", ...] = ()
     error_code: str | None = None
@@ -134,6 +136,7 @@ class AlphaVantageDailyProvider:
             provider_symbol=plan.provider_symbol,
             provider_exchange=plan.provider_exchange,
             provider_timeframe=plan.provider_timeframe,
+            timestamp_timezone=provider_timezone(payload, False),
             data_end_at=latest_timestamp,
             candles=tuple(candles),
         )
@@ -186,6 +189,7 @@ class TwelveDataProvider:
             provider_symbol=plan.provider_symbol,
             provider_exchange=plan.provider_exchange,
             provider_timeframe=plan.provider_timeframe,
+            timestamp_timezone=provider_timezone(payload, True),
             data_end_at=latest_timestamp,
             candles=tuple(candles),
         )
@@ -244,6 +248,21 @@ def _twelve_data_interval(timeframe: Timeframe) -> str:
     return mapping[timeframe]
 
 
+def provider_timezone(payload: dict, twelve_data: bool) -> str:
+    from zoneinfo import ZoneInfo
+
+    meta = payload.get("meta" if twelve_data else "Meta Data", {})
+    if not isinstance(meta, dict):
+        raise ValueError("Provider timezone missing")
+    timezone = meta.get("exchange_timezone" if twelve_data else "5. Time Zone")
+    if timezone is None and twelve_data and meta.get("type") == "Digital Currency":
+        timezone = "UTC"
+    if not isinstance(timezone, str) or not timezone:
+        raise ValueError("Provider timezone missing")
+    ZoneInfo(timezone)
+    return timezone
+
+
 def parse_twelve_data_response(payload: object) -> tuple[list[ProviderCandle], str | None]:
     if not isinstance(payload, dict):
         return [], "provider_invalid_response"
@@ -266,7 +285,9 @@ def parse_twelve_data_response(payload: object) -> tuple[list[ProviderCandle], s
         try:
             candles.append(
                 ProviderCandle(
-                    timestamp=datetime.fromisoformat(raw_candle["datetime"]).replace(tzinfo=UTC),
+                    timestamp=normalize_provider_time(
+                        raw_candle["datetime"], provider_timezone(payload, True)
+                    ),
                     open=_decimal_field(raw_candle, "open"),
                     high=_decimal_field(raw_candle, "high"),
                     low=_decimal_field(raw_candle, "low"),
@@ -298,7 +319,7 @@ def parse_alpha_vantage_daily_response(payload: object) -> tuple[list[ProviderCa
         try:
             candles.append(
                 ProviderCandle(
-                    timestamp=datetime.fromisoformat(date_text).replace(tzinfo=UTC),
+                    timestamp=normalize_provider_time(date_text, provider_timezone(payload, False)),
                     open=_decimal_field(raw_candle, "1. open"),
                     high=_decimal_field(raw_candle, "2. high"),
                     low=_decimal_field(raw_candle, "3. low"),
@@ -517,6 +538,7 @@ def persist_provider_sync_result(
                 provider_exchange=result.provider_exchange,
                 provider_timeframe=result.provider_timeframe,
                 data_end_at=max(candle.timestamp for candle in result.candles),
+                timestamp_timezone=result.timestamp_timezone,
                 candles=result.candles,
             )
 
@@ -529,6 +551,7 @@ def persist_provider_candles(
     candles: tuple[ProviderCandle, ...],
 ) -> None:
     sorted_candles = sorted(candles, key=lambda candle: candle.timestamp)
+    db.execute(delete(IndicatorSnapshot).where(IndicatorSnapshot.series_id == series.id))
     db.execute(delete(MarketDataCandle).where(MarketDataCandle.series_id == series.id))
     db.flush()
     db.add_all(
@@ -558,6 +581,8 @@ def apply_market_data_sync_result(
     series.provider_symbol = result.provider_symbol
     series.provider_exchange = result.provider_exchange
     series.provider_timeframe = result.provider_timeframe
+    if result.sync_status == MarketDataSyncStatus.SUCCESS:
+        series.timestamp_timezone = result.timestamp_timezone
     series.last_synced_at = completed_at
     if result.data_end_at is not None:
         series.end_time = result.data_end_at
@@ -588,7 +613,10 @@ def evaluate_timestamp_freshness(
 ) -> MarketDataFreshnessStatus:
     checked_at = now or datetime.now(UTC)
     freshness_window = FRESHNESS_WINDOWS[timeframe]
-    if checked_at - _as_aware_datetime(end_time) <= freshness_window:
+    age = _as_aware_datetime(checked_at) - _as_aware_datetime(end_time)
+    if age < timedelta(0):
+        return MarketDataFreshnessStatus.UNKNOWN
+    if age <= freshness_window:
         return MarketDataFreshnessStatus.FRESH
     return MarketDataFreshnessStatus.STALE
 

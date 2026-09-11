@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from sqlalchemy import delete, select
@@ -7,6 +8,7 @@ from app.models.enums import (
     Bias,
     MarketDataFreshnessStatus,
     MarketDataStatus,
+    MarketDataSyncStatus,
     SignalStatus,
     StrategyType,
     Timeframe,
@@ -19,6 +21,8 @@ from app.services.indicators import (
 )
 from app.services.analysis_quality import build_analysis_quality_report
 from app.services.market_context import assess_market_context
+from app.services.candle_time import as_utc, completed_candles, series_timezone
+from app.services.market_data_sync import evaluate_timestamp_freshness
 from app.services.signals import upsert_signal_from_analysis
 from app.services.swing_structure import (
     latest_meaningful_swing_high,
@@ -56,7 +60,10 @@ class TimeframeAnalysisData:
         return self.snapshots[-1] if self.snapshots else None
 
 
-def analyze_market_data_series(db: Session, series: MarketDataSeries) -> MarketDataAnalysisResult:
+def analyze_market_data_series(
+    db: Session, series: MarketDataSeries, *, as_of: datetime | None = None
+) -> MarketDataAnalysisResult:
+    as_of = as_utc(as_of or datetime.now(UTC))
     candles = list(
         db.scalars(
             select(MarketDataCandle)
@@ -64,6 +71,7 @@ def analyze_market_data_series(db: Session, series: MarketDataSeries) -> MarketD
             .order_by(MarketDataCandle.timestamp)
         )
     )
+    candles = completed_candles(series, candles, as_of)
     snapshots = calculate_indicator_snapshots(
         [indicator_input_from_model(candle) for candle in candles]
     )
@@ -76,9 +84,9 @@ def analyze_market_data_series(db: Session, series: MarketDataSeries) -> MarketD
     )
 
     signal_result = evaluate_mvp_signal_engine(
-        build_signal_engine_input(db, series, candles, snapshots)
+        build_signal_engine_input(db, series, candles, snapshots, as_of=as_of)
     )
-    trigger_data = load_timeframe_analysis_data(db, series, candles, snapshots).get(
+    trigger_data = load_timeframe_analysis_data(db, series, candles, snapshots, as_of=as_of).get(
         signal_result.timeframe_trigger
     )
 
@@ -154,19 +162,22 @@ def build_signal_engine_input(
     series: MarketDataSeries,
     candles: list[MarketDataCandle],
     snapshots: list[object],
+    *, as_of: datetime | None = None,
 ) -> SignalEngineInput:
-    timeframe_data = load_timeframe_analysis_data(db, series, candles, snapshots)
+    as_of = as_utc(as_of or datetime.now(UTC))
+    timeframe_data = load_timeframe_analysis_data(db, series, candles, snapshots, as_of=as_of)
     missing_timeframes = [
         timeframe.value for timeframe in REQUIRED_TIMEFRAMES if timeframe not in timeframe_data
     ]
     data_quality: list[str] = []
     data_quality.extend(f"missing_{timeframe}_data" for timeframe in missing_timeframes)
-    data_quality.extend(timeframe_quality_flags(timeframe_data))
+    data_quality.extend(timeframe_quality_flags(timeframe_data, as_of))
     daily_data = timeframe_data.get(Timeframe.ONE_DAY)
     market_context = assess_market_context(
         db,
         series,
         daily_data.candles if daily_data is not None else [],
+        as_of=as_of,
     )
 
     fallback_input = SignalEvaluationInput(
@@ -290,7 +301,9 @@ def load_timeframe_analysis_data(
     source_series: MarketDataSeries,
     source_candles: list[MarketDataCandle],
     source_snapshots: list[object],
+    *, as_of: datetime | None = None,
 ) -> dict[Timeframe, TimeframeAnalysisData]:
+    as_of = as_utc(as_of or datetime.now(UTC))
     latest_series = {
         source_series.timeframe: TimeframeAnalysisData(
             source_series,
@@ -325,6 +338,17 @@ def load_timeframe_analysis_data(
             candidate_candles,
             candidate_snapshots,
         )
+    for data in latest_series.values():
+        data.candles = completed_candles(data.series, data.candles, as_of)
+        timestamps = {as_utc(candle.timestamp) for candle in data.candles}
+        data.snapshots = [
+            snapshot for snapshot in data.snapshots
+            if as_utc(snapshot.timestamp) in timestamps
+        ]
+        if len(data.snapshots) != len(data.candles):
+            data.snapshots = calculate_indicator_snapshots(
+                [indicator_input_from_model(candle) for candle in data.candles]
+            )
     return latest_series
 
 
@@ -439,11 +463,25 @@ def base_range_too_wide(base_high: Decimal | None, base_low: Decimal | None) -> 
     return (base_high - base_low) / base_low > Decimal("0.15")
 
 
-def timeframe_quality_flags(timeframe_data: dict[Timeframe, TimeframeAnalysisData]) -> list[str]:
+def timeframe_quality_flags(
+    timeframe_data: dict[Timeframe, TimeframeAnalysisData], as_of: datetime
+) -> list[str]:
     flags: list[str] = []
     for timeframe, data in timeframe_data.items():
+        try:
+            series_timezone(data.series)
+        except (ValueError, KeyError):
+            flags.append(f"market_data_timezone_unknown_{timeframe.value}")
+        if data.candles:
+            freshness = evaluate_timestamp_freshness(
+                data.candles[-1].timestamp, timeframe, as_of
+            )
+            if freshness != MarketDataFreshnessStatus.FRESH:
+                flags.append(f"market_data_{freshness.value}_{timeframe.value}")
         if data.series.freshness_status != MarketDataFreshnessStatus.FRESH:
             flags.append(f"market_data_{data.series.freshness_status.value}_{timeframe.value}")
+        if data.series.sync_status in (MarketDataSyncStatus.FAILED, MarketDataSyncStatus.PARTIAL):
+            flags.append(f"market_data_{data.series.sync_status.value}_{timeframe.value}")
         latest_snapshot = data.latest_snapshot
         if len(data.candles) < MIN_ANALYSIS_CANDLES:
             flags.append(f"{timeframe.value}_insufficient_candle_history")
